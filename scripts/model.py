@@ -54,7 +54,25 @@ PRIORS = {
     "kappa": (0.60, 1.00, "uni"),      # non-work responsiveness
     "pkshare": (0.45, 0.60, "uni"),    # peak share of boardings (TOD blend)
 }
-ENVELOPES = [("uncapped", None), ("cap +80%", 0.80), ("cap +55%", 0.55)]
+# cap treatments removed per user decision 2026-07: the headline is reported
+# uncapped NEXT TO the backtest-calibrated (ABC) treatment -- see reweight_abc.py
+ENVELOPES = [("uncapped", None)]
+
+
+def draw_params(n, seed=42, over=None):
+    """Draw the prior vector on its own child stream. ALWAYS consumes the
+    rng for every key, so pinning one prior no longer shifts the draws of
+    the others; the same (n, seed) gives common random numbers across
+    configurations (backtest vs forward) for ABC reweighting."""
+    rng = np.random.default_rng(np.random.SeedSequence(seed).spawn(2)[0])
+    p = {}
+    for k, (lo, hi, shape) in PRIORS.items():
+        p[k] = (rng.triangular(lo, (lo + hi) / 2, hi, n) if shape == "tri"
+                else rng.uniform(lo, hi, n))
+    for k, v in (over or {}).items():
+        if k in p:
+            p[k] = np.full(n, float(v))
+    return p
 
 
 class Corridor:
@@ -77,12 +95,16 @@ class Corridor:
 
 
 def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
-        no_visitor=False, cfg_patch=None, smooth_k=SUBK, **over):
+        no_visitor=False, cfg_patch=None, smooth_k=SUBK, params=None, **over):
     """Vectorized MC. `over` pins any PRIORS key / 'anchor'; `cfg_patch`
     deep-merges into the corridor config (service definitions etc.).
     smooth_k: sub-cell quadrature nodes for within-cell rider position
-    (0 = old knife-edge point value spacing/4)."""
-    rng = np.random.default_rng(seed)
+    (0 = old knife-edge point value spacing/4).
+    params: pre-drawn prior dict from draw_params() -- pass the SAME dict
+    to two run() calls for common random numbers (ABC); anchor and input
+    jitters use a second child stream, so run(params=draw_params(n, s),
+    seed=s) is identical to run(seed=s)."""
+    rng = np.random.default_rng(np.random.SeedSequence(seed).spawn(2)[1])
     cfg = copy.deepcopy(cor.cfg)
     if cfg_patch:
         for k, v in cfg_patch.items():
@@ -91,15 +113,11 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             else:
                 cfg[k] = v
 
-    def draw(key):
-        if key in over:
-            return np.full(n, float(over[key]))
-        lo, hi, shape = PRIORS[key]
-        if shape == "tri":
-            return rng.triangular(lo, (lo + hi) / 2, hi, n)
-        return rng.uniform(lo, hi, n)
-
-    p = {k: draw(k) for k in PRIORS}
+    if params is None:
+        p = draw_params(n, seed, over)
+    else:   # pins still apply on top of shared draws
+        p = {k: (np.full(n, float(over[k])) if k in over else v)
+             for k, v in params.items()}
     anchor = (np.full(n, float(over["anchor"])) if "anchor" in over
               else rng.uniform(cfg["anchor_low"], cfg["anchor_high"], n))
     bwait = p["bivt"] * p["ovt"]   # also the walk weight
@@ -273,11 +291,19 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     res["ratio_fold"] = out["fold"]["ratio"]
     res["ratio_retain"] = out["retain"]["ratio"]
     res["newshare_retain"] = out["retain"]["newshare"]
+    res["params"], res["anchor"] = p, anchor
     return res
 
 
 def pct(x, q):
     return float(np.percentile(x, q))
+
+
+def wpct(x, w, q):
+    """Weighted percentile (cumulative-weight interpolation)."""
+    i = np.argsort(x)
+    cw = np.cumsum(w[i])
+    return float(np.interp(q / 100.0, cw / cw[-1], x[i]))
 
 
 def main(path):
