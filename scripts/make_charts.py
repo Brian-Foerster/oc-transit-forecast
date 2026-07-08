@@ -18,8 +18,8 @@ plt.rcParams["font.family"] = ["Segoe UI", "DejaVu Sans", "sans-serif"]
 def intervals(name):
     j = json.load(open(os.path.join(OUT, f"results_{name}.json"), encoding="utf-8"))
     cfg, s = j["config"], j["summary"]
-    up = s["uplift_pct"]
-    rows = [("Observed today", "corridor anchor",
+    up = s["ratio_retain"]
+    rows = [("Observed today", "corridor anchor (corridor-consistent)",
              cfg["anchor_low"], None, cfg["anchor_high"], GRAY)]
     for label, sub in [("uncapped", "model as-is - implied uplift "
                         f"+{up[0]:.0f}/+{up[1]:.0f}/+{up[2]:.0f}%"),

@@ -8,16 +8,50 @@
       "43"
     ],
     "window_mi": null,
-    "speed_exist_mph": 15.0,
-    "headway_exist_min": 24.0,
-    "speed_exist_alt": 12.8,
-    "headway_exist_alt": 20.0,
-    "service_note": "doc/OCTA values; alt = current GTFS (543 median run, midday headway)",
-    "anchor_low": 10000,
-    "anchor_high": 13000,
-    "anchor_note": "43+543 combined; ~10k post-COVID TSP study .. ~13k Route 43 at 2013 launch",
-    "speed_new_mph": 30.0,
-    "headway_new_min": 5.0
+    "anchor_low": 7700,
+    "anchor_high": 10000,
+    "anchor_note": "Corridor-consistent: current 43+543 route totals 9,500-11,000 (Harbor TSP study: '>10,000, 8% of OCTA riders'; OCTA ~117k/wkdy 2024) x [543 share 0.25-0.35 counts fully + Route 43 x corridor share 0.75 (LODES) - 0.86 (ACS transit workers), scripts/route43_share.py]. Cross-check: 12,800 on-Harbor boardings in 2015 (Central Harbor study via Streetsblog) x system trend x street-vs-corridor share ~ 8,400.",
+    "services_base": {
+      "local": {
+        "speed": 11.4,
+        "headway": 20.0,
+        "spacing": 0.25,
+        "note": "Route 43, current GTFS"
+      },
+      "rapid": {
+        "speed": 15.0,
+        "headway": 24.0,
+        "spacing": 1.0,
+        "note": "Route 543 per corridor doc; GTFS current = 12.8 mph / 20 min (sensitivity row)"
+      }
+    },
+    "rapid_alt": {
+      "speed": 12.8,
+      "headway": 20.0
+    },
+    "service_new": {
+      "speed": 30.0,
+      "headway": 5.0,
+      "spacing": 1.0
+    },
+    "visitor": {
+      "share": [
+        0.05,
+        0.15
+      ],
+      "S0": [
+        0.1,
+        0.3
+      ],
+      "bin_weights": [
+        0.55,
+        0.35,
+        0.1,
+        0.0,
+        0.0
+      ],
+      "note": "Anaheim resort/visitor market: share of base boardings (pinned like tau); short trips (hotel-Disneyland-convention); random arrival (h/2 wait, no schedule adaptation)"
+    }
   },
   "segments": {
     "car_frac": [
@@ -29,6 +63,11 @@
       0.2273,
       0.0442,
       0.0192
+    ],
+    "S0_se_rel": [
+      0.2668,
+      0.2151,
+      0.122
     ],
     "S0_overall": 0.0292,
     "workers_total": 118415

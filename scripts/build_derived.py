@@ -28,7 +28,8 @@ acs = pd.read_csv(os.path.join(RAW, "acsdt5y2023-b08141.dat"), sep="|",
                   dtype={"GEO_ID": str})
 acs = acs[acs["GEO_ID"].str.startswith("1400000US06059", na=False)].copy()
 acs["GEOID"] = acs["GEO_ID"].str[-11:]
-keep = ["GEOID"] + [f"B08141_E{i:03d}" for i in list(range(1, 6)) + list(range(16, 21))]
+keep = ["GEOID"] + [f"B08141_{k}{i:03d}" for k in ("E", "M")
+                    for i in list(range(1, 6)) + list(range(16, 21))]
 acs[keep].to_csv(os.path.join(DER, "oc_b08141.csv"), index=False)
 print(f"oc_b08141.csv: {len(acs)} tracts")
 

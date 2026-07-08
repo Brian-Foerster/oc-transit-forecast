@@ -126,15 +126,29 @@ def main(cfg_path):
     acs = pd.read_csv(os.path.join(DER, "oc_b08141.csv"), dtype={"GEOID": str})
     m = acs[acs["GEOID"].isin(cset)]
     def c(i): return f"B08141_E{i:03d}"
-    wk0, wk1 = m[c(2)].sum(), m[c(3)].sum()
-    wk2 = m[c(4)].sum() + m[c(5)].sum()
-    t0, t1 = m[c(17)].sum(), m[c(18)].sum()
-    t2 = m[c(19)].sum() + m[c(20)].sum()
+    def cm(i): return f"B08141_M{i:03d}"
+    def agg(cols_e, cols_m):
+        est = sum(m[x].sum() for x in cols_e)
+        se = math.sqrt(sum((m[x] / 1.645).pow(2).sum() for x in cols_m))
+        return est, se
+    wk0, se_w0 = agg([c(2)], [cm(2)])
+    wk1, se_w1 = agg([c(3)], [cm(3)])
+    wk2, se_w2 = agg([c(4), c(5)], [cm(4), cm(5)])
+    t0, se_t0 = agg([c(17)], [cm(17)])
+    t1, se_t1 = agg([c(18)], [cm(18)])
+    t2, se_t2 = agg([c(19), c(20)], [cm(19), cm(20)])
     W = wk0 + wk1 + wk2
+
+    def ratio_se_rel(t, se_t, w, se_w):
+        # delta method on t/w; relative SE of the share
+        return math.sqrt((se_t / max(t, 1)) ** 2 + (se_w / max(w, 1)) ** 2)
     segments = {
         "car_frac": [round(wk0 / W, 4), round(wk1 / W, 4), round(wk2 / W, 4)],
         "S0_by_car": [round(t0 / max(wk0, 1), 4), round(t1 / max(wk1, 1), 4),
                       round(t2 / max(wk2, 1), 4)],
+        "S0_se_rel": [round(min(ratio_se_rel(t0, se_t0, wk0, se_w0), 0.5), 4),
+                      round(min(ratio_se_rel(t1, se_t1, wk1, se_w1), 0.5), 4),
+                      round(min(ratio_se_rel(t2, se_t2, wk2, se_w2), 0.5), 4)],
         "S0_overall": round(m[c(16)].sum() / m[c(1)].sum(), 4),
         "workers_total": int(m[c(1)].sum()),
     }
