@@ -91,7 +91,7 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 | `scripts/route43_share.py` | Route 43 runs ~18 mi but the corridor is 12.1; this measures the share of 43's market inside the corridor (0.75 by LODES, 0.86 by ACS) used in the anchor derivation. |
 | `scripts/model.py` | The model. See "Model internals". |
 | `scripts/backtest_543.py` | Reruns the model as of June 2013 (local-only base, 543 at its actual 10/15 launch service) vs observed 543 ridership; exports `backtest_corridor()` for the ABC script. |
-| `scripts/reweight_abc.py` | Backtest-calibrated treatment: same draws through 2013 + forward configs, Gaussian kernel on the 543 prediction (mu 3,700, sigma 500; sens 350/800), weighted percentiles + ASC posterior + ESS + seed check. |
+| `scripts/reweight_abc.py` | Backtest-calibrated treatment: same draws through 2013 + forward configs, Gaussian kernel on the 543 prediction (mu 4,200, sigma 500; sens 350/800), weighted percentiles + ASC posterior + ESS + seed check. |
 | `scripts/make_charts.py` | Interval chart (anchor, uncapped, ABC-calibrated) and sensitivity tornado. |
 | `outputs/results_harbor.json` | Summary percentiles, full sensitivity table, design sweep. |
 | `outputs/records_request_draft.md` | Ready-to-send CPRA request for route/stop-level APC + on-board transfer rate (anchor research came up dry online). |

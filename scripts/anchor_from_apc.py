@@ -59,8 +59,9 @@ print(f"2024 corridor anchor: {lo:,.0f} - {hi:,.0f}")
 print(f"-> config/harbor.json anchor_low/high (rounded to 50): "
       f"{round(lo / 50) * 50:,} - {round(hi / 50) * 50:,}")
 
-# 543 observed series for the backtest/ABC target (launch-era response):
+# 543 observed series for the backtest/ABC target (matured response;
+# launch itself is unmeasured -- earliest measurement is 4 yrs post-launch):
 print(f"\n543 measured weekday series: FY2017 = {1_176_910 / WEEKDAYS:,.0f}, "
       f"FY2019 = {wd543:,.0f}, FY2020(YTD) = {641_470 / 190:,.0f}")
 print("six-year press cumulative 6.4M (OCTA 2019) ~ 4,250/wd average")
-print("-> ABC kernel mu = 4,200 (launch-era average), obs range 3,700-4,600")
+print("-> ABC kernel mu = 4,200 (matured six-year average), obs range 3,700-4,600")

@@ -59,7 +59,12 @@ every scenario input set (GTFS diff + parameter file) in the repo.
   quoted.
 - Sanity replication: STOPS run of the 2013-style 543 overlay (existing
   natural experiment) compared against observed — a stage-3 analog of
-  the stage-2 backtest; document, don't tune to it.
+  the stage-2 backtest; document, don't tune to it. *Double-use note
+  (review 2026-07-08):* the 543 also calibrates stage 2; this replication
+  is tolerated as a DIAGNOSTIC because STOPS's parameters are nationally
+  estimated, not fit to the 543 — it is never claimed as independent
+  validation, and the TSP speed-up becomes the preferred stage-3 check
+  once its data arrives (spec 00 §5).
 - Reconciliation memo vs stage 2 per spec 00 §6 before publication.
 
 ## 7. Known limitations
@@ -69,11 +74,13 @@ Daily (no time-of-day) outputs; CTPP vintage lags ACS; special-generator
 market maps, since it is ~5-15% of the stage-2 base; setup effort is the
 real cost, so stage-2 must earn its keep by minimizing STOPS reruns.
 
-## 8. Open questions for review
+## 8. Questions resolved (review 2026-07-08)
 
-- Q1: Pursue CIG (Small Starts) compliance from the start (affects
-  documentation rigor), or run STOPS as technical analysis only?
-- Q2: One finalist or two through full STOPS setup? (Marginal cost of a
-  second corridor after the first is set up: days, not weeks.)
-- Q3: Park-and-ride at Fullerton Transportation Center — model as
-  station access in STOPS (it can) even though stage 2 omits it?
+- Q1 (CIG): technical analysis only for now; keep lineage clean enough
+  to upgrade if a federal funding path materializes — the funding
+  decision drives the rigor, not the modeling.
+- Q2 (finalist count): conditional on gate-2 band overlap (spec 00 §3).
+- Q3 (park-and-ride at FTC): yes, model it in STOPS — and pre-register
+  it in the reconciliation memo as a known stage-2/stage-3 divergence
+  source so the P&R delta is not misread as model disagreement
+  (spec 00 §6).

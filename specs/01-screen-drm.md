@@ -61,15 +61,21 @@ decomposition, overlap group, underservice flag, incumbent routes.
 
 ## 5. Validation gates (must pass before first use)
 
-- Leave-one-route-out: median absolute log error <= 0.35 (~ within
-  +/-40% on a held-out route); report the worst 5 routes by error.
-- Rank stability: LOO refits must keep Spearman rho >= 0.9 on the
-  full-route ranking.
-- Sanity anchors: Harbor must score at/near #1 (it is the known best
-  corridor); the screen must reproduce the qualitative 13-arterial
-  result (Bolsa/1st, State College/Bristol, Main St in the top tier).
-- Endogeneity guard: publish scores at standardized service; never
-  publish "predicted ridership if service added" from this model.
+Ordered by weight (review 2026-07-08: rank stability is the PRIMARY gate
+— for a screen that passes ties onward, ranking robustness matters more
+than point accuracy):
+
+1. **Rank stability (primary):** LOO refits keep Spearman rho >= 0.9 on
+   the full-route ranking, and the model ranks existing routes by
+   observed boardings/revenue-hour sensibly (external check).
+2. **LOO accuracy (secondary diagnostic):** median absolute log error
+   <= 0.35 (~ +/-40% on a held-out route); report the worst 5 routes.
+3. **Smoke test (demoted from gate):** reproduces the qualitative
+   13-arterial prototype result — near-circular (the prototype is what
+   this model supersedes), so failure prompts investigation, not
+   automatic rejection.
+4. **Endogeneity guard:** publish scores at standardized service; never
+   publish "predicted ridership if service added" from this model.
 
 ## 6. Runtime & implementation
 
@@ -86,11 +92,12 @@ generators crudely dummied; FY2020-Q3 partially COVID-clipped (use
 Jul-Feb only if March distorts). All acceptable because the output is a
 shortlist, and gate 1 passes near-ties onward rather than resolving them.
 
-## 8. Open questions for review
+## 8. Questions resolved (review 2026-07-08)
 
-- Q1: Buffer 0.9 mi (consistent with stage 2) or narrower (0.5 mi) for
-  screening walk markets?
-- Q2: Standardized service level for scoring — median OCTA local, or the
-  proposed rapid spec?
-- Q3: Is statsmodels an acceptable new dependency, or keep to
-  numpy-only (log-OLS by hand)?
+- Q1 (buffer): 0.9 mi primary (spine consistency); 0.5 mi as a
+  robustness row.
+- Q2 (standardized service): median OCTA local — scoring at the proposed
+  rapid spec would re-inject the service endogeneity §1 removes and
+  flatter corridors one intends to propose rapid on.
+- Q3 (dependency): statsmodels accepted and pinned in requirements.txt;
+  hand-rolled NB is a maintenance liability for a solo analyst.

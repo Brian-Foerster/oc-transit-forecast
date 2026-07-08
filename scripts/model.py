@@ -63,7 +63,9 @@ PRIORS = {
     "pkshare": (0.45, 0.60, "uni"),    # peak share of boardings (TOD blend)
 }
 # cap treatments removed per user decision 2026-07: the headline is reported
-# uncapped NEXT TO the backtest-calibrated (ABC) treatment -- see reweight_abc.py
+# uncapped NEXT TO the backtest-calibrated (ABC) treatment -- see reweight_abc.py.
+# The single-element list is retained deliberately: the (label, cap) loop
+# structure lets a future analysis reintroduce a treatment in one line.
 ENVELOPES = [("uncapped", None)]
 
 

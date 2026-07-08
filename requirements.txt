@@ -1,3 +1,5 @@
-numpy>=1.26
-pandas>=2.0
-matplotlib>=3.8
+numpy==2.3.4
+pandas==2.3.3
+matplotlib==3.10.8
+# Exact pins (review 2026-07-08): protects bit-reproducibility of the seeded
+# Monte-Carlo results against future RNG/percentile changes. Loosen knowingly.

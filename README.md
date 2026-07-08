@@ -66,7 +66,7 @@ features (see `scripts/model.py`):
   reported **uncapped** next to a **backtest-calibrated (ABC)** treatment:
   the same 40,000 draws are run through the 2013 Bravo! 543 configuration and
   weighted by how well each reproduces the observed 543 outcome
-  (`scripts/reweight_abc.py`; Gaussian kernel mu=3,700, sigma=500, ESS ~6,500,
+  (`scripts/reweight_abc.py`; Gaussian kernel mu=4,200, sigma=500, ESS ~8,600,
   seed-drift +0.1%). This calibrates against the corridor's own natural
   experiment -- categorically different from filtering by literature
   benchmarks, which remains rejected (the old cap +80%/+55% columns are
@@ -105,6 +105,17 @@ Caveats: 2022 LODES / 2023 ACS proxy for 2013 markets; the 2013 Route 43's
 peak headway is unknown (flat 15 assumed; the "43 at 10-min pk/15 off" row
 moves the prediction -24%, which the ABC kernel's structural-error term
 covers).
+
+## Reading the outputs (two easy stumbles)
+
+- The sensitivity tornado's central (12,051) is the *expected* fold/retain
+  blend at fixed bins, n=4,000; the headline P50 (11,969) is the full-MC
+  coin-flip blend at n=40,000. They differ by <1% by construction; the
+  tornado measures deltas, not the headline.
+- The design sweep's "h=5" cell is 5-min peak / 10-min off-peak (sweep
+  convention: off-peak = 2x peak), while the sensitivity row "flat 5-min
+  all day" is a different service definition — the two 5-minute numbers
+  are not comparable.
 
 ## Layout
 
@@ -202,9 +213,37 @@ Recorded as they were made; each is exposed in the sensitivity output.
 11. **The 2013 Route 43's peak headway is unknown** (backtest assumes flat
     15-min; the 10/15 variant moves the backtest -24%). Covered by the ABC
     kernel's structural-error term; a records request would settle it.
-13. **The FY2019->FY2024 trend factor (0.90-0.99)** assumes the corridor's
-    share of system ridership held from 2020 to 2024; it held 8.3-8.7%
-    across FY2017-FY2020 and the TSP study quotes 8% in 2024, but post-2020
-    route-level data would pin it (records request).
-12. **ABC kernel width is a judgment call** (sigma=500 = obs spread ~200 (+)
-    structural error ~450); sigma 350/800 move the calibrated P50 by <1.3%.
+12. **The FY2019->FY2024 trend factor (0.90-0.99)** applies the SYSTEM
+    per-month ratio and assumes the corridor's share held through the
+    COVID recovery. The share was stable pre-COVID (8.3-8.7% measured,
+    FY2017-FY2020), but "held through recovery" is an assumption, and a
+    possibly conservative one: dense transit-dependent corridors generally
+    recovered above system average. FY2021 route-level reports (live on
+    octa.net) can partially test this; post-2020 data (records request)
+    would pin it.
+13. **ABC kernel width is a judgment call** (sigma=500 = obs spread (+)
+    structural error, the latter now explicitly including the post-COVID
+    2022 LODES commute *shape* proxying both the 2013 experiment and the
+    forward market); sigma 350/800 move the calibrated P50 by <1.3%.
+14. **ASC transportability is assumed, not shown** (review 2026-07-08).
+    The ABC posterior moves essentially only the ASC (bivt/ovt barely
+    shift), so the calibrated headline rests on one assumption: the new
+    line's image/reliability premium equals the 2013 Bravo! 543's. The
+    543 was a modest overlay; the proposed line is a categorically larger
+    jump, which plausibly earns a LARGER premium — the calibration treats
+    the weaker experiment's premium as a ceiling for a stronger
+    intervention. Defensible conservatism, now named. An
+    ASC-transportability sensitivity (forward ASC = calibrated x premium
+    factor) is queued.
+15. **The calibration target is matured, not launch, ridership — and the
+    backtest residual is one-sided.** mu=4,200 is the six-year matured
+    average; the earliest measurement (FY2017 = 4,615) is four years
+    post-launch, after systemwide decline began. If the 543 launched
+    higher and eroded, the target under-states the launch response and
+    over-pulls the ASC down (compounding issue 14 in the same direction).
+    A launch-equivalent retarget (FY2017 x 2013/2017 system back-trend,
+    needs OCTA FY2013 UPT from NTD) is queued. Relatedly, per the
+    saturation rule (specs 00 §5 / 02 §4.4): the central backtest residual
+    is one-sided (P50 6,169 vs target 4,200; even P10 barely reaches the
+    observed band) — reported here as a model-saturation signal, not
+    smoothed away by the kernel.

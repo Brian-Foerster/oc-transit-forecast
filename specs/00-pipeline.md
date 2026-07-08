@@ -42,6 +42,19 @@ final ridership; stage 3 is the number of record.
   bands overlap so much that secondary criteria (cost proxy, overlap
   conflicts, equity) decide — in which case the overlap is stated in the
   gate memo, not resolved silently.
+  - *Division of labor (review 2026-07-08):* the ABC-calibrated number is
+    the **decision metric** at gates; the uncapped number is the
+    **transparency companion**, always shown alongside. This is
+    calibration against local observed data, not a literature filter, and
+    so does not violate governance rule 1 — but the two roles are
+    distinct and both numbers always appear together. Final gate
+    authority remains with the project owner via the gate memo.
+  - *Cost proxy (defined):* route-miles x lane-treatment class
+    (mixed-traffic / TSP / dedicated), used as a TIEBREAK-ONLY quantity
+    when ridership bands overlap; never combined with ridership into a
+    single score.
+  - *Second finalist:* advances to stage 3 only when gate-2 bands
+    overlap (conditional, not a fixed count).
 - **Gate 3 -> publish**: stage-3 vs stage-2 reconciliation memo required
   (section 6).
 
@@ -73,6 +86,23 @@ become validation. Rationale: with ~3 identifiable parameters, further
 targets narrow the parameter posterior without narrowing true forecast
 error (structural error binds), producing overconfident intervals.
 
+**Stated plainly (review 2026-07-08):** with ~3 identifiable parameters
+and ~3 clean experiments on this system, one can calibrate or validate,
+not both. This pipeline chooses CALIBRATE; stage 2 therefore has **no
+completed out-of-sample validation today**. Mitigations: (a) the 529 is
+used validate-then-calibrate — the 543-calibrated model's prediction of
+the 529 outcome is committed BEFORE the 529 enters the joint kernel
+(spec 02 §4.4); (b) the TSP speed-up remains fully held out as the
+registered prospective test.
+
+**543 cross-stage note:** the 543 launch calibrates stage 2 and also
+appears in spec 03 §6 as a stage-3 sanity replication. This is a soft
+double-use, tolerated because STOPS's parameters are nationally
+estimated (not fit to the 543) — the replication tests STOPS's
+transferability, not shared fitted parameters. It is a diagnostic, and
+is never claimed as independent validation of the pipeline; the TSP
+event is the preferred stage-3 check once its data lands.
+
 ## 6. Reconciliation protocol (stage 2 vs stage 3)
 
 Before publishing a stage-3 forecast: run stage 2 on the identical build
@@ -81,11 +111,21 @@ decompose the gap (anchor vs market coverage vs network effects vs
 response coefficients) in a short memo committed to the repo.
 Disagreement is signal about model risk, not an error to suppress.
 
-## 7. Open questions for review
+**Agreement is not a free pass (review 2026-07-08):** stages 2 and 3
+share the anchor series, GTFS, and incremental philosophy, so some
+agreement is mechanical and validates none of the shared assumptions
+(market composition, ASC transportability). The memo must separate
+agreement attributable to shared inputs from informative agreement, and
+pre-registered divergence sources (e.g., park-and-ride at Fullerton,
+which stage 3 models and stage 2 omits) are itemized so they are not
+misread as model disagreement.
 
-- Q1: Shortlist size — is 5-8 right, or should gate 1 pass more/fewer?
-- Q2: Should the stage-2 induced-demand column (spec 02 §6) be shown at
-  gate 2, or is it stage-3-adjacent scope?
-- Q3: How many finalists get full STOPS treatment — 1 or 2?
-- Q4: Is a cost proxy (route-miles x lane treatment) in scope for gate 2,
-  or is this pipeline ridership-only?
+## 7. Questions resolved (review 2026-07-08)
+
+- Q1 (shortlist size): anchor on 5; the tie and underservice-outlier
+  clauses widen it — no fixed debate over 5 vs 8.
+- Q2 (induced demand at gate 2): labeled sensitivity column only, NEVER a
+  gate criterion — showing it at the gate risks a de facto headline.
+- Q3 (finalists to STOPS): conditional — a second finalist earns STOPS
+  only when gate-2 bands overlap (see §3).
+- Q4 (cost proxy): in scope, tiebreak-only, defined in §3.

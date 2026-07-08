@@ -51,24 +51,74 @@ Report pairwise P(A > B) alongside per-corridor bands.
 catchment tracts: rerun with exclusive tract assignment (each shared
 tract to its nearer corridor) as a sensitivity row on both.
 
-**4.4 Multi-experiment ABC.** Add the Bravo! 529 launch (Feb 2019;
-pre = Rt 29 FY2017/FY2019, post = FY2020-Q3, data on disk) as a second
-kernel; optionally the FY2017->FY2020 service-change panel as a third,
-down-weighted (weight per spec 00 §5). Joint weight = product of
-per-experiment kernels; structural-error floor sigma >= 400 per
-experiment REGARDLESS of experiment count (overconfidence guard).
-Report per-experiment residuals and joint ESS; if ESS < 1,000 or one
-experiment's residual is systematically one-sided, that is a
-model-saturation finding to report, not to fix with extra parameters.
+**4.4 Multi-experiment ABC.** Sequenced (review 2026-07-08, so the 529
+does double duty honestly):
+1. **Validate first:** commit the 543-calibrated model's prediction of
+   the Bravo! 529 launch outcome (Feb 2019; pre = Rt 29 FY2017/FY2019,
+   post = FY2020-Q3, data on disk) BEFORE comparing — this is stage 2's
+   only near-term out-of-sample test (spec 00 §5).
+2. **Then calibrate jointly:** fold the 529 into the kernel; optionally
+   the FY2017->FY2020 service-change panel, down-weighted. Panel kernel
+   sigma is ESTIMATED, not asserted: the ridership drift of routes with
+   UNCHANGED service FY2017->FY2019 measures non-service variance, and
+   that sets the panel sigma (replaces the earlier round-number "3x").
+Joint weight = product of per-experiment kernels; structural-error floor
+sigma >= 400 per experiment REGARDLESS of experiment count
+(overconfidence guard). Report per-experiment residuals and joint ESS;
+if ESS < 1,000 or one experiment's residual is systematically one-sided,
+that is a model-saturation finding to report, not to fix with extra
+parameters. (The current single-experiment residual IS one-sided —
+central 6,169 vs target 4,200 — recorded as README known issue 15; the
+launch-equivalent retarget in 4.6 is the first-order response.)
 **Hold out the Harbor TSP speed-up**: before its post-2024 data arrives,
-commit a registered prediction of the 43/543 ridership response to the
-measured +7-8% speed change (`outputs/registered_prediction_tsp.json`).
+commit a registered prediction of the ridership response to the measured
++7-8% speed change — BOTH the corridor total AND the 43-vs-543 route
+split (the split is the more falsifiable prediction)
+(`outputs/registered_prediction_tsp.json`).
 
 **4.5 Structural risk pricing (sensitivity rows, not headline changes).**
-(a) Nonlinear time: damped utility bivt*t^gamma, gamma in {0.8, 0.9} rows.
+(a) Nonlinear time: damped utility bivt*t^gamma, gamma in {0.7, 0.8, 0.9}
+    rows (0.7 added per review — 0.8/0.9 alone are too mild to reveal
+    whether nonlinearity matters).
 (b) Induced demand: optional side column "with induced demand" using a
     total-demand elasticity to the accessibility change, prior U(0.1, 0.3),
-    clearly labeled, never the headline (per governance).
+    clearly labeled, never the headline and never a gate criterion.
+(c) **ASC transportability** (review 2026-07-08; README known issue 14):
+    the ABC moves essentially only the ASC, and transporting the 543's
+    modest-overlay premium to a categorically larger service is an
+    assumption in the conservative direction. Add a sensitivity row/band:
+    forward ASC = calibrated ASC x premium factor, premium in
+    {1.0 (current assumption), 1.25, 1.5}.
+(d) Choice-structure middle bracket: the hard max and the theta=1 logsum
+    (-37%) are the two extremes; add small-theta softmax rows
+    (theta in {0.1, 0.2}) — genuine idiosyncratic taste without the full
+    variety bonus. Expectation: with typical inter-service utility gaps
+    >= 0.3, small-theta should land within a few percent of the max —
+    showing that (or failing to) is the point. Note: the existing
+    walk_spread row perturbs walk distance, not choice-level taste, and
+    is not a substitute.
+
+**4.6 Calibration-target vintage.** Retarget the 543 kernel from the
+matured six-year average (mu=4,200) to a launch-equivalent value:
+FY2017 measured (4,615) x the 2013->2017 system back-trend (needs OCTA
+FY2013 bus UPT from NTD — public data). Keep mu=4,200 as a sensitivity.
+Expected direction: raises the ASC posterior and the calibrated headline,
+and shrinks the one-sided residual. Until then the current target is
+labeled "matured", not "launch" (README known issue 15).
+
+**4.7 Reporting: separate the fold/retain scenarios.** The 50/50
+coin-flip blend mixes an operator decision into the forecast band. Lead
+with fold and retain reported separately; the blend becomes a labeled
+summary line, and ONE blend convention (expected blend) is used
+everywhere (currently the headline uses the coin-flip mixture and the
+sensitivity table uses blend_ev — unify).
+
+**4.8 Demand-fabric vintage row.** LODES 2022 carries post-COVID,
+WFH-reshaped commute SHAPE into both the backtest (2013) and the forward
+market — sharper than an "old data" caveat because the response keys on
+the trip-length mix. Rebuild bins with pre-COVID LODES 2019 as a
+sensitivity row; the vintage gap is also now named in the ABC sigma
+rationale.
 
 ## 5. Validation gates (standing; must hold after any change)
 
@@ -92,11 +142,11 @@ Frozen market composition (bounded by 4.5b); linear-in-time utility
 pinned by assumption until the records request lands; one-transfer
 access only; LA County flows excluded; weekday only.
 
-## 8. Open questions for review
+## 8. Questions resolved (review 2026-07-08)
 
-- Q1: 4.4 weighting of the service-change panel — suggest each panel
-  observation gets sigma 3x the launch experiments'; acceptable?
-- Q2: Registered TSP prediction — publish P10/P50/P90 of boardings
-  response, or also a route-split (43 vs 543) prediction?
-- Q3: gamma values for the nonlinear-time rows — {0.8, 0.9} or a wider
-  bracket?
+- Q1 (panel weighting): sigma estimated from the ridership drift of
+  routes with UNCHANGED service (non-service variance), replacing the
+  round-number 3x — folded into §4.4.
+- Q2 (TSP prediction): publish both the corridor total AND the 43-vs-543
+  split; the split is the more falsifiable, more diagnostic prediction.
+- Q3 (gamma bracket): widened to {0.7, 0.8, 0.9} — folded into §4.5a.
