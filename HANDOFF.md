@@ -14,13 +14,17 @@ logit — the same philosophy as FTA STOPS's incremental mode — Monte-Carlo'd
 for honest uncertainty, anchored to observed boardings, built to be run in
 seconds instead of the person-months a STOPS run costs.
 
-**Current headline: ~13,800 weekday boardings on the new line (P10–P90
-11,900–16,100), implied corridor uplift +40/+57/+76% (P10/P50/P90).**
-That uplift sits inside the empirical reference class for bus→rapid quality
-jumps (Twin Cities +33%, UW +35%, Cleveland HealthLine +78%), so the
-envelope caps barely bind. The model, backtested against the corridor's own
-2013 Bravo! 543 launch with untuned midpoint parameters, predicted P50 3,804
-weekday boardings vs ~3,500–3,900 observed (`outputs/backtest_543.json`).
+**Current headline (2026-07, post top-5-flaw fixes): uncapped ~12,200
+weekday boardings (P10–P90 10,100–14,400), implied uplift +31/+45/+61%;
+backtest-calibrated (ABC) ~10,700 (8,900–12,500), shown SIDE BY SIDE.**
+The design is now 5-min peak / 10-min off-peak (user decision). The old
+cap +80%/+55% columns were removed (user decision); the companion treatment
+is calibration against the corridor's own 2013 Bravo! 543 launch
+(`outputs/abc_harbor.json`). Honesty note: the backtest at prior-central
+parameters now OVERPREDICTS the 543 launch (6,169 vs ~3,500–3,900) — the
+earlier near-perfect 3,804 came from an unfaithful flat-15-min spec plus
+knife-edge artifacts; the ABC treatment turns that discrepancy into an ASC
+posterior (0.05/0.08/0.13 vs prior 0.09/0.20/0.31).
 
 ## How it got here (session history, oldest → newest)
 
@@ -40,6 +44,14 @@ weekday boardings vs ~3,500–3,900 observed (`outputs/backtest_543.json`).
    stop-spacing walk time, best-of-services choice, visitor market, ACS-MOE
    jitter, and a corridor-consistent anchor. Each fix moved the mechanistic
    forecast toward the empirical band; they now agree without filtering.
+6. A top-5-flaws review (2026-07) drove five fixes, committed stepwise:
+   sub-half-mile market from intra-tract LODES (−4%); rider-position
+   quadrature replacing the knife-edge choice (sweep kink gone, backtest
+   band 6.2×→2.3×); peak/off-peak time-of-day (−6%, design now 5/10);
+   ABC calibration against the 543 launch replacing the cap columns
+   (plus a latent rng bug fix: pinning a prior used to shift all other
+   draws); web research for a measured anchor came up dry →
+   `outputs/records_request_draft.md`.
 
 ## Pipeline (run in this order)
 
@@ -48,6 +60,7 @@ weekday boardings vs ~3,500–3,900 observed (`outputs/backtest_543.json`).
     scripts/build_corridor.py config/harbor.json   # -> data/derived/corridor_harbor.json
     scripts/model.py data/derived/corridor_harbor.json  # -> outputs/results_harbor.json
     scripts/backtest_543.py                   # -> outputs/backtest_543.json
+    scripts/reweight_abc.py                   # -> outputs/abc_harbor.json (ABC treatment)
     scripts/make_charts.py harbor             # -> outputs/*.png
 
 `data/derived` is committed, so **model.py runs with zero downloads** on a
@@ -64,9 +77,11 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 | `scripts/build_corridor.py` | Projects tracts onto the corridor route's GTFS shape (0.9-mi buffer), builds: ACS segments with delta-method SEs, walk-market distance bins (both-ends-in-corridor flows), feeder crossings (routes that genuinely cross the line, with crossing position + headway), transfer-market bins (one-end flows entering via nearest crossing feeder). |
 | `scripts/route43_share.py` | Route 43 runs ~18 mi but the corridor is 12.1; this measures the share of 43's market inside the corridor (0.75 by LODES, 0.86 by ACS) used in the anchor derivation. |
 | `scripts/model.py` | The model. See "Model internals". |
-| `scripts/backtest_543.py` | Reruns the model as of June 2013 (local-only base, 543 as the "new" line) and compares to observed 543 ridership. |
-| `scripts/make_charts.py` | Interval chart (anchor + three envelope treatments) and sensitivity tornado. |
+| `scripts/backtest_543.py` | Reruns the model as of June 2013 (local-only base, 543 at its actual 10/15 launch service) vs observed 543 ridership; exports `backtest_corridor()` for the ABC script. |
+| `scripts/reweight_abc.py` | Backtest-calibrated treatment: same draws through 2013 + forward configs, Gaussian kernel on the 543 prediction (mu 3,700, sigma 500; sens 350/800), weighted percentiles + ASC posterior + ESS + seed check. |
+| `scripts/make_charts.py` | Interval chart (anchor, uncapped, ABC-calibrated) and sensitivity tornado. |
 | `outputs/results_harbor.json` | Summary percentiles, full sensitivity table, design sweep. |
+| `outputs/records_request_draft.md` | Ready-to-send CPRA request for route/stop-level APC + on-board transfer rate (anchor research came up dry online). |
 
 ## Model internals (scripts/model.py)
 
@@ -76,25 +91,32 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
   market; pinned to `phi` = 5–15%; its own S0).
 - Each service (local / rapid / new line) gets utility: in-vehicle time from
   speed, wait from headway (walk access: `min(h/2, w0+lam*h)`; transfer:
-  `min(h/2, xcap)`; visitor: `h/2`), walk time from stop spacing
-  (`legs * spacing/4 @ 3 mph`, weighted by `ovt`), plus `asc` for the new
-  line only.
-- **Each segment takes its best service — deliberately NOT a logsum.** A
-  logsum over parallel routes on the same street awards a red-bus/blue-bus
-  "variety bonus" (up to ~1.4 utils); the first implementation had this bug
-  and produced fold-scenario ridership LOSSES. `variety_logsum=True` keeps
-  the rejected spec as a sensitivity row (−40%).
+  `min(h/2, xcap)`; visitor: `h/2`), walk time from the rider's position
+  vs the service's stop grid (weighted by `ovt`), plus `asc` for the new
+  line only. Headways may be scalar or `{peak, offpeak}`; per-period
+  utilities blend by the `pkshare` prior (45–60%).
+- **Each sub-rider takes their best service — deliberately NOT a logsum.**
+  Within a cell, rider street-position is a K=8 quadrature over one stop-grid
+  period; every service's walk time comes from the SAME position
+  (`subcell_walks`), so the choice is smooth at cell level with no
+  red-bus/blue-bus variety bonus. `variety_logsum=True` keeps the rejected
+  logsum (−37%); `smooth_k=0` keeps the old knife-edge point value (+3%).
 - Scenarios: **fold** (new line only) vs **retain** (new + local). The new
   line's share and the retained-local share are derived from the utilities
-  (currently ~0% retained at central parameters — the model says fold the
-  local, as Cleveland did). Headline = 50/50 blend of scenarios.
-- Pivot: `S1 = S0·e^dV/(S0·e^dV+1−S0)` per cell; corridor ratio is
-  base-share-weighted; non-work expansion via `ws`/`kappa`; forecast =
-  anchor × ratio.
+  (~8% retained at P50 now that sub-half-mile trips are in). Headline =
+  50/50 blend of scenarios.
+- Pivot: `S1 = S0·e^dV/(S0·e^dV+1−S0)` per sub-cell; corridor ratio is
+  base-share-weighted; non-work expansion via `ws`/`kappa` (optional
+  `nonwork_short` tilt); forecast = anchor × ratio.
 - Uncertainty: triangular priors on behavioral params (bivt, ovt, asc),
   uniform on the rest; S0 jittered with ACS-published MOEs; bins Dirichlet-
-  resampled. Envelope treatments (uncapped / cap +80% / cap +55%) are
-  REPORTED SIDE BY SIDE, never filtered — see user preferences below.
+  resampled. `draw_params()` draws priors on a child stream and ALWAYS
+  consumes the rng before pinning (a latent bug fix — pinning used to shift
+  every later draw); `run(params=...)` gives common random numbers across
+  configurations, which is what makes the ABC reweighting coherent.
+- Treatments: **uncapped** and **backtest-calibrated (ABC)** reported side
+  by side, never filtered — see user preferences below. Cap columns removed
+  by user decision 2026-07.
 
 ## User's working preferences (binding)
 
@@ -144,22 +166,23 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 
 ## Open threads (ranked)
 
-1. **Get real APC counts** (OCTA public-records request or bimonthly
-   performance reports): current 43/543 route-level and ideally stop-level
-   boardings. The anchor is the #1 sensitivity (±13%) and its derivation is
-   inference, not measurement.
-2. **Smooth the knife-edge service choice**: deterministic best-service
-   makes rapid-vs-local switching binary per cell (visible as a kink in the
-   design sweep and the wide backtest band). A taste-heterogeneity spread on
-   the walk weight (distribution over riders within a cell) would fix it
-   without reintroducing the variety bonus.
-3. **Time-of-day split** — deliberately skipped by user instruction, but
-   acknowledged as real: all-day 5-min headway applied to all-day boardings
-   overstates; peak/off-peak would damp the frequency benefit.
-4. Sub-half-mile trips are excluded (LODES bin floor), understating the
-   local's advantage on short hops; affects the fold-vs-retain conclusion.
-5. New visitor demand (tourists not already riding) is unmodeled upside.
-6. No GitHub remote is configured yet; the user intends eventual push.
+1. **Send the records request** (`outputs/records_request_draft.md`, ready
+   to submit): route- and stop-level APC for 43/543 + on-board transfer
+   rate. The anchor is a top-2 sensitivity (±13%) and its derivation is
+   inference, not measurement; web research 2026-07 confirmed the reports
+   exist but are not retrievable online (boarding-report PDF 404s, Legistar
+   item deleted, dot.gov blocks fetches).
+2. **Pin down the 2013 Route 43's peak headway** (same records request):
+   the backtest assumes flat 15-min; the 10/15 variant moves the backtest
+   prediction −24%, which directly moves the ABC-calibrated headline.
+3. **ABC kernel width** (sigma=500) is a documented judgment call; revisit
+   when real APC data narrows the structural-error term.
+4. New visitor demand (tourists not already riding) is unmodeled upside.
+5. No GitHub remote is configured yet; the user intends eventual push.
+
+(Closed 2026-07: knife-edge smoothing — rider-position quadrature;
+time-of-day — 5/10 peak/off design; sub-half-mile market — intra-tract
+LODES bin. Each keeps its old spec as a sensitivity row.)
 
 ## Environment gotchas
 

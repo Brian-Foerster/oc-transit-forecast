@@ -10,7 +10,7 @@ OUT = os.path.join(HERE, "..", "outputs")
 
 SURFACE = "#fcfcfb"; INK = "#0b0b0b"; INK2 = "#52514e"; MUTED = "#898781"
 GRID = "#e1e0d9"; BASE = "#c3c2b7"
-BLUE = "#2a78d6"; RED = "#e34948"; GRAY = "#898781"
+BLUE = "#2a78d6"; RED = "#e34948"; GRAY = "#898781"; TEAL = "#1b8a6b"
 
 plt.rcParams["font.family"] = ["Segoe UI", "DejaVu Sans", "sans-serif"]
 
@@ -21,13 +21,21 @@ def intervals(name):
     up = s["ratio_retain"]
     rows = [("Observed today", "corridor anchor (corridor-consistent)",
              cfg["anchor_low"], None, cfg["anchor_high"], GRAY)]
-    for label, sub in [("uncapped", "model as-is - implied uplift "
-                        f"+{up[0]:.0f}/+{up[1]:.0f}/+{up[2]:.0f}%"),
-                       ("cap +80%", "uplift clipped at Cleveland-class ceiling"),
-                       ("cap +55%", "uplift clipped at incremental-BRT ceiling")]:
-        b = s[label]["blend"]
-        rows.append((f"Blended headline - {label}", sub,
-                     b[0], b[1], b[2], BLUE))
+    b = s["uncapped"]["blend"]
+    rows.append(("Blended headline - uncapped",
+                 "model as-is - implied uplift "
+                 f"+{up[0]:.0f}/+{up[1]:.0f}/+{up[2]:.0f}%",
+                 b[0], b[1], b[2], BLUE))
+    abc_path = os.path.join(OUT, f"abc_{name}.json")
+    if os.path.exists(abc_path):
+        abc = json.load(open(abc_path, encoding="utf-8"))
+        key = [k for k, v in abc["sigmas"].items() if v["tag"] == "central"][0]
+        d = abc["sigmas"][key]
+        c = d["forecast"]["blend"]
+        rows.append(("Backtest-calibrated (ABC)",
+                     "draws reweighted by the 2013 Bravo! 543 outcome "
+                     f"(sigma={key}, ESS={d['ess']:,.0f})",
+                     c[0], c[1], c[2], TEAL))
 
     fig, ax = plt.subplots(figsize=(10.6, 4.9), dpi=200)
     fig.patch.set_facecolor(SURFACE); ax.set_facecolor(SURFACE)
@@ -64,8 +72,8 @@ def intervals(name):
     fig.text(0.02, 0.94, f"{cfg['title']} — forecast weekday boardings",
              fontsize=13.5, fontweight="bold", color=INK)
     fig.text(0.02, 0.875, "P10–P90, P50 dots · blended fold/retain headline · "
-             "envelope treatments shown separately — reference class: "
-             "Twin Cities +33%, UW +35%, Cleveland +78%",
+             "uncalibrated and backtest-calibrated shown side by side — "
+             "reference class: Twin Cities +33%, UW +35%, Cleveland +78%",
              fontsize=8.8, color=INK2)
     fig.savefig(os.path.join(OUT, f"forecast_{name}.png"), facecolor=SURFACE)
     plt.close(fig)

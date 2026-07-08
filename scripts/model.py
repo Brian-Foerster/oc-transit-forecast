@@ -1,30 +1,38 @@
 """
 Monte-Carlo incremental pivot logit, nested within transit.
 
-Structure (per market segment x distance bin):
+Structure (per market segment x distance bin x within-cell sub-rider):
   Each transit service s has utility
-      V_s = bivt*IVT(d, speed_s) + bwait*wait_s(headway) + bwalk*walk(spacing_s)
+      V_s = bivt*IVT(d, speed_s) + bwait*(wait_s(headway) + walk_s(position))
             [+ asc for the NEW line]
-  The rider's transit utility is the theta-logsum over available services;
-  the pivot applies exp(dV) to base shares, where
-      dV = logsum(new system) - logsum(base system).
-  In the retain scenario the new line's boardings are total x P(new | transit),
-  from the same logsum -- this replaces the old invented "retained share" and
-  the fold/retain coin flip with mechanism. Fold removes the local, so short
-  trips are charged the longer walk to rapid stops.
+  A rider's street position is uniform over one stop-grid period; every
+  service's walk time is computed from that SAME position (K=8 quadrature,
+  see subcell_walks), so the best-service choice is smooth at the cell level
+  without any logsum "variety bonus". The pivot applies exp(dV) per sub-cell:
+      S1 = S0*e^dV / (S0*e^dV + 1 - S0),   dV = V(new system) - V(base).
+  In the retain scenario the new line's boardings are total x P(new|transit),
+  derived from the same utilities. Fold removes the local, so short trips
+  are charged the longer walk to rapid stops.
 
-Markets: walk (both-ends LODES), transfer (one-end LODES via feeder crossings,
-pinned to tau share of base boardings), visitor (resort market, pinned to phi
-share; random arrival so wait = h/2). Non-work expansion via ws/kappa.
+Markets: walk (both-ends LODES incl. 0-0.5-mi intra-tract bin), transfer
+(one-end LODES via feeder crossings, pinned to tau share of base boardings),
+visitor (resort market, pinned to phi share; random arrival so wait = h/2).
+Non-work expansion via ws/kappa (optionally with a shorter-trip tilt).
 
-Wait: walk/visitor access uses eff_wait = min(h/2, w0 + lam*h) (arrival-
-strategy closed form; visitors use h/2 -- no schedule adaptation); transfers
-use min(h/2, xcap).
+Time of day: a service's headway may be scalar or {'peak','offpeak'};
+per-period utilities are blended by a pkshare prior.
+
+Wait: walk access uses eff_wait = min(h/2, w0 + lam*h) (arrival-strategy
+closed form; visitors use h/2 -- no schedule adaptation); transfers use
+min(h/2, xcap).
 
 Uncertainty: behavioral params (bivt, ovt, asc) drawn triangular (peaked);
 base shares jittered with ACS-published MOEs (delta-method SEs); bins
-Dirichlet-resampled. NO envelope filter: implied uplift is reported against
-the reference class and the headline shown uncapped / cap +80% / cap +55%.
+Dirichlet-resampled. NO baked-in filter: the headline is reported uncapped,
+with the backtest-calibrated (ABC) treatment SIDE BY SIDE -- see
+reweight_abc.py -- and the implied uplift printed against the reference
+class. draw_params()/run(params=) provide common random numbers across
+configurations.
 
 usage: python model.py data/derived/corridor_harbor.json
 """
