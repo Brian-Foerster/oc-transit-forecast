@@ -120,6 +120,39 @@ the trip-length mix. Rebuild bins with pre-COVID LODES 2019 as a
 sensitivity row; the vintage gap is also now named in the ABC sigma
 rationale.
 
+**4.9 Derived average speed (R6 — land BEFORE the 4.5 risk-pricing
+batch, since it revises the stop-spacing rows those will quote).**
+`speed` and `spacing` are currently independent config knobs — a
+physical inconsistency: the "+21.8% at 0.5-mi spacing" row credits
+shorter walks while holding 30 mph fixed, charging nothing for the
+added stops. Replace exogenous speed with a TCQSM-style decomposition:
+
+    min/mi = 60/v_cruise + (dwell + accel/decel loss)/(60 * spacing)
+             [+ signal delay/mi]
+
+- Config: services gain a running-way package (mixed / TSP / dedicated
+  -> v_cruise prior) and a dwell prior; average speed becomes DERIVED.
+- Calibration from data on disk: Routes 43 (11.4 mph @ 0.25-mi) and 543
+  (~12.8 mph @ 1.0-mi) share the street and signals — two equations
+  identify the per-stop penalty and the effective no-stop street speed
+  (~13-13.5 mph pre-TSP). GTFS stop_times provide segment-level checks;
+  the 2024 TSP study's delay reduction informs the TSP package prior.
+- Realism surfacing: 30 mph @ 1-mi spacing implies high-30s cruise —
+  dedicated lanes + TSP; infeasible sweep cells become visible instead
+  of silently priced. The design sweep's speed axis becomes a
+  running-way-treatment axis.
+- Exogenous-speed spec retained as a sensitivity toggle (governance).
+- Expected effect: the 0.5-mi spacing row shrinks materially (walk gain
+  minus newly-charged speed penalty); long-trip cells flip sign.
+- Stage-3 tie-in: the SAME function generates the build-GTFS stop_times
+  (station-pair trip times), satisfying spec 03's no-drift requirement.
+  Full pair-level skims stay a stage-3 concern (stage 2's distance bins
+  would average them away); optional cheap stage-2 refinement: weight
+  bin-center IVTs by the corridor speed profile measured from Route 43
+  GTFS stop_times.
+- Known issue to log when landed: dwell depends on loading, so a small
+  ridership->speed feedback is deliberately ignored at this stage.
+
 ## 5. Validation gates (standing; must hold after any change)
 
 - Regression toggles reproduce prior behavior: smooth_k=0, scalar
