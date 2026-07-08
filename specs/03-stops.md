@@ -1,0 +1,79 @@
+# Spec 03 — Stage 3: FTA STOPS v2.53, Incremental Mode (forecast of record)
+
+Status: DRAFT for review · 2026-07-08 · not yet acquired/installed
+
+## 1. Role and non-role
+
+Produces the forecast of record for the finalist(s): station-level
+boardings, full-network effects (feeder reallocation, transfers,
+park-and-ride, network-wide cannibalization), CIG-compliant lineage if
+federal funding is pursued. It is not a design-iteration tool — coarse
+design questions must be settled at stage 2 before STOPS setup begins;
+stage-3 reruns are for refinement (alignment tweaks, stopping patterns,
+horizon-year land use), not for exploring the speed x headway grid.
+
+## 2. Acquisition & environment
+
+- Software: STOPS v2.53, free download from FTA
+  (transit.dot.gov "STOPS - Documentation and Software"); Windows.
+- Effort (FTA estimate): 1-2 weeks install + data assembly; 1-3 weeks
+  first forecasts. One-time; subsequent scenarios are incremental.
+- Run time: typically ~1-6 h/run depending on resolution — inside the
+  8-hour budget including full-resolution reruns.
+- Consider FTA's STOPS course (offered periodically) before first use.
+
+## 3. Inputs
+
+| Input | Source | Status |
+|---|---|---|
+| CTPP journey-to-work flows (district/TAZ) | CTPP program (free) | to acquire; check newest 5-yr vintage at setup |
+| Census/ACS demographics | already familiar (B08141 etc.) | on hand |
+| Existing-service GTFS | `data/raw/gtfs/` | on disk |
+| Build-scenario GTFS | author from the stage-2 winning service definition (speed/headway/stops -> GTFS edit) | to build; script it so stage-2 config and stage-3 GTFS cannot drift |
+| Station/stop-level counts (calibration) | records request item 2 (`outputs/records_request_draft.md`) | pending — **critical path** |
+| Route-level boardings (group calibration) | measured, `data/raw/apc/` | on disk |
+
+## 4. Configuration decisions (record in repo when made)
+
+- Mode: **incremental** (Option 2, count-anchored), consistent with the
+  stage-2 philosophy; synthetic mode only as a diagnostic comparison.
+- District system: OC-focused with LA-boundary buffer districts (the
+  stage-2 LA-exclusion limitation is lifted here — note in reconciliation).
+- Calibration targets: stop/station counts on 43/543 corridor (records
+  request), route-level totals elsewhere; document every adjustment
+  factor in a calibration memo committed to the repo.
+- Horizon year(s): opening year + one planning horizon; land-use growth
+  from SCAG projections (cite vintage).
+
+## 5. Outputs
+
+Per scenario: STOPS standard reports (project boardings, station-level,
+district flows) + a repo-side `outputs/stops_<scenario>_summary.json`
+extracted by script for the reconciliation memo and charts. Version
+every scenario input set (GTFS diff + parameter file) in the repo.
+
+## 6. Validation gates
+
+- Base-year validation: modeled existing 43/543 boardings within +/-15%
+  of counts at route level (FTA practice norm) before any build run is
+  quoted.
+- Sanity replication: STOPS run of the 2013-style 543 overlay (existing
+  natural experiment) compared against observed — a stage-3 analog of
+  the stage-2 backtest; document, don't tune to it.
+- Reconciliation memo vs stage 2 per spec 00 §6 before publication.
+
+## 7. Known limitations
+
+Daily (no time-of-day) outputs; CTPP vintage lags ACS; special-generator
+(resort/visitor) handling in STOPS is coarse — document how the visitor
+market maps, since it is ~5-15% of the stage-2 base; setup effort is the
+real cost, so stage-2 must earn its keep by minimizing STOPS reruns.
+
+## 8. Open questions for review
+
+- Q1: Pursue CIG (Small Starts) compliance from the start (affects
+  documentation rigor), or run STOPS as technical analysis only?
+- Q2: One finalist or two through full STOPS setup? (Marginal cost of a
+  second corridor after the first is set up: days, not weeks.)
+- Q3: Park-and-ride at Fullerton Transportation Center — model as
+  station access in STOPS (it can) even though stage 2 omits it?
