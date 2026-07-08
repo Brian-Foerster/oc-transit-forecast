@@ -9,11 +9,13 @@ how well its backtest prediction matches the observed 543 outcome:
 
     w_i ~ exp(-0.5 * ((pred_i - MU) / SIGMA)^2)
 
-MU = 3,700 (center of the observed 3,500-3,900 range). SIGMA combines the
-observation spread (~200: six-year average vs 2017 figure) with structural
-error the draws do not carry (~450: 2022 LODES / 2023 ACS proxying 2013
-markets, the 2013 Route 43's unknown peak headway, the anchor derivation
-being inference) -> 500 central, reported at 350/800 as sensitivities.
+MU = 4,200: the 543's measured launch-era average (six-year cumulative 6.4M
+~ 4,250/wd; measured FY2017 = 4,615, FY2019 = 3,739 -- see
+anchor_from_apc.py; the old press-quote target ~3,700 was low). SIGMA
+combines the observation spread (~300: ramp-up and decline across the
+early years) with structural error the draws do not carry (~400: 2022
+LODES / 2023 ACS proxying 2013 markets, the 2013 Route 43's unknown peak
+headway) -> 500 central, reported at 350/800 as sensitivities.
 
 This calibrates against the corridor's own natural experiment (local data),
 which is categorically different from the rejected literature-envelope
@@ -31,7 +33,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MU = 3700.0
+MU = 4200.0   # measured launch-era 543 average (anchor_from_apc.py)
 SIGMAS = [500.0, 350.0, 800.0]          # central first, then sensitivities
 SEED = 42
 

@@ -18,11 +18,24 @@ SOURCES = {
     # OCTA GTFS (4 MB)
     "octa_gtfs.zip":
         "https://www.octa.net/current/google_transit.zip",
+    # OCTA quarterly performance reports with route-level boardings (~5 MB;
+    # the anchor's measured source -- see scripts/anchor_from_apc.py).
+    # Found 2026-07 by URL-pattern probing; the monthly ridership report's
+    # real filename contains a space (%20) -- the clean URL 404s.
+    "apc/FY2017-Q4-Detailed-Report-PM.pdf":
+        "https://www.octa.net/pdf/FY%202017%20Q4%20Detailed%20Report%20PM.pdf",
+    "apc/FY-2019-Q4-Detailed-Report-PM.pdf":
+        "https://www.octa.net/pdf/FY-2019-Q4-Detailed-Report-PM.pdf",
+    "apc/FY2020-Q3-Detailed-Report.pdf":
+        "https://www.octa.net/pdf/FY2020-Q3-Detailed-Report.pdf",
+    "apc/OC_Bus_Ridership_July_2022_to_March_2024.pdf":
+        "https://octa.net/pdf/OC_Bus_Ridership_July_2022_to_%20March_2024.pdf",
 }
 
 def main():
     for name, url in SOURCES.items():
         dest = os.path.join(RAW, name)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
         if os.path.exists(dest) and os.path.getsize(dest) > 0:
             print(f"have {name}")
             continue

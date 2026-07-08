@@ -8,9 +8,9 @@
       "43"
     ],
     "window_mi": null,
-    "anchor_low": 7700,
-    "anchor_high": 10000,
-    "anchor_note": "Corridor-consistent: current 43+543 route totals 9,500-11,000 (Harbor TSP study: '>10,000, 8% of OCTA riders'; OCTA ~117k/wkdy 2024) x [543 share 0.25-0.35 counts fully + Route 43 x corridor share 0.75 (LODES) - 0.86 (ACS transit workers), scripts/route43_share.py]. Cross-check: 12,800 on-Harbor boardings in 2015 (Central Harbor study via Streetsblog) x system trend x street-vs-corridor share ~ 8,400.",
+    "anchor_low": 7650,
+    "anchor_high": 9650,
+    "anchor_note": "MEASURED (2026-07): OCTA quarterly performance reports give FY2019 route totals 43 = 2,095,510 and 543 = 953,471 (scripts/anchor_from_apc.py, source URLs inside). Weekday: 543 (wkdy-only) 3,739; 43 (7-day) 6,350-6,985; x FY2019->FY2024 system trend 0.90-0.99 (central 0.94); corridor = 543 + 43 x corridor share 0.75 (LODES) - 0.86 (ACS), scripts/route43_share.py. 43+543 = 8.3-8.7% of system FY2017-20, matching the TSP study's '8%' quote (which this data supersedes). Cross-check: 12,800 on-Harbor boardings in 2015 (Central Harbor study) x trend x street-vs-corridor share ~ 8,400.",
     "services_base": {
       "local": {
         "speed": 11.4,

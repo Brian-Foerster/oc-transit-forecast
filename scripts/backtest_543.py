@@ -10,10 +10,12 @@ Setup (2013):
   anchor      : Route 43 ~13,000 route-total at launch x corridor share
                 0.75-0.86 -> 9,750-11,180 corridor boardings
 
-Observed outcome:
-  543 carried ~3,900/day by 2017 (Streetsblog) and averaged ~3,500/day over
-  its first six years (OCTA 2019 release). 543 runs only the corridor, so
-  these are corridor-consistent numbers -- the cleanest observable.
+Observed outcome (MEASURED, 2026-07 -- OCTA quarterly performance reports,
+scripts/anchor_from_apc.py): 543 weekday boardings FY2017 = 4,615,
+FY2019 = 3,739, FY2020-YTD = 3,376; six-year cumulative 6.4M (OCTA 2019
+release) ~ 4,250/wd average. The old press figures (~3,500-3,900) were low.
+543 runs only the corridor, so these are corridor-consistent numbers --
+the cleanest observable. Launch-era target for calibration: ~4,200.
 
 Caveats: 2022 LODES / 2023 ACS proxy for 2013 markets; the 2013 Route 43's
 peak headway is unknown (flat 15 assumed; sensitivity row covers 10/15);
@@ -29,7 +31,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OBS_543 = (3500, 3900)
+OBS_543 = (3700, 4600)   # measured FY2019 wd .. FY2017 wd (anchor_from_apc.py)
 
 
 def backtest_corridor():
@@ -59,7 +61,7 @@ def main():
     print(f"predicted 543 weekday boardings (P10/P50/P90): "
           f"{pct(new,10):,.0f} / {pct(new,50):,.0f} / {pct(new,90):,.0f}")
     print(f"OBSERVED 543: ~{OBS_543[0]:,} - {OBS_543[1]:,} "
-          f"(6-yr avg .. 2017)")
+          f"(measured FY2019 wd .. FY2017 wd; 6-yr avg ~4,250)")
     print(f"predicted corridor transit uplift: "
           f"{'/'.join(f'{u:+.0f}%' for u in up)}")
     print(f"  (observed corridor uplift is confounded by OCTA's 2013-2017 "

@@ -14,17 +14,20 @@ logit — the same philosophy as FTA STOPS's incremental mode — Monte-Carlo'd
 for honest uncertainty, anchored to observed boardings, built to be run in
 seconds instead of the person-months a STOPS run costs.
 
-**Current headline (2026-07, post top-5-flaw fixes): uncapped ~12,200
-weekday boardings (P10–P90 10,100–14,400), implied uplift +31/+45/+61%;
-backtest-calibrated (ABC) ~10,700 (8,900–12,500), shown SIDE BY SIDE.**
-The design is now 5-min peak / 10-min off-peak (user decision). The old
+**Current headline (2026-07, measured anchor): uncapped ~12,000 weekday
+boardings (P10–P90 9,963–13,995), implied uplift +31/+45/+61%;
+backtest-calibrated (ABC) ~10,750 (9,100–12,350), shown SIDE BY SIDE.**
+The design is 5-min peak / 10-min off-peak (user decision). The old
 cap +80%/+55% columns were removed (user decision); the companion treatment
 is calibration against the corridor's own 2013 Bravo! 543 launch
-(`outputs/abc_harbor.json`). Honesty note: the backtest at prior-central
-parameters now OVERPREDICTS the 543 launch (6,169 vs ~3,500–3,900) — the
-earlier near-perfect 3,804 came from an unfaithful flat-15-min spec plus
-knife-edge artifacts; the ABC treatment turns that discrepancy into an ASC
-posterior (0.05/0.08/0.13 vs prior 0.09/0.20/0.31).
+(`outputs/abc_harbor.json`). **The anchor and the 543 calibration target
+are now MEASURED**, not inferred: OCTA's quarterly performance reports
+(FY2017/FY2019/FY2020-Q3, still live on octa.net) give route-level
+boardings — `scripts/anchor_from_apc.py`. Honesty notes: the backtest at
+prior-central parameters OVERPREDICTS the 543 launch (6,169 vs measured
+~3,700–4,600) — the earlier near-perfect 3,804 came from an unfaithful
+flat-15-min spec plus knife-edge artifacts; the ABC posterior puts the
+ASC at 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.
 
 ## How it got here (session history, oldest → newest)
 
@@ -52,6 +55,15 @@ posterior (0.05/0.08/0.13 vs prior 0.09/0.20/0.31).
    (plus a latent rng bug fix: pinning a prior used to shift all other
    draws); web research for a measured anchor came up dry →
    `outputs/records_request_draft.md`.
+7. Same session, second pass: the "unretrievable" data was recovered from
+   octa.net itself — URL-pattern probing found the FY2017–FY2021 quarterly
+   detailed reports (route-level boardings) still live, and the Wayback CDX
+   index revealed the monthly ridership report's real filename contains a
+   stray space (the clean URL 404s). Anchor re-derived from measurement
+   (7,650–9,650); the 543 calibration target rose to mu=4,200 (measured
+   FY2017 4,615/wd, FY2019 3,739/wd — press figures were low). Records
+   request narrowed to stop-level APC, FY2014–16, post-2020 route-level,
+   and the transfer rate.
 
 ## Pipeline (run in this order)
 
@@ -72,7 +84,8 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 | File | Role |
 |---|---|
 | `config/harbor.json` | The corridor definition: anchor range + derivation note, base services (Route 43 local, Route 543 rapid) with speed/headway/stop-spacing, the proposed line, visitor-market parameters. Change the design here. |
-| `scripts/download_data.py` | Fetches the four raw sources (URLs inside). |
+| `scripts/download_data.py` | Fetches the raw sources incl. the OCTA performance-report PDFs (URLs inside; note the %20 filename quirk). |
+| `scripts/anchor_from_apc.py` | Anchor derivation from MEASURED route-level boardings (data table + source URLs + the trend assumptions). |
 | `scripts/build_derived.py` | Raw → `oc_tracts.csv` (614 OC tract centroids), `oc_b08141.csv` (ACS workers/transit × vehicle availability, estimates AND margins of error), `oc_tract_od.csv.gz` (LODES commute flows aggregated to 178,900 OC tract pairs). |
 | `scripts/build_corridor.py` | Projects tracts onto the corridor route's GTFS shape (0.9-mi buffer), builds: ACS segments with delta-method SEs, walk-market distance bins (both-ends-in-corridor flows), feeder crossings (routes that genuinely cross the line, with crossing position + headway), transfer-market bins (one-end flows entering via nearest crossing feeder). |
 | `scripts/route43_share.py` | Route 43 runs ~18 mi but the corridor is 12.1; this measures the share of 43's market inside the corridor (0.75 by LODES, 0.86 by ACS) used in the anchor derivation. |
@@ -166,23 +179,22 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 
 ## Open threads (ranked)
 
-1. **Send the records request** (`outputs/records_request_draft.md`, ready
-   to submit): route- and stop-level APC for 43/543 + on-board transfer
-   rate. The anchor is a top-2 sensitivity (±13%) and its derivation is
-   inference, not measurement; web research 2026-07 confirmed the reports
-   exist but are not retrievable online (boarding-report PDF 404s, Legistar
-   item deleted, dot.gov blocks fetches).
+1. **Send the narrowed records request** (`outputs/records_request_draft.md`):
+   stop-level APC, FY2014–16 route-level (543 launch ramp — sharpens the
+   ABC target), post-FY2021 route-level (pins the 0.90–0.99 trend factor),
+   and the on-board transfer rate (narrows tau).
 2. **Pin down the 2013 Route 43's peak headway** (same records request):
    the backtest assumes flat 15-min; the 10/15 variant moves the backtest
    prediction −24%, which directly moves the ABC-calibrated headline.
 3. **ABC kernel width** (sigma=500) is a documented judgment call; revisit
-   when real APC data narrows the structural-error term.
+   when launch-ramp data narrows the observation term.
 4. New visitor demand (tourists not already riding) is unmodeled upside.
 5. No GitHub remote is configured yet; the user intends eventual push.
 
 (Closed 2026-07: knife-edge smoothing — rider-position quadrature;
 time-of-day — 5/10 peak/off design; sub-half-mile market — intra-tract
-LODES bin. Each keeps its old spec as a sensitivity row.)
+LODES bin; anchor — measured from OCTA quarterly reports. Old specs kept
+as sensitivity rows.)
 
 ## Environment gotchas
 
@@ -193,3 +205,10 @@ LODES bin. Each keeps its old spec as a sensitivity row.)
 - Percent-encode spaces in octa.net PDF URLs; transit.dot.gov blocks
   non-browser fetches; the Census API now requires a key (use the
   table-based summary files on the FTP instead, as download_data.py does).
+- octa.net "not found" is often a filename quirk, not a missing file: the
+  monthly ridership report's real name contains a space before "March"
+  (`OC_Bus_Ridership_July_2022_to_%20March_2024.pdf`), and older quarterly
+  reports use three different naming patterns (see download_data.py).
+  URL-pattern probing + the Wayback CDX index (`web.archive.org/cdx/search/
+  cdx?url=octa.net/pdf/*`) recovered everything a records request would
+  have taken weeks for.

@@ -1,11 +1,10 @@
 # Draft: Public Records Request to OCTA
 
-*(Prepared 2026-07-07. Web research found that the relevant reports exist but
-are not retrievable online: the "OC Bus Ridership July 2022 to March 2024"
-boarding report link on octa.net/news/publications/bus-boarding-reports/
-returns 404, and the January 2026 Bimonthly Transit Performance Report on
-octa.legistar.com has been deleted. Submit via OCTA's public records portal
-or clerk of the board.)*
+*(Prepared 2026-07-07; NARROWED the same day after route-level boardings
+through FY2020-Q3 and monthly system ridership through Mar 2024 were
+recovered directly from octa.net — see `scripts/anchor_from_apc.py`. The
+items below are only what remains unmeasured. Submit via OCTA's public
+records portal or clerk of the board.)*
 
 ---
 
@@ -20,29 +19,25 @@ request the following records, in electronic form (CSV or Excel preferred
 where available):
 
 1. **Route-level average weekday boardings** for OC Bus Route 43 and
-   Bravo! Route 543, monthly or quarterly, for fiscal years 2019 through the
-   most recent period available. (The report series titled "OC Bus Ridership"
-   — e.g. "OC Bus Ridership July 2022 to March 2024," formerly posted at
-   octa.net/news/publications/bus-boarding-reports/ — appears responsive.)
+   Bravo! Route 543 for (a) fiscal years 2014–2016 (the 543's launch ramp;
+   the quarterly "Bus Operations Performance Measurements" detailed reports
+   for FY2017–FY2021 are already public on octa.net) and (b) FY2021-Q3
+   onward (the series stops at FY2021 online).
 
 2. **Stop-level average weekday boardings and alightings** (APC data) for
    Routes 43 and 543, most recent available service period, ideally split by
    time-of-day period (peak / midday / evening).
 
-3. **The most recent Bimonthly Transit Performance Report** presented to the
-   Transit Committee (e.g. the January 2026 report, agenda item on
-   octa.legistar.com), including any route-level performance appendix.
-
-4. From the **most recent systemwide on-board / customer survey**: the share
+3. From the **most recent systemwide on-board / customer survey**: the share
    of riders whose one-way trip involves a transfer between routes, and, if
    tabulated, transfer rates for riders boarding Routes 43 or 543.
 
 Purpose (offered for context, not as a condition): an open-methodology
-corridor ridership analysis of Harbor Boulevard transit. These figures
-replace inferred values — item 1 sets the forecast anchor (currently derived
-indirectly from the Harbor TSP study's ">10,000 daily boardings" statement),
-item 2 grounds the boarding distribution along the corridor, and item 4
-replaces an assumed 25–40% transfer share.
+corridor ridership analysis of Harbor Boulevard transit. Item 1(a) grounds
+the 2013 Bravo! 543 launch response used as a calibration target, item 1(b)
+updates a trend factor currently carried from FY2019, item 2 grounds the
+boarding distribution along the corridor, and item 3 replaces an assumed
+25–40% transfer share.
 
 Please let me know if any portion can be provided sooner than the rest, or
 if a fee applies above a nominal amount.
@@ -50,9 +45,9 @@ if a fee applies above a nominal amount.
 ---
 
 *Model integration notes (for whoever receives the data):*
-- Item 1 → `anchor_low/high` in `config/harbor.json` (route totals × corridor
-  share via `scripts/route43_share.py`); the anchor is the forecast's #2
-  sensitivity (±13%).
+- Item 1(a) → sharpens the ABC kernel target (`scripts/reweight_abc.py`,
+  currently mu=4,200 from FY2017/six-year figures); 1(b) → the 0.90–0.99
+  trend factor in `scripts/anchor_from_apc.py`.
 - Item 2 → replaces the LODES-proxied boarding distribution and directly
   tests the walk/transfer market split.
-- Item 4 → narrows the `tau` prior (0.25–0.40) in `scripts/model.py`.
+- Item 3 → narrows the `tau` prior (0.25–0.40) in `scripts/model.py`.

@@ -74,10 +74,10 @@ features (see `scripts/model.py`):
   HealthLine +78%) are still printed next to the model's implied uplift, and
   all structural knobs appear in the one-at-a-time sensitivity table.
 
-**Headline (2026-07): uncapped blend P50 = 12,232 (P10-P90 10,128-14,404),
-implied corridor uplift +31/+45/+61%; backtest-calibrated P50 = 10,678
-(8,891-12,467). The calibration's main effect is on the new-line ASC:
-posterior 0.05/0.08/0.13 vs prior 0.09/0.20/0.31.**
+**Headline (2026-07, measured anchor): uncapped blend P50 = 11,969 (P10-P90
+9,963-13,995), implied corridor uplift +31/+45/+61%; backtest-calibrated
+P50 = 10,757 (9,098-12,336). The calibration's main effect is on the
+new-line ASC: posterior 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.**
 
 ## Backtest (scripts/backtest_543.py)
 
@@ -86,17 +86,20 @@ rapid overlay at its actual 10-min-peak / 15-min-off-peak launch service to
 the existing Route 43 local, both retained):
 
 - predicted 543 weekday boardings at prior-central parameters:
-  **P50 = 6,169** (P10-P90 3,862-8,923); observed: **~3,500-3,900**
-  (OCTA six-year average / 2017 figure). The model at its priors
-  **overpredicts the launch** -- honesty note: an earlier version reported a
-  near-perfect 3,804, but that came from an unfaithful flat-15-min spec plus
-  knife-edge choice artifacts; fixing both moved the prediction up.
+  **P50 = 6,169** (P10-P90 3,862-8,923); observed (measured route-level
+  data, `scripts/anchor_from_apc.py`): **~3,700-4,600** weekday boardings
+  (FY2019 / FY2017; six-year average ~4,250 -- the press figures
+  ~3,500-3,900 previously used here were low). The model at its priors
+  still **overpredicts the launch** -- honesty note: an earlier version
+  reported a near-perfect 3,804, but that came from an unfaithful
+  flat-15-min spec plus knife-edge choice artifacts.
 - predicted corridor uplift +5/+9/+16% -- directionally consistent with the
   observed non-growth of total corridor ridership (an overlay on an
   already-frequent local mostly re-sorts riders; cf. FTA's Cleveland finding)
 - the discrepancy is what the ABC treatment consumes: reweighting draws by
-  the observed outcome concentrates the new-line ASC near 0.08 (vs prior
-  midpoint 0.20) and pulls the forward headline from 12,232 to 10,678.
+  the measured outcome (kernel mu = 4,200) concentrates the new-line ASC
+  near 0.11 (vs prior midpoint 0.20) and pulls the forward headline from
+  11,969 to 10,757 (ESS 8,624).
 
 Caveats: 2022 LODES / 2023 ACS proxy for 2013 markets; the 2013 Route 43's
 peak headway is unknown (flat 15 assumed; the "43 at 10-min pk/15 off" row
@@ -113,6 +116,8 @@ covers).
       build_corridor.py corridor config -> model inputs json (tracts, segments
                         with MOE-based SEs, walk bins, feeder crossings,
                         transfer flows)
+      anchor_from_apc.py  anchor derivation from measured OCTA route-level
+                        boardings (source URLs + full data table inside)
       route43_share.py  Route 43's corridor share (anchor consistency)
       model.py          the Monte-Carlo pivot model + sensitivities + sweep
       backtest_543.py   backtest vs the 2013 Bravo! 543 launch
@@ -133,17 +138,24 @@ then `python scripts/build_derived.py`.
   availability x transit use, tract level.
 - **2023 Census gazetteer** -- tract centroids.
 - **OCTA GTFS** (fetched 2026-07) -- shapes, headways, scheduled speeds.
-- **Anchor (corridor-consistent):** 7,700-10,000. Derivation: current 43+543
-  *route-total* boardings 9,500-11,000 (Harbor TSP study: ">10,000 daily
-  boardings, 8% of all OCTA riders"; OCTA ~117k/weekday in 2024), times
-  [543's share (0.25-0.35) counted fully + Route 43's share scaled by its
-  corridor share 0.75 (LODES) - 0.86 (ACS transit workers), since Route 43
-  runs ~18 mi vs the 12.1-mi corridor -- `scripts/route43_share.py`].
-  Cross-check: 12,800 weekday boardings on Harbor itself in 2015 (Central
-  Harbor Blvd Transit Corridor Study, via Streetsblog 2018-01-17) x system
-  ridership trend x street-vs-corridor share ~ 8,400. Historical (backtest):
-  Route 43 ~13,000 at the 543's June 2013 launch; 543 launched at 10-min
-  peak / 15-min off-peak; 543 ~3,900/day in 2017, ~3,500/day six-year average.
+- **Anchor (MEASURED, 2026-07):** 7,650-9,650. OCTA's quarterly "Bus
+  Operations Performance Measurements" reports (still live on octa.net --
+  found by URL-pattern probing; `scripts/anchor_from_apc.py` has the URLs
+  and the full table) give route-level annual boardings: FY2019 Route 43 =
+  2,095,510, Route 543 = 953,471 (FY2017: 2,190,951 / 1,176,910; FY2020
+  YTD-Q3: 1,515,585 / 641,470). Weekday: 543 (weekday-only) = 3,739; 43
+  (7-day) = 6,350-6,985; scaled by the FY2019->FY2024 system trend
+  0.90-0.99 (per-month ratio 0.94, from the OC_Bus_Ridership monthly
+  report), times [543 fully + Route 43 x corridor share 0.75 (LODES) - 0.86
+  (ACS) -- `scripts/route43_share.py`]. 43+543 held 8.3-8.7% of system
+  boardings FY2017-FY2020, matching -- and superseding -- the TSP study's
+  ">10,000 daily boardings, 8% of all OCTA riders" quote the old anchor
+  inferred from. Cross-check: 12,800 on-Harbor boardings in 2015 (Central
+  Harbor Blvd Transit Corridor Study) x trend x street-vs-corridor share
+  ~ 8,400. Historical (backtest): Route 43 ~13,000 at the 543's June 2013
+  launch; 543 launched at 10-min peak / 15-min off-peak; 543 measured
+  weekday boardings FY2017 = 4,615, FY2019 = 3,739, six-year cumulative
+  6.4M ~ 4,250/wd (the old press figures ~3,500-3,900 were low).
 
 ## Known issues & judgment calls
 
@@ -180,11 +192,19 @@ Recorded as they were made; each is exposed in the sensitivity output.
    off-peak per the operating-plan decision; flat-5 kept as a row (+7%).
 9. **Harbor baseline rapid** uses the corridor-doc values (15 mph / 24-min);
    current GTFS shows 12.8 mph / 20-min -- a sensitivity row covers it (+0.2%).
-10. **The anchor is still inference, not measurement** (route-level reports
-    exist but are not retrievable online; see `outputs/records_request_draft.md`).
-    +/-13% sensitivity, and everything scales with it.
+10. ~~The anchor is inference, not measurement~~ **Largely closed (2026-07):**
+    route-level boardings through FY2020-Q3 and monthly system ridership
+    through Mar 2024 were recovered from OCTA's own site (URL-pattern
+    probing + a filename with a stray space; `scripts/anchor_from_apc.py`).
+    Anchor now 7,650-9,650 measured. Remaining gaps for the records request:
+    stop-level APC, post-2020 route-level, FY2014-16 (launch ramp), and the
+    on-board transfer rate.
 11. **The 2013 Route 43's peak headway is unknown** (backtest assumes flat
     15-min; the 10/15 variant moves the backtest -24%). Covered by the ABC
     kernel's structural-error term; a records request would settle it.
+13. **The FY2019->FY2024 trend factor (0.90-0.99)** assumes the corridor's
+    share of system ridership held from 2020 to 2024; it held 8.3-8.7%
+    across FY2017-FY2020 and the TSP study quotes 8% in 2024, but post-2020
+    route-level data would pin it (records request).
 12. **ABC kernel width is a judgment call** (sigma=500 = obs spread ~200 (+)
     structural error ~450); sigma 350/800 move the calibrated P50 by <1.3%.
