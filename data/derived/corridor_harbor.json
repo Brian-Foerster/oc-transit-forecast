@@ -31,8 +31,12 @@
     },
     "service_new": {
       "speed": 30.0,
-      "headway": 5.0,
-      "spacing": 1.0
+      "headway": {
+        "peak": 5.0,
+        "offpeak": 10.0
+      },
+      "spacing": 1.0,
+      "note": "5-min peak / 10-min off-peak operating plan (user decision 2026-07); flat 5-min all-day kept as sensitivity row. Base routes stay scalar: GTFS measures 43 and 543 at flat 20-min peak AND midday"
     },
     "visitor": {
       "share": [

@@ -34,7 +34,8 @@ cfg = copy.deepcopy(cor.cfg)
 cfg["anchor_low"], cfg["anchor_high"] = 9750, 11180
 cfg["services_base"] = {"local": {"speed": 12.0, "headway": 15.0,
                                   "spacing": 0.25}}
-cfg["service_new"] = {"speed": 15.0, "headway": 15.0, "spacing": 1.0}
+cfg["service_new"] = {"speed": 15.0, "headway": {"peak": 10.0, "offpeak": 15.0},
+                      "spacing": 1.0}   # actual June-2013 launch service
 cor.cfg = cfg
 
 res = run(cor)
@@ -56,17 +57,22 @@ print(f"  (observed corridor uplift is confounded by OCTA's 2013-2017 "
 # sensitivity of the prediction to the shakiest backtest assumptions
 central = {"bivt": -0.0265, "ovt": 2.05, "asc": 0.20, "w0": 5.5, "lam": 0.175,
            "xcap": 12.5, "tau": 0.325, "phi": 0.10, "s0v": 0.20,
-           "ws": 0.50, "kappa": 0.80, "fix_bins": 1}
+           "ws": 0.50, "kappa": 0.80, "pkshare": 0.525, "fix_bins": 1}
 b0 = pct(run(cor, n=4000, **central)["uncapped"]["retain"]["newline"], 50)
 print(f"\ncentral 543 prediction: {b0:,.0f}")
 for label, patch, kv in [
     ("no Bravo branding (asc=0)", None, {"asc": 0.0}),
+    ("543 flat 15-min (old spec)", {"service_new": dict(cfg["service_new"],
+                                                        headway=15.0)}, {}),
     ("543 at 20-min all day", {"service_new": dict(cfg["service_new"],
                                                    headway=20.0)}, {}),
     ("543 at 13 mph (weaker TSP)", {"service_new": dict(cfg["service_new"],
                                                         speed=13.0)}, {}),
     ("43 base 20-min headway", {"services_base": {"local": {
         "speed": 12.0, "headway": 20.0, "spacing": 0.25}}}, {}),
+    ("43 base 10-min pk/15 off", {"services_base": {"local": {
+        "speed": 12.0, "headway": {"peak": 10.0, "offpeak": 15.0},
+        "spacing": 0.25}}}, {}),
 ]:
     d = dict(central); d.update(kv)
     v = pct(run(cor, n=4000, cfg_patch=patch, **d)

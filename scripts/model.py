@@ -52,6 +52,7 @@ PRIORS = {
     "s0v":   (0.10, 0.30, "uni"),      # visitor base transit share
     "ws":    (0.40, 0.60, "uni"),      # work share of boardings
     "kappa": (0.60, 1.00, "uni"),      # non-work responsiveness
+    "pkshare": (0.45, 0.60, "uni"),    # peak share of boardings (TOD blend)
 }
 ENVELOPES = [("uncapped", None), ("cap +80%", 0.80), ("cap +55%", 0.55)]
 
@@ -118,6 +119,11 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             arr[:, 0] = 0.0
             arr /= arr.sum(axis=1, keepdims=True)
 
+    def hdw(svc, period):
+        """Headway may be scalar (uniform) or {'peak': h, 'offpeak': h}."""
+        h = svc["headway"]
+        return h[period] if isinstance(h, dict) else h
+
     def wait_of(svc, market, h):
         if market == "transfer":
             return np.minimum(h / 2.0, p["xcap"])
@@ -127,10 +133,10 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             return np.full(n, h / 2.0)
         return np.minimum(h / 2.0, p["w0"] + p["lam"] * h)
 
-    def util(svc, market, dists, walks, is_new):
+    def util(svc, market, dists, walks, is_new, period):
         """(n, cells) utility of one service; walks[id(svc)] is the
         per-cell walk distance (mi) for this service."""
-        h, v = svc["headway"], svc["speed"]
+        h, v = hdw(svc, period), svc["speed"]
         walk_min = walks[id(svc)] / WALK_MPH * 60.0
         u = (p["bivt"][:, None] * dists[None, :] * (60.0 / v)
              + bwait[:, None] * (wait_of(svc, market, h)[:, None]
@@ -176,12 +182,13 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             subw = (subw[:, None] * tw[None, :]).ravel()
         return {id(s): W[i] for i, s in enumerate(union)}, subw
 
-    def combine(svcs, market, dists, walks):
+    def combine(svcs, market, dists, walks, period):
         """Each sub-rider takes their best available service (near-perfect
         substitutes on one street earn no logsum 'variety bonus' -- the
         red-bus/blue-bus correction). variety_logsum=True restores a
         theta=1 logsum as a sensitivity toggle."""
-        us = np.stack([util(s, market, dists, walks, isn) for s, isn in svcs])
+        us = np.stack([util(s, market, dists, walks, isn, period)
+                       for s, isn in svcs])
         if over.get("variety_logsum"):
             m = us.max(axis=0)
             ls = m + np.log(np.exp(us - m).sum(axis=0))
@@ -191,17 +198,17 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         pnew = (us[0] >= best - 1e-12).astype(float) if svcs[0][1] else None
         return best, pnew
 
-    def market_terms(market, dists, wts):
+    def market_terms(market, dists, wts, period):
         legs = 1 if market == "transfer" else 2
         walks, subw = subcell_walks(legs)
         Q = len(subw)
         dists_e = np.repeat(dists, Q)                        # (bins*Q,)
         walks_e = {k: np.tile(v, len(dists)) for k, v in walks.items()}
         wts_e = (wts[:, :, None] * subw[None, None, :]).reshape(n, -1)
-        ls0, _ = combine(base_svcs, market, dists_e, walks_e)
+        ls0, _ = combine(base_svcs, market, dists_e, walks_e, period)
         out = {}
         for scen, svcs in systems.items():
-            ls1, pnew = combine(svcs, market, dists_e, walks_e)
+            ls1, pnew = combine(svcs, market, dists_e, walks_e, period)
             dv = ls1 - ls0                                   # (n, bins*Q)
             e = np.exp(np.clip(dv, -20, 20))[:, :, None]
             if market == "visitor":
@@ -217,21 +224,36 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             den = (P * S0).sum(axis=(1, 2))
         return out, den
 
-    mk_w, den_w = market_terms("walk", cor.wd, ww)
-    mk_x, den_x = market_terms("transfer", cor.xd, xw)
-    mk_v, den_v = market_terms("visitor", cor.wd, vw)
-
-    fx = 0.0 if no_transfer else p["tau"] * den_w / ((1 - p["tau"]) * den_x)
-    fv = 0.0 if no_visitor else p["phi"] * den_w / ((1 - p["phi"]) * den_v)
-    den = den_w + fx * den_x + fv * den_v
+    # periods: single pass unless any service has {'peak','offpeak'} headways;
+    # den/fx/fv are utility-free, so only the numerators vary by period and
+    # blending numerators at common den == blending per-period ratios.
+    tod = any(isinstance(s["headway"], dict) for s in union)
+    periods = ([("peak", p["pkshare"]), ("offpeak", 1.0 - p["pkshare"])]
+               if tod else [(None, 1.0)])
+    num = {scen: 0.0 for scen in systems}
+    num_new = {scen: 0.0 for scen in systems}
+    den = fx = fv = None
+    for period, wgt in periods:
+        mk_w, den_w = market_terms("walk", cor.wd, ww, period)
+        mk_x, den_x = market_terms("transfer", cor.xd, xw, period)
+        mk_v, den_v = market_terms("visitor", cor.wd, vw, period)
+        if den is None:
+            fx = (0.0 if no_transfer
+                  else p["tau"] * den_w / ((1 - p["tau"]) * den_x))
+            fv = (0.0 if no_visitor
+                  else p["phi"] * den_w / ((1 - p["phi"]) * den_v))
+            den = den_w + fx * den_x + fv * den_v
+        for scen in systems:
+            num[scen] = num[scen] + wgt * (
+                mk_w[scen][0] + fx * mk_x[scen][0] + fv * mk_v[scen][0])
+            num_new[scen] = num_new[scen] + wgt * (
+                mk_w[scen][1] + fx * mk_x[scen][1] + fv * mk_v[scen][1])
 
     out = {}
     for scen in systems:
-        num = mk_w[scen][0] + fx * mk_x[scen][0] + fv * mk_v[scen][0]
-        num_new = mk_w[scen][1] + fx * mk_x[scen][1] + fv * mk_v[scen][1]
-        r_work = num / den
+        r_work = num[scen] / den
         ratio = p["ws"] * r_work + (1 - p["ws"]) * (1 + p["kappa"] * (r_work - 1))
-        newshare = num_new / num
+        newshare = num_new[scen] / num[scen]
         out[scen] = {"ratio": ratio, "newshare": newshare}
 
     res = {}
@@ -262,7 +284,10 @@ def main(path):
     cor = Corridor(path)
     cfg = cor.cfg
     sn = cfg["service_new"]
-    print(f"=== {cfg['title']} : {sn['speed']:.0f} mph / {sn['headway']:.0f}-min"
+    h = sn["headway"]
+    hstr = (f"{h['peak']:.0f}/{h['offpeak']:.0f}-min pk/off"
+            if isinstance(h, dict) else f"{h:.0f}-min")
+    print(f"=== {cfg['title']} : {sn['speed']:.0f} mph / {hstr}"
           f" / {sn['spacing']:.2f}-mi stops ===")
 
     res = run(cor)
@@ -331,8 +356,11 @@ def main(path):
              cfg["services_base"]["rapid"], **cfg["rapid_alt"])}})
     sens("new line 25 mph",
          cfg_patch={"service_new": dict(sn, speed=25.0)})
-    sens("new line 10-min headway",
-         cfg_patch={"service_new": dict(sn, headway=10.0)})
+    sens("new line 10/20-min headway",
+         cfg_patch={"service_new": dict(sn, headway={"peak": 10.0,
+                                                     "offpeak": 20.0})})
+    sens("flat 5-min all day (old spec)",
+         cfg_patch={"service_new": dict(sn, headway=5.0)})
     sens("new stop spacing 0.5 mi",
          cfg_patch={"service_new": dict(sn, spacing=0.5)})
     sens("new stop spacing 1.5 mi",
@@ -343,14 +371,16 @@ def main(path):
     for label, v, d in sorted(rows, key=lambda r: -abs(r[2])):
         print(f"  {label:32s}: {v:8,.0f}  ({d:+.1f}%)")
 
-    # ---- design sweep -------------------------------------------------------
-    print("\n--- design sweep: central expected-blend P50 (uncapped) ---")
+    # ---- design sweep (h = peak headway; off-peak = 2x) --------------------
+    print("\n--- design sweep: central expected-blend P50 (uncapped; "
+          "h = peak, off-peak = 2x) ---")
     speeds, heads = [20, 25, 30, 35], [5, 10, 15]
     sweep = {}
     print("        " + "".join(f"  h={h:>2}min" for h in heads))
     for v in speeds:
-        vals = [point(cfg_patch={"service_new": dict(sn, speed=float(v),
-                                                     headway=float(h))})
+        vals = [point(cfg_patch={"service_new": dict(
+                    sn, speed=float(v),
+                    headway={"peak": float(h), "offpeak": 2.0 * h})})
                 for h in heads]
         sweep[v] = vals
         print(f"  {v} mph" + "".join(f"  {x:7,.0f}" for x in vals))

@@ -57,7 +57,9 @@ def main_shape_xy(trips, shapes, wk, route):
     return best, bl
 
 
-def midday_headway(trips, st, wk, route):
+def route_headways(trips, st, wk, route):
+    """Median weekday start-gap by period: {'peak': 6-9a, 'midday': 9a-3p}
+    in minutes (None per period if < 3 trips)."""
     t = trips[(trips["route_id"] == route) & trips["service_id"].isin(wk)]
     if len(t) == 0:
         return None
@@ -65,10 +67,11 @@ def midday_headway(trips, st, wk, route):
     tt = st[st["trip_id"].isin(set(d0["trip_id"]))]
     starts = (tt.groupby("trip_id")["departure_time"].min()
                 .map(lambda x: int(x[:2]) * 60 + int(x[3:5])).sort_values())
-    mid = starts[(starts >= 9 * 60) & (starts <= 15 * 60)].to_numpy()
-    if len(mid) < 3:
-        return None
-    return float(np.median(np.diff(mid)))
+    out = {}
+    for label, lo, hi in (("peak", 6 * 60, 9 * 60), ("midday", 9 * 60, 15 * 60)):
+        w = starts[(starts >= lo) & (starts <= hi)].to_numpy()
+        out[label] = float(np.median(np.diff(w))) if len(w) >= 3 else None
+    return out
 
 
 class Line:
@@ -109,6 +112,9 @@ def bin_flows(dists, weights):
 def main(cfg_path):
     cfg = json.load(open(cfg_path, encoding="utf-8"))
     trips, shapes, st, wk = load_gtfs()
+    for rid in dict.fromkeys([cfg["corridor_route"]] + cfg["excluded_feeders"]):
+        hw = route_headways(trips, st, wk, rid)
+        print(f"  route {rid} GTFS headways: {hw}  (for config base services)")
     (sx, sy), L = main_shape_xy(trips, shapes, wk, cfg["corridor_route"])
     line = Line(sx, sy)
     w0, w1 = cfg["window_mi"] or [0.0, line.L]
@@ -192,9 +198,10 @@ def main(cfg_path):
         npos = poss[j]
         if not (w0 <= npos <= w1):
             continue
-        hw = midday_headway(trips, st, wk, rid)
+        hw = route_headways(trips, st, wk, rid)
         feeders.append({"route": rid, "node_pos": round(float(npos), 2),
-                        "headway": hw, "x": fx, "y": fy})
+                        "headway": hw["midday"] if hw else None,
+                        "x": fx, "y": fy})
     print(f"  crossing feeders: {len(feeders)} "
           f"({[f['route'] for f in feeders]})")
 
