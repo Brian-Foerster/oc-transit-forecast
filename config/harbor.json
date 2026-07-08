@@ -18,7 +18,7 @@
   "visitor": {
     "share": [0.05, 0.15],
     "S0": [0.10, 0.30],
-    "bin_weights": [0.55, 0.35, 0.10, 0.0, 0.0],
-    "note": "Anaheim resort/visitor market: share of base boardings (pinned like tau); short trips (hotel-Disneyland-convention); random arrival (h/2 wait, no schedule adaptation)"
+    "bin_weights": [0.25, 0.30, 0.35, 0.10, 0.0, 0.0],
+    "note": "Anaheim resort/visitor market: share of base boardings (pinned like tau); short trips (hotel-Disneyland-convention); random arrival (h/2 wait, no schedule adaptation). Judgment call: old first bin 0.55 split 0.25/0.30 into the new 0-0.5-mi bin -- visitor trips are exactly the sub-half-mile kind"
   }
 }

@@ -68,6 +68,10 @@ class Corridor:
         self.ww = np.array(j["walk_bins"]["weights"])
         self.xd = np.array(j["transfer_bins"]["centers"])
         self.xw = np.array(j["transfer_bins"]["weights"])
+        nv = len(self.cfg["visitor"]["bin_weights"])
+        assert nv == len(self.wd), (
+            f"visitor bin_weights has {nv} entries but walk_bins has "
+            f"{len(self.wd)} -- update the config to match")
 
 
 def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
@@ -106,6 +110,10 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     s0 = cor.s0[None, :] * (1.0 if fixed
                             else rng.lognormal(0.0, cor.s0_se, (n, 3)))
     cf = np.tile(cor.cf, (n, 1)) if fixed else rng.dirichlet(cor.cf * 400, n)
+    if over.get("no_bin0"):        # drop the 0-0.5-mi bin (old market defn)
+        for arr in (ww, xw, vw):
+            arr[:, 0] = 0.0
+            arr /= arr.sum(axis=1, keepdims=True)
 
     def wait_of(svc, market, h):
         if market == "transfer":
@@ -273,6 +281,7 @@ def main(path):
     sens("linear h/2 wait (old spec)", linear_wait=True)
     sens("no transfer market", no_transfer=True)
     sens("no visitor market", no_visitor=True)
+    sens("no sub-half-mile bin (old defn)", no_bin0=1)
     sens("rapid base -> GTFS current",
          cfg_patch={"services_base": {"rapid": dict(
              cfg["services_base"]["rapid"], **cfg["rapid_alt"])}})

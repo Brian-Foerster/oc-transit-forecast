@@ -44,13 +44,14 @@
         0.3
       ],
       "bin_weights": [
-        0.55,
+        0.25,
+        0.3,
         0.35,
         0.1,
         0.0,
         0.0
       ],
-      "note": "Anaheim resort/visitor market: share of base boardings (pinned like tau); short trips (hotel-Disneyland-convention); random arrival (h/2 wait, no schedule adaptation)"
+      "note": "Anaheim resort/visitor market: share of base boardings (pinned like tau); short trips (hotel-Disneyland-convention); random arrival (h/2 wait, no schedule adaptation). Judgment call: old first bin 0.55 split 0.25/0.30 into the new 0-0.5-mi bin -- visitor trips are exactly the sub-half-mile kind"
     }
   },
   "segments": {
@@ -74,37 +75,41 @@
   },
   "walk_bins": {
     "weights": [
-      0.492,
-      0.2978,
-      0.1402,
-      0.0549,
-      0.0151
+      0.2603,
+      0.3639,
+      0.2203,
+      0.1037,
+      0.0406,
+      0.0112
     ],
     "centers": [
+      0.24,
       1.36,
       3.43,
       5.89,
       8.73,
       10.82
     ],
-    "jobs": 10647
+    "jobs": 14394
   },
   "transfer_bins": {
     "weights": [
-      0.3788,
-      0.2725,
-      0.1991,
-      0.1025,
-      0.047
+      0.1088,
+      0.3376,
+      0.2429,
+      0.1774,
+      0.0914,
+      0.0419
     ],
     "centers": [
+      0.23,
       1.44,
       3.53,
       6.0,
       8.72,
       11.48
     ],
-    "jobs": 85085
+    "jobs": 95474
   },
   "feeders": [
     {

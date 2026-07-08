@@ -25,8 +25,10 @@ GTFS = os.path.join(RAW, "gtfs")
 
 BUFFER_MI, XFER_BUFFER_MI = 0.9, 0.9
 CROSS_NEAR, CROSS_FAR = 0.25, 1.0     # crossing test thresholds (mi)
-MIN_TRIP_MI = 0.5
-EDGES = np.array([0.5, 2.5, 4.75, 7.5, 10.25, 12.6])
+# first bin 0-0.5 mi: intra-tract flows enter with an imputed along-line
+# distance sqrt(ALAND)/3 (E|dx| of two uniform points, 1-D projection)
+EDGES = np.array([0.0, 0.5, 2.5, 4.75, 7.5, 10.25, 12.6])
+INTRA_CLIP = (0.10, 0.45)
 
 MI_LAT = 69.05
 MI_LON = 69.17 * math.cos(math.radians(33.77))
@@ -160,6 +162,12 @@ def main(cfg_path):
 
     both = od[hin & win].copy()
     d = (both["h"].map(posmap) - both["w"].map(posmap)).abs()
+    alandmap = dict(zip(tr["GEOID"], tr["aland_sqmi"]))
+    intra = both["h"] == both["w"]
+    d[intra] = (both.loc[intra, "h"].map(alandmap).pow(0.5) / 3.0
+                ).clip(*INTRA_CLIP)
+    print(f"  intra-tract walk flows: {int(both.loc[intra, 'n'].sum()):,} jobs "
+          f"({100 * both.loc[intra, 'n'].sum() / both['n'].sum():.0f}% of walk market)")
     wwts, wctr, wcnt = bin_flows(d.to_numpy(), both["n"].to_numpy(float))
 
     # feeder crossings

@@ -1,5 +1,5 @@
 """Compress data/raw into the small committed tables in data/derived:
-  oc_tracts.csv        OC tract centroids (GEOID, lat, lon)
+  oc_tracts.csv        OC tract centroids (GEOID, lat, lon, aland_sqmi)
   oc_b08141.csv        ACS B08141 estimates for OC tracts (workers/transit
                        by vehicle availability)
   oc_tract_od.csv.gz   LODES commute flows aggregated to OC tract pairs
@@ -18,8 +18,9 @@ gaz = pd.read_csv(os.path.join(RAW, "gaz_tracts_06.txt"), sep="\t")
 gaz.columns = [c.strip() for c in gaz.columns]
 gaz["GEOID"] = gaz["GEOID"].astype(str).str.zfill(11)
 oc = gaz[gaz["GEOID"].str.startswith("06059")]
-oc[["GEOID", "INTPTLAT", "INTPTLONG"]].rename(
-    columns={"INTPTLAT": "lat", "INTPTLONG": "lon"}).to_csv(
+oc[["GEOID", "INTPTLAT", "INTPTLONG", "ALAND_SQMI"]].rename(
+    columns={"INTPTLAT": "lat", "INTPTLONG": "lon",
+             "ALAND_SQMI": "aland_sqmi"}).to_csv(
     os.path.join(DER, "oc_tracts.csv"), index=False)
 print(f"oc_tracts.csv: {len(oc)} tracts")
 
