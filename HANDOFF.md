@@ -189,7 +189,8 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 3. **ABC kernel width** (sigma=500) is a documented judgment call; revisit
    when launch-ramp data narrows the observation term.
 4. New visitor demand (tourists not already riding) is unmodeled upside.
-5. No GitHub remote is configured yet; the user intends eventual push.
+5. ~~No GitHub remote~~ **Closed 2026-07-08:** pushed to
+   https://github.com/Brian-Foerster/oc-transit-forecast (private).
 
 (Closed 2026-07: knife-edge smoothing — rider-position quadrature;
 time-of-day — 5/10 peak/off design; sub-half-mile market — intra-tract
