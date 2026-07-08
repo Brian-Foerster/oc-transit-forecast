@@ -248,29 +248,46 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     tod = any(isinstance(s["headway"], dict) for s in union)
     periods = ([("peak", p["pkshare"]), ("offpeak", 1.0 - p["pkshare"])]
                if tod else [(None, 1.0)])
-    num = {scen: 0.0 for scen in systems}
-    num_new = {scen: 0.0 for scen in systems}
-    den = fx = fv = None
-    for period, wgt in periods:
-        mk_w, den_w = market_terms("walk", cor.wd, ww, period)
-        mk_x, den_x = market_terms("transfer", cor.xd, xw, period)
-        mk_v, den_v = market_terms("visitor", cor.wd, vw, period)
-        if den is None:
-            fx = (0.0 if no_transfer
-                  else p["tau"] * den_w / ((1 - p["tau"]) * den_x))
-            fv = (0.0 if no_visitor
-                  else p["phi"] * den_w / ((1 - p["phi"]) * den_v))
-            den = den_w + fx * den_x + fv * den_v
-        for scen in systems:
-            num[scen] = num[scen] + wgt * (
-                mk_w[scen][0] + fx * mk_x[scen][0] + fv * mk_v[scen][0])
-            num_new[scen] = num_new[scen] + wgt * (
-                mk_w[scen][1] + fx * mk_x[scen][1] + fv * mk_v[scen][1])
+
+    def system_response(wwA, xwA, vwA):
+        num = {scen: 0.0 for scen in systems}
+        num_new = {scen: 0.0 for scen in systems}
+        den = fx = fv = None
+        for period, wgt in periods:
+            mk_w, den_w = market_terms("walk", cor.wd, wwA, period)
+            mk_x, den_x = market_terms("transfer", cor.xd, xwA, period)
+            mk_v, den_v = market_terms("visitor", cor.wd, vwA, period)
+            if den is None:   # utility-free, identical across periods
+                fx = (0.0 if no_transfer
+                      else p["tau"] * den_w / ((1 - p["tau"]) * den_x))
+                fv = (0.0 if no_visitor
+                      else p["phi"] * den_w / ((1 - p["phi"]) * den_v))
+                den = den_w + fx * den_x + fv * den_v
+            for scen in systems:
+                num[scen] = num[scen] + wgt * (
+                    mk_w[scen][0] + fx * mk_x[scen][0] + fv * mk_v[scen][0])
+                num_new[scen] = num_new[scen] + wgt * (
+                    mk_w[scen][1] + fx * mk_x[scen][1] + fv * mk_v[scen][1])
+        return num, num_new, den
+
+    num, num_new, den = system_response(ww, xw, vw)
+    rshort = None
+    if over.get("nonwork_short"):
+        # sensitivity probe: LODES is commute-only, so the non-work market
+        # inherits the work O-D shape; this tilts it toward shorter trips
+        # (exp weight, L = 4 mi) for the non-work response only
+        L = 4.0
+        def tilt(w, d):
+            t = w * np.exp(-d / L)[None, :]
+            return t / t.sum(axis=1, keepdims=True)
+        numS, _, denS = system_response(tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
+        rshort = {scen: numS[scen] / denS for scen in systems}
 
     out = {}
     for scen in systems:
         r_work = num[scen] / den
-        ratio = p["ws"] * r_work + (1 - p["ws"]) * (1 + p["kappa"] * (r_work - 1))
+        r_nw = r_work if rshort is None else rshort[scen]
+        ratio = p["ws"] * r_work + (1 - p["ws"]) * (1 + p["kappa"] * (r_nw - 1))
         newshare = num_new[scen] / num[scen]
         out[scen] = {"ratio": ratio, "newshare": newshare}
 
@@ -373,6 +390,7 @@ def main(path):
     sens("no transfer market", no_transfer=True)
     sens("no visitor market", no_visitor=True)
     sens("no sub-half-mile bin (old defn)", no_bin0=1)
+    sens("non-work trips shorter (4-mi tilt)", nonwork_short=1)
     sens("knife-edge choice (old spec)", smooth_k=0)
     sens("walk-taste spread +/-15%", walk_spread=1)
     sens("new-line stops offset 0.5 mi",

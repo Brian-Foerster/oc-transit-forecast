@@ -254,6 +254,11 @@
       "pct": 5.18682815255859
     },
     {
+      "label": "non-work trips shorter (4-mi tilt)",
+      "value": 11910.040387558982,
+      "pct": -3.415345877822009
+    },
+    {
       "label": "knife-edge choice (old spec)",
       "value": 12749.433239399248,
       "pct": 3.3917232528845154
