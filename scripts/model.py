@@ -36,6 +36,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 N = 40000
 WALK_MPH = 3.0
+SUBK = 8   # rider-position quadrature nodes; 8 is exact for 0.25/0.5/1.0-mi grids
 REFERENCE = "Twin Cities +33% | UW +35% | Cleveland HealthLine +78%"
 
 # (lo, hi, shape): triangular = peaked at midpoint; uniform elsewhere
@@ -75,9 +76,11 @@ class Corridor:
 
 
 def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
-        no_visitor=False, cfg_patch=None, **over):
+        no_visitor=False, cfg_patch=None, smooth_k=SUBK, **over):
     """Vectorized MC. `over` pins any PRIORS key / 'anchor'; `cfg_patch`
-    deep-merges into the corridor config (service definitions etc.)."""
+    deep-merges into the corridor config (service definitions etc.).
+    smooth_k: sub-cell quadrature nodes for within-cell rider position
+    (0 = old knife-edge point value spacing/4)."""
     rng = np.random.default_rng(seed)
     cfg = copy.deepcopy(cor.cfg)
     if cfg_patch:
@@ -124,13 +127,14 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             return np.full(n, h / 2.0)
         return np.minimum(h / 2.0, p["w0"] + p["lam"] * h)
 
-    def util(svc, market, dists, is_new):
-        """(n, bins) utility of one service for one market."""
-        h, v, sp = svc["headway"], svc["speed"], svc["spacing"]
-        legs = 1 if market == "transfer" else 2
-        walk_min = legs * (sp / 4.0) / WALK_MPH * 60.0
+    def util(svc, market, dists, walks, is_new):
+        """(n, cells) utility of one service; walks[id(svc)] is the
+        per-cell walk distance (mi) for this service."""
+        h, v = svc["headway"], svc["speed"]
+        walk_min = walks[id(svc)] / WALK_MPH * 60.0
         u = (p["bivt"][:, None] * dists[None, :] * (60.0 / v)
-             + (bwait * (wait_of(svc, market, h) + walk_min))[:, None])
+             + bwait[:, None] * (wait_of(svc, market, h)[:, None]
+                                 + walk_min[None, :]))
         if is_new:
             u = u + p["asc"][:, None]
         return u
@@ -141,13 +145,43 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         "retain": [(cfg["service_new"], True),
                    (cfg["services_base"]["local"], False)],
     }
+    union = list(cfg["services_base"].values()) + [cfg["service_new"]]
 
-    def combine(svcs, market, dists):
-        """Each segment takes its best available service (near-perfect
+    def subcell_walks(legs):
+        """Within-cell rider-position quadrature. A rider's absolute street
+        position x is uniform over one grid period P = max(spacing); every
+        service's per-leg walk distance is min(x mod sp, sp - x mod sp)
+        from the SAME x -- heterogeneity lives in the rider, so services
+        stay perfectly correlated and no variety bonus can arise. Identical
+        joint columns are merged (aligned grids collapse K^2 -> ~7).
+        Returns ({id(svc): (Q,) walk mi}, (Q,) weights)."""
+        if not smooth_k:
+            return ({id(s): np.array([legs * s["spacing"] / 4.0])
+                     for s in union}, np.array([1.0]))
+        x = (np.arange(smooth_k) + 0.5) / smooth_k * \
+            max(s["spacing"] for s in union)
+        def d(s):
+            r = (x - s.get("grid_phase", 0.0)) % s["spacing"]
+            return np.minimum(r, s["spacing"] - r)
+        W = np.stack([d(s) for s in union])                  # (S, K)
+        if legs == 2:
+            W = (W[:, :, None] + W[:, None, :]).reshape(len(union), -1)
+        uniq, inv = np.unique(np.round(W, 9).T, axis=0, return_inverse=True)
+        subw = np.zeros(len(uniq))
+        np.add.at(subw, inv, 1.0 / W.shape[1])
+        W = uniq.T                                           # (S, Q)
+        if over.get("walk_spread"):   # +/-15% walk-taste axis (sensitivity)
+            t, tw = np.array([0.85, 1.0, 1.15]), np.array([0.25, 0.5, 0.25])
+            W = (W[:, :, None] * t[None, None, :]).reshape(len(union), -1)
+            subw = (subw[:, None] * tw[None, :]).ravel()
+        return {id(s): W[i] for i, s in enumerate(union)}, subw
+
+    def combine(svcs, market, dists, walks):
+        """Each sub-rider takes their best available service (near-perfect
         substitutes on one street earn no logsum 'variety bonus' -- the
         red-bus/blue-bus correction). variety_logsum=True restores a
         theta=1 logsum as a sensitivity toggle."""
-        us = np.stack([util(s, market, dists, isn) for s, isn in svcs])
+        us = np.stack([util(s, market, dists, walks, isn) for s, isn in svcs])
         if over.get("variety_logsum"):
             m = us.max(axis=0)
             ls = m + np.log(np.exp(us - m).sum(axis=0))
@@ -158,19 +192,25 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         return best, pnew
 
     def market_terms(market, dists, wts):
-        ls0, _ = combine(base_svcs, market, dists)
+        legs = 1 if market == "transfer" else 2
+        walks, subw = subcell_walks(legs)
+        Q = len(subw)
+        dists_e = np.repeat(dists, Q)                        # (bins*Q,)
+        walks_e = {k: np.tile(v, len(dists)) for k, v in walks.items()}
+        wts_e = (wts[:, :, None] * subw[None, None, :]).reshape(n, -1)
+        ls0, _ = combine(base_svcs, market, dists_e, walks_e)
         out = {}
         for scen, svcs in systems.items():
-            ls1, pnew = combine(svcs, market, dists)
-            dv = ls1 - ls0                                   # (n, bins)
+            ls1, pnew = combine(svcs, market, dists_e, walks_e)
+            dv = ls1 - ls0                                   # (n, bins*Q)
             e = np.exp(np.clip(dv, -20, 20))[:, :, None]
             if market == "visitor":
                 S0 = np.clip(p["s0v"], 1e-6, 0.95)[:, None, None]
-                P = wts[:, :, None]
+                P = wts_e[:, :, None]
             else:
                 S0 = np.clip(s0, 1e-6, 0.95)[:, None, :]
-                P = wts[:, :, None] * cf[:, None, :]
-            S1 = S0 * e / (S0 * e + (1 - S0))
+                P = wts_e[:, :, None] * cf[:, None, :]
+            S1 = S0 * e / (S0 * e + (1 - S0))                # pivot per sub-cell
             pn = 1.0 if pnew is None else pnew[:, :, None]
             out[scen] = ((P * S1).sum(axis=(1, 2)),
                          (P * S1 * pn).sum(axis=(1, 2)))
@@ -282,6 +322,10 @@ def main(path):
     sens("no transfer market", no_transfer=True)
     sens("no visitor market", no_visitor=True)
     sens("no sub-half-mile bin (old defn)", no_bin0=1)
+    sens("knife-edge choice (old spec)", smooth_k=0)
+    sens("walk-taste spread +/-15%", walk_spread=1)
+    sens("new-line stops offset 0.5 mi",
+         cfg_patch={"service_new": dict(sn, grid_phase=0.5)})
     sens("rapid base -> GTFS current",
          cfg_patch={"services_base": {"rapid": dict(
              cfg["services_base"]["rapid"], **cfg["rapid_alt"])}})
