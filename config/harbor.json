@@ -1,0 +1,17 @@
+{
+  "name": "harbor",
+  "title": "Harbor Blvd (Fullerton → Santa Ana)",
+  "corridor_route": "543",
+  "excluded_feeders": ["543", "43"],
+  "window_mi": null,
+  "speed_exist_mph": 15.0,
+  "headway_exist_min": 24.0,
+  "speed_exist_alt": 12.8,
+  "headway_exist_alt": 20.0,
+  "service_note": "doc/OCTA values; alt = current GTFS (543 median run, midday headway)",
+  "anchor_low": 10000,
+  "anchor_high": 13000,
+  "anchor_note": "43+543 combined; ~10k post-COVID TSP study .. ~13k Route 43 at 2013 launch",
+  "speed_new_mph": 30.0,
+  "headway_new_min": 5.0
+}

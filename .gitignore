@@ -1,0 +1,4 @@
+# large raw downloads -- regenerate with scripts/download_data.py
+data/raw/
+__pycache__/
+*.pyc

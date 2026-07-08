@@ -1,0 +1,163 @@
+{
+  "config": {
+    "name": "harbor",
+    "title": "Harbor Blvd (Fullerton \u2192 Santa Ana)",
+    "corridor_route": "543",
+    "excluded_feeders": [
+      "543",
+      "43"
+    ],
+    "window_mi": null,
+    "speed_exist_mph": 15.0,
+    "headway_exist_min": 24.0,
+    "speed_exist_alt": 12.8,
+    "headway_exist_alt": 20.0,
+    "service_note": "doc/OCTA values; alt = current GTFS (543 median run, midday headway)",
+    "anchor_low": 10000,
+    "anchor_high": 13000,
+    "anchor_note": "43+543 combined; ~10k post-COVID TSP study .. ~13k Route 43 at 2013 launch",
+    "speed_new_mph": 30.0,
+    "headway_new_min": 5.0
+  },
+  "segments": {
+    "car_frac": [
+      0.0298,
+      0.1522,
+      0.818
+    ],
+    "S0_by_car": [
+      0.2273,
+      0.0442,
+      0.0192
+    ],
+    "S0_overall": 0.0292,
+    "workers_total": 118415
+  },
+  "walk_bins": {
+    "weights": [
+      0.492,
+      0.2978,
+      0.1402,
+      0.0549,
+      0.0151
+    ],
+    "centers": [
+      1.36,
+      3.43,
+      5.89,
+      8.73,
+      10.82
+    ],
+    "jobs": 10647
+  },
+  "transfer_bins": {
+    "weights": [
+      0.3788,
+      0.2725,
+      0.1991,
+      0.1025,
+      0.047
+    ],
+    "centers": [
+      1.44,
+      3.53,
+      6.0,
+      8.72,
+      11.48
+    ],
+    "jobs": 85085
+  },
+  "feeders": [
+    {
+      "route": "123",
+      "node_pos": 12.03,
+      "headway": 59.0
+    },
+    {
+      "route": "30",
+      "node_pos": 11.07,
+      "headway": 30.0
+    },
+    {
+      "route": "38",
+      "node_pos": 10.23,
+      "headway": 30.0
+    },
+    {
+      "route": "42",
+      "node_pos": 9.3,
+      "headway": 20.0
+    },
+    {
+      "route": "42A",
+      "node_pos": 9.3,
+      "headway": 60.0
+    },
+    {
+      "route": "46",
+      "node_pos": 8.14,
+      "headway": 2.0
+    },
+    {
+      "route": "47",
+      "node_pos": 12.02,
+      "headway": 16.0
+    },
+    {
+      "route": "50",
+      "node_pos": 7.12,
+      "headway": 30.0
+    },
+    {
+      "route": "54",
+      "node_pos": 6.13,
+      "headway": 30.0
+    },
+    {
+      "route": "56",
+      "node_pos": 4.96,
+      "headway": 30.0
+    },
+    {
+      "route": "560",
+      "node_pos": 3.95,
+      "headway": 20.0
+    },
+    {
+      "route": "60",
+      "node_pos": 3.95,
+      "headway": 20.0
+    },
+    {
+      "route": "64",
+      "node_pos": 2.94,
+      "headway": 15.0
+    },
+    {
+      "route": "66",
+      "node_pos": 2.47,
+      "headway": 15.0
+    },
+    {
+      "route": "70",
+      "node_pos": 1.71,
+      "headway": 24.0
+    },
+    {
+      "route": "72",
+      "node_pos": 0.75,
+      "headway": 28.0
+    },
+    {
+      "route": "76",
+      "node_pos": 0.0,
+      "headway": 60.0
+    },
+    {
+      "route": "83",
+      "node_pos": 7.16,
+      "headway": 30.0
+    }
+  ],
+  "one_end_jobs_total": 127988
+}

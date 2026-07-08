@@ -1,0 +1,126 @@
+{
+  "config": {
+    "name": "beach",
+    "title": "Beach Blvd (La Palma \u2192 Yorktown)",
+    "corridor_route": "29",
+    "excluded_feeders": [
+      "29",
+      "529"
+    ],
+    "window_mi": [
+      2.25,
+      14.75
+    ],
+    "speed_exist_mph": 16.1,
+    "headway_exist_min": 30.0,
+    "speed_exist_alt": 11.0,
+    "headway_exist_alt": 30.0,
+    "service_note": "529 rapid per current GTFS; alt speed = Route 29 local",
+    "anchor_low": 4300,
+    "anchor_high": 7500,
+    "anchor_note": "29+529 full-route 6,000-9,000 (Route 29 = 5,888 Oct 2018 pre-529 at 2x today's frequency) scaled by window demand share 0.71-0.84",
+    "speed_new_mph": 30.0,
+    "headway_new_min": 5.0
+  },
+  "segments": {
+    "car_frac": [
+      0.0244,
+      0.1601,
+      0.8155
+    ],
+    "S0_by_car": [
+      0.0739,
+      0.0235,
+      0.0111
+    ],
+    "S0_overall": 0.0147,
+    "workers_total": 110340
+  },
+  "walk_bins": {
+    "weights": [
+      0.5686,
+      0.2222,
+      0.1327,
+      0.0629,
+      0.0135
+    ],
+    "centers": [
+      1.37,
+      3.49,
+      5.87,
+      8.63,
+      11.19
+    ],
+    "jobs": 8297
+  },
+  "transfer_bins": {
+    "weights": [
+      0.4172,
+      0.3191,
+      0.1704,
+      0.0814,
+      0.0119
+    ],
+    "centers": [
+      1.37,
+      3.47,
+      5.86,
+      8.44,
+      10.97
+    ],
+    "jobs": 50854
+  },
+  "feeders": [
+    {
+      "route": "38",
+      "node_pos": 2.77,
+      "headway": 30.0
+    },
+    {
+      "route": "42",
+      "node_pos": 3.81,
+      "headway": 20.0
+    },
+    {
+      "route": "42A",
+      "node_pos": 3.34,
+      "headway": 60.0
+    },
+    {
+      "route": "46",
+      "node_pos": 4.83,
+      "headway": 2.0
+    },
+    {
+      "route": "50",
+      "node_pos": 5.83,
+      "headway": 30.0
+    },
+    {
+      "route": "54",
+      "node_pos": 6.83,
+      "headway": 30.0
+    },
+    {
+      "route": "56",
+      "node_pos": 7.84,
+      "headway": 30.0
+    },
+    {
+      "route": "60",
+      "node_pos": 8.87,
+      "headway": 20.0
+    },
+    {
+      "route": "70",
+      "node_pos": 10.89,
+      "headway": 24.0
+    },
+    {
+      "route": "72",
+      "node_pos": 11.89,
+      "headway": 28.0
+    }
+  ],
+  "one_end_jobs_total": 99160
+}
