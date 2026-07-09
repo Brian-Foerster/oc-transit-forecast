@@ -53,6 +53,30 @@ final ridership; stage 3 is the number of record.
     (mixed-traffic / TSP / dedicated), used as a TIEBREAK-ONLY quantity
     when ridership bands overlap; never combined with ridership into a
     single score.
+  - *Economic-potential layer (defined, adopted 2026-07-08):* a
+    per-finalist descriptive column read alongside ridership — never
+    fused into a score, never additive with user benefits (land markets
+    largely capitalize the same time savings the ridership model already
+    values; two lenses on one benefit). Per station catchment (1/2-mi
+    buffer): (1) **capacity ceiling** — developable/underused parcels x
+    zoning headroom -> potential net new units / commercial sq ft,
+    computed as TWO ceilings (base municipal zoning vs base + CA
+    state-law overlays: SB 9, AB 2011, density bonus — the static local
+    ceiling is soft in CA); (2) **value base x premium band** — market-
+    adjusted property value (NOT raw assessed value; Prop 13 makes
+    assessor rolls lag decades, worst in the underused catchments where
+    capacity is best) x a mode-matched hedonic premium band of ~0-10%
+    for bus-based rapid (rail-class showcase premia excluded), with
+    position in the band keyed to the running-way package (spec 02 §4.9
+    treatment class; permanence drives premia) and, secondarily, ordinal
+    ridership rank within the finalist set; (3) **realization gate** —
+    permitted-density and market-demand markdown from "physically
+    possible" to "realizable". Output: one table row per finalist
+    (capacity band, uplift $ band, realization flag) + a one-line read,
+    in the gate memo. Implemented as a script + committed CSV
+    (repo rule: regenerable by script), built once gate 1 produces a
+    finalist set. Corridor spans five cities' zoning codes — that is
+    the layer's main cost, and why it runs at finalist scale only.
   - *Second finalist:* advances to stage 3 only when gate-2 bands
     overlap (conditional, not a fixed count).
 - **Gate 3 -> publish**: stage-3 vs stage-2 reconciliation memo required
@@ -67,6 +91,13 @@ final ridership; stage 3 is the number of record.
    as they arise, not summarized after the fact.
 4. Repos stay GitHub-committable: raw blobs gitignored, derived tables
    small and committed, seeds fixed, every figure regenerable by script.
+5. **Two-way firewall between ridership and economic layers.** The
+   economic-potential column never informs the ridership number, and the
+   ridership machinery's induced-demand sensitivity (spec 02 §4.5b) is
+   never justified by the development column — otherwise the "two
+   lenses" silently become a cascade of speculative elasticities. Value
+   uplift and user benefits are presented as alternative measurements of
+   the same benefit, never summed.
 
 ## 5. Validation registry
 
