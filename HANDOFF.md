@@ -55,7 +55,19 @@ ASC at 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.
    (plus a latent rng bug fix: pinning a prior used to shift all other
    draws); web research for a measured anchor came up dry →
    `outputs/records_request_draft.md`.
-7. Same session, second pass: the "unretrievable" data was recovered from
+7. **MODE DECISION (user, 2026-07-08): the proposed line is an ELEVATED
+   AUTOMATED LIGHT METRO, REM-class (GoA4 driverless)** — not arterial
+   BRT. Capital cost model: `costs/metro_cost_model.xlsx` (user-supplied,
+   REM-calibrated, intentionally aggressive = LOW scenario) + spec
+   `specs/04-capital-cost.md` (fleet derived from service plan, LOW /
+   US-TYPICAL band, special structures, land flag). Back-propagation:
+   ASC premium bracket widened to {1.0, 1.5, 2.0} (bus-calibrated ASC on
+   a rail-class product), derived-speed model split grade-separated
+   (forward) vs street (bus backtests), economic-layer premium band to
+   rail-class 5-25%, stage-3 build GTFS as rail mode. Grade-separated
+   physics at 80 km/h cruise / 25-s dwell / 1-mi stops gives ~29.5 mph —
+   independently validates the 30-mph config value.
+8. Same session, second pass: the "unretrievable" data was recovered from
    octa.net itself — URL-pattern probing found the FY2017–FY2021 quarterly
    detailed reports (route-level boardings) still live, and the Wayback CDX
    index revealed the monthly ridership report's real filename contains a

@@ -49,10 +49,12 @@ final ridership; stage 3 is the number of record.
     so does not violate governance rule 1 — but the two roles are
     distinct and both numbers always appear together. Final gate
     authority remains with the project owner via the gate memo.
-  - *Cost proxy (defined):* route-miles x lane-treatment class
-    (mixed-traffic / TSP / dedicated), used as a TIEBREAK-ONLY quantity
-    when ridership bands overlap; never combined with ridership into a
-    single score.
+  - *Cost proxy:* SUPERSEDED for the chosen mode (elevated automated
+    light metro, decision 2026-07-08) by the capital-cost module,
+    [04-capital-cost.md](04-capital-cost.md) — LOW / US-TYPICAL bands,
+    tiebreak-only, never combined with ridership into a single score.
+    The old route-miles x lane-treatment proxy is retained only if BRT
+    alternatives re-enter the study.
   - *Economic-potential layer (defined, adopted 2026-07-08):* a
     per-finalist descriptive column read alongside ridership — never
     fused into a score, never additive with user benefits (land markets
@@ -65,11 +67,12 @@ final ridership; stage 3 is the number of record.
     ceiling is soft in CA); (2) **value base x premium band** — market-
     adjusted property value (NOT raw assessed value; Prop 13 makes
     assessor rolls lag decades, worst in the underused catchments where
-    capacity is best) x a mode-matched hedonic premium band of ~0-10%
-    for bus-based rapid (rail-class showcase premia excluded), with
-    position in the band keyed to the running-way package (spec 02 §4.9
-    treatment class; permanence drives premia) and, secondarily, ordinal
-    ridership rank within the finalist set; (3) **realization gate** —
+    capacity is best) x a mode-matched hedonic premium band — with the
+    2026-07-08 mode decision (elevated automated light metro) this is
+    the rail-class band, ~5-25%, permanence-keyed (elevated guideway =
+    high permanence; comparators: SkyTrain / Canada Line-class hedonics,
+    not bus-rapid studies), positioned secondarily by ordinal ridership
+    rank within the finalist set; (3) **realization gate** —
     permitted-density and market-demand markdown from "physically
     possible" to "realizable". Output: one table row per finalist
     (capacity band, uplift $ band, realization flag) + a one-line read,

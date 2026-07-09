@@ -3,7 +3,8 @@
 > Full reviewable specifications: [specs/00-pipeline.md](specs/00-pipeline.md)
 > (stage gates, validation registry, governance) and per-method specs
 > [01-screen-drm](specs/01-screen-drm.md) · [02-pivot-logit](specs/02-pivot-logit.md)
-> · [03-stops](specs/03-stops.md).
+> · [03-stops](specs/03-stops.md) · [04-capital-cost](specs/04-capital-cost.md).
+> Mode decision 2026-07-08: elevated automated light metro (REM-class).
 
 Roles and runtime budgets set by the user: shortlist selection (<= 1 hr),
 finalist picking (<= 1 hr), full modeling of the finalist (<= 8 hr/run).

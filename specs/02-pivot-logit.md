@@ -83,12 +83,15 @@ split (the split is the more falsifiable prediction)
 (b) Induced demand: optional side column "with induced demand" using a
     total-demand elasticity to the accessibility change, prior U(0.1, 0.3),
     clearly labeled, never the headline and never a gate criterion.
-(c) **ASC transportability** (review 2026-07-08; README known issue 14):
-    the ABC moves essentially only the ASC, and transporting the 543's
-    modest-overlay premium to a categorically larger service is an
-    assumption in the conservative direction. Add a sensitivity row/band:
+(c) **ASC transportability** (review 2026-07-08; README known issue 14;
+    sharpened by the 2026-07-08 MODE DECISION — elevated automated light
+    metro): the ABC moves essentially only the ASC, and the calibration
+    experiments are BUS overlays while the forward line is a rail-class
+    product — transporting the 543's premium is an assumption in the
+    conservative direction, now across modes. Sensitivity band widened:
     forward ASC = calibrated ASC x premium factor, premium in
-    {1.0 (current assumption), 1.25, 1.5}.
+    {1.0 (current assumption), 1.5, 2.0} — a 2.0 premium on the ~0.11
+    posterior roughly returns the prior midpoint.
 (d) Choice-structure middle bracket: the hard max and the theta=1 logsum
     (-37%) are the two extremes; add small-theta softmax rows
     (theta in {0.1, 0.2}) — genuine idiosyncratic taste without the full
@@ -129,6 +132,16 @@ added stops. Replace exogenous speed with a TCQSM-style decomposition:
 
     min/mi = 60/v_cruise + (dwell + accel/decel loss)/(60 * spacing)
              [+ signal delay/mi]
+
+*Mode decision 2026-07-08 (elevated automated light metro) splits this
+in two:* the FORWARD line uses the grade-separated variant — no signal
+delay, cruise prior 70-90 km/h, dwell 20-30 s (at 80 km/h / 25 s /
+1.6-km spacing: ~47 km/h ≈ 29.5 mph, independently validating the
+30-mph config value); the street-calibrated variant below (43/543
+two-point measurement) remains for the BUS backtest/calibration
+experiments, whose service definitions stay street-physical. The same
+function sizes the fleet (spec 04 §3.1) and generates stage-3 build-GTFS
+stop_times.
 
 - Config: services gain a running-way package (mixed / TSP / dedicated
   -> v_cruise prior) and a dwell prior; average speed becomes DERIVED.
