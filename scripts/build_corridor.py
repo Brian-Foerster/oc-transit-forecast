@@ -112,10 +112,17 @@ def bin_flows(dists, weights):
 def main(cfg_path):
     cfg = json.load(open(cfg_path, encoding="utf-8"))
     trips, shapes, st, wk = load_gtfs()
-    for rid in dict.fromkeys([cfg["corridor_route"]] + cfg["excluded_feeders"]):
+    base_rts = ([cfg["corridor_route"]] if cfg.get("corridor_route") else [])
+    for rid in dict.fromkeys(base_rts + cfg["excluded_feeders"]):
         hw = route_headways(trips, st, wk, rid)
         print(f"  route {rid} GTFS headways: {hw}  (for config base services)")
-    (sx, sy), L = main_shape_xy(trips, shapes, wk, cfg["corridor_route"])
+    if cfg.get("corridor_waypoints"):
+        # explicit polyline (lat, lon) -- for alignments no GTFS route traces
+        # (e.g. the OC Streetcar's Pacific Electric ROW, spec 05 §3.3)
+        wp = np.array(cfg["corridor_waypoints"], float)
+        sx, sy = wp[:, 1] * MI_LON, wp[:, 0] * MI_LAT
+    else:
+        (sx, sy), L = main_shape_xy(trips, shapes, wk, cfg["corridor_route"])
     line = Line(sx, sy)
     w0, w1 = cfg["window_mi"] or [0.0, line.L]
     print(f"{cfg['name']}: shape {line.L:.1f} mi, window {w0:.2f}-{w1:.2f}")

@@ -467,9 +467,10 @@ def main(path):
     sens("walk-taste spread +/-15%", walk_spread=1)
     sens("new-line stops offset 0.5 mi",
          cfg_patch={"service_new": dict(sn, grid_phase=0.5)})
-    sens("rapid base -> GTFS current",
-         cfg_patch={"services_base": {"rapid": dict(
-             cfg["services_base"]["rapid"], **cfg["rapid_alt"])}})
+    if "rapid" in cfg["services_base"] and cfg.get("rapid_alt"):
+        sens("rapid base -> GTFS current",
+             cfg_patch={"services_base": {"rapid": dict(
+                 cfg["services_base"]["rapid"], **cfg["rapid_alt"])}})
     sens("new line 25 mph",
          cfg_patch={"service_new": dict(sn, speed=25.0)})
     sens("new line 10/20-min headway",
@@ -486,6 +487,19 @@ def main(path):
           f"uncapped expected blend) ---")
     for label, v, d in sorted(rows, key=lambda r: -abs(r[2])):
         print(f"  {label:32s}: {v:8,.0f}  ({d:+.1f}%)")
+
+    # rail-ASC premium bracket (spec 05 §3.4): central points at the
+    # ABC-calibrated ASC x each premium multiplier. Reported as a band,
+    # not a point -- the constant has the least local support of any
+    # parameter for a rail-class product calibrated on bus experiments.
+    if cfg.get("asc_bracket"):
+        a0 = cfg.get("asc_calibrated", 0.109)
+        print(f"\n--- rail-ASC premium bracket (calibrated asc={a0:.3f} "
+              f"from the BUS 543 experiment; bracket borrowed from the "
+              f"metro scenario -- README issue 14) ---")
+        for m in cfg["asc_bracket"]:
+            v = point(asc=a0 * m)
+            print(f"  asc x {m:.2f} = {a0*m:.3f}: {v:8,.0f}")
 
     # ---- design sweep (h = peak headway; off-peak = 2x) --------------------
     print("\n--- design sweep: central expected-blend P50 (uncapped; "

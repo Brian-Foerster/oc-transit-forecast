@@ -1,0 +1,222 @@
+{
+  "name": "streetcar",
+  "title": "OC Streetcar (SARTC → Harbor/Westminster)",
+  "mode": "streetcar_at_grade",
+  "corridor_route": null,
+  "corridor_waypoints": [
+    [
+      33.751568,
+      -117.857184
+    ],
+    [
+      33.752091,
+      -117.857577
+    ],
+    [
+      33.751987,
+      -117.858654
+    ],
+    [
+      33.751372,
+      -117.860236
+    ],
+    [
+      33.750932,
+      -117.861282
+    ],
+    [
+      33.750397,
+      -117.862603
+    ],
+    [
+      33.749907,
+      -117.863556
+    ],
+    [
+      33.749729,
+      -117.864983
+    ],
+    [
+      33.749729,
+      -117.866595
+    ],
+    [
+      33.749732,
+      -117.868058
+    ],
+    [
+      33.749735,
+      -117.869613
+    ],
+    [
+      33.749692,
+      -117.871529
+    ],
+    [
+      33.749,
+      -117.872433
+    ],
+    [
+      33.748508,
+      -117.873254
+    ],
+    [
+      33.747965,
+      -117.873867
+    ],
+    [
+      33.74792,
+      -117.874957
+    ],
+    [
+      33.747912,
+      -117.876847
+    ],
+    [
+      33.747915,
+      -117.878301
+    ],
+    [
+      33.748028,
+      -117.879633
+    ],
+    [
+      33.74793,
+      -117.881108
+    ],
+    [
+      33.747977,
+      -117.88336
+    ],
+    [
+      33.747925,
+      -117.885264
+    ],
+    [
+      33.747923,
+      -117.886933
+    ],
+    [
+      33.747895,
+      -117.888798
+    ],
+    [
+      33.74788,
+      -117.892084
+    ],
+    [
+      33.747907,
+      -117.893505
+    ],
+    [
+      33.747897,
+      -117.894135
+    ],
+    [
+      33.747864,
+      -117.89579
+    ],
+    [
+      33.747894,
+      -117.897348
+    ],
+    [
+      33.74786,
+      -117.897979
+    ],
+    [
+      33.748115,
+      -117.899216
+    ],
+    [
+      33.748579,
+      -117.900149
+    ],
+    [
+      33.750743,
+      -117.903659
+    ],
+    [
+      33.751375,
+      -117.904657
+    ],
+    [
+      33.754144,
+      -117.90903
+    ],
+    [
+      33.756858,
+      -117.913433
+    ],
+    [
+      33.759589,
+      -117.917913
+    ],
+    [
+      33.760846,
+      -117.91997
+    ],
+    [
+      33.760903,
+      -117.920067
+    ]
+  ],
+  "excluded_feeders": [
+    "60",
+    "64",
+    "560",
+    "150"
+  ],
+  "window_mi": null,
+  "anchor_low": 3600,
+  "anchor_high": 5500,
+  "anchor_note": "MEASURED but WEAK -- read spec 05 §3.3 before quoting. Composite of partial overlaps, not a co-located pair: parallel carriers Rt 60 (shape-share 0.29), 64 (0.35), 560 (0.56), 150 (0.41) x FY2019 weekday boardings (route_boardings.csv / 318) = ~5,034 raw corridor boardings, x uniformity 0.80-1.10 (boardings not uniform along routes) x FY2019->present trend 0.90-0.99 (anchor_from_apc.py). scripts/anchor_streetcar.py reproduces. NOT included: SARTC Metrolink/Amtrak transfers (no OCTA GTFS; partially via tau), greenfield PE-ROW new access (out of scope by construction -- upside risk). Crossing routes (43/543/53/47/57/83...) enter via the transfer market.",
+  "services_base": {
+    "local": {
+      "speed": 11.4,
+      "headway": 18.0,
+      "spacing": 0.25,
+      "note": "composite of parallel carriers; contribution-weighted headway ~18 min (64 at 12/15, 60/560 at 20, 150 at 39); local speed per OCTA GTFS typical"
+    }
+  },
+  "service_new": {
+    "speed": 11.3,
+    "headway": {
+      "peak": 10.0,
+      "offpeak": 15.0
+    },
+    "spacing": 0.42,
+    "note": "4.15 mi / ~22 min end-to-end (~11 mph), ~10 stops, 10/15-min headway per OCTA project docs"
+  },
+  "visitor": {
+    "share": [
+      0.05,
+      0.15
+    ],
+    "S0": [
+      0.1,
+      0.3
+    ],
+    "bin_weights": [
+      0.45,
+      0.45,
+      0.1,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "note": "downtown Santa Ana civic-center/courts/event visitors; short trips; judgment call"
+  },
+  "cross_check": {
+    "lo": 5000,
+    "hi": 7300,
+    "note": "OCTA official projection ~6,000-7,300/day; CEO more recently ~5,000 (spec 05 §3.6)"
+  },
+  "asc_bracket": [
+    1.0,
+    1.5,
+    2.0
+  ],
+  "asc_calibrated": 0.109,
+  "asc_note": "rail-ASC bracket BORROWED from the metro scenario (spec 05 §3.4); an at-grade slow streetcar premium may differ -- flagged, README issue 14"
+}

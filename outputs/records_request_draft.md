@@ -32,6 +32,13 @@ where available):
    of riders whose one-way trip involves a transfer between routes, and, if
    tabulated, transfer rates for riders boarding Routes 43 or 543.
 
+4. *(post-launch, ~2027)* **OC Streetcar stop-level average weekday
+   boardings and alightings** (APC), monthly from revenue-service start,
+   plus transfer counts at the Harbor/Westminster and SARTC termini. This
+   becomes the first rail-class calibration target for the corridor models
+   (spec 05 §3.5) and directly sharpens the Harbor Blvd forecast via the
+   shared transfer node.
+
 Purpose (offered for context, not as a condition): an open-methodology
 corridor ridership analysis of Harbor Boulevard transit. Item 1(a) grounds
 the 2013 Bravo! 543 launch response used as a calibration target, item 1(b)

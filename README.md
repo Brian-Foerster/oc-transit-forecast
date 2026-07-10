@@ -129,6 +129,10 @@ covers).
                         transfer flows)
       anchor_from_apc.py  anchor derivation from measured OCTA route-level
                         boardings (source URLs + full data table inside)
+      extract_apc.py    all-route boardings table from the report PDFs
+                        -> data/derived/route_boardings.csv
+      anchor_streetcar.py  OC Streetcar cold-start anchor (spec 05 §3.3):
+                        shape-share x measured boardings of parallel carriers
       route43_share.py  Route 43's corridor share (anchor consistency)
       model.py          the Monte-Carlo pivot model + sensitivities + sweep
       backtest_543.py   backtest vs the 2013 Bravo! 543 launch
@@ -247,3 +251,14 @@ Recorded as they were made; each is exposed in the sensitivity output.
     is one-sided (P50 6,169 vs target 4,200; even P10 barely reaches the
     observed band) — reported here as a model-saturation signal, not
     smoothed away by the kernel.
+16. **The streetcar anchor is measured but WEAK, and its rail ASC is
+    borrowed** (spec 05). The OC Streetcar corridor (config/streetcar.json)
+    has no co-located route pair like Harbor's 43/543 — its anchor
+    (3,600-5,500) is a composite of partial overlaps (Rt 60/64/560/150
+    shape-shares x measured boardings), with SARTC rail transfers and
+    greenfield new access excluded (upside risk, out of scope by
+    construction). Its ASC bracket {1.0, 1.5, 2.0} is borrowed from the
+    metro scenario; an at-grade slow streetcar premium may differ. The
+    result (P50 ~5,600, inside OCTA's 5,000-7,300 band) should be read
+    with both caveats. Post-launch APC (~2027) becomes the first
+    rail-class ABC target (records request item 4).

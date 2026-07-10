@@ -55,7 +55,16 @@ ASC at 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.
    (plus a latent rng bug fix: pinning a prior used to shift all other
    draws); web research for a measured anchor came up dry →
    `outputs/records_request_draft.md`.
-7. **MODE DECISION (user, 2026-07-08): the proposed line is an ELEVATED
+7. Same session, second pass: the "unretrievable" data was recovered from
+   octa.net itself — URL-pattern probing found the FY2017–FY2021 quarterly
+   detailed reports (route-level boardings) still live, and the Wayback CDX
+   index revealed the monthly ridership report's real filename contains a
+   stray space (the clean URL 404s). Anchor re-derived from measurement
+   (7,650–9,650); the 543 calibration target rose to mu=4,200 (measured
+   FY2017 4,615/wd, FY2019 3,739/wd — press figures were low). Records
+   request narrowed to stop-level APC, FY2014–16, post-2020 route-level,
+   and the transfer rate.
+8. **MODE DECISION (user, 2026-07-08): the proposed line is an ELEVATED
    AUTOMATED LIGHT METRO, REM-class (GoA4 driverless)** — not arterial
    BRT. Capital cost model: `costs/metro_cost_model.xlsx` (user-supplied,
    REM-calibrated, intentionally aggressive = LOW scenario) + spec
@@ -67,15 +76,17 @@ ASC at 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.
    rail-class 5-25%, stage-3 build GTFS as rail mode. Grade-separated
    physics at 80 km/h cruise / 25-s dwell / 1-mi stops gives ~29.5 mph —
    independently validates the 30-mph config value.
-8. Same session, second pass: the "unretrievable" data was recovered from
-   octa.net itself — URL-pattern probing found the FY2017–FY2021 quarterly
-   detailed reports (route-level boardings) still live, and the Wayback CDX
-   index revealed the monthly ridership report's real filename contains a
-   stray space (the clean URL 404s). Anchor re-derived from measurement
-   (7,650–9,650); the 543 calibration target rose to mu=4,200 (measured
-   FY2017 4,615/wd, FY2019 3,739/wd — press figures were low). Records
-   request narrowed to stop-level APC, FY2014–16, post-2020 route-level,
-   and the transfer rate.
+9. **Spec 05 implemented (2026-07-09):** (a) REFERENCE relabeled into a
+   basis-tagged, display-only object (regime x horizon; Cleveland split
+   launch +40 / matured +78; ALM analogs Canada Line / REM South Shore in
+   absolute-accuracy-only columns; Flyvbjerg 2005 optimism prior printed
+   beside every headline; nothing filters draws). (b) OC Streetcar
+   cold-start: alignment recovered from OSM (corridor_waypoints polyline
+   support in build_corridor.py), anchor derived from parallel carriers'
+   measured boardings x shape-share (3,600-5,500, WEAK -- see README
+   issue 16), result P50 ~5,600 (4,500-6,800), inside OCTA's 5,000-7,300
+   projection band; rail-ASC bracket printed as a band. Post-launch APC
+   (~2027) is the future rail-class ABC target (records request item 4).
 
 ## Pipeline (run in this order)
 
