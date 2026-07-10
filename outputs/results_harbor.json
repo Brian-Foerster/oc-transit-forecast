@@ -92,6 +92,54 @@
       ]
     }
   },
+  "reference": {
+    "uplift": [
+      {
+        "name": "Twin Cities A Line",
+        "pct": 30,
+        "regime": "retain",
+        "horizon": "launch",
+        "note": "first-year, overlay on retained local"
+      },
+      {
+        "name": "Cleveland HealthLine",
+        "pct": 40,
+        "regime": "fold",
+        "horizon": "launch",
+        "note": "launch year; $200M street-rebuild confound"
+      },
+      {
+        "name": "Cleveland HealthLine",
+        "pct": 78,
+        "regime": "fold",
+        "horizon": "matured",
+        "note": "5-yr matured; rebuild + Univ Circle TOD confound"
+      }
+    ],
+    "study": {
+      "name": "UW BRT synthesis (2017)",
+      "pct": 35,
+      "note": "average across BRT corridors, mixed bases"
+    },
+    "alm_analogs": [
+      {
+        "name": "Vancouver Canada Line (2009)",
+        "note": "beat ~100k/day target by 2010; 2019 ~150k vs 120k forecast (optimism-confirming pole; embedded in a feeder network)"
+      },
+      {
+        "name": "Montreal REM South Shore (2023)",
+        "note": "~30k/day projected, early counts ~24k (cautionary launch pole; opened as a standalone stub)"
+      }
+    ],
+    "mode_bonus": {
+      "name": "Canada Line displacing the 98 B-Line",
+      "note": "rail replacing the busiest bus corridor; anchors the rail-ASC premium bracket"
+    },
+    "optimism": {
+      "name": "Flyvbjerg, Holm & Buhl (2005), JAPA 71(2)",
+      "note": "9 of 10 rail forecasts overestimated; mean overestimation ~106%; 84% off by more than +/-20%"
+    }
+  },
   "sensitivity": [
     {
       "label": "anchor -> low",

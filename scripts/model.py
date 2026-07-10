@@ -45,7 +45,46 @@ if hasattr(sys.stdout, "reconfigure"):
 N = 40000
 WALK_MPH = 3.0
 SUBK = 8   # rider-position quadrature nodes; 8 is exact for 0.25/0.5/1.0-mi grids
-REFERENCE = "Twin Cities +33% | UW +35% | Cleveland HealthLine +78%"
+
+# Reference classes are DISPLAY-ONLY (spec 05 §4): printed beside the
+# forecast, never used to cap, reweight, or filter draws (standing user
+# decision). Entries are basis-tagged -- regime {fold, retain, study} x
+# horizon {launch, matured} -- because the old one-line string mixed three
+# measurement bases (Cleveland matured fold vs Twin Cities launch retain vs
+# a study average) and quoted only Cleveland's matured high end.
+REFERENCE = {
+    "uplift": [  # tier 0: bus->rapid corridor uplifts (arterial BRT analogs)
+        {"name": "Twin Cities A Line", "pct": 30, "regime": "retain",
+         "horizon": "launch", "note": "first-year, overlay on retained local"},
+        {"name": "Cleveland HealthLine", "pct": 40, "regime": "fold",
+         "horizon": "launch", "note": "launch year; $200M street-rebuild confound"},
+        {"name": "Cleveland HealthLine", "pct": 78, "regime": "fold",
+         "horizon": "matured", "note": "5-yr matured; rebuild + Univ Circle TOD confound"},
+    ],
+    "study": {"name": "UW BRT synthesis (2017)", "pct": 35,
+              "note": "average across BRT corridors, mixed bases"},
+    # tier 1: mode-matched grade-separated driverless metros -- absolute
+    # ridership / forecast-accuracy analogs ONLY; no clean corridor-uplift
+    # basis (new alignments, not same-street bus replacements). Do NOT back
+    # out a pseudo-uplift from these.
+    "alm_analogs": [
+        {"name": "Vancouver Canada Line (2009)",
+         "note": "beat ~100k/day target by 2010; 2019 ~150k vs 120k forecast "
+                 "(optimism-confirming pole; embedded in a feeder network)"},
+        {"name": "Montreal REM South Shore (2023)",
+         "note": "~30k/day projected, early counts ~24k (cautionary launch "
+                 "pole; opened as a standalone stub)"},
+    ],
+    # tier 2: rail-over-bus mode bonus -- empirical anchor for the ASC
+    # premium bracket {1.0, 1.5, 2.0} (README issue 14)
+    "mode_bonus": {"name": "Canada Line displacing the 98 B-Line",
+                   "note": "rail replacing the busiest bus corridor; anchors "
+                           "the rail-ASC premium bracket"},
+    # tier 3: outside-view accuracy prior -- an annotation, never a filter
+    "optimism": {"name": "Flyvbjerg, Holm & Buhl (2005), JAPA 71(2)",
+                 "note": "9 of 10 rail forecasts overestimated; mean "
+                         "overestimation ~106%; 84% off by more than +/-20%"},
+}
 
 # (lo, hi, shape): triangular = peaked at midpoint; uniform elsewhere
 PRIORS = {
@@ -345,12 +384,27 @@ def main(path):
 
     res = run(cor)
     summary = {}
+    bands = {}
     for key in ("ratio_fold", "ratio_retain"):
         u = [100 * (pct(res[key], q) - 1) for q in (10, 50, 90)]
         summary[key] = u
+        bands[key.split("_")[1]] = (u[0], u[2])
         print(f"implied corridor uplift, {key[6:]:>6}: "
               f"{'/'.join(f'{x:+.0f}%' for x in u)}")
-    print(f"reference class: {REFERENCE}")
+    # reference classes: display-only, basis-tagged (spec 05 §4); the
+    # in-band flag compares each analog to the MATCHING scenario's P10-P90
+    print("reference analogs (display-only; regime x horizon):")
+    for e in REFERENCE["uplift"]:
+        lo, hi = bands[e["regime"]]
+        flag = "inside" if lo <= e["pct"] <= hi else "outside"
+        print(f"  {e['name']:24s} +{e['pct']}%  [{e['regime']}/{e['horizon']}]"
+              f"  {flag} model P10-P90 vs {e['regime']} -- {e['note']}")
+    s = REFERENCE["study"]
+    print(f"  study average: {s['name']} +{s['pct']}% -- {s['note']}")
+    for e in REFERENCE["alm_analogs"]:
+        print(f"  ALM analog (absolute/accuracy only): {e['name']} -- {e['note']}")
+    print(f"  mode bonus: {REFERENCE['mode_bonus']['name']} -- "
+          f"{REFERENCE['mode_bonus']['note']}")
     print(f"retained-local share of corridor transit (P50): "
           f"{100 * (1 - pct(res['newshare_retain'], 50)):.0f}% "
           f"(was an invented 25-40% prior; now mechanistic)")
@@ -369,6 +423,14 @@ def main(path):
         print(f"{label:>10} | {pct(d['fold']['newline'], 50):16,.0f} "
               f"{pct(d['retain']['newline'], 50):10,.0f} | "
               f"{pct(b, 10):9,.0f} {pct(b, 50):7,.0f} {pct(b, 90):7,.0f}")
+    o = REFERENCE["optimism"]
+    print(f"outside-view accuracy prior (annotation, never a filter): "
+          f"{o['name']} -- {o['note']}")
+    if cfg.get("cross_check"):
+        cc = cfg["cross_check"]
+        print(f"cross-check: {cc['note']}: {cc['lo']:,}-{cc['hi']:,}/day "
+              f"(a pivot result far outside this band is a finding to "
+              f"report -- anchor or ASC mis-set -- not to force)")
 
     # ---- one-at-a-time sensitivity (uncapped expected blend P50) ----------
     central = {k: (lo + hi) / 2 for k, (lo, hi, _) in PRIORS.items()}
@@ -443,6 +505,7 @@ def main(path):
                         "..", "outputs", f"results_{cor.name}.json")
     with open(dest, "w", encoding="utf-8") as f:
         json.dump({"config": cfg, "summary": summary,
+                   "reference": REFERENCE,
                    "sensitivity": [{"label": l, "value": v, "pct": d}
                                    for l, v, d in rows],
                    "sweep": {str(v): sweep[v] for v in speeds},

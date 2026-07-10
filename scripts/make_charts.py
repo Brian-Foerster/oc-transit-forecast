@@ -72,8 +72,9 @@ def intervals(name):
     fig.text(0.02, 0.94, f"{cfg['title']} — forecast weekday boardings",
              fontsize=13.5, fontweight="bold", color=INK)
     fig.text(0.02, 0.875, "P10–P90, P50 dots · blended fold/retain headline · "
-             "uncalibrated and backtest-calibrated shown side by side — "
-             "reference class: Twin Cities +33%, UW +35%, Cleveland +78%",
+             "uncalibrated and backtest-calibrated side by side — analogs "
+             "(display-only): Cleveland +40 launch/+78 matured (fold) · "
+             "Twin Cities +30 launch (retain) · study avg +35",
              fontsize=8.8, color=INK2)
     fig.savefig(os.path.join(OUT, f"forecast_{name}.png"), facecolor=SURFACE)
     plt.close(fig)
