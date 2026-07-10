@@ -200,16 +200,18 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             return np.full(n, h / 2.0)
         return np.minimum(h / 2.0, p["w0"] + p["lam"] * h)
 
-    def util(svc, market, dists, walks, is_new, period):
+    def util(svc, market, dists, walks, is_new, period, asc_scale=1.0):
         """(n, cells) utility of one service; walks[id(svc)] is the
-        per-cell walk distance (mi) for this service."""
+        per-cell walk distance (mi) for this service. asc_scale scales the
+        new line's ASC (0 = no-ASC counterfactual, spec 06 D1); the 1.0
+        default is a numerical no-op, so the ridership path is unchanged."""
         h, v = hdw(svc, period), svc["speed"]
         walk_min = walks[id(svc)] / WALK_MPH * 60.0
         u = (p["bivt"][:, None] * dists[None, :] * (60.0 / v)
              + bwait[:, None] * (wait_of(svc, market, h)[:, None]
                                  + walk_min[None, :]))
         if is_new:
-            u = u + p["asc"][:, None]
+            u = u + asc_scale * p["asc"][:, None]
         return u
 
     base_svcs = [(s, False) for s in cfg["services_base"].values()]
@@ -249,12 +251,13 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             subw = (subw[:, None] * tw[None, :]).ravel()
         return {id(s): W[i] for i, s in enumerate(union)}, subw
 
-    def combine(svcs, market, dists, walks, period):
+    def combine(svcs, market, dists, walks, period, asc_scale=1.0):
         """Each sub-rider takes their best available service (near-perfect
         substitutes on one street earn no logsum 'variety bonus' -- the
         red-bus/blue-bus correction). variety_logsum=True restores a
-        theta=1 logsum as a sensitivity toggle."""
-        us = np.stack([util(s, market, dists, walks, isn, period)
+        theta=1 logsum as a sensitivity toggle. asc_scale threads to util()
+        for the no-ASC welfare pass (spec 06 D1)."""
+        us = np.stack([util(s, market, dists, walks, isn, period, asc_scale)
                        for s, isn in svcs])
         if over.get("variety_logsum"):
             m = us.max(axis=0)
@@ -264,6 +267,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         best = us.max(axis=0)
         pnew = (us[0] >= best - 1e-12).astype(float) if svcs[0][1] else None
         return best, pnew
+
+    def um_split(dv, e, S0, P):
+        """Exact per-sub-cell binary-logit consumer surplus in utils (spec 06
+        D10): CS/capita = ln(1 + S0*(e - 1)) with e = clipped exp(dv) reused
+        from the pivot. Returns (infra, margin): um_infra = sum P*S0*dv (the
+        existing-rider component, ramped separately per D6), um_margin =
+        um_total - um_infra. Consumes NO rng."""
+        cs = np.log1p(S0 * (e - 1.0))                        # (n, C, seg)
+        infra = (P * S0 * dv[:, :, None]).sum(axis=(1, 2))
+        return infra, (P * cs).sum(axis=(1, 2)) - infra
 
     def market_terms(market, dists, wts, period):
         legs = 1 if market == "transfer" else 2
@@ -286,8 +299,19 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                 P = wts_e[:, :, None] * cf[:, None, :]
             S1 = S0 * e / (S0 * e + (1 - S0))                # pivot per sub-cell
             pn = 1.0 if pnew is None else pnew[:, :, None]
+            # spec 06 B1: welfare accumulators, NOT multiplied by pnew --
+            # benefits accrue to all corridor transit riders; pnew only splits
+            # boardings. Signed dv (fold short trips can lose) flows unclipped.
+            um_infra, um_margin = um_split(dv, e, S0, P)
+            # no-ASC counterfactual (spec 06 D1): re-combine with the new
+            # line's ASC zeroed (own ls/dv/e) for monetization only -- the
+            # ridership terms above stay on full utility.
+            dv0 = combine(svcs, market, dists_e, walks_e, period, 0.0)[0] - ls0
+            e0 = np.exp(np.clip(dv0, -20, 20))[:, :, None]
+            um0_infra, um0_margin = um_split(dv0, e0, S0, P)
             out[scen] = ((P * S1).sum(axis=(1, 2)),
-                         (P * S1 * pn).sum(axis=(1, 2)))
+                         (P * S1 * pn).sum(axis=(1, 2)),
+                         um_infra, um_margin, um0_infra, um0_margin)
             den = (P * S0).sum(axis=(1, 2))
         return out, den
 
@@ -301,6 +325,9 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     def system_response(wwA, xwA, vwA):
         num = {scen: 0.0 for scen in systems}
         num_new = {scen: 0.0 for scen in systems}
+        # spec 06 B1: welfare numerators [um_infra, um_margin, um0_infra,
+        # um0_margin] blended by wgt and combined with fx/fv exactly like num.
+        um = {scen: [0.0, 0.0, 0.0, 0.0] for scen in systems}
         den = fx = fv = None
         for period, wgt in periods:
             mk_w, den_w = market_terms("walk", cor.wd, wwA, period)
@@ -317,9 +344,13 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                     mk_w[scen][0] + fx * mk_x[scen][0] + fv * mk_v[scen][0])
                 num_new[scen] = num_new[scen] + wgt * (
                     mk_w[scen][1] + fx * mk_x[scen][1] + fv * mk_v[scen][1])
-        return num, num_new, den
+                for j in range(4):
+                    um[scen][j] = um[scen][j] + wgt * (
+                        mk_w[scen][j + 2] + fx * mk_x[scen][j + 2]
+                        + fv * mk_v[scen][j + 2])
+        return num, num_new, den, um
 
-    num, num_new, den = system_response(ww, xw, vw)
+    num, num_new, den, um = system_response(ww, xw, vw)
     rshort = None
     if over.get("nonwork_short"):
         # sensitivity probe: LODES is commute-only, so the non-work market
@@ -329,7 +360,9 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         def tilt(w, d):
             t = w * np.exp(-d / L)[None, :]
             return t / t.sum(axis=1, keepdims=True)
-        numS, _, denS = system_response(tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
+        # welfare is exported main-path only (B1); the tilted umS is a future
+        # export design point (spec 06 D8), discarded here.
+        numS, _, denS, _ = system_response(tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
         rshort = {scen: numS[scen] / denS for scen in systems}
 
     out = {}
@@ -349,6 +382,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             total = anchor * rc
             d[scen] = {"total": total,
                        "newline": total * out[scen]["newshare"]}
+            # spec 06 B1: per-draw user benefit in equivalent IVT minutes,
+            # person-scaled by the anchor and normalized like the ratio
+            # (um/den), utils->minutes via |bivt|. WORK-SHAPED and PRE-BLEND
+            # (spec 06 D8): the ws/kappa non-work expansion is ridership-only;
+            # the BCA wrapper applies the benefits blend. total = infra +
+            # margin, so totals are not returned.
+            um_infra, um_margin, um0_infra, um0_margin = um[scen]
+            for key, u_x in (("um_infra", um_infra), ("um_margin", um_margin),
+                             ("um0_infra", um0_infra), ("um0_margin", um0_margin)):
+                d[scen][key] = anchor * (u_x / den) / np.abs(p["bivt"])
         blend_ev = 0.5 * (d["fold"]["newline"] + d["retain"]["newline"])
         blend = np.where(rng.random(n) < 0.5,
                          d["fold"]["newline"], d["retain"]["newline"])
