@@ -45,6 +45,7 @@ if hasattr(sys.stdout, "reconfigure"):
 N = 40000
 WALK_MPH = 3.0
 SUBK = 8   # rider-position quadrature nodes; 8 is exact for 0.25/0.5/1.0-mi grids
+DEFAULT_FARE = 2.00   # OCTA flat cash fare, $ (spec 06 D3; override via cfg["fare_base"])
 
 # Reference classes are DISPLAY-ONLY (spec 05 §4): printed beside the
 # forecast, never used to cap, reweight, or filter draws (standing user
@@ -100,6 +101,16 @@ PRIORS = {
     "ws":    (0.40, 0.60, "uni"),      # work share of boardings
     "kappa": (0.60, 1.00, "uni"),      # non-work responsiveness
     "pkshare": (0.45, 0.60, "uni"),    # peak share of boardings (TOD blend)
+    # spec 06 D3/D7: appended LAST so draw_params consumes its rng stream in
+    # insertion order and every pre-existing prior's draws stay bit-identical
+    # (the append-last rule -- the repo was once bitten by rng reordering).
+    "vot_behav": (10.0, 22.0, "tri"),  # $/hr, behavioral VOT (fare response)
+    "pcar0":     (0.05, 0.25, "uni"),  # car-diversion prob, 0-vehicle segment
+    "pcar1":     (0.35, 0.65, "uni"),  # 1-vehicle segment
+    "pcar2":     (0.55, 0.85, "uni"),  # 2+-vehicle segment
+    "pcarv":     (0.00, 0.30, "uni"),  # visitor market
+    # pcar* are drawn and exported only (res["params"]); the BCA wrapper (B4)
+    # prices them -- model code must NOT consume them anywhere.
 }
 # cap treatments removed per user decision 2026-07: the headline is reported
 # uncapped NEXT TO the backtest-calibrated (ABC) treatment -- see reweight_abc.py.
@@ -175,6 +186,9 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     anchor = (np.full(n, float(over["anchor"])) if "anchor" in over
               else rng.uniform(cfg["anchor_low"], cfg["anchor_high"], n))
     bwait = p["bivt"] * p["ovt"]   # also the walk weight
+    # spec 06 D3: base fare each service falls back to; per-service override
+    # via svc["fare"]. At today's flat fare every fare term is exactly 0.
+    fare_base = cfg.get("fare_base", DEFAULT_FARE)
 
     fixed = "fix_bins" in over
     ww = np.tile(cor.ww, (n, 1)) if fixed else rng.dirichlet(cor.ww * 300, n)
@@ -205,11 +219,14 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             return np.full(n, h / 2.0)
         return np.minimum(h / 2.0, p["w0"] + p["lam"] * h)
 
-    def util(svc, market, dists, walks, is_new, period, asc_scale=1.0):
+    def util(svc, market, dists, walks, is_new, period, asc_scale=1.0,
+             fare_scale=1.0):
         """(n, cells) utility of one service; walks[id(svc)] is the
         per-cell walk distance (mi) for this service. asc_scale scales the
-        new line's ASC (0 = no-ASC counterfactual, spec 06 D1); the 1.0
-        default is a numerical no-op, so the ridership path is unchanged."""
+        new line's ASC (0 = no-ASC counterfactual, spec 06 D1); fare_scale
+        scales the fare term (0 = fare-free utility for the welfare passes,
+        spec 06 D3). Both 1.0 defaults are numerical no-ops, so the ridership
+        path is unchanged."""
         h, v = hdw(svc, period), svc["speed"]
         walk_min = walks[id(svc)] / WALK_MPH * 60.0
         u = (p["bivt"][:, None] * dists[None, :] * (60.0 / v)
@@ -217,6 +234,14 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                                  + walk_min[None, :]))
         if is_new:
             u = u + asc_scale * p["asc"][:, None]
+        # spec 06 D3: fare enters BEHAVIOR here (bcost = utils per $, negative)
+        # but the MONEY is never monetized through VOT -- welfare uses the
+        # fare-free variant (fare_scale=0) and the dollar burden is a separate
+        # stream. At flat fares svc_fare == fare_base, so this term is exactly
+        # 0.0 and u is bitwise unchanged.
+        bcost = p["bivt"] * 60.0 / p["vot_behav"]        # utils per $ (negative)
+        u = u + fare_scale * bcost[:, None] * (svc.get("fare", fare_base)
+                                               - fare_base)
         return u
 
     base_svcs = [(s, False) for s in cfg["services_base"].values()]
@@ -256,14 +281,15 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             subw = (subw[:, None] * tw[None, :]).ravel()
         return {id(s): W[i] for i, s in enumerate(union)}, subw
 
-    def combine(svcs, market, dists, walks, period, asc_scale=1.0):
+    def combine(svcs, market, dists, walks, period, asc_scale=1.0,
+                fare_scale=1.0):
         """Each sub-rider takes their best available service (near-perfect
         substitutes on one street earn no logsum 'variety bonus' -- the
         red-bus/blue-bus correction). variety_logsum=True restores a
-        theta=1 logsum as a sensitivity toggle. asc_scale threads to util()
-        for the no-ASC welfare pass (spec 06 D1)."""
-        us = np.stack([util(s, market, dists, walks, isn, period, asc_scale)
-                       for s, isn in svcs])
+        theta=1 logsum as a sensitivity toggle. asc_scale/fare_scale thread
+        to util() for the no-ASC / fare-free welfare passes (spec 06 D1/D3)."""
+        us = np.stack([util(s, market, dists, walks, isn, period, asc_scale,
+                            fare_scale) for s, isn in svcs])
         if over.get("variety_logsum"):
             m = us.max(axis=0)
             ls = m + np.log(np.exp(us - m).sum(axis=0))
@@ -294,6 +320,11 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         walks_e = {k: np.tile(v, len(dists)) for k, v in walks.items()}
         wts_e = (wts[:, :, None] * subw[None, None, :]).reshape(n, -1)
         ls0, _ = combine(base_svcs, market, dists_e, walks_e, period)
+        # spec 06 D3: fare-free base logsum for the welfare passes (fare term
+        # zeroed); at flat fares it equals ls0 bitwise. base_svcs has no new
+        # line, so asc_scale is irrelevant here -- only fare_scale=0 matters.
+        ls0_ff = combine(base_svcs, market, dists_e, walks_e, period,
+                         fare_scale=0.0)[0]
         out = {}
         for scen, svcs in systems.items():
             ls1, pnew = combine(svcs, market, dists_e, walks_e, period)
@@ -307,14 +338,23 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                 P = wts_e[:, :, None] * cf[:, None, :]
             S1 = S0 * e / (S0 * e + (1 - S0))                # pivot per sub-cell
             pn = 1.0 if pnew is None else pnew[:, :, None]
-            # spec 06 B1: welfare accumulators, NOT multiplied by pnew --
-            # benefits accrue to all corridor transit riders; pnew only splits
+            # spec 06 B1+D3: welfare accumulators on the FARE-FREE utility
+            # variant (fare_scale=0) -- fare money is NEVER monetized through
+            # VOT (D3 blocking-finding fix); the dollar burden below is the
+            # separate money-metric stream. NOT multiplied by pnew -- benefits
+            # accrue to all corridor transit riders; pnew only splits
             # boardings. Signed dv (fold short trips can lose) flows unclipped.
-            um_infra, um_margin = um_split(dv, e, S0, P)
-            # no-ASC counterfactual (spec 06 D1): re-combine with the new
-            # line's ASC zeroed (own ls/dv/e) for monetization only -- the
-            # ridership terms above stay on full utility.
-            dv0 = combine(svcs, market, dists_e, walks_e, period, 0.0)[0] - ls0
+            # At flat fares dv_ff == dv bitwise, so B1's values are unchanged.
+            ls1_ff = combine(svcs, market, dists_e, walks_e, period,
+                             1.0, 0.0)[0]
+            dv_ff = ls1_ff - ls0_ff
+            e_ff = np.exp(np.clip(dv_ff, -20, 20))[:, :, None]
+            um_infra, um_margin = um_split(dv_ff, e_ff, S0, P)
+            # no-ASC AND fare-free counterfactual (spec 06 D1/D3): re-combine
+            # with the new line's ASC and the fare term BOTH zeroed, against
+            # the fare-free base -- for monetization only.
+            dv0 = combine(svcs, market, dists_e, walks_e, period,
+                          0.0, 0.0)[0] - ls0_ff
             e0 = np.exp(np.clip(dv0, -20, 20))[:, :, None]
             um0_infra, um0_margin = um_split(dv0, e0, S0, P)
             # spec 06 B2/D7: signed diverted-car-trip-mile mass per
@@ -334,10 +374,22 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                 P * dS * distsod_e[None, :, None]).sum(axis=1)
             if market == "visitor":
                 dcm, dcm_od = dcm.sum(axis=1), dcm_od.sum(axis=1)
+            # spec 06 D3: money-metric fare-burden mass (dollars). The fare
+            # changed BEHAVIOR via the full-utility pivot above (S1, dS); here
+            # the MONEY is booked separately -- rule-of-half on the margin,
+            # (S0 + 0.5*dS), the full-utility choice pnew picking each rider's
+            # fare (fold: all-new; retain: new-vs-local split). Base-service
+            # fares == fare_base assumed; extend fare_chosen_0 if a config ever
+            # sets base-service fares. Exactly 0 at flat fares (Dfare == 0).
+            fare_new = svcs[0][0].get("fare", fare_base)
+            fare_local = svcs[-1][0].get("fare", fare_base)   # retain fallback
+            fare_chosen = pn * fare_new + (1 - pn) * fare_local
+            fb = (P * (S0 + 0.5 * dS)
+                  * (fare_chosen - fare_base)).sum(axis=(1, 2))
             out[scen] = ((P * S1).sum(axis=(1, 2)),
                          (P * S1 * pn).sum(axis=(1, 2)),
                          um_infra, um_margin, um0_infra, um0_margin,
-                         dcm, dcm_od)
+                         dcm, dcm_od, fb)
             den = (P * S0).sum(axis=(1, 2))
         return out, den
 
@@ -366,6 +418,10 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         # (walk + fx*transfer, no visitor -- visitor has no car segments);
         # cm_visitor is (n,) (fv*visitor only).
         cm = {scen: [0.0, 0.0, 0.0] for scen in systems}
+        # spec 06 D3: money-metric fare-burden numerator ($), (n,) like num --
+        # same wgt/fx/fv blend across all three markets (visitor pays fares
+        # too). Zero at flat fares.
+        fb = {scen: 0.0 for scen in systems}
         den = fx = fv = None
         for period, wgt in periods:
             mk_w, den_w = market_terms("walk", cor.wd, wwA, period)
@@ -392,9 +448,11 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                 cm[scen][1] = cm[scen][1] + wgt * (fv * mk_v[scen][6])
                 cm[scen][2] = cm[scen][2] + wgt_c * (
                     mk_w[scen][7] + fx_c * mk_x[scen][7])
-        return num, num_new, den, um, cm
+                fb[scen] = fb[scen] + wgt * (
+                    mk_w[scen][8] + fx * mk_x[scen][8] + fv * mk_v[scen][8])
+        return num, num_new, den, um, cm, fb
 
-    num, num_new, den, um, cm = system_response(ww, xw, vw)
+    num, num_new, den, um, cm, fb = system_response(ww, xw, vw)
     rshort = None
     if over.get("nonwork_short"):
         # sensitivity probe: LODES is commute-only, so the non-work market
@@ -404,9 +462,10 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         def tilt(w, d):
             t = w * np.exp(-d / L)[None, :]
             return t / t.sum(axis=1, keepdims=True)
-        # welfare/car-mile exports are main-path only (B1/B2); the tilted
-        # umS/cmS are a future export design point (spec 06 D8), discarded.
-        numS, _, denS, _, _ = system_response(tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
+        # welfare/car-mile/fare-burden exports are main-path only (B1/B2/D3);
+        # the tilted umS/cmS/fbS are a future export design point (D8), dropped.
+        numS, _, denS, _, _, _ = system_response(
+            tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
         rshort = {scen: numS[scen] / denS for scen in systems}
 
     out = {}
@@ -446,6 +505,11 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             d[scen]["cm_seg"] = anchor[:, None] * (cm_seg / den[:, None])
             d[scen]["cm_visitor"] = anchor * (cm_visitor / den)
             d[scen]["cm_seg_fullod"] = anchor[:, None] * (cm_seg_fullod / den[:, None])
+            # spec 06 D3: fare-burden in DOLLARS -- person-scaled like the
+            # ratio (fb/den), NO /|bivt| (this is money, not utils). The BCA
+            # engine nets it against fare revenue at exactly $1. Work-shaped,
+            # PRE-BLEND (like um/cm). Zero at flat fares.
+            d[scen]["fare_burden"] = anchor * (fb[scen] / den)
         blend_ev = 0.5 * (d["fold"]["newline"] + d["retain"]["newline"])
         blend = np.where(rng.random(n) < 0.5,
                          d["fold"]["newline"], d["retain"]["newline"])
