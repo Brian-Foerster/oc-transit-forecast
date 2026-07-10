@@ -96,7 +96,7 @@ class Line:
                float(self.cum[i] + t[i] * self.seg[i])
 
 
-def bin_flows(dists, weights):
+def bin_flows(dists, weights, extra=None):
     idx = np.digitize(dists, EDGES) - 1
     counts = np.zeros(len(EDGES) - 1)
     sums = np.zeros(len(EDGES) - 1)
@@ -106,7 +106,16 @@ def bin_flows(dists, weights):
     w = counts / counts.sum() if counts.sum() > 0 else counts
     centers = np.where(counts > 0, sums / np.maximum(counts, 1e-9),
                        0.5 * (EDGES[:-1] + EDGES[1:]))
-    return w, centers, counts
+    if extra is None:
+        return w, centers, counts
+    # spec 06 D7: flow-weighted mean of a second distance array (the full
+    # O-D straight-line miles), binned by the SAME idx as the primary dists
+    # -- empty bins fall back to the corridor-leg center (weight 0 there
+    # anyway, so the fallback value is inert).
+    esums = np.zeros(len(EDGES) - 1)
+    np.add.at(esums, idx[ok], (weights * extra)[ok])
+    ecenters = np.where(counts > 0, esums / np.maximum(counts, 1e-9), centers)
+    return w, centers, counts, ecenters
 
 
 def main(cfg_path):
@@ -237,7 +246,18 @@ def main(cfg_path):
     one["node"] = one["oend"].map(node_of)
     one = one.dropna(subset=["node"])
     one["d"] = (one["cend"].map(posmap) - one["node"]).abs()
-    xwts, xctr, xcnt = bin_flows(one["d"].to_numpy(), one["n"].to_numpy(float))
+    # spec 06 D7: the transfer bin's own "d" is corridor-leg-only (cend
+    # position to the feeder crossing node); a diverted CAR trip covers the
+    # full origin-destination distance, so also track the straight-line
+    # centroid-to-centroid miles (same flat-earth transform as the rest of
+    # this script) for a full-O-D bound on the corridor-leg undercount.
+    lonmap = dict(zip(tr["GEOID"], tr["lon"]))
+    latmap = dict(zip(tr["GEOID"], tr["lat"]))
+    one["full_od"] = np.hypot(
+        (one["cend"].map(lonmap) - one["oend"].map(lonmap)) * MI_LON,
+        (one["cend"].map(latmap) - one["oend"].map(latmap)) * MI_LAT)
+    xwts, xctr, xcnt, xctr_od = bin_flows(
+        one["d"].to_numpy(), one["n"].to_numpy(float), one["full_od"].to_numpy())
 
     out = {
         "config": cfg,
@@ -247,7 +267,8 @@ def main(cfg_path):
                       "jobs": int(wcnt.sum())},
         "transfer_bins": {"weights": [round(x, 4) for x in xwts],
                           "centers": [round(x, 2) for x in xctr],
-                          "jobs": int(xcnt.sum())},
+                          "jobs": int(xcnt.sum()),
+                          "centers_od": [round(x, 2) for x in xctr_od]},
         "feeders": [{k: f[k] for k in ("route", "node_pos", "headway")}
                     for f in feeders],
         "one_end_jobs_total": int(od[hin ^ win]["n"].sum()),

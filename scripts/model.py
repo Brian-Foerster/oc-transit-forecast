@@ -137,6 +137,11 @@ class Corridor:
         self.ww = np.array(j["walk_bins"]["weights"])
         self.xd = np.array(j["transfer_bins"]["centers"])
         self.xw = np.array(j["transfer_bins"]["weights"])
+        # spec 06 D7: full-O-D (straight-line centroid-to-centroid) distance
+        # per transfer bin, for the cm_seg_fullod bound; falls back to the
+        # corridor-leg centers on derived files built before this field
+        # existed.
+        self.xd_od = np.array(j["transfer_bins"].get("centers_od", j["transfer_bins"]["centers"]))
         nv = len(self.cfg["visitor"]["bin_weights"])
         assert nv == len(self.wd), (
             f"visitor bin_weights has {nv} entries but walk_bins has "
@@ -278,11 +283,14 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         infra = (P * S0 * dv[:, :, None]).sum(axis=(1, 2))
         return infra, (P * cs).sum(axis=(1, 2)) - infra
 
-    def market_terms(market, dists, wts, period):
+    def market_terms(market, dists, wts, period, dists_od=None):
         legs = 1 if market == "transfer" else 2
         walks, subw = subcell_walks(legs)
         Q = len(subw)
         dists_e = np.repeat(dists, Q)                        # (bins*Q,)
+        # spec 06 B2/D7: full-O-D distance variant (transfer market only;
+        # None elsewhere, so dcm_od below just reuses dcm).
+        distsod_e = None if dists_od is None else np.repeat(dists_od, Q)
         walks_e = {k: np.tile(v, len(dists)) for k, v in walks.items()}
         wts_e = (wts[:, :, None] * subw[None, None, :]).reshape(n, -1)
         ls0, _ = combine(base_svcs, market, dists_e, walks_e, period)
@@ -309,9 +317,27 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             dv0 = combine(svcs, market, dists_e, walks_e, period, 0.0)[0] - ls0
             e0 = np.exp(np.clip(dv0, -20, 20))[:, :, None]
             um0_infra, um0_margin = um_split(dv0, e0, S0, P)
+            # spec 06 B2/D7: signed diverted-car-trip-mile mass per
+            # car-ownership segment, off the HEADLINE pivot only (no no-ASC
+            # variant for car-miles), NOT scaled by pnew (a diverted car trip
+            # stays diverted regardless of which service captures the rider),
+            # unfloored (a fold short-trip loss is a real negative mass). The
+            # transfer market's dists_e is the corridor-leg (access) distance
+            # -- an undercount of the diverted VMT, since the car trip covers
+            # the full O-D; dcm_od swaps in the full-O-D distance for the
+            # SAME choice-probability mass (dS unchanged, only the mile
+            # multiplier differs). Visitor has no car segments -- squeeze to
+            # (n,) so it accumulates into cm_visitor, not cm_seg.
+            dS = S1 - S0
+            dcm = (P * dS * dists_e[None, :, None]).sum(axis=1)
+            dcm_od = dcm if distsod_e is None else (
+                P * dS * distsod_e[None, :, None]).sum(axis=1)
+            if market == "visitor":
+                dcm, dcm_od = dcm.sum(axis=1), dcm_od.sum(axis=1)
             out[scen] = ((P * S1).sum(axis=(1, 2)),
                          (P * S1 * pn).sum(axis=(1, 2)),
-                         um_infra, um_margin, um0_infra, um0_margin)
+                         um_infra, um_margin, um0_infra, um0_margin,
+                         dcm, dcm_od)
             den = (P * S0).sum(axis=(1, 2))
         return out, den
 
@@ -322,16 +348,28 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     periods = ([("peak", p["pkshare"]), ("offpeak", 1.0 - p["pkshare"])]
                if tod else [(None, 1.0)])
 
+    def _col(x):
+        """x as-is if a python-scalar weight (0.0/1.0 literals, broadcasts
+        fine against any shape), else reshaped to (n, 1) so it lines up
+        with the (n, seg) car-mile accumulators -- wgt/fx are (n,) arrays
+        whenever pinned via `over` (still one value, but a real array)."""
+        return x if np.isscalar(x) else x[:, None]
+
     def system_response(wwA, xwA, vwA):
         num = {scen: 0.0 for scen in systems}
         num_new = {scen: 0.0 for scen in systems}
         # spec 06 B1: welfare numerators [um_infra, um_margin, um0_infra,
         # um0_margin] blended by wgt and combined with fx/fv exactly like num.
         um = {scen: [0.0, 0.0, 0.0, 0.0] for scen in systems}
+        # spec 06 B2: diverted-trip-mile numerators [cm_seg, cm_visitor,
+        # cm_seg_fullod], same TOD blend. cm_seg/cm_seg_fullod are (n, seg)
+        # (walk + fx*transfer, no visitor -- visitor has no car segments);
+        # cm_visitor is (n,) (fv*visitor only).
+        cm = {scen: [0.0, 0.0, 0.0] for scen in systems}
         den = fx = fv = None
         for period, wgt in periods:
             mk_w, den_w = market_terms("walk", cor.wd, wwA, period)
-            mk_x, den_x = market_terms("transfer", cor.xd, xwA, period)
+            mk_x, den_x = market_terms("transfer", cor.xd, xwA, period, cor.xd_od)
             mk_v, den_v = market_terms("visitor", cor.wd, vwA, period)
             if den is None:   # utility-free, identical across periods
                 fx = (0.0 if no_transfer
@@ -339,6 +377,7 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                 fv = (0.0 if no_visitor
                       else p["phi"] * den_w / ((1 - p["phi"]) * den_v))
                 den = den_w + fx * den_x + fv * den_v
+            wgt_c, fx_c = _col(wgt), _col(fx)
             for scen in systems:
                 num[scen] = num[scen] + wgt * (
                     mk_w[scen][0] + fx * mk_x[scen][0] + fv * mk_v[scen][0])
@@ -348,9 +387,14 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                     um[scen][j] = um[scen][j] + wgt * (
                         mk_w[scen][j + 2] + fx * mk_x[scen][j + 2]
                         + fv * mk_v[scen][j + 2])
-        return num, num_new, den, um
+                cm[scen][0] = cm[scen][0] + wgt_c * (
+                    mk_w[scen][6] + fx_c * mk_x[scen][6])
+                cm[scen][1] = cm[scen][1] + wgt * (fv * mk_v[scen][6])
+                cm[scen][2] = cm[scen][2] + wgt_c * (
+                    mk_w[scen][7] + fx_c * mk_x[scen][7])
+        return num, num_new, den, um, cm
 
-    num, num_new, den, um = system_response(ww, xw, vw)
+    num, num_new, den, um, cm = system_response(ww, xw, vw)
     rshort = None
     if over.get("nonwork_short"):
         # sensitivity probe: LODES is commute-only, so the non-work market
@@ -360,9 +404,9 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         def tilt(w, d):
             t = w * np.exp(-d / L)[None, :]
             return t / t.sum(axis=1, keepdims=True)
-        # welfare is exported main-path only (B1); the tilted umS is a future
-        # export design point (spec 06 D8), discarded here.
-        numS, _, denS, _ = system_response(tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
+        # welfare/car-mile exports are main-path only (B1/B2); the tilted
+        # umS/cmS are a future export design point (spec 06 D8), discarded.
+        numS, _, denS, _, _ = system_response(tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
         rshort = {scen: numS[scen] / denS for scen in systems}
 
     out = {}
@@ -392,6 +436,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             for key, u_x in (("um_infra", um_infra), ("um_margin", um_margin),
                              ("um0_infra", um0_infra), ("um0_margin", um0_margin)):
                 d[scen][key] = anchor * (u_x / den) / np.abs(p["bivt"])
+            # spec 06 B2: diverted-trip-mile masses, per car-ownership
+            # segment (cm_seg (n,3): walk+transfer, corridor-leg distance for
+            # transfer -- documented undercount; cm_seg_fullod (n,3): same
+            # but the transfer leg is the full O-D straight-line distance,
+            # a D7 bound on that undercount). cm_visitor (n,): visitor market
+            # has no car segments. Miles, not utils -- no /|bivt|.
+            cm_seg, cm_visitor, cm_seg_fullod = cm[scen]
+            d[scen]["cm_seg"] = anchor[:, None] * (cm_seg / den[:, None])
+            d[scen]["cm_visitor"] = anchor * (cm_visitor / den)
+            d[scen]["cm_seg_fullod"] = anchor[:, None] * (cm_seg_fullod / den[:, None])
         blend_ev = 0.5 * (d["fold"]["newline"] + d["retain"]["newline"])
         blend = np.where(rng.random(n) < 0.5,
                          d["fold"]["newline"], d["retain"]["newline"])
