@@ -1,5 +1,7 @@
 # large raw downloads -- regenerate with scripts/download_data.py
 data/raw/
+# BCA exports -- regenerable and heavy (several MB); scripts/bca_export.py
+outputs/bca_export_*.json.gz
 __pycache__/
 *.pyc
 

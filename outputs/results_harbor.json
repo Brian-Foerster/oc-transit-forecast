@@ -56,6 +56,22 @@
         0.0
       ],
       "note": "Anaheim resort/visitor market: share of base boardings (pinned like tau); short trips (hotel-Disneyland-convention); random arrival (h/2 wait, no schedule adaptation). Judgment call: old first bin 0.55 split 0.25/0.30 into the new 0-0.5-mi bin -- visitor trips are exactly the sub-half-mile kind"
+    },
+    "bca": {
+      "routes_removed": {
+        "fold": [
+          "43",
+          "543"
+        ],
+        "retain": [
+          "543"
+        ]
+      },
+      "rev_hours_weekday": {
+        "43": 183.3,
+        "543": 77.1
+      },
+      "rev_hours_note": "Weekday revenue vehicle-hours for the BCA's avoided base O&M (spec 06 E4): sum over one weekday's trips of (last-stop arrival - first-stop departure), OCTA GTFS in data/raw/gtfs. Weekday = the calendar.monday=1 services (both routes run their weekday trips under service_id MTUWTF): route 43 = 114 trips -> 183.3 h, route 543 = 86 trips -> 77.1 h. Fold sheds both the local 43 and the rapid 543; retain keeps the local 43 (only the 543 is folded into the new line)."
     }
   },
   "summary": {

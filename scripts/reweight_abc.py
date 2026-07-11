@@ -41,12 +41,40 @@ SIGMAS = [500.0, 350.0, 800.0]          # central first, then sensitivities
 SEED = 42
 
 
+def kernel_label(sigma):
+    """ABC kernel label: experiment + target flavor + sigma (spec 06 §5 B4),
+    e.g. 543_matured_s500. Distinct from the bare-sigma key used in the JSON
+    so the spec 02 §4.4 joint multi-experiment kernel can join by adding
+    labels without churning abc_weights' signature."""
+    return f"543_matured_s{sigma:.0f}"
+
+
+def abc_weights(pred, kernels):
+    """pred: (n,) backtest predictions; kernels: [(label, mu, sigma), ...]
+    -> {label: normalized (n,) weights}.
+
+    Each draw is weighted by a Gaussian kernel on its backtest prediction
+    against the target mu; the weights are normalized to sum 1. `pred` is
+    computed ONCE by the caller and reused across kernels (common random
+    numbers), so adding kernels is free. The spec 02 §4.4 joint
+    multi-experiment kernel joins by appending entries -- this signature does
+    not change."""
+    out = {}
+    for label, mu, sigma in kernels:
+        w = np.exp(-0.5 * ((pred - mu) / sigma) ** 2)
+        w /= w.sum()
+        out[label] = w
+    return out
+
+
 def main(path):
     cor = Corridor(path)
     params = draw_params(N, SEED)
     back = run(backtest_corridor(), params=params, seed=SEED)
     fwd = run(cor, params=params, seed=SEED)
     pred = back["uncapped"]["retain"]["newline"]     # per-draw 543 prediction
+    kernels = [(kernel_label(s), MU, s) for s in SIGMAS]
+    weights = abc_weights(pred, kernels)
 
     out = {"mu": MU, "observed_543": list(OBS_543), "sigmas": {}}
     print(f"=== ABC calibration vs Bravo! 543 launch "
@@ -54,9 +82,8 @@ def main(path):
     print(f"backtest per-draw prediction P10/P50/P90: "
           f"{pct(pred,10):,.0f} / {pct(pred,50):,.0f} / {pct(pred,90):,.0f}")
 
-    for sigma in SIGMAS:
-        w = np.exp(-0.5 * ((pred - MU) / sigma) ** 2)
-        w /= w.sum()
+    for label, _, sigma in kernels:
+        w = weights[label]
         ess = 1.0 / np.sum(w ** 2)
         tag = "central" if sigma == SIGMAS[0] else "sensitivity"
         d = {"ess": float(ess), "tag": tag, "forecast": {}, "posterior": {}}
@@ -94,13 +121,13 @@ def main(path):
                   f"{cb[0]:,.0f} / {cb[1]:,.0f} / {cb[2]:,.0f} "
                   f"(ESS={ess:,.0f})")
 
-    # seed-robustness check: fresh draws, same kernel
+    # seed-robustness check: fresh draws, same central kernel
     p2 = draw_params(N, SEED + 1)
     b2 = run(backtest_corridor(), params=p2, seed=SEED + 1)
     f2 = run(cor, params=p2, seed=SEED + 1)
-    w2 = np.exp(-0.5 * ((b2["uncapped"]["retain"]["newline"] - MU)
-                        / SIGMAS[0]) ** 2)
-    w2 /= w2.sum()
+    lbl0 = kernel_label(SIGMAS[0])
+    w2 = abc_weights(b2["uncapped"]["retain"]["newline"],
+                     [(lbl0, MU, SIGMAS[0])])[lbl0]
     alt = wpct(f2["uncapped"]["blend"], w2, 50)
     ref = out["sigmas"][f"{SIGMAS[0]:.0f}"]["forecast"]["blend"][1]
     drift = 100 * (alt - ref) / ref

@@ -1,0 +1,99 @@
+"""
+Checks for the BCA export interface (spec 06 §3, work item B4). The schema and
+round-trip checks read the generated gz, so run the exports first:
+    python bca_export.py harbor
+    python bca_export.py streetcar
+    python test_bca_export.py
+
+  - test_abc_weights_normalize: the refactored abc_weights returns per-kernel
+    weights that sum to 1, one array per label, tighter sigma concentrating
+    more mass near mu (fast; no file).
+  - test_schema_shape(name): every §3 key is present with the right array
+    lengths (N) and float dtype; abc_weights present iff a calibration target
+    exists (harbor yes, streetcar no -> absence reason instead).
+  - test_round_trip(name): reuses bca_export.roundtrip_check -- harbor's
+    weighted ABC central retain P50 vs abc_harbor.json, streetcar's unweighted
+    retain P50 vs results_streetcar.json, to 4 significant figures.
+
+usage: python test_bca_export.py [harbor streetcar]
+"""
+import gzip, json, os, sys
+import numpy as np
+from model import N
+from reweight_abc import abc_weights, kernel_label, SIGMAS
+import bca_export as bx
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+SCALAR_KEYS = ("newline", "total", "um_infra", "um_margin", "um0_infra",
+               "um0_margin", "fare_burden", "cm_visitor")
+SEG_KEYS = ("cm_seg", "cm_seg_fullod")
+N_PRIORS = 17
+
+
+def _load(name):
+    p = os.path.join(bx.OUT, f"bca_export_{name}.json.gz")
+    with gzip.open(p, "rt", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def test_abc_weights_normalize():
+    pred = np.linspace(3000.0, 6000.0, 1000)
+    kernels = [("543_matured_s500", 4200.0, 500.0),
+               ("543_matured_s350", 4200.0, 350.0)]
+    w = abc_weights(pred, kernels)
+    assert set(w) == {"543_matured_s500", "543_matured_s350"}, set(w)
+    for lbl, v in w.items():
+        assert v.shape == (1000,), (lbl, v.shape)
+        assert abs(v.sum() - 1.0) < 1e-12, (lbl, v.sum())
+    near = np.abs(pred - 4200.0) < 200.0
+    assert (w["543_matured_s350"][near].sum()
+            > w["543_matured_s500"][near].sum()), "tighter sigma not tighter"
+    print("  test_abc_weights_normalize OK")
+
+
+def test_schema_shape(name):
+    e = _load(name)
+    for k in ("corridor", "design", "n", "seed", "eq_days", "scenarios",
+              "params", "base_service"):
+        assert k in e, f"missing top-level key {k}"
+    assert e["corridor"] == name, e["corridor"]
+    assert e["n"] == N and e["eq_days"] == [300, 330]
+    for scen in ("fold", "retain"):
+        s = e["scenarios"][scen]
+        for k in SCALAR_KEYS:
+            assert len(s[k]) == N, f"{scen}.{k} len {len(s[k])} != {N}"
+            assert isinstance(s[k][0], float), f"{scen}.{k} not float"
+        for k in SEG_KEYS:
+            assert len(s[k]) == 3, f"{scen}.{k} not 3 segments"
+            assert all(len(seg) == N for seg in s[k]), f"{scen}.{k} bad seg len"
+    assert len(e["params"]) == N_PRIORS + 1, len(e["params"])   # 17 + anchor
+    assert len(e["params"]["anchor"]) == N
+    if name == "harbor":
+        assert set(e["abc_weights"]) == {kernel_label(x) for x in SIGMAS}
+        assert all(len(v) == N for v in e["abc_weights"].values())
+        assert "abc_weights_absent_reason" not in e
+        assert e["base_service"]["rev_hours_weekday"]["543"] > 0
+    else:
+        assert "abc_weights" not in e, "streetcar should have no abc_weights"
+        assert e["abc_weights_absent_reason"], "missing absence reason"
+        assert e["base_service"]["routes_removed"]["fold"] == []
+    print(f"  test_schema_shape({name}) OK  "
+          f"({len(SCALAR_KEYS) + len(SEG_KEYS)} streams x 2 scenarios, "
+          f"{len(e['params'])} param arrays)")
+
+
+def test_round_trip(name):
+    p = os.path.join(bx.OUT, f"bca_export_{name}.json.gz")
+    assert bx.roundtrip_check(name, p), f"round-trip failed for {name}"
+    print(f"  test_round_trip({name}) OK")
+
+
+if __name__ == "__main__":
+    names = sys.argv[1:] or ["harbor", "streetcar"]
+    test_abc_weights_normalize()
+    for nm in names:
+        test_schema_shape(nm)
+        test_round_trip(nm)
+    print("ALL CHECKS PASS")

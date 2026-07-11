@@ -218,5 +218,9 @@
     2.0
   ],
   "asc_calibrated": 0.109,
-  "asc_note": "rail-ASC bracket BORROWED from the metro scenario (spec 05 §3.4); an at-grade slow streetcar premium may differ -- flagged, README issue 14"
+  "asc_note": "rail-ASC bracket BORROWED from the metro scenario (spec 05 §3.4); an at-grade slow streetcar premium may differ -- flagged, README issue 14",
+  "bca": {
+    "routes_removed": {"fold": [], "retain": []},
+    "note": "No existing OCTA route is folded: the OC Streetcar is a new PE-ROW alignment, and services_base 'local' is a synthetic composite of the parallel carriers Rt 60/64/560/150 (spec 05 §3.3), which keep running -- there is no single route to remove. rev_hours_weekday is therefore omitted; avoided base O&M (spec 06 E4) is zero for both fold and retain. Crossing routes enter via the transfer market, not as removals."
+  }
 }
