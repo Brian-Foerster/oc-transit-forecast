@@ -29,7 +29,7 @@ if hasattr(sys.stdout, "reconfigure"):
 SCALAR_KEYS = ("newline", "total", "um_infra", "um_margin", "um0_infra",
                "um0_margin", "fare_burden", "cm_visitor")
 SEG_KEYS = ("cm_seg", "cm_seg_fullod")
-N_PRIORS = 17
+N_PRIORS = 17   # update when appending priors (append-last discipline, see model.py PRIORS)
 
 
 def _load(name):
@@ -56,7 +56,7 @@ def test_abc_weights_normalize():
 def test_schema_shape(name):
     e = _load(name)
     for k in ("corridor", "design", "n", "seed", "eq_days", "scenarios",
-              "params", "base_service"):
+              "params", "base_service", "routes_removed"):
         assert k in e, f"missing top-level key {k}"
     assert e["corridor"] == name, e["corridor"]
     assert e["n"] == N and e["eq_days"] == [300, 330]
@@ -74,11 +74,18 @@ def test_schema_shape(name):
         assert set(e["abc_weights"]) == {kernel_label(x) for x in SIGMAS}
         assert all(len(v) == N for v in e["abc_weights"].values())
         assert "abc_weights_absent_reason" not in e
+        # routes_removed is top-level; base_service is ONLY rev_hours_weekday
+        assert e["routes_removed"]["fold"] == ["43", "543"], e["routes_removed"]
+        assert e["routes_removed"]["retain"] == ["543"], e["routes_removed"]
+        assert set(e["base_service"]) == {"rev_hours_weekday"}, e["base_service"]
         assert e["base_service"]["rev_hours_weekday"]["543"] > 0
     else:
         assert "abc_weights" not in e, "streetcar should have no abc_weights"
         assert e["abc_weights_absent_reason"], "missing absence reason"
-        assert e["base_service"]["routes_removed"]["fold"] == []
+        # streetcar folds nothing: routes_removed empty, base_service {} (no
+        # rev_hours_weekday when routes_removed is empty)
+        assert e["routes_removed"]["fold"] == [] and e["routes_removed"]["retain"] == []
+        assert e["base_service"] == {}, e["base_service"]
     print(f"  test_schema_shape({name}) OK  "
           f"({len(SCALAR_KEYS) + len(SEG_KEYS)} streams x 2 scenarios, "
           f"{len(e['params'])} param arrays)")

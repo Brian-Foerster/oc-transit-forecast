@@ -100,10 +100,16 @@ ABC weights flush to zero, immaterial at the round-trip gate's tolerance):
                                                   // label, not bare sigma, so the
                                                   // spec-02 §4.4 joint kernel can
                                                   // join without churning the schema
-  "base_service": { "rev_hours_weekday": { "43": ..., "543": ... } },
-  "routes_removed": { "fold": ["43", "543"], "retain": ["543"] }
+  "base_service": { "rev_hours_weekday": { "43": ..., "543": ... } },  // {} when routes_removed is empty
+  "routes_removed": { "fold": ["43", "543"], "retain": ["543"] }       // {"fold": [], "retain": []} when nothing folds
 }
 ```
+
+`routes_removed` is a top-level key (per-scenario route lists); `base_service`
+carries ONLY `rev_hours_weekday` (config prose notes are not shipped).
+`rev_hours_weekday` is absent — `base_service` is `{}` — when `routes_removed`
+is empty: a corridor that folds no route sheds no base O&M (the streetcar's
+synthetic composite local, spec 05 §3.3, has no single route to remove).
 
 Division of labor for sensitivity rows (governance-audit fix): rows that
 re-price exported quantities (VOT, pcar set, kappa→1, transfer-full-OD, λ, γ,
@@ -308,6 +314,15 @@ delta quantities. For benefits and car-miles:
 `system_response` call sites — model.py:322 and :332 — are updated for the
 extended return signature). The blend is applied **by the wrapper** from the
 exported pre-blend arrays and per-draw ws/κ, making the κ→1 row free.
+
+**Logged deferral (B1-scope, per rule 3).** The `nonwork_short` rerun today
+DISCARDS its tilted welfare / car-mile / fare streams — model.py drops them
+with `_`, keeping only `numS/denS` for the ridership ratio. So `b_nw = b_work`
+is the ONLY blend input currently available; the tilted `umS/cmS/fbS` are not
+threaded through. This is a deliberate deferral: the `nonwork_short` export is
+an "additional export design point" (§3), not a base stream, and no consumer
+exists until W1. Revisit if that design point is ever built — thread the
+tilted streams through `system_response`'s extended return at that point.
 
 ### D9 — Labor-market channel: dropped with reasons, bounded by a row (NEW)
 

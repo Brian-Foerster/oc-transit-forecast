@@ -97,6 +97,7 @@ ASC at 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.
     scripts/backtest_543.py                   # -> outputs/backtest_543.json
     scripts/reweight_abc.py                   # -> outputs/abc_harbor.json (ABC treatment)
     scripts/make_charts.py harbor             # -> outputs/*.png
+    scripts/bca_export.py harbor [--seed-check]  # OPTIONAL: -> outputs/bca_export_harbor.json.gz (spec 06 B4 BCA handoff; post-ABC, gitignored)
 
 `data/derived` is committed, so **model.py runs with zero downloads** on a
 fresh clone. Everything is plain numpy/pandas/matplotlib (requirements.txt);
@@ -106,7 +107,7 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 
 | File | Role |
 |---|---|
-| `config/harbor.json` | The corridor definition: anchor range + derivation note, base services (Route 43 local, Route 543 rapid) with speed/headway/stop-spacing, the proposed line, visitor-market parameters. Change the design here. |
+| `config/harbor.json` | The corridor definition: anchor range + derivation note, base services (Route 43 local, Route 543 rapid) with speed/headway/stop-spacing, the proposed line, visitor-market parameters. Change the design here. Spec 06 added a `bca` block (`routes_removed` per scenario + `rev_hours_weekday` per route for the BCA's avoided base O&M, plus prose notes that are NOT shipped in the export) and an optional `fare_base` (defaults to `DEFAULT_FARE`, the OCTA flat cash fare in `model.py`). |
 | `scripts/download_data.py` | Fetches the raw sources incl. the OCTA performance-report PDFs (URLs inside; note the %20 filename quirk). |
 | `scripts/anchor_from_apc.py` | Anchor derivation from MEASURED route-level boardings (data table + source URLs + the trend assumptions). |
 | `scripts/build_derived.py` | Raw → `oc_tracts.csv` (614 OC tract centroids), `oc_b08141.csv` (ACS workers/transit × vehicle availability, estimates AND margins of error), `oc_tract_od.csv.gz` (LODES commute flows aggregated to 178,900 OC tract pairs). |
@@ -116,6 +117,8 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 | `scripts/backtest_543.py` | Reruns the model as of June 2013 (local-only base, 543 at its actual 10/15 launch service) vs observed 543 ridership; exports `backtest_corridor()` for the ABC script. |
 | `scripts/reweight_abc.py` | Backtest-calibrated treatment: same draws through 2013 + forward configs, Gaussian kernel on the 543 prediction (mu 4,200, sigma 500; sens 350/800), weighted percentiles + ASC posterior + ESS + seed check. |
 | `scripts/make_charts.py` | Interval chart (anchor, uncapped, ABC-calibrated) and sensitivity tornado. |
+| `scripts/bca_export.py` | Freezes the stage-2 per-draw BCA quantity streams (spec 06 §3) to `outputs/bca_export_<corridor>.json.gz` — the file interface the downstream `transit-benefit-cost` wrapper prices. Runs `run()` once per design point, packages the welfare / car-mile / fare-burden arrays + ABC weights (harbor) at float32; `--seed-check` adds a seed+1 companion (gate G4). Computes NO prices or valuation. Optional; not on the critical path; output gitignored. |
+| `scripts/test_bca_export.py` | Executable statement of the §3 interface contract: schema shape, array lengths (N), `abc_weights` present iff a calibration target exists, and the round-trip P50 vs the committed reference to 4 significant figures. Run the exports first. |
 | `outputs/results_harbor.json` | Summary percentiles, full sensitivity table, design sweep. |
 | `outputs/records_request_draft.md` | Ready-to-send CPRA request for route/stop-level APC + on-board transfer rate (anchor research came up dry online). |
 
@@ -153,6 +156,19 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 - Treatments: **uncapped** and **backtest-calibrated (ABC)** reported side
   by side, never filtered — see user preferences below. Cap columns removed
   by user decision 2026-07.
+- **BCA quantity streams (spec 06 B1–B3).** `run()` now also returns, per
+  scenario, exact-logsum consumer-surplus accumulators (equivalent-IVT
+  minutes, split `um_infra`/`um_margin` for the D6 margin-only ramp, plus a
+  no-ASC counterfactual variant `um0_*`); per-segment diverted-trip-mile
+  masses (`cm_seg`/`cm_visitor`, PRE-pcar, plus the full-O-D transfer variant
+  `cm_seg_fullod` via the derived `centers_od` field); and a money-metric
+  `fare_burden` dollar stream (fare enters utility through `vot_behav` for
+  BEHAVIOR but is never monetized through the social VOT — D3). All are
+  work-shaped and PRE-BLEND (the wrapper applies the D8 ws/κ blend), and the
+  accumulators consume no rng. The 5 new priors (`vot_behav`, `pcar0/1/2/v`)
+  are appended LAST in `PRIORS` for rng-stream stability and show as 0.0%
+  sensitivity rows (no fare sweep / wrapper re-pricing exists yet). `bca_export.py`
+  packages these to the §3 file; the model itself prices nothing.
 
 ## User's working preferences (binding)
 

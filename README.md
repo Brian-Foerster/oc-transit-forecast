@@ -262,3 +262,50 @@ Recorded as they were made; each is exposed in the sensitivity output.
     result (P50 ~5,600, inside OCTA's 5,000-7,300 band) should be read
     with both caveats. Post-launch APC (~2027) becomes the first
     rail-class ABC target (records request item 4).
+
+Items 17-24 were opened by **spec 06 (BCA integration, `specs/06-bca-integration.md`
+§10)**. Entries 17-18 are stage-2 exposures visible in this repo's exports;
+19-24 bind the BCA wrapper/engine side (`transit-benefit-cost`, not yet built)
+and become live sensitivity rows when W1 lands.
+
+17. **Behavioral VOT ≠ social VOT** — deliberate, both exposed as priors:
+    `vot_behav` ($10-22/hr) governs fare response in stage 2, social `VOT`
+    ($15-30/hr) converts minutes to dollars in the BCA. Rows `vot_behav` lo/hi
+    and `VOT` lo/hi must NOT be read jointly at opposite extremes (jointly
+    implausible preferences); the tornado prints the caution (spec 06 D3).
+18. **Transfer-market diverted car-miles use the corridor-leg distance** — an
+    undercount, since the diverted car trip covers the full O-D. The
+    `cm_seg_fullod` stream (full-O-D straight-line distance per transfer bin)
+    bounds it, but DIRECTIONALLY (a flow-weighted-mean bound), not per-bin: the
+    longest harbor transfer bin has full-OD 7.83 mi < corridor-leg 11.48 mi, so
+    the "bound" sits below the base for individual long bins. Wrapper row
+    `transfer-full-OD` (spec 06 D7).
+19. **Growth vs ramp asymmetry** — growth (`g`) scales all quantity streams
+    proportionally (whole-market scaling is coherent); the ramp is margin-only
+    by construction (`um_infra`/existing riders are never ramped). The earlier
+    all-streams linear ramp had opposite-signed biases by stream and was
+    rejected at review. BCA time-profile knobs (spec 06 D6).
+20. **R1 retarget and the BCA ramp prior pull opposite directions** on the
+    543's launch shape: R1's FY2017 × back-trend retarget implies the 543
+    launched HIGHER and eroded, while the BCA ramp prior assumes launch BELOW
+    steady state — and the observable 543 series (FY2017 4,615 → FY2019 3,739)
+    shows no visible ramp-up. Logged, not hidden; records item 1a (FY2014-16
+    route-level) disciplines both when it lands (spec 06 D6).
+21. **γ / SCC / pcar / O&M priors are literature-informed** exposed knobs, each
+    carrying a zero or lo row (γ=0 central, SCC 0/190, pcar set lo/hi,
+    avoidable-cost marginal end). Allowed as exposed priors with rows;
+    literature-envelope FILTERS remain rejected (standing user decision) — spec
+    06 D8/E4.
+22. **Crowding deliberately out of stage 2** — a diagnostic load flag only, no
+    CS haircut in v1 (wrapper "CS haircut when load > comfort" row keeps the
+    tail exposure visible). D4's load arithmetic uses a conservative peak
+    decomposition ~2× spec 04 §3.1's; the two bases are cross-referenced and
+    the below-comfort-threshold conclusion is robust to either (spec 06 D4).
+23. **Single VOT across trip purposes, and the κ-blend as a QUANTITY blend** —
+    both named judgments with rows: "non-work minutes at 0.7×VOT" and κ→1. The
+    κ-blend expands non-work quantities; it does NOT revalue them (spec 06
+    D3/D8).
+24. **Avoided-cost rate: fully-allocated NTD $/rev-hr overstates** what folding
+    routes actually sheds (folding two routes does not shed their full
+    allocated cost). The E4 avoidable-cost knob spans marginal → fully-allocated
+    $/rev-hr, with a row at the marginal end (spec 06 E4).

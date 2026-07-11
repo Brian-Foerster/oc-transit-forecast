@@ -25,6 +25,7 @@ import gzip, json, os, sys
 import numpy as np
 from model import Corridor, run, draw_params, pct, wpct, N
 from reweight_abc import abc_weights, kernel_label, MU, SIGMAS
+from backtest_543 import backtest_corridor
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -70,12 +71,13 @@ def scenario_block(d):
 def compute_weights(name, params, seed):
     """ABC draw weights for a corridor with a backtest target. Harbor only
     today (its 543 natural experiment); a corridor with no calibration target
-    until post-launch returns None. The backtest is imported HERE, inside the
-    harbor branch, so the streetcar path never imports the harbor-specific
-    backtest_corridor and cannot crash on it."""
+    until post-launch returns None. The streetcar path is safe not because of
+    where backtest_corridor is imported -- reweight_abc already imports it at
+    module load, so the harbor-specific backtest is present regardless -- but
+    because of the harbor-only call gate below: backtest_corridor() is never
+    CALLED off the harbor branch."""
     if name != "harbor":
         return None
-    from backtest_543 import backtest_corridor       # corridor-conditional
     pred = run(backtest_corridor(), params=params,
                seed=seed)["uncapped"]["retain"]["newline"]
     return abc_weights(pred, HARBOR_KERNELS)
@@ -108,9 +110,18 @@ def build_design_point(name, seed):
             "no calibration target until post-launch (spec 05): the corridor "
             "has no pre-launch natural experiment to reweight draws against, "
             "so the export degrades to uncapped-only")
-    # spec 06 §3: the config bca block (routes_removed + rev_hours_weekday);
-    # empty routes_removed / no rev_hours for a corridor that folds nothing.
-    export["base_service"] = cor.cfg.get("bca", {})
+    # spec 06 §3: routes_removed is a TOP-LEVEL key (per-scenario route lists
+    # from the config bca block; {"fold": [], "retain": []} when the corridor
+    # folds nothing). base_service carries ONLY rev_hours_weekday -- empty {}
+    # (rev_hours_weekday absent) when the corridor defines none, e.g. the
+    # streetcar's synthetic composite local has no single route to remove.
+    # Config prose notes (rev_hours_note etc.) are NOT shipped in the export.
+    bca = cor.cfg.get("bca", {})
+    export["routes_removed"] = bca.get("routes_removed",
+                                       {"fold": [], "retain": []})
+    rev_hours = bca.get("rev_hours_weekday", {})
+    export["base_service"] = ({"rev_hours_weekday": rev_hours}
+                              if rev_hours else {})
     return export
 
 
@@ -137,16 +148,20 @@ def roundtrip_check(name, path):
         lbl = kernel_label(SIGMAS[0])
         w = np.asarray(e["abc_weights"][lbl])
         got = wpct(newline, w, 50)
-        ref = json.load(open(os.path.join(OUT, f"abc_{name}.json"),
-                             encoding="utf-8"))["sigmas"][
-                                 f"{SIGMAS[0]:.0f}"]["forecast"]["retain"][1]
+        with open(os.path.join(OUT, f"abc_{name}.json"), encoding="utf-8") as fh:
+            ref = json.load(fh)["sigmas"][f"{SIGMAS[0]:.0f}"][
+                "forecast"]["retain"][1]
         what = f"ABC central-sigma ({lbl}) retain P50, weighted, vs abc_{name}.json"
     else:
         got = pct(newline, 50)
-        ref = json.load(open(os.path.join(OUT, f"results_{name}.json"),
-                             encoding="utf-8"))["summary"]["uncapped"]["retain"][1]
+        with open(os.path.join(OUT, f"results_{name}.json"),
+                  encoding="utf-8") as fh:
+            ref = json.load(fh)["summary"]["uncapped"]["retain"][1]
         what = f"unweighted retain newline P50 vs results_{name}.json"
-    ok = (_sig4(got) == _sig4(ref)) or abs(got - ref) <= 5e-4 * abs(ref)
+    # spec 06 §3 round-trip gate: strict 4-significant-figure match. float32
+    # rounding lands ~1e-8 relative, well inside 4 sig figs, so the earlier
+    # 5e-4 relative fallback is dropped -- code now matches its stated contract.
+    ok = _sig4(got) == _sig4(ref)
     tag = "OK" if ok else "FAIL"
     print(f"round-trip [{tag}] {what}: export {got:,.4f} vs committed "
           f"{ref:,.4f}  (rel {abs(got - ref) / abs(ref):.2e})")

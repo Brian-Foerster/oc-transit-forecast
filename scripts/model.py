@@ -381,6 +381,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             # fare (fold: all-new; retain: new-vs-local split). Base-service
             # fares == fare_base assumed; extend fare_chosen_0 if a config ever
             # sets base-service fares. Exactly 0 at flat fares (Dfare == 0).
+            # I3 guard: the rule-of-half books the "before" fare as fare_base
+            # for EVERY rider, so a base service quoting its own fare would
+            # silently corrupt the dollar stream (fare_chosen_0, the pre-change
+            # fare, is hardwired to fare_base). A crash beats a wrong money-
+            # metric stream -- extend fare_chosen_0 before setting a base fare.
+            assert all(s.get("fare", fare_base) == fare_base
+                       for s in cfg["services_base"].values()), (
+                "a base service sets a non-default 'fare'; fare_burden assumes "
+                "base fares == fare_base -- extend fare_chosen_0 (the pre-change "
+                "fare) to carry per-service base fares")
             fare_new = svcs[0][0].get("fare", fare_base)
             fare_local = svcs[-1][0].get("fare", fare_base)   # retain fallback
             fare_chosen = pn * fare_new + (1 - pn) * fare_local
@@ -401,10 +411,11 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                if tod else [(None, 1.0)])
 
     def _col(x):
-        """x as-is if a python-scalar weight (0.0/1.0 literals, broadcasts
-        fine against any shape), else reshaped to (n, 1) so it lines up
-        with the (n, seg) car-mile accumulators -- wgt/fx are (n,) arrays
-        whenever pinned via `over` (still one value, but a real array)."""
+        """x as-is if a python-scalar weight (the tod=False wgt=1.0 literal or
+        the no_transfer fx=0.0 literal -- broadcasts fine against any shape),
+        else reshaped to (n, 1) so it lines up with the (n, seg) car-mile
+        accumulators. In the normal case wgt (=pkshare) and fx (built from tau)
+        are prior DRAWS, hence (n,) arrays -- not only when pinned via `over`."""
         return x if np.isscalar(x) else x[:, None]
 
     def system_response(wwA, xwA, vwA):
