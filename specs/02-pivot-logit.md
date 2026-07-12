@@ -24,10 +24,13 @@ must not be silently imputed to it.
   min(h/2, w0+lam*h); rider-position walk quadrature (K=8, no variety
   bonus); {peak, offpeak} headways blended by pkshare; ASC (new line).
 - Anchor: MEASURED 7,650-9,650 (`scripts/anchor_from_apc.py`).
-- Calibration: ABC vs the 543 launch (kernel mu=4,200 sigma=500);
-  headline = uncapped | backtest-calibrated side by side.
+- Calibration: ABC vs the 543 launch (launch-equivalent kernel mu=5,938
+  sigma=500, NTD back-trend 1.28678 — §4.6, landed 2026-07-11; matured
+  mu=4,200 kept as a row); headline = uncapped | backtest-calibrated
+  side by side.
 - Current Harbor answer: uncapped 11,969 (9,963-13,995); calibrated
-  10,757 (9,098-12,336); ASC posterior 0.06/0.11/0.16.
+  11,836 (10,377-13,394); ASC posterior 0.14/0.19/0.24 (matured row:
+  0.06/0.11/0.16).
 
 ## 3. Inputs / outputs
 
