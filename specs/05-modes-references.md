@@ -90,7 +90,7 @@ services_base, service_new), not the sketch in the proposal.
 
 ### 3.4 Rail-ASC transportability (Issue 14, sharpened)
 
-The ASC posterior (0.06/0.11/0.16) is calibrated to a bus overlay (543). A
+The ASC posterior (0.14/0.19/0.24) is calibrated to a bus overlay (543) (launch-equivalent retarget, 2026-07-11). A
 streetcar is a rail-class product; the bus-calibrated constant is a
 conservative floor. Use the widened ASC premium bracket already introduced
 for the metro scenario ({1.0, 1.5, 2.0}) and report it as a band, not a

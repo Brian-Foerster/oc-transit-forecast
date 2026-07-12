@@ -90,8 +90,8 @@ split (the split is the more falsifiable prediction)
     product — transporting the 543's premium is an assumption in the
     conservative direction, now across modes. Sensitivity band widened:
     forward ASC = calibrated ASC x premium factor, premium in
-    {1.0 (current assumption), 1.5, 2.0} — a 2.0 premium on the ~0.11
-    posterior roughly returns the prior midpoint.
+    {1.0 (current assumption), 1.5, 2.0} — the launch-equivalent central
+    ~0.19 already sits at the prior midpoint (0.20); a 2.0 premium probes roughly double it.
 (d) Choice-structure middle bracket: the hard max and the theta=1 logsum
     (-37%) are the two extremes; add small-theta softmax rows
     (theta in {0.1, 0.2}) — genuine idiosyncratic taste without the full

@@ -160,7 +160,7 @@ Recorded here, implemented in the owning specs:
 - **ASC transportability (spec 02 §4.5c) sharpens:** the calibration
   experiments are BUS overlays; the forward line is a rail-class
   product. Premium bracket widened to {1.0, 1.5, 2.0} on the calibrated
-  ASC (a 2.0 premium returns roughly the prior midpoint).
+  ASC (the launch-equivalent central ~0.19 already sits at the prior midpoint (0.20); a 2.0 premium now probes roughly double it).
 - **Derived speed (spec 02 §4.9):** grade-separated variant — no signal
   delay, cruise prior 70-90 km/h, dwell 20-30 s; the 43/543 street
   calibration remains for the (bus) backtest experiments only.

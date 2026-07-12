@@ -146,7 +146,7 @@ pipeline use. The ASC subtracted in the counterfactual is the **effective
 (spec 02 §4.5c) stay consistent automatically.
 
 **Rationale.** The ASC is ABC-disciplined against the corridor's own 543
-experiment (posterior 0.06/0.11/0.16) and bracketed for the rail-class
+experiment (posterior 0.14/0.19/0.24) and bracketed for the rail-class
 product by spec 05's tier-2 analogs. The calibrated choice model is the best
 available statement of what riders value; excluding the ASC from welfare
 while using it for ridership would assert the model is right about behavior
