@@ -28,9 +28,11 @@ must not be silently imputed to it.
   sigma=500, NTD back-trend 1.28678 — §4.6, landed 2026-07-11; matured
   mu=4,200 kept as a row); headline = uncapped | backtest-calibrated
   side by side.
-- Current Harbor answer: uncapped 11,969 (9,963-13,995); calibrated
-  11,836 (10,377-13,394); ASC posterior 0.14/0.19/0.24 (matured row:
-  0.06/0.11/0.16).
+- Current Harbor answer: uncapped 11,969 (9,956-13,998); calibrated
+  11,833 (10,377-13,395); ASC posterior 0.14/0.19/0.24 (matured row:
+  0.06/0.11/0.16). Average speed is now DERIVED (§4.9, landed 2026-07-11):
+  the central move is within noise, the bands widened slightly, and the
+  stop-spacing sensitivity rows shrank toward physical honesty.
 
 ## 3. Inputs / outputs
 
@@ -172,6 +174,23 @@ stop_times.
   GTFS stop_times.
 - Known issue to log when landed: dwell depends on loading, so a small
   ridership->speed feedback is deliberately ignored at this stage.
+
+(landed 2026-07-11: grade-separated variant on Harbor's service_new,
+A_COMFORT=1.0 m/s^2 constant (loss_s = v_cruise_mps / A_COMFORT); central
+80 km/h / 25 s / 1.0-mi -> 30.09 mph, validating the old 30-mph config value
+(kept as the exogenous fallback + governance toggle exogenous_speed=1). Two
+priors v_cruise (70-90 km/h) / dwell (20-30 s) appended LAST (rng append-last
+discipline). Street variant calibrated IN CODE from the two measured OCTA
+points 43 (11.4 mph @ 0.25-mi) / 543 (12.8 mph @ 1.0-mi): p_stop=0.192 min
+(11.5 s), v_street=13.35 mph (~13-13.5 pre-TSP); reproduces both points to
+float precision, prices hypothetical bus designs only (measured base services
+keep their config scalars). Streetcar stays exogenous (at-grade, measured,
+built line). Actuals: uncapped blend P50 11,969 unchanged (P10/P90
+9,963/13,995 -> 9,956/13,998, slightly wider); calibrated P50 11,836 -> 11,833;
+0.5-mi spacing row +23.6% -> +16.9%, 1.5-mi row -22.3% -> -20.2%; the
+exogenous-speed row reproduces the pre-R6 headline; ABC weights/ESS/posterior
+and outputs/backtest_543.json byte-identical (backtest untouched, only the
+forward forecast moves) -- model.py grade_sep_min_per_mile / calibrate_street.)
 
 ## 5. Validation gates (standing; must hold after any change)
 

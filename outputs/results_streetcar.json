@@ -492,6 +492,26 @@
       "pct": 0.0
     },
     {
+      "label": "v_cruise -> 70.0",
+      "value": 5716.664643508402,
+      "pct": 0.0
+    },
+    {
+      "label": "v_cruise -> 90.0",
+      "value": 5716.664643508402,
+      "pct": 0.0
+    },
+    {
+      "label": "dwell -> 20.0",
+      "value": 5716.664643508402,
+      "pct": 0.0
+    },
+    {
+      "label": "dwell -> 30.0",
+      "value": 5716.664643508402,
+      "pct": 0.0
+    },
+    {
       "label": "asc -> 0.55 (untrimmed)",
       "value": 7771.997290653815,
       "pct": 35.953353490472104
@@ -542,9 +562,9 @@
       "pct": 0.2895875657288003
     },
     {
-      "label": "new line 25 mph",
-      "value": 6250.860087809963,
-      "pct": 9.34453002955439
+      "label": "exogenous speed (old spec)",
+      "value": 5716.664643508402,
+      "pct": 0.0
     },
     {
       "label": "new line 10/20-min headway",
@@ -589,5 +609,6 @@
       5272.457833653545
     ]
   },
+  "sweep_axis": "exogenous_speed_mph",
   "central_blend": 5716.664643508402
 }

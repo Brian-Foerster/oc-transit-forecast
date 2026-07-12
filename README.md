@@ -36,6 +36,25 @@ features (see `scripts/model.py`):
   measurement shows the base routes at flat 20-min peak AND midday, so they
   stay scalar. "Flat 5-min all day" is kept as a sensitivity row (+7%, the
   overstatement the old spec carried).
+- **Derived average speed (spec 02 §4.9).** The forward line's average speed
+  is no longer an independent config knob: it is DERIVED from a cruise-speed
+  prior, a station-dwell prior, and the stop spacing via a TCQSM-style
+  decomposition `min/mi = 60/v_cruise + (dwell + accel/decel loss)/(60·spacing)`.
+  The proposed elevated automated light-metro line uses the grade-separated
+  variant (no signal delay; per-stop loss = accel+decel time at a comfortable
+  1.0 m/s²); at the prior-central 80 km/h cruise / 25 s dwell / 1-mi spacing
+  this gives ~30 mph, independently validating the old 30-mph value (kept as
+  the exogenous fallback; the `exogenous speed (old spec)` sensitivity row and
+  the `exogenous_speed=1` governance toggle restore the scalar path). The
+  street variant is calibrated **in code** from two measured OCTA points
+  (Route 43 = 11.4 mph @ 0.25-mi, Route 543 = 12.8 mph @ 1.0-mi → per-stop
+  penalty ~0.19 min, no-stop street speed ~13.3 mph) and prices hypothetical
+  bus designs; the measured base services keep their config scalar speeds
+  (measured stays measured). The design sweep's speed axis is now the
+  grade-separated **cruise** axis (60–90 km/h), and the stop-spacing
+  sensitivity rows now recompute speed — so a tighter 0.5-mi grid is charged
+  its added stops (that row shrank +23.6% → +16.9%; the 1.5-mi row eased
+  −22.3% → −20.2%).
 - **Arrival-strategy wait structure.** Walk-access wait is
   `min(headway/2, w0 + lambda*headway)` -- the closed form of a rider choosing
   between random and schedule-timed arrival. Transfers get
@@ -77,15 +96,15 @@ features (see `scripts/model.py`):
   HealthLine +78%) are still printed next to the model's implied uplift, and
   all structural knobs appear in the one-at-a-time sensitivity table.
 
-**Headline (2026-07, measured anchor; launch-equivalent ABC target): uncapped
-blend P50 = 11,969 (P10-P90 9,963-13,995), implied corridor uplift
-+31/+45/+61%; backtest-calibrated P50 = 11,836 (10,377-13,394). The
-calibration's main effect is on the new-line ASC: posterior 0.14/0.19/0.24 vs
-prior 0.09/0.20/0.31 -- now near the prior midpoint, since the
-launch-equivalent target (mu=5,938) sits close to the model's backtest mass
-(P50 6,169). The matured-target row (mu=4,200) still gives 10,757
-(9,098-12,336), posterior 0.06/0.11/0.16 -- the old central, kept as a
-sensitivity.**
+**Headline (2026-07, measured anchor; launch-equivalent ABC target; average
+speed now DERIVED, spec 02 §4.9): uncapped blend P50 = 11,969 (P10-P90
+9,956-13,998), implied corridor uplift +31/+45/+61%; backtest-calibrated
+P50 = 11,833 (10,377-13,395). The calibration's main effect is on the new-line
+ASC: posterior 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 -- now near the prior
+midpoint, since the launch-equivalent target (mu=5,938) sits close to the
+model's backtest mass (P50 6,169). The matured-target row (mu=4,200) still
+gives 10,754 (9,095-12,330), posterior 0.06/0.11/0.16 -- the old central, kept
+as a sensitivity.**
 
 ## Backtest (scripts/backtest_543.py)
 
@@ -110,10 +129,10 @@ the existing Route 43 local, both retained):
 - the residual is what the ABC treatment consumes: reweighting draws by the
   launch-equivalent target (kernel mu = 5,938) leaves the new-line ASC near
   0.19 (prior midpoint 0.20) and pulls the forward headline only slightly,
-  11,969 -> 11,836 (ESS 15,090, up from the matured target's 8,624 because
+  11,969 -> 11,833 (ESS 15,090, up from the matured target's 8,624 because
   the target now sits inside the prediction mass). The retired matured target
   (mu = 4,200) concentrated the ASC near 0.11 and pulled the headline to
-  10,757 (ESS 8,624) -- kept as a sensitivity row (README known issue 15,
+  10,754 (ESS 8,624) -- kept as a sensitivity row (README known issue 15,
   closed).
 
 Caveats: 2022 LODES / 2023 ACS proxy for 2013 markets; the 2013 Route 43's
@@ -123,7 +142,7 @@ covers).
 
 ## Reading the outputs (two easy stumbles)
 
-- The sensitivity tornado's central (12,051) is the *expected* fold/retain
+- The sensitivity tornado's central (12,056) is the *expected* fold/retain
   blend at fixed bins, n=4,000; the headline P50 (11,969) is the full-MC
   coin-flip blend at n=40,000. They differ by <1% by construction; the
   tornado measures deltas, not the headline.
@@ -131,6 +150,11 @@ covers).
   convention: off-peak = 2x peak), while the sensitivity row "flat 5-min
   all day" is a different service definition — the two 5-minute numbers
   are not comparable.
+- The design sweep's rows are now the grade-separated **cruise** speed
+  (60–90 km/h), not the average speed — the derived average mph is printed in
+  parentheses per row (`results_harbor.json` records `sweep_axis`). Adjacent
+  cruise cells at fixed headway move ≤1.7% (spec 02 §5 continuity gate ≤8%);
+  the large step across headway columns is the service effect, not a kink.
 
 ## Layout
 
@@ -333,3 +357,19 @@ and become live sensitivity rows when W1 lands.
     routes actually sheds (folding two routes does not shed their full
     allocated cost). The E4 avoidable-cost knob spans marginal → fully-allocated
     $/rev-hr, with a row at the marginal end (spec 06 E4).
+
+25. **Derived average speed — two deliberate simplifications** (spec 02 §4.9,
+    landed 2026-07-11). (a) **Dwell-loading feedback ignored:** station dwell
+    is a prior (20–30 s), but real dwell grows with boardings, so a small
+    ridership→speed→ridership feedback is left out at this stage (it would
+    modestly damp the busiest cells). (b) **Measured stays measured:** the
+    grade-separated derivation drives only the forward line; the base services
+    (43 local, 543 rapid) and the 2013 backtest keep their measured config
+    scalar speeds, and the OC Streetcar stays exogenous (a built, scheduled,
+    at-grade line). The street-calibrated curve (Route 43 11.4 mph @ 0.25-mi,
+    Route 543 12.8 mph @ 1.0-mi → ~13.3 mph no-stop, ~0.19 min/stop) exists to
+    reproduce those two points and to price hypothetical bus designs, not to
+    overwrite measurement. It also gives item 9 a physical reading: the 543's
+    corridor-doc 15 mph sits ABOVE this street curve's 12.8 mph @ 1.0-mi, so
+    that doc value implies TSP/priority the current street does not have — the
+    "rapid → GTFS current" sensitivity row already brackets it.

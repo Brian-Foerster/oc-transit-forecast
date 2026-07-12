@@ -30,7 +30,7 @@ if hasattr(sys.stdout, "reconfigure"):
 SCALAR_KEYS = ("newline", "total", "um_infra", "um_margin", "um0_infra",
                "um0_margin", "fare_burden", "cm_visitor")
 SEG_KEYS = ("cm_seg", "cm_seg_fullod")
-N_PRIORS = 17   # update when appending priors (append-last discipline, see model.py PRIORS)
+N_PRIORS = 19   # update when appending priors (append-last discipline, see model.py PRIORS)
 
 
 def _load(name):
@@ -72,7 +72,7 @@ def test_schema_shape(name):
         for k in SEG_KEYS:
             assert len(s[k]) == 3, f"{scen}.{k} not 3 segments"
             assert all(len(seg) == N for seg in s[k]), f"{scen}.{k} bad seg len"
-    assert len(e["params"]) == N_PRIORS + 1, len(e["params"])   # 17 + anchor
+    assert len(e["params"]) == N_PRIORS + 1, len(e["params"])   # 19 + anchor
     assert len(e["params"]["anchor"]) == N
     if name == "harbor":
         assert set(e["abc_weights"]) == {lbl for lbl, _, _ in get_kernels()}

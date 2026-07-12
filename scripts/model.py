@@ -111,12 +111,83 @@ PRIORS = {
     "pcarv":     (0.00, 0.30, "uni"),  # visitor market
     # pcar* are drawn and exported only (res["params"]); the BCA wrapper (B4)
     # prices them -- model code must NOT consume them anywhere.
+    # spec 02 §4.9 (R6): grade-separated derived-speed priors, appended LAST
+    # after pcarv (the same append-last rng discipline) so every pre-existing
+    # prior's draws stay bit-identical. Consumed ONLY by the forward line's
+    # derived_speed block; central (80 km/h, 25 s) reproduces ~30 mph at 1-mi
+    # spacing. The measured base services keep their config scalar speeds.
+    "v_cruise": (70.0, 90.0, "uni"),   # km/h, grade-separated cruise (ALM)
+    "dwell":    (20.0, 30.0, "uni"),   # s, station dwell (ALM)
 }
 # cap treatments removed per user decision 2026-07: the headline is reported
 # uncapped NEXT TO the backtest-calibrated (ABC) treatment -- see reweight_abc.py.
 # The single-element list is retained deliberately: the (label, cap) loop
 # structure lets a future analysis reintroduce a treatment in one line.
 ENVELOPES = [("uncapped", None)]
+
+# ---- derived average speed (spec 02 §4.9, R6) ---------------------------
+# TCQSM-style decomposition: average speed falls OUT of cruise speed, station
+# dwell, and the accel/decel time lost at each stop, so `speed` and `spacing`
+# are no longer independent config knobs. Mode decision 2026-07-08 splits it in
+# two: the forward elevated automated light-metro line uses the grade-separated
+# variant (no signal delay); the street variant, calibrated in code from two
+# measured OCTA bus points, stays for the bus backtest/calibration experiments.
+A_COMFORT = 1.0          # m/s^2, REM-class comfortable accel(=decel): sets the
+                         # per-stop time lost vs cruising, grade-separated only
+KMH_PER_MPH = 1.609344   # exact
+MPS_PER_KMH = 1000.0 / 3600.0
+# Two measured points on the shared Harbor street (avg mph, stop spacing mi):
+# Route 43 local and Route 543 rapid, both in this repo's GTFS/anchor
+# provenance. Two equations identify the street variant's per-stop penalty and
+# no-stop street speed; MEASURED STAYS MEASURED, so the base services keep
+# their own config scalar speeds and this curve only prices hypothetical bus
+# designs (sensitivity rows / future experiments).
+STREET_CAL_POINTS = ((11.4, 0.25), (12.8, 1.0))
+TSP_SPEEDUP = 0.075      # 2024 OCTA TSP study ~7-8% corridor speed-up would
+                         # raise v_street; informational only, no consumer yet
+
+
+def grade_sep_min_per_mile(v_cruise_kmh, dwell_s, spacing_mi):
+    """Grade-separated running time (min/mi), elementwise over draws. No signal
+    delay; the per-stop loss is the accel+decel time vs cruising at A_COMFORT
+    (loss_s = v_cruise_mps / A_COMFORT)."""
+    v_mph = v_cruise_kmh / KMH_PER_MPH
+    loss_s = (v_cruise_kmh * MPS_PER_KMH) / A_COMFORT
+    return 60.0 / v_mph + (dwell_s + loss_s) / 60.0 / spacing_mi
+
+
+def calibrate_street(points=STREET_CAL_POINTS):
+    """Solve two measured (avg mph, spacing) points for the street variant's
+    (per-stop penalty min, no-stop street speed mph): min/mi = 60/v_street +
+    p_stop/spacing, two equations / two unknowns. Solved symbolically from the
+    named constants so the ~0.19 min-per-stop / ~13.3 mph result MOVES if the
+    calibration points are ever revised -- never hardcode the solved values."""
+    (v1, s1), (v2, s2) = points
+    m1, m2 = 60.0 / v1, 60.0 / v2                    # measured min/mi
+    p_stop = (m1 - m2) / (1.0 / s1 - 1.0 / s2)       # min per stop
+    v_street = 60.0 / (m2 - p_stop / s2)             # no-stop street speed, mph
+    return p_stop, v_street
+
+
+def street_min_per_mile(spacing_mi, cal=None):
+    """Street running time (min/mi) at a given stop spacing, from the calibrated
+    (p_stop, v_street). Reproduces the two measured points by construction."""
+    p_stop, v_street = cal if cal is not None else calibrate_street()
+    return 60.0 / v_street + p_stop / spacing_mi
+
+
+def derived_speed_mph(svc, p, variant=None):
+    """Average speed (mph) for a service carrying a derived_speed block.
+    Grade-separated -> per-draw (n,) array (v_cruise/dwell are priors in `p`);
+    street -> scalar (calibrated constants only)."""
+    variant = variant or svc["derived_speed"]["variant"]
+    if variant == "grade_separated":
+        mpm = grade_sep_min_per_mile(p["v_cruise"], p["dwell"], svc["spacing"])
+    elif variant == "street":
+        mpm = street_min_per_mile(svc["spacing"])
+    else:
+        raise ValueError(f"unknown derived_speed variant {variant!r}")
+    return 60.0 / mpm
 
 
 def draw_params(n, seed=42, over=None):
@@ -227,9 +298,12 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         scales the fare term (0 = fare-free utility for the welfare passes,
         spec 06 D3). Both 1.0 defaults are numerical no-ops, so the ridership
         path is unchanged."""
-        h, v = hdw(svc, period), svc["speed"]
+        h = hdw(svc, period)
         walk_min = walks[id(svc)] / WALK_MPH * 60.0
-        u = (p["bivt"][:, None] * dists[None, :] * (60.0 / v)
+        # inv_v[id(svc)] is 60/speed in min/mi, pre-shaped to broadcast against
+        # (n, cells): a python scalar for exogenous services (old path, bitwise
+        # unchanged) or an (n, 1) per-draw column where speed is derived.
+        u = (p["bivt"][:, None] * dists[None, :] * inv_v[id(svc)]
              + bwait[:, None] * (wait_of(svc, market, h)[:, None]
                                  + walk_min[None, :]))
         if is_new:
@@ -251,6 +325,18 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                    (cfg["services_base"]["local"], False)],
     }
     union = list(cfg["services_base"].values()) + [cfg["service_new"]]
+
+    def inv_speed(svc):
+        """60/speed (min/mi), pre-shaped for the util() broadcast. A service
+        carrying a derived_speed block gets its average speed DERIVED per draw
+        (spec 02 §4.9) -> (n, 1) column; otherwise (or under the exogenous_speed
+        governance toggle) it stays the config scalar speed, so the exogenous
+        ridership path is bitwise unchanged (measured stays measured)."""
+        if "derived_speed" in svc and not over.get("exogenous_speed"):
+            f = 60.0 / derived_speed_mph(svc, p)
+            return f[:, None] if np.ndim(f) else f
+        return 60.0 / svc["speed"]
+    inv_v = {id(s): inv_speed(s) for s in union}
 
     def subcell_walks(legs):
         """Within-cell rider-position quadrature. A rider's absolute street
@@ -551,7 +637,17 @@ def main(path):
     h = sn["headway"]
     hstr = (f"{h['peak']:.0f}/{h['offpeak']:.0f}-min pk/off"
             if isinstance(h, dict) else f"{h:.0f}-min")
-    print(f"=== {cfg['title']} : {sn['speed']:.0f} mph / {hstr}"
+    # spec 02 §4.9: with a derived_speed block the average speed is DERIVED from
+    # the prior-central cruise/dwell and this spacing, not the config scalar.
+    vc_c = sum(PRIORS["v_cruise"][:2]) / 2.0     # central grade-sep cruise, km/h
+    dw_c = sum(PRIORS["dwell"][:2]) / 2.0        # central station dwell, s
+    if "derived_speed" in sn:
+        spd = 60.0 / grade_sep_min_per_mile(vc_c, dw_c, sn["spacing"])
+        sstr = (f"{spd:.1f} mph derived ({vc_c:.0f} km/h cruise / {dw_c:.0f}s "
+                f"dwell)")
+    else:
+        sstr = f"{sn['speed']:.0f} mph"
+    print(f"=== {cfg['title']} : {sstr} / {hstr}"
           f" / {sn['spacing']:.2f}-mi stops ===")
 
     res = run(cor)
@@ -643,8 +739,10 @@ def main(path):
         sens("rapid base -> GTFS current",
              cfg_patch={"services_base": {"rapid": dict(
                  cfg["services_base"]["rapid"], **cfg["rapid_alt"])}})
-    sens("new line 25 mph",
-         cfg_patch={"service_new": dict(sn, speed=25.0)})
+    # spec 02 §4.9 governance toggle: restore the old scalar-speed path (uses
+    # the config's exogenous fallback speed) -- should reproduce the pre-R6
+    # headline, since central derived speed ~= the 30-mph fallback.
+    sens("exogenous speed (old spec)", exogenous_speed=1)
     sens("new line 10/20-min headway",
          cfg_patch={"service_new": dict(sn, headway={"peak": 10.0,
                                                      "offpeak": 20.0})})
@@ -673,19 +771,37 @@ def main(path):
             v = point(asc=a0 * m)
             print(f"  asc x {m:.2f} = {a0*m:.3f}: {v:8,.0f}")
 
-    # ---- design sweep (h = peak headway; off-peak = 2x) --------------------
-    print("\n--- design sweep: central expected-blend P50 (uncapped; "
-          "h = peak, off-peak = 2x) ---")
-    speeds, heads = [20, 25, 30, 35], [5, 10, 15]
+    # ---- design sweep (off-peak = 2x peak) ---------------------------------
+    heads = [5, 10, 15]
     sweep = {}
-    print("        " + "".join(f"  h={h:>2}min" for h in heads))
-    for v in speeds:
-        vals = [point(cfg_patch={"service_new": dict(
-                    sn, speed=float(v),
-                    headway={"peak": float(h), "offpeak": 2.0 * h})})
-                for h in heads]
-        sweep[v] = vals
-        print(f"  {v} mph" + "".join(f"  {x:7,.0f}" for x in vals))
+    if "derived_speed" in sn:
+        # spec 02 §4.9: the speed axis IS the grade-separated cruise axis now;
+        # derived average speed responds to spacing everywhere (mph in parens
+        # at central dwell/spacing so the km/h cells stay readable).
+        print("\n--- design sweep: central expected-blend P50 (uncapped; "
+              "grade-sep cruise x peak headway, off-peak = 2x) ---")
+        axis, keys = "grade_separated_cruise_kmh", [60, 70, 80, 90]
+        print("               " + "".join(f"  h={hh:>2}min" for hh in heads))
+        for vc in keys:
+            mph = 60.0 / grade_sep_min_per_mile(float(vc), dw_c, sn["spacing"])
+            sweep[vc] = [point(v_cruise=float(vc), cfg_patch={"service_new": dict(
+                            sn, headway={"peak": float(hh), "offpeak": 2.0 * hh})})
+                         for hh in heads]
+            print(f"  {vc} km/h (~{mph:4.1f}mph)"
+                  + "".join(f"  {x:7,.0f}" for x in sweep[vc]))
+    else:
+        # exogenous-speed corridors (e.g. the at-grade OC Streetcar, decision 5)
+        # keep the measured-speed axis.
+        print("\n--- design sweep: central expected-blend P50 (uncapped; "
+              "h = peak, off-peak = 2x) ---")
+        axis, keys = "exogenous_speed_mph", [20, 25, 30, 35]
+        print("        " + "".join(f"  h={hh:>2}min" for hh in heads))
+        for v in keys:
+            sweep[v] = [point(cfg_patch={"service_new": dict(
+                            sn, speed=float(v),
+                            headway={"peak": float(hh), "offpeak": 2.0 * hh})})
+                        for hh in heads]
+            print(f"  {v} mph" + "".join(f"  {x:7,.0f}" for x in sweep[v]))
 
     dest = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "..", "outputs", f"results_{cor.name}.json")
@@ -694,7 +810,8 @@ def main(path):
                    "reference": REFERENCE,
                    "sensitivity": [{"label": l, "value": v, "pct": d}
                                    for l, v, d in rows],
-                   "sweep": {str(v): sweep[v] for v in speeds},
+                   "sweep": {str(k): sweep[k] for k in keys},
+                   "sweep_axis": axis,
                    "central_blend": base}, f, indent=2)
     print(f"\n-> {dest}")
 

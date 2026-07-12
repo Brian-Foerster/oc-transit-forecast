@@ -8,16 +8,25 @@ does, decisions that are NOT derivable from the code, and where to go next.
 
 A ridership forecast for a proposed rapid transit line on **Harbor Blvd,
 Fullerton Transportation Center → Harbor/MacArthur, Santa Ana (12.1 mi)**,
-with a user-specified design of **30 mph average speed / 5-minute headway**
-(stop spacing ~1 mi, a config parameter). It is an incremental (pivot-point)
+with a user-specified design of **~30 mph average speed / 5-minute headway**
+(stop spacing ~1 mi). As of spec 02 §4.9 (2026-07-11) the average speed is
+**derived** from grade-separated cruise/dwell priors and the spacing, not a
+free config scalar; the central design reproduces ~30 mph. It is an
+incremental (pivot-point)
 logit — the same philosophy as FTA STOPS's incremental mode — Monte-Carlo'd
 for honest uncertainty, anchored to observed boardings, built to be run in
 seconds instead of the person-months a STOPS run costs.
 
 **Current headline (2026-07-11, measured anchor; launch-equivalent ABC
-target): uncapped ~12,000 weekday boardings (P10–P90 9,963–13,995), implied
-uplift +31/+45/+61%; backtest-calibrated (ABC) ~11,840 (10,377–13,394), shown
-SIDE BY SIDE.** The ABC target was retargeted (spec 02 §4.6) from the 543's
+target; average speed DERIVED, spec 02 §4.9): uncapped ~12,000 weekday
+boardings (P10–P90 9,956–13,998), implied uplift +31/+45/+61%;
+backtest-calibrated (ABC) ~11,833 (10,377–13,395), shown SIDE BY SIDE.**
+The derived-speed landing (R6) restated the headline deliberately: the central
+barely moved (speed's central still ~30 mph), the bands widened slightly
+(speed is now uncertain), and the stop-spacing sensitivity rows shrank toward
+physical honesty (0.5-mi +23.6%→+16.9%, 1.5-mi −22.3%→−20.2%). The backtest
+and the ABC weights/ESS/posterior are byte-identical — only the forward
+forecast moved. The ABC target was retargeted (spec 02 §4.6) from the 543's
 matured six-year average (mu=4,200) to a launch-equivalent mu=5,938 (FY2017
 measured 4,615/wd × OCTA's measured FY2013/FY2017 bus-UPT back-trend 1.2868,
 NTD ID 90036); the matured 4,200 is kept as a sensitivity row (calibrated
@@ -142,6 +151,20 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
   vs the service's stop grid (weighted by `ovt`), plus `asc` for the new
   line only. Headways may be scalar or `{peak, offpeak}`; per-period
   utilities blend by the `pkshare` prior (45–60%).
+- **Derived average speed (spec 02 §4.9).** A service carrying a
+  `derived_speed` block gets its average speed DERIVED per draw from cruise +
+  dwell priors and its spacing (`grade_sep_min_per_mile` / `derived_speed_mph`,
+  module-level + unit-testable), so `util()`'s `60/speed` becomes an `(n,1)`
+  column via the `inv_speed` helper; exogenous services stay a scalar (old path
+  bitwise unchanged). Harbor's `service_new` uses the grade-separated variant
+  (`A_COMFORT = 1.0` m/s² per-stop loss, no signals); the two new priors
+  `v_cruise` (70–90 km/h) / `dwell` (20–30 s) are appended LAST in `PRIORS`.
+  The street variant (`calibrate_street`) is solved in code from the 43/543
+  measured points and prices hypothetical bus designs only. Governance: `over`
+  key `exogenous_speed=1` (sensitivity row "exogenous speed (old spec)")
+  restores the config scalar. The design sweep's speed axis is now the
+  grade-separated cruise axis (`sweep_axis` in the results JSON). Streetcar
+  stays exogenous.
 - **Each sub-rider takes their best service — deliberately NOT a logsum.**
   Within a cell, rider street-position is a K=8 quadrature over one stop-grid
   period; every service's walk time comes from the SAME position
