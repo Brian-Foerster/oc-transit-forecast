@@ -29,12 +29,13 @@ def intervals(name):
     abc_path = os.path.join(OUT, f"abc_{name}.json")
     if os.path.exists(abc_path):
         abc = json.load(open(abc_path, encoding="utf-8"))
-        key = [k for k, v in abc["sigmas"].items() if v["tag"] == "central"][0]
-        d = abc["sigmas"][key]
+        key = [k for k, v in abc["kernels"].items() if v["tag"] == "central"][0]
+        d = abc["kernels"][key]
         c = d["forecast"]["blend"]
-        rows.append(("Backtest-calibrated (ABC)",
-                     "draws reweighted by the 2013 Bravo! 543 outcome "
-                     f"(sigma={key}, ESS={d['ess']:,.0f})",
+        rows.append(("Backtest-calibrated (ABC, launch-eq.)",
+                     "draws reweighted by the 2013 Bravo! 543 launch-equivalent "
+                     f"(mu={d['mu']:,.0f}, sigma={d['sigma']:.0f}, "
+                     f"ESS={d['ess']:,.0f})",
                      c[0], c[1], c[2], TEAL))
 
     fig, ax = plt.subplots(figsize=(10.6, 4.9), dpi=200)

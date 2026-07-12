@@ -14,9 +14,14 @@ logit — the same philosophy as FTA STOPS's incremental mode — Monte-Carlo'd
 for honest uncertainty, anchored to observed boardings, built to be run in
 seconds instead of the person-months a STOPS run costs.
 
-**Current headline (2026-07, measured anchor): uncapped ~12,000 weekday
-boardings (P10–P90 9,963–13,995), implied uplift +31/+45/+61%;
-backtest-calibrated (ABC) ~10,750 (9,100–12,350), shown SIDE BY SIDE.**
+**Current headline (2026-07-11, measured anchor; launch-equivalent ABC
+target): uncapped ~12,000 weekday boardings (P10–P90 9,963–13,995), implied
+uplift +31/+45/+61%; backtest-calibrated (ABC) ~11,840 (10,377–13,394), shown
+SIDE BY SIDE.** The ABC target was retargeted (spec 02 §4.6) from the 543's
+matured six-year average (mu=4,200) to a launch-equivalent mu=5,938 (FY2017
+measured 4,615/wd × OCTA's measured FY2013/FY2017 bus-UPT back-trend 1.2868,
+NTD ID 90036); the matured 4,200 is kept as a sensitivity row (calibrated
+~10,750). See README known issue 15 (closed 2026-07-11).
 The design is 5-min peak / 10-min off-peak (user decision). The old
 cap +80%/+55% columns were removed (user decision); the companion treatment
 is calibration against the corridor's own 2013 Bravo! 543 launch
@@ -24,10 +29,12 @@ is calibration against the corridor's own 2013 Bravo! 543 launch
 are now MEASURED**, not inferred: OCTA's quarterly performance reports
 (FY2017/FY2019/FY2020-Q3, still live on octa.net) give route-level
 boardings — `scripts/anchor_from_apc.py`. Honesty notes: the backtest at
-prior-central parameters OVERPREDICTS the 543 launch (6,169 vs measured
-~3,700–4,600) — the earlier near-perfect 3,804 came from an unfaithful
-flat-15-min spec plus knife-edge artifacts; the ABC posterior puts the
-ASC at 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.
+prior-central parameters overpredicts the MATURED measurement (6,169 vs
+measured ~3,700–4,600) but nearly matches the launch-equivalent target
+(5,938, +3.9%) the ABC now uses — the earlier near-perfect 3,804 came from an
+unfaithful flat-15-min spec plus knife-edge artifacts; the ABC posterior puts
+the ASC at 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 (matured-target row:
+0.06/0.11/0.16).
 
 ## How it got here (session history, oldest → newest)
 
@@ -61,9 +68,10 @@ ASC at 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.
    index revealed the monthly ridership report's real filename contains a
    stray space (the clean URL 404s). Anchor re-derived from measurement
    (7,650–9,650); the 543 calibration target rose to mu=4,200 (measured
-   FY2017 4,615/wd, FY2019 3,739/wd — press figures were low). Records
-   request narrowed to stop-level APC, FY2014–16, post-2020 route-level,
-   and the transfer rate.
+   FY2017 4,615/wd, FY2019 3,739/wd — press figures were low). (Later
+   retargeted 2026-07-11 to launch-equivalent mu=5,938; spec 02 §4.6 /
+   README issue 15.) Records request narrowed to stop-level APC, FY2014–16,
+   post-2020 route-level, and the transfer rate.
 8. **MODE DECISION (user, 2026-07-08): the proposed line is an ELEVATED
    AUTOMATED LIGHT METRO, REM-class (GoA4 driverless)** — not arterial
    BRT. Capital cost model: `costs/metro_cost_model.xlsx` (user-supplied,
@@ -115,7 +123,7 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 | `scripts/route43_share.py` | Route 43 runs ~18 mi but the corridor is 12.1; this measures the share of 43's market inside the corridor (0.75 by LODES, 0.86 by ACS) used in the anchor derivation. |
 | `scripts/model.py` | The model. See "Model internals". |
 | `scripts/backtest_543.py` | Reruns the model as of June 2013 (local-only base, 543 at its actual 10/15 launch service) vs observed 543 ridership; exports `backtest_corridor()` for the ABC script. |
-| `scripts/reweight_abc.py` | Backtest-calibrated treatment: same draws through 2013 + forward configs, Gaussian kernel on the 543 prediction (mu 4,200, sigma 500; sens 350/800), weighted percentiles + ASC posterior + ESS + seed check. |
+| `scripts/reweight_abc.py` | Backtest-calibrated treatment: same draws through 2013 + forward configs, Gaussian kernel on the 543 prediction. Five kernels (single source of truth `KERNELS` / `get_kernels()`): launch-equivalent central mu=5,938 (=FY2017 4,615 × NTD FY2013/FY2017 back-trend 1.2868, spec 02 §4.6) at sigma 500, width sensitivities 350/800, an FY2014-vintage row (mu=5,647), and the retired matured mu=4,200 row. Weighted percentiles + ASC posterior + ESS + central residual + seed check. JSON keyed by kernel label (`kernels` block), not bare sigma. |
 | `scripts/make_charts.py` | Interval chart (anchor, uncapped, ABC-calibrated) and sensitivity tornado. |
 | `scripts/bca_export.py` | Freezes the stage-2 per-draw BCA quantity streams (spec 06 §3) to `outputs/bca_export_<corridor>.json.gz` — the file interface the downstream `transit-benefit-cost` wrapper prices. Runs `run()` once per design point, packages the welfare / car-mile / fare-burden arrays + ABC weights (harbor) at float32; `--seed-check` adds a seed+1 companion (gate G4). Computes NO prices or valuation. Optional; not on the critical path; output gitignored. |
 | `scripts/test_bca_export.py` | Executable statement of the §3 interface contract: schema shape, array lengths (N), `abc_weights` present iff a calibration target exists, and the round-trip P50 vs the committed reference to 4 significant figures. Run the exports first. |

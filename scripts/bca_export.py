@@ -24,7 +24,7 @@ usage: python bca_export.py harbor [--seed-check]
 import gzip, json, os, sys
 import numpy as np
 from model import Corridor, run, draw_params, pct, wpct, N
-from reweight_abc import abc_weights, kernel_label, MU, SIGMAS
+from reweight_abc import abc_weights, get_kernels, central_label
 from backtest_543 import backtest_corridor
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -37,8 +37,10 @@ SEED = 42
 EQ_DAYS = [300, 330]                 # weekday->annual band (anchor_from_apc convention)
 
 # ABC kernels for a corridor that has a backtest target: (label, mu, sigma),
-# central sigma first. Harbor's 543 experiment only, today.
-HARBOR_KERNELS = [(kernel_label(s), MU, s) for s in SIGMAS]
+# central first. Imported from reweight_abc (single source of truth) so the
+# export carries exactly the same five launch/matured kernels the calibration
+# writes -- no hardcoded labels here.
+HARBOR_KERNELS = get_kernels()
 
 
 def f32(a):
@@ -138,20 +140,19 @@ def _sig4(x):
 def roundtrip_check(name, path):
     """Read the gz back and match a P50 against the committed reference to 4
     significant figures (float32 rounding is well inside that). Harbor: the
-    ABC central-sigma retain P50 (weighted) vs abc_harbor.json. Streetcar (no
+    ABC central-kernel retain P50 (weighted) vs abc_harbor.json. Streetcar (no
     weights): the unweighted retain newline P50 vs results_streetcar.json.
     Returns True/False; the caller turns False into a nonzero exit."""
     with gzip.open(path, "rt", encoding="utf-8") as f:
         e = json.load(f)
     newline = np.asarray(e["scenarios"]["retain"]["newline"])
     if "abc_weights" in e:
-        lbl = kernel_label(SIGMAS[0])
+        lbl = central_label()
         w = np.asarray(e["abc_weights"][lbl])
         got = wpct(newline, w, 50)
         with open(os.path.join(OUT, f"abc_{name}.json"), encoding="utf-8") as fh:
-            ref = json.load(fh)["sigmas"][f"{SIGMAS[0]:.0f}"][
-                "forecast"]["retain"][1]
-        what = f"ABC central-sigma ({lbl}) retain P50, weighted, vs abc_{name}.json"
+            ref = json.load(fh)["kernels"][lbl]["forecast"]["retain"][1]
+        what = f"ABC central ({lbl}) retain P50, weighted, vs abc_{name}.json"
     else:
         got = pct(newline, 50)
         with open(os.path.join(OUT, f"results_{name}.json"),

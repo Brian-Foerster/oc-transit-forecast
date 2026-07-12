@@ -6,21 +6,22 @@ round-trip checks read the generated gz, so run the exports first:
     python test_bca_export.py
 
   - test_abc_weights_normalize: the refactored abc_weights returns per-kernel
-    weights that sum to 1, one array per label, tighter sigma concentrating
-    more mass near mu (fast; no file).
+    weights that sum to 1, one array per label (all five launch/matured
+    kernels), tighter sigma concentrating more mass near mu (fast; no file).
   - test_schema_shape(name): every §3 key is present with the right array
     lengths (N) and float dtype; abc_weights present iff a calibration target
-    exists (harbor yes, streetcar no -> absence reason instead).
+    exists (harbor yes -> all five kernel labels from reweight_abc, streetcar
+    no -> absence reason instead).
   - test_round_trip(name): reuses bca_export.roundtrip_check -- harbor's
-    weighted ABC central retain P50 vs abc_harbor.json, streetcar's unweighted
-    retain P50 vs results_streetcar.json, to 4 significant figures.
+    weighted ABC central-kernel retain P50 vs abc_harbor.json["kernels"][central],
+    streetcar's unweighted retain P50 vs results_streetcar.json, to 4 sig figs.
 
 usage: python test_bca_export.py [harbor streetcar]
 """
 import gzip, json, os, sys
 import numpy as np
 from model import N
-from reweight_abc import abc_weights, kernel_label, SIGMAS
+from reweight_abc import abc_weights, get_kernels, central_label
 import bca_export as bx
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -39,17 +40,20 @@ def _load(name):
 
 
 def test_abc_weights_normalize():
-    pred = np.linspace(3000.0, 6000.0, 1000)
-    kernels = [("543_matured_s500", 4200.0, 500.0),
-               ("543_matured_s350", 4200.0, 350.0)]
+    pred = np.linspace(3000.0, 8000.0, 1000)
+    kernels = get_kernels()                       # single source of truth
     w = abc_weights(pred, kernels)
-    assert set(w) == {"543_matured_s500", "543_matured_s350"}, set(w)
+    labels = {lbl for lbl, _, _ in kernels}
+    assert set(w) == labels, set(w)
+    assert len(w) == 5, len(w)                     # two launch, launch14, matured
     for lbl, v in w.items():
         assert v.shape == (1000,), (lbl, v.shape)
         assert abs(v.sum() - 1.0) < 1e-12, (lbl, v.sum())
-    near = np.abs(pred - 4200.0) < 200.0
-    assert (w["543_matured_s350"][near].sum()
-            > w["543_matured_s500"][near].sum()), "tighter sigma not tighter"
+    # the two launch kernels share MU_LAUNCH (~5,938); the s350 is tighter
+    mu_launch = {lbl: mu for lbl, mu, _ in kernels}["543_launch_s500"]
+    near = np.abs(pred - mu_launch) < 200.0
+    assert (w["543_launch_s350"][near].sum()
+            > w["543_launch_s500"][near].sum()), "tighter sigma not tighter"
     print("  test_abc_weights_normalize OK")
 
 
@@ -71,7 +75,8 @@ def test_schema_shape(name):
     assert len(e["params"]) == N_PRIORS + 1, len(e["params"])   # 17 + anchor
     assert len(e["params"]["anchor"]) == N
     if name == "harbor":
-        assert set(e["abc_weights"]) == {kernel_label(x) for x in SIGMAS}
+        assert set(e["abc_weights"]) == {lbl for lbl, _, _ in get_kernels()}
+        assert len(e["abc_weights"]) == 5, len(e["abc_weights"])
         assert all(len(v) == N for v in e["abc_weights"].values())
         assert "abc_weights_absent_reason" not in e
         # routes_removed is top-level; base_service is ONLY rev_hours_weekday

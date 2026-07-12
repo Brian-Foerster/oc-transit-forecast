@@ -65,19 +65,27 @@ features (see `scripts/model.py`):
 - **No baked-in filter; calibration shown side by side.** The headline is
   reported **uncapped** next to a **backtest-calibrated (ABC)** treatment:
   the same 40,000 draws are run through the 2013 Bravo! 543 configuration and
-  weighted by how well each reproduces the observed 543 outcome
-  (`scripts/reweight_abc.py`; Gaussian kernel mu=4,200, sigma=500, ESS ~8,600,
-  seed-drift +0.1%). This calibrates against the corridor's own natural
+  weighted by how well each reproduces the launch-equivalent 543 outcome
+  (`scripts/reweight_abc.py`; Gaussian kernel mu=5,938 -- the FY2017 measured
+  4,615/wd scaled by OCTA's measured FY2013/FY2017 system back-trend 1.2868,
+  spec 02 §4.6 -- sigma=500, ESS ~15,100, seed-drift 0.0%; the matured
+  six-year average mu=4,200 is retained as a sensitivity row, not the target).
+  This calibrates against the corridor's own natural
   experiment -- categorically different from filtering by literature
   benchmarks, which remains rejected (the old cap +80%/+55% columns are
   gone). Reference-class uplifts (Twin Cities +33%, UW +35%, Cleveland
   HealthLine +78%) are still printed next to the model's implied uplift, and
   all structural knobs appear in the one-at-a-time sensitivity table.
 
-**Headline (2026-07, measured anchor): uncapped blend P50 = 11,969 (P10-P90
-9,963-13,995), implied corridor uplift +31/+45/+61%; backtest-calibrated
-P50 = 10,757 (9,098-12,336). The calibration's main effect is on the
-new-line ASC: posterior 0.06/0.11/0.16 vs prior 0.09/0.20/0.31.**
+**Headline (2026-07, measured anchor; launch-equivalent ABC target): uncapped
+blend P50 = 11,969 (P10-P90 9,963-13,995), implied corridor uplift
++31/+45/+61%; backtest-calibrated P50 = 11,836 (10,377-13,394). The
+calibration's main effect is on the new-line ASC: posterior 0.14/0.19/0.24 vs
+prior 0.09/0.20/0.31 -- now near the prior midpoint, since the
+launch-equivalent target (mu=5,938) sits close to the model's backtest mass
+(P50 6,169). The matured-target row (mu=4,200) still gives 10,757
+(9,098-12,336), posterior 0.06/0.11/0.16 -- the old central, kept as a
+sensitivity.**
 
 ## Backtest (scripts/backtest_543.py)
 
@@ -90,16 +98,23 @@ the existing Route 43 local, both retained):
   data, `scripts/anchor_from_apc.py`): **~3,700-4,600** weekday boardings
   (FY2019 / FY2017; six-year average ~4,250 -- the press figures
   ~3,500-3,900 previously used here were low). The model at its priors
-  still **overpredicts the launch** -- honesty note: an earlier version
-  reported a near-perfect 3,804, but that came from an unfaithful
-  flat-15-min spec plus knife-edge choice artifacts.
+  overpredicts the MATURED measurement, but the calibration now targets a
+  **launch-equivalent** level (spec 02 §4.6): the FY2017 4,615/wd scaled by
+  OCTA's measured FY2013/FY2017 system back-trend (1.2868) gives mu=5,938,
+  which the backtest P50 (6,169) overshoots by only ~4% -- honesty note: an
+  earlier version reported a near-perfect 3,804, but that came from an
+  unfaithful flat-15-min spec plus knife-edge choice artifacts.
 - predicted corridor uplift +5/+9/+16% -- directionally consistent with the
   observed non-growth of total corridor ridership (an overlay on an
   already-frequent local mostly re-sorts riders; cf. FTA's Cleveland finding)
-- the discrepancy is what the ABC treatment consumes: reweighting draws by
-  the measured outcome (kernel mu = 4,200) concentrates the new-line ASC
-  near 0.11 (vs prior midpoint 0.20) and pulls the forward headline from
-  11,969 to 10,757 (ESS 8,624).
+- the residual is what the ABC treatment consumes: reweighting draws by the
+  launch-equivalent target (kernel mu = 5,938) leaves the new-line ASC near
+  0.19 (prior midpoint 0.20) and pulls the forward headline only slightly,
+  11,969 -> 11,836 (ESS 15,090, up from the matured target's 8,624 because
+  the target now sits inside the prediction mass). The retired matured target
+  (mu = 4,200) concentrated the ASC near 0.11 and pulled the headline to
+  10,757 (ESS 8,624) -- kept as a sensitivity row (README known issue 15,
+  closed).
 
 Caveats: 2022 LODES / 2023 ACS proxy for 2013 markets; the 2013 Route 43's
 peak headway is unknown (flat 15 assumed; the "43 at 10-min pk/15 off" row
@@ -185,9 +200,10 @@ Recorded as they were made; each is exposed in the sensitivity output.
    on long-headway feeders; OCTA does not generally run timed transfers.
 3. **Image/reliability ASC trimmed to 0-0.40** (from 0-0.55). Still the #1
    sensitivity (+38% at 0.55 / -21% at 0), but now disciplined by the ABC
-   treatment: the 543-launch calibration concentrates the posterior at
-   0.05/0.08/0.13 -- the priors are generous to the new line, and the
-   calibrated column shows what the corridor's own experiment implies.
+   treatment: the launch-equivalent 543 calibration puts the posterior at
+   0.14/0.19/0.24 (near the prior midpoint 0.20), and the calibrated column
+   shows what the corridor's own experiment implies. (The retired matured
+   target pulled it lower, to 0.06/0.11/0.16 -- kept as a sensitivity row.)
 4. **One-transfer access only**; flows whose non-corridor end is not within
    0.9 mi of a crossing feeder are dropped (conservative). Flows to LA County
    are excluded (OC-only tract-pair table).
@@ -228,7 +244,11 @@ Recorded as they were made; each is exposed in the sensitivity output.
 13. **ABC kernel width is a judgment call** (sigma=500 = obs spread (+)
     structural error, the latter now explicitly including the post-COVID
     2022 LODES commute *shape* proxying both the 2013 experiment and the
-    forward market); sigma 350/800 move the calibrated P50 by <1.3%.
+    forward market, PLUS the launch-equivalent back-trend vintage uncertainty
+    -- the FY2013-vs-FY2014 ratio spread is itself exposed as the
+    543_launch14_s500 kernel, mu=5,647). At the launch-equivalent target
+    (mu=5,938) the kernel sits inside the prediction mass, so sigma 350/800
+    move the calibrated P50 by <0.2% (the matured target was more sensitive).
 14. **ASC transportability is assumed, not shown** (review 2026-07-08).
     The ABC posterior moves essentially only the ASC (bivt/ovt barely
     shift), so the calibrated headline rests on one assumption: the new
@@ -239,18 +259,22 @@ Recorded as they were made; each is exposed in the sensitivity output.
     intervention. Defensible conservatism, now named. An
     ASC-transportability sensitivity (forward ASC = calibrated x premium
     factor) is queued.
-15. **The calibration target is matured, not launch, ridership — and the
-    backtest residual is one-sided.** mu=4,200 is the six-year matured
-    average; the earliest measurement (FY2017 = 4,615) is four years
-    post-launch, after systemwide decline began. If the 543 launched
-    higher and eroded, the target under-states the launch response and
-    over-pulls the ASC down (compounding issue 14 in the same direction).
-    A launch-equivalent retarget (FY2017 x 2013/2017 system back-trend,
-    needs OCTA FY2013 UPT from NTD) is queued. Relatedly, per the
-    saturation rule (specs 00 §5 / 02 §4.4): the central backtest residual
-    is one-sided (P50 6,169 vs target 4,200; even P10 barely reaches the
-    observed band) — reported here as a model-saturation signal, not
-    smoothed away by the kernel.
+15. ~~The calibration target is matured, not launch, ridership — and the
+    backtest residual is one-sided.~~ **Closed 2026-07-11:** launch-equivalent
+    retarget landed (spec 02 §4.6). mu=4,200 was the six-year matured average;
+    the earliest measurement (FY2017 = 4,615) is four years post-launch, after
+    systemwide decline began, so it under-stated the launch response and
+    over-pulled the ASC down (compounding issue 14). The retarget scales the
+    FY2017 measurement to launch vintage by OCTA's measured FY2013/FY2017
+    system bus-UPT back-trend (NTD ID 90036, dual-source verified):
+    mu = 4,615 x 1.2868 = 5,938 (central kernel `543_launch_s500`). The
+    matured 4,200 is kept as a sensitivity row (`543_matured_s500`), and the
+    FY2014-vintage reading (mu=5,647, `543_launch14_s500`) as another. The
+    central backtest residual, one-sided at +47% against the matured target
+    (P50 6,169 vs 4,200), shrinks to +3.9% against the launch-equivalent
+    target — the saturation signal (specs 00 §5 / 02 §4.4) is largely
+    resolved, not smoothed away. Effect: calibrated headline 10,757 -> 11,836,
+    ASC posterior 0.11 -> 0.19, ESS 8,624 -> 15,090.
 16. **The streetcar anchor is measured but WEAK, and its rail ASC is
     borrowed** (spec 05). The OC Streetcar corridor (config/streetcar.json)
     has no co-located route pair like Harbor's 43/543 — its anchor

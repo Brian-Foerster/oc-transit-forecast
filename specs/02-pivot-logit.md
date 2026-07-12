@@ -108,6 +108,10 @@ FY2013 bus UPT from NTD — public data). Keep mu=4,200 as a sensitivity.
 Expected direction: raises the ASC posterior and the calibrated headline,
 and shrinks the one-sided residual. Until then the current target is
 labeled "matured", not "launch" (README known issue 15).
+(landed 2026-07-11: MU_LAUNCH=4,615×1.28678≈5,938, NTD-measured back-trend;
+FY2014-ratio and matured-4,200 kept as rows — reweight_abc.py. Actuals:
+calibrated blend P50 10,757→11,836, ASC posterior 0.11→0.19, ESS 8,624→15,090,
+central residual +47%→+3.9%.)
 
 **4.7 Reporting: separate the fold/retain scenarios.** The 50/50
 coin-flip blend mixes an operator decision into the forecast band. Lead
