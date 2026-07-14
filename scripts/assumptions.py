@@ -86,7 +86,11 @@ ASSUMPTIONS = {
         "provenance": "rail/BRT image-and-reliability premium, trimmed 0-0.40; "
                       "the ABC-calibrated posterior is reported separately "
                       "(README issue 14)",
-        "rows": "auto", "no_row_reason": None, "accepted": None,
+        "rows": "auto",
+        # prior EXTRA (spec 08 §2): the untrimmed asc=0.55 probe, beyond the
+        # auto lo/hi edge rows -- per-artifact, present in both corridor results.
+        "extras": {"harbor": ["asc_untrimmed"], "streetcar": ["asc_untrimmed"]},
+        "no_row_reason": None, "accepted": None,
         "logged": "README known-issue 14", "upgrade": "ABC posterior / observed launch",
     },
     "w0": {
@@ -283,7 +287,8 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 40000, "definitional",
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "headline/BCA draw count; ESS and percentile-stability knob",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "convergence study",
     },
     "walk_mph": {
@@ -293,8 +298,10 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 3.0, "literature",
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "standard pedestrian speed ~3 mph (~1.4 m/s); spec 08 "
-                      "s7 mandates {2.5, 3.5} point rows (A2)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "s7 {2.5, 3.5} point rows generated from this band (A2)",
+        "rows": {"harbor": ["walk_mph_lo", "walk_mph_hi"],
+                 "streetcar": ["walk_mph_lo", "walk_mph_hi"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "observed access speeds",
     },
     "subk": {
@@ -304,7 +311,8 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 8, "definitional",
                      "spec08 A1 harvest -- introduced spec03")],
         "provenance": "8 is exact for 0.25/0.5/1.0-mi stop grids (spec 03)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "default_fare": {
@@ -315,18 +323,23 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec06 D3")],
         "provenance": "OCTA flat cash fare, reference base (spec 06 D3); every "
                       "fare term is 0 at flat fares; override via cfg['fare_base']",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "OCTA fare schedule change",
     },
     "a_comfort": {
         "title": "REM-class comfortable acceleration (= deceleration)",
         "tier": "constant", "status": "active",
-        "value": 1.0, "units": "m/s^2", "band": None, "basis": "literature",
+        "value": 1.0, "units": "m/s^2", "band": (1.0, 1.3), "basis": "literature",
         "history": [("2026-07-11", 1.0, "literature",
                      "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca")],
         "provenance": "REM-class comfortable accel; sets the per-stop time lost "
-                      "vs cruising, grade-separated only (spec 02 s4.9)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "vs cruising, grade-separated only (spec 02 s4.9). Band "
+                      "1.0 comfortable .. 1.3 performance (the a_comfort_hi probe); "
+                      "the comfort value 1.0 is the operative central. Band added "
+                      "in A2 harvest (A1 left it None) so the row is check-legible",
+        "rows": {"harbor": ["a_comfort_hi"]}, "no_row_reason": None,
+        "accepted": None,
         "logged": None, "upgrade": "vehicle procurement spec",
     },
     "j_comfort": {
@@ -336,8 +349,11 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 0.75, "literature",
                      "spec08 A1 harvest -- introduced spec02 s4.9b, 5e63eb2")],
         "provenance": "EN 13452-family passenger comfort band 0.5-1.0; "
-                      "REM-class service (spec 02 s4.9b)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "REM-class service (spec 02 s4.9b). Band edges jk_lo/jk_hi "
+                      "plus the jk_trapezoid (j->inf) R6 regression row are the "
+                      "harbor grade-separated derived-speed rows",
+        "rows": {"harbor": ["jk_lo", "jk_hi", "jk_trapezoid"]},
+        "no_row_reason": None, "accepted": None,
         "logged": "README known-issue 25 addendum",
         "upgrade": "vehicle procurement spec / observed REM telemetry",
     },
@@ -348,7 +364,8 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 1.609344, "definitional",
                      "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca")],
         "provenance": "exact international mile definition (1 mi = 1.609344 km)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "street_cal_local": {
@@ -385,8 +402,10 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 0.075, "literature",
                      "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca")],
         "provenance": "2024 OCTA TSP study ~7-8% corridor speed-up; "
-                      "informational only, no consumer yet (spec 08 s7)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "informational only, no consumer yet (spec 08 s7) -- a row "
+                      "is impossible until TSP is wired into the street speed",
+        "rows": {}, "no_row_reason": "spec-pending:02§4.9",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "held-out TSP experiment",
     },
     "dv_clip": {
@@ -396,8 +415,10 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 20, "definitional",
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "symmetric +/-20 clamp on dv before exp() -- numerical "
-                      "overflow guard, not a behavioral bound",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "overflow guard, not a behavioral bound; verified NOT to "
+                      "bind at central (max|dv| << 20), so a point row is 0.0%",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "tie_epsilon": {
@@ -408,7 +429,90 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "tolerance for the best-service indicator (near-perfect "
                       "substitutes tie at the util level)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": None,
+    },
+    "sens_n": {
+        "title": "one-at-a-time / point sensitivity draw count",
+        "tier": "constant", "status": "active",
+        "value": 4000, "units": "draws", "band": None, "basis": "definitional",
+        "history": [("2026-07-11", 4000, "definitional",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "MC draw count for the point()/sens() rows and the design "
+                      "sweep (model.py) -- a percentile-stability quality knob, "
+                      "smaller than the N=40,000 headline; backtest_543.py keeps "
+                      "a parallel literal 4,000 to unify in A2b",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": None,
+    },
+    "visitor_alpha_floor": {
+        "title": "visitor-Dirichlet alpha floor",
+        "tier": "constant", "status": "active",
+        "value": 1e-3, "units": "alpha", "band": None, "basis": "definitional",
+        "history": [("2026-07-11", 1e-3, "definitional",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "floor on the visitor bin-weight Dirichlet concentration "
+                      "(np.maximum(vw_base, 1e-3)*100) -- guards zero-weight "
+                      "bins from a degenerate alpha=0 (spec 08 s7)",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": None,
+    },
+    "s0_pivot_clip": {
+        "title": "S0 base-share pivot clips (numerical floor, max-share ceiling)",
+        "tier": "constant", "status": "active",
+        "value": (1e-6, 0.95), "units": "share", "band": None, "basis": "judgment",
+        "history": [("2026-07-11", (1e-6, 0.95), "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "np.clip on S0 before the pivot: 1e-6 numerical floor and "
+                      "0.95 max-share ceiling (a real max-share assumption, spec "
+                      "08 s7). Neither binds at central (max base transit share "
+                      "<< 0.95, s0v<=0.30), so a point row would be vacuously "
+                      "0.0% -- rowless, not counterfactual",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": None,
+    },
+    "subcell_merge_decimals": {
+        "title": "sub-cell walk-column merge epsilon (round decimals)",
+        "tier": "constant", "status": "active",
+        "value": 9, "units": "decimals", "band": None, "basis": "definitional",
+        "history": [("2026-07-11", 9, "definitional",
+                     "spec08 A2 harvest -- introduced spec03")],
+        "provenance": "np.round(W, 9) before np.unique merges identical joint "
+                      "walk columns (aligned stop grids collapse K^2 -> ~7); a "
+                      "float-dedup tolerance, not a behavioral knob (spec 08 s7)",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": None,
+    },
+    "walk_spread_grid": {
+        "title": "walk-taste spread grid (+/-15% axis and its weights)",
+        "tier": "constant", "status": "active",
+        "value": ((0.85, 1.0, 1.15), (0.25, 0.5, 0.25)),
+        "units": "(taste multiplier, weight)", "band": None, "basis": "judgment",
+        "history": [("2026-07-11", ((0.85, 1.0, 1.15), (0.25, 0.5, 0.25)),
+                     "judgment", "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "the +/-15% walk-taste quadrature (0.85/1.0/1.15 at "
+                      "0.25/0.5/0.25) applied only when the walk_spread toggle is "
+                      "on; the grid's whole effect IS the walk_spread row",
+        "rows": {}, "no_row_reason": "covered-elsewhere:walk_spread",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": None,
+    },
+    "nonwork_tilt_l": {
+        "title": "non-work shorter-trip exponential-tilt scale",
+        "tier": "constant", "status": "active",
+        "value": 4.0, "units": "mi", "band": None, "basis": "judgment",
+        "history": [("2026-07-11", 4.0, "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "decay length of the exp(-d/L) short-trip tilt applied to "
+                      "the non-work market when the nonwork_short toggle is on; "
+                      "the tilt's whole effect IS the nonwork_short row",
+        "rows": {}, "no_row_reason": "covered-elsewhere:nonwork_short",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
 
@@ -498,7 +602,8 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "common-random-numbers seed across backtest/forward runs; "
                       "seed+1 is the seed-robustness drift check",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "ess_min": {
@@ -509,7 +614,8 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db")],
         "provenance": "conventional ESS rule-of-thumb; below it the kernel is "
                       "too tight -- widen sigma, never filter (spec 08 s7)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
 
@@ -700,6 +806,209 @@ ASSUMPTIONS = {
                       "(the cos factor in MI_LON)",
         "rows": {}, "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": None,
+    },
+
+    # ===== structural tier (governance toggles; NOT owned) ==================
+    # Each names a run() over-key toggle and the sensitivity row-id it produces
+    # in BOTH corridor results (spec 08 §2/§3). No value/band -- structural
+    # entries satisfy materiality (§5 check 5) because every enumerated
+    # alternative code path has a row. Introduced pre-08; harvested in A2.
+    "variety_logsum": {
+        "title": "variety-logsum choice toggle (red-bus/blue-bus correction)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "variety_logsum", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "OFF (headline): near-perfect substitutes on one street "
+                      "earn no logsum variety bonus (best-service choice). ON: a "
+                      "theta=1 logsum -- the rejected alternative, kept as a row",
+        "rows": {"harbor": ["variety_logsum"], "streetcar": ["variety_logsum"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "linear_wait": {
+        "title": "linear-wait toggle (h/2 vs arrival-strategy closed form)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "linear_wait", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "OFF (headline): walk-access wait = min(h/2, w0 + lam*h). "
+                      "ON: the old plain h/2 wait -- retained as a row",
+        "rows": {"harbor": ["linear_wait"], "streetcar": ["linear_wait"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "smooth_k": {
+        "title": "sub-cell quadrature toggle (knife-edge vs K-node smoothing)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "smooth_k", "judgment",
+                     "spec08 A2 harvest -- introduced spec03")],
+        "provenance": "smooth_k=0 restores the old knife-edge point walk "
+                      "(spacing/4); the headline uses the SUBK-node within-cell "
+                      "quadrature. The knife-edge extreme is the smooth_k row",
+        "rows": {"harbor": ["smooth_k"], "streetcar": ["smooth_k"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "no_transfer": {
+        "title": "transfer-market toggle",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "no_transfer", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "ON drops the transfer market (fx=0) -- bounds the "
+                      "transfer market's contribution to the headline",
+        "rows": {"harbor": ["no_transfer"], "streetcar": ["no_transfer"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "no_visitor": {
+        "title": "visitor-market toggle",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "no_visitor", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "ON drops the visitor market (fv=0) -- bounds the "
+                      "resort/visitor market's contribution to the headline",
+        "rows": {"harbor": ["no_visitor"], "streetcar": ["no_visitor"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "no_bin0": {
+        "title": "sub-half-mile bin toggle (old market definition)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "no_bin0", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "ON drops the 0-0.5-mi intra-tract bin and renormalizes "
+                      "-- the pre-intra-tract market definition, kept as a row",
+        "rows": {"harbor": ["no_bin0"], "streetcar": ["no_bin0"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "nonwork_short": {
+        "title": "non-work shorter-trip tilt toggle",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "nonwork_short", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "ON tilts the non-work O-D toward shorter trips (exp decay "
+                      "L=nonwork_tilt_l); probes the commute-only-LODES proxy for "
+                      "the non-work market",
+        "rows": {"harbor": ["nonwork_short"], "streetcar": ["nonwork_short"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "exogenous_speed": {
+        "title": "exogenous-speed governance toggle (spec 02 §4.9)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "exogenous_speed", "judgment",
+                     "spec08 A2 harvest -- introduced spec02 s4.9 R6")],
+        "provenance": "ON restores the old config scalar-speed path (the "
+                      "exogenous fallback), bypassing the derived_speed block; "
+                      "no-op for exogenous corridors (streetcar row = 0.0%)",
+        "rows": {"harbor": ["exogenous_speed"], "streetcar": ["exogenous_speed"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "walk_spread": {
+        "title": "walk-taste spread toggle (+/-15% axis)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "walk_spread", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "ON adds the walk_spread_grid +/-15% walk-taste "
+                      "quadrature; this toggle's row IS where the walk_spread_grid "
+                      "constant is exercised (covered-elsewhere target)",
+        "rows": {"harbor": ["walk_spread"], "streetcar": ["walk_spread"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+
+    # ===== config tier (corridor-owned; entry points at a config key) =======
+    # NOT owned here -- the entry names a structured config key and claims the
+    # per-artifact rows those config values drive. Harbor and streetcar anchors
+    # are SEPARATE entries (spec 08 §3: "anchor -> low" means DIFFERENT
+    # assumptions per corridor). The anchor_derivation structured-key promotion
+    # (trend / corr_share) and full pointer resolution are A2b.
+    "harbor_anchor": {
+        "title": "Harbor corridor anchor band (weekday boardings)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/harbor.json: anchor_low / anchor_high",
+        "history": [("2026-07-11", (7650, 9650), "measured",
+                     "spec08 A2 harvest -- config anchor_low/high")],
+        "provenance": "543 + 43 FY2019 route totals x FY2019->FY2024 trend x "
+                      "corridor share (anchor_from_apc.py / route43_share.py); "
+                      "the anchor_lo/anchor_hi sensitivity rows sweep the band",
+        "rows": {"harbor": ["anchor_lo", "anchor_hi"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "APC records request",
+    },
+    "streetcar_anchor": {
+        "title": "OC Streetcar corridor anchor band (weekday boardings)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/streetcar.json: anchor_low / anchor_high",
+        "history": [("2026-07-11", (3600, 5500), "measured",
+                     "spec08 A2 harvest -- config anchor_low/high")],
+        "provenance": "composite of parallel-carrier shape-shares x FY2019 "
+                      "weekday boardings x uniformity x trend (anchor_streetcar.py; "
+                      "MEASURED but WEAK, spec 05 §3.3); anchor_lo/anchor_hi rows",
+        "rows": {"streetcar": ["anchor_lo", "anchor_hi"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "APC records request",
+    },
+    "harbor_service_new": {
+        "title": "Harbor new-line service design (grade-separated ALM)",
+        "tier": "config", "status": "active", "basis": "judgment",
+        "config_key": "config/harbor.json: service_new / services_base.rapid",
+        "history": [("2026-07-11", "service_new", "judgment",
+                     "spec08 A2 harvest -- config service_new design axis")],
+        "provenance": "owns the harbor design-exploration rows: stop-offset, "
+                      "rapid-base GTFS variant, 10/20 & flat-5 headway plans, "
+                      "0.5/1.5-mi spacing (spec 08 §3 -- one owner per artifact)",
+        "rows": {"harbor": ["grid_phase_half", "rapid_gtfs", "headway_10_20",
+                            "headway_flat5", "spacing_05", "spacing_15"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "OCTA project design docs",
+    },
+    "streetcar_service_new": {
+        "title": "OC Streetcar new-line service design (at-grade)",
+        "tier": "config", "status": "active", "basis": "judgment",
+        "config_key": "config/streetcar.json: service_new",
+        "history": [("2026-07-11", "service_new", "judgment",
+                     "spec08 A2 harvest -- config service_new design axis")],
+        "provenance": "owns the streetcar design-exploration rows: stop-offset, "
+                      "10/20 & flat-5 headway plans, 0.5/1.5-mi spacing (no rapid "
+                      "base -> no rapid_gtfs row); spec 08 §3 one-owner rule",
+        "rows": {"streetcar": ["grid_phase_half", "headway_10_20",
+                              "headway_flat5", "spacing_05", "spacing_15"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "OCTA project design docs",
+    },
+
+    # ===== width-block owners (spec 08 §4; rows in the 'width' artifact) =====
+    # The band-WIDTH knobs. A point() row is vacuously 0.0% (it pins fix_bins),
+    # so these are exercised by the width_sensitivities block: full reruns under
+    # x0.5/x2 scale factors (a scale over-key, NOT new priors). The raw
+    # concentration literals (300/300/100/400) remain in run(); single-sourcing
+    # them is an A2b/later cleanup -- the width rows already expose the effect.
+    "dirichlet_strength": {
+        "title": "Dirichlet bin-shape concentration (joint bin-shape trust)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-11", "dirichlet_strength", "judgment",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "the four Dirichlet concentrations -- walk-bin 300, "
+                      "transfer-bin 300, visitor-bin 100, car-frac 400 -- encode "
+                      "one 'how much do we trust the bin shapes' assumption; the "
+                      "width block scales all four jointly x0.5/x2 (spec 08 §4)",
+        "rows": {"width": ["dirichlet_half", "dirichlet_double"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "on-board / APC bin-share observations",
+    },
+    "s0_se_width": {
+        "title": "S0 base-share lognormal jitter width",
+        "tier": "structural", "status": "active", "basis": "locally-calibrated",
+        "history": [("2026-07-11", "s0_se_width", "locally-calibrated",
+                     "spec08 A2 harvest -- introduced spec02")],
+        "provenance": "the S0 base-share jitter is lognormal(0, cor.s0_se) with "
+                      "cor.s0_se the ACS delta-method relative SEs (data); the "
+                      "width block scales that sigma x0.5/x2 (spec 08 §4)",
+        "rows": {"width": ["s0se_half", "s0se_double"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "ACS refresh / observed base shares",
     },
 }
 

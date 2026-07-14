@@ -312,276 +312,343 @@
   },
   "sensitivity": [
     {
+      "id": "anchor_lo",
       "label": "anchor -> low",
       "value": 4512.358582625311,
       "pct": -21.066585780060567
     },
     {
+      "id": "anchor_hi",
       "label": "anchor -> high",
       "value": 6893.881167899781,
       "pct": 20.592716169351913
     },
     {
+      "id": "bivt_lo",
       "label": "bivt -> -0.035",
       "value": 5814.923134327112,
       "pct": 1.7188080278644318
     },
     {
+      "id": "bivt_hi",
       "label": "bivt -> -0.018",
       "value": 5633.470722259073,
       "pct": -1.4552877672088103
     },
     {
+      "id": "ovt_lo",
       "label": "ovt -> 1.6",
       "value": 5670.376281612206,
       "pct": -0.8097092410127474
     },
     {
+      "id": "ovt_hi",
       "label": "ovt -> 2.5",
       "value": 5771.23726343719,
       "pct": 0.954623426979552
     },
     {
+      "id": "asc_lo",
       "label": "asc -> 0.0",
       "value": 4248.894623503453,
       "pct": -25.675286404489125
     },
     {
+      "id": "asc_hi",
       "label": "asc -> 0.4",
       "value": 6842.50169703135,
       "pct": 19.693949597015454
     },
     {
+      "id": "w0_lo",
       "label": "w0 -> 4.0",
       "value": 5503.781859948944,
       "pct": -3.723898406410789
     },
     {
+      "id": "w0_hi",
       "label": "w0 -> 7.0",
       "value": 5775.002293734861,
       "pct": 1.020484038585416
     },
     {
+      "id": "lam_lo",
       "label": "lam -> 0.1",
       "value": 5493.169380895297,
       "pct": -3.909539505118546
     },
     {
+      "id": "lam_hi",
       "label": "lam -> 0.25",
       "value": 5775.002293734861,
       "pct": 1.020484038585416
     },
     {
+      "id": "xcap_lo",
       "label": "xcap -> 10.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "xcap_hi",
       "label": "xcap -> 15.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "tau_lo",
       "label": "tau -> 0.25",
       "value": 5689.562561804474,
       "pct": -0.474089060562682
     },
     {
+      "id": "tau_hi",
       "label": "tau -> 0.4",
       "value": 5744.186291726572,
       "pct": 0.4814284190943735
     },
     {
+      "id": "phi_lo",
       "label": "phi -> 0.05",
       "value": 5726.586015672907,
       "pct": 0.17355176109151213
     },
     {
+      "id": "phi_hi",
       "label": "phi -> 0.15",
       "value": 5706.4040076038455,
       "pct": -0.1794864058749402
     },
     {
+      "id": "s0v_lo",
       "label": "s0v -> 0.1",
       "value": 5728.249122412131,
       "pct": 0.20264401755460698
     },
     {
+      "id": "s0v_hi",
       "label": "s0v -> 0.3",
       "value": 5705.950470233225,
       "pct": -0.18742000700257222
     },
     {
+      "id": "ws_lo",
       "label": "ws -> 0.4",
       "value": 5689.96673347397,
       "pct": -0.46701899970202765
     },
     {
+      "id": "ws_hi",
       "label": "ws -> 0.6",
       "value": 5743.362553542834,
       "pct": 0.4670189997020118
     },
     {
+      "id": "kappa_lo",
       "label": "kappa -> 0.6",
       "value": 5583.175093336241,
       "pct": -2.3350949985101224
     },
     {
+      "id": "kappa_hi",
       "label": "kappa -> 1.0",
       "value": 5850.1541936805625,
       "pct": 2.3350949985101064
     },
     {
+      "id": "pkshare_lo",
       "label": "pkshare -> 0.45",
       "value": 5658.073889230173,
       "pct": -1.0249115162765747
     },
     {
+      "id": "pkshare_hi",
       "label": "pkshare -> 0.6",
       "value": 5775.2413624949895,
       "pct": 1.0246660008840043
     },
     {
+      "id": "vot_behav_lo",
       "label": "vot_behav -> 10.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "vot_behav_hi",
       "label": "vot_behav -> 22.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcar0_lo",
       "label": "pcar0 -> 0.05",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcar0_hi",
       "label": "pcar0 -> 0.25",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcar1_lo",
       "label": "pcar1 -> 0.35",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcar1_hi",
       "label": "pcar1 -> 0.65",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcar2_lo",
       "label": "pcar2 -> 0.55",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcar2_hi",
       "label": "pcar2 -> 0.85",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcarv_lo",
       "label": "pcarv -> 0.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "pcarv_hi",
       "label": "pcarv -> 0.3",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "v_cruise_lo",
       "label": "v_cruise -> 70.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "v_cruise_hi",
       "label": "v_cruise -> 90.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "dwell_lo",
       "label": "dwell -> 20.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "dwell_hi",
       "label": "dwell -> 30.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "walk_mph_lo",
+      "label": "walk_mph -> 2.5",
+      "value": 5619.1702797443895,
+      "pct": -1.7054413691158712
+    },
+    {
+      "id": "walk_mph_hi",
+      "label": "walk_mph -> 3.5",
+      "value": 5782.127280302617,
+      "pct": 1.1451194162412723
+    },
+    {
+      "id": "asc_untrimmed",
       "label": "asc -> 0.55 (untrimmed)",
       "value": 7771.997290653815,
       "pct": 35.953353490472104
     },
     {
+      "id": "variety_logsum",
       "label": "logsum variety bonus (rejected)",
       "value": 5536.388560478228,
       "pct": -3.153518603455037
     },
     {
+      "id": "linear_wait",
       "label": "linear h/2 wait (old spec)",
       "value": 5775.002293734861,
       "pct": 1.020484038585416
     },
     {
+      "id": "no_transfer",
       "label": "no transfer market",
       "value": 5602.131822199412,
       "pct": -2.0034902946256996
     },
     {
+      "id": "no_visitor",
       "label": "no visitor market",
       "value": 5736.184678201364,
       "pct": 0.34145845366541705
     },
     {
+      "id": "no_bin0",
       "label": "no sub-half-mile bin (old defn)",
       "value": 5713.537624321854,
       "pct": -0.05470006343819292
     },
     {
+      "id": "nonwork_short",
       "label": "non-work trips shorter (4-mi tilt)",
       "value": 5717.228252726296,
       "pct": 0.009859056863407885
     },
     {
+      "id": "smooth_k",
       "label": "knife-edge choice (old spec)",
       "value": 5703.252353578604,
       "pct": -0.2346173995885617
     },
     {
+      "id": "walk_spread",
       "label": "walk-taste spread +/-15%",
       "value": 5712.3438585554595,
       "pct": -0.0755822708237596
     },
     {
+      "id": "grid_phase_half",
       "label": "new-line stops offset 0.5 mi",
       "value": 5733.219393490417,
       "pct": 0.2895875657288003
     },
     {
+      "id": "exogenous_speed",
       "label": "exogenous speed (old spec)",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
+      "id": "headway_10_20",
       "label": "new line 10/20-min headway",
       "value": 5353.701093410771,
       "pct": -6.349218866805433
     },
     {
+      "id": "headway_flat5",
       "label": "flat 5-min all day (old spec)",
       "value": 6833.193591400624,
       "pct": 19.531125534188966
     },
     {
+      "id": "spacing_05",
       "label": "new stop spacing 0.5 mi",
       "value": 5382.962806094778,
       "pct": -5.837351991472188
     },
     {
+      "id": "spacing_15",
       "label": "new stop spacing 1.5 mi",
       "value": 2641.760518138587,
       "pct": -53.78842939233008
@@ -610,5 +677,51 @@
     ]
   },
   "sweep_axis": "exogenous_speed_mph",
-  "central_blend": 5716.664643508402
+  "central_blend": 5716.664643508402,
+  "width_sensitivities": [
+    {
+      "id": "dirichlet_half",
+      "label": "Dirichlet concentration x0.5 (all 4 sites: looser bin shapes)",
+      "blend": [
+        4509.02950697791,
+        5590.563436943714,
+        6797.221700828843
+      ],
+      "band": 2288.192193850932,
+      "band_delta": -3.4623883055219267
+    },
+    {
+      "id": "dirichlet_double",
+      "label": "Dirichlet concentration x2 (all 4 sites: tighter bin shapes)",
+      "blend": [
+        4505.679567167669,
+        5591.052191274367,
+        6796.448389373501
+      ],
+      "band": 2290.7688222058323,
+      "band_delta": -0.8857599506218321
+    },
+    {
+      "id": "s0se_half",
+      "label": "S0 lognormal jitter x0.5 (tighter base-share draws)",
+      "blend": [
+        4508.964200004357,
+        5596.289935814546,
+        6807.615466645435
+      ],
+      "band": 2298.651266641078,
+      "band_delta": 6.996684484623984
+    },
+    {
+      "id": "s0se_double",
+      "label": "S0 lognormal jitter x2 (wider base-share draws)",
+      "blend": [
+        4488.118544511481,
+        5560.039480781412,
+        6761.15968125245
+      ],
+      "band": 2273.0411367409697,
+      "band_delta": -18.61344541548442
+    }
+  ]
 }

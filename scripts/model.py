@@ -38,7 +38,7 @@ usage: python model.py data/derived/corridor_harbor.json
 """
 import copy, json, os, sys
 import numpy as np
-from assumptions import val, build_priors
+from assumptions import val, band, build_priors
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -51,6 +51,14 @@ SUBK = val("subk")   # rider-position quadrature nodes; 8 is exact for 0.25/0.5/
 DEFAULT_FARE = val("default_fare")   # OCTA flat cash fare, $ (spec 06 D3; override via cfg["fare_base"])
 DV_CLIP = val("dv_clip")      # +/- clamp on dv before exp() (numerical overflow guard)
 TIE_EPS = val("tie_epsilon")  # best-service tie-break tolerance
+SENS_N = val("sens_n")        # one-at-a-time / point sensitivity draw count (quality knob)
+# spec 08 A2 harvest: the previously-ungathered "silently load-bearing" literals
+# (spec 08 §7), now single-sourced. Registry-owned; call sites keep local names.
+VIS_ALPHA_FLOOR = val("visitor_alpha_floor")   # visitor-Dirichlet alpha floor 1e-3
+S0_CLIP_LO, S0_CLIP_HI = val("s0_pivot_clip")  # S0 pivot clips (1e-6 floor, 0.95 max share)
+SUBCELL_MERGE_DECIMALS = val("subcell_merge_decimals")  # round(W, 9) sub-cell merge epsilon
+WALK_SPREAD_TASTE, WALK_SPREAD_WEIGHTS = val("walk_spread_grid")  # +/-15% walk-taste grid
+NONWORK_TILT_L = val("nonwork_tilt_l")   # non-work shorter-trip exp-tilt scale (mi)
 
 # Reference classes are DISPLAY-ONLY (spec 05 §4): printed beside the
 # forecast, never used to cap, reweight, or filter draws (standing user
@@ -306,6 +314,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             else:
                 cfg[k] = v
 
+    # spec 08 A2: non-prior over-keys. draw_params ignores any key not in PRIORS
+    # (verified: no shadowing), so these thread through **over without colliding
+    # with a pin. walk_mph -> the mandated point sensitivity rows (spec 08 §7);
+    # dir_scale/s0se_scale -> the width-sensitivity block (§4). Each defaults to a
+    # numerical no-op (x*1.0 is exact; WALK_MPH is the same literal), so every
+    # pre-existing call path stays bitwise unchanged -- the additivity gate.
+    walk_mph = over.get("walk_mph", WALK_MPH)
+    dir_scale = over.get("dir_scale", 1.0)     # Dirichlet concentration multiplier
+    s0se_scale = over.get("s0se_scale", 1.0)   # S0 lognormal jitter-width multiplier
+
     if params is None:
         p = draw_params(n, seed, over)
     else:   # pins still apply on top of shared draws
@@ -318,16 +336,21 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     # via svc["fare"]. At today's flat fare every fare term is exactly 0.
     fare_base = cfg.get("fare_base", DEFAULT_FARE)
 
+    # spec 08 §4 width block: dir_scale scales the FOUR Dirichlet concentrations
+    # (ww 300, xw 300, vw 100, cf 400) jointly; s0se_scale scales the S0
+    # lognormal jitter width. Both default to 1.0 (x*1.0 exact -> bitwise
+    # unchanged); they bind only in the not-fixed jitter path, which is exactly
+    # why band-WIDTH needs full reruns rather than a vacuous fix_bins point row.
     fixed = "fix_bins" in over
-    ww = np.tile(cor.ww, (n, 1)) if fixed else rng.dirichlet(cor.ww * 300, n)
-    xw = np.tile(cor.xw, (n, 1)) if fixed else rng.dirichlet(cor.xw * 300, n)
+    ww = np.tile(cor.ww, (n, 1)) if fixed else rng.dirichlet(cor.ww * 300 * dir_scale, n)
+    xw = np.tile(cor.xw, (n, 1)) if fixed else rng.dirichlet(cor.xw * 300 * dir_scale, n)
     vw_base = np.array(cfg["visitor"]["bin_weights"], float)
     vw_base = vw_base / vw_base.sum()
     vw = (np.tile(vw_base, (n, 1)) if fixed
-          else rng.dirichlet(np.maximum(vw_base, 1e-3) * 100, n))
+          else rng.dirichlet(np.maximum(vw_base, VIS_ALPHA_FLOOR) * 100 * dir_scale, n))
     s0 = cor.s0[None, :] * (1.0 if fixed
-                            else rng.lognormal(0.0, cor.s0_se, (n, 3)))
-    cf = np.tile(cor.cf, (n, 1)) if fixed else rng.dirichlet(cor.cf * 400, n)
+                            else rng.lognormal(0.0, cor.s0_se * s0se_scale, (n, 3)))
+    cf = np.tile(cor.cf, (n, 1)) if fixed else rng.dirichlet(cor.cf * 400 * dir_scale, n)
     if over.get("no_bin0"):        # drop the 0-0.5-mi bin (old market defn)
         for arr in (ww, xw, vw):
             arr[:, 0] = 0.0
@@ -356,7 +379,7 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         spec 06 D3). Both 1.0 defaults are numerical no-ops, so the ridership
         path is unchanged."""
         h = hdw(svc, period)
-        walk_min = walks[id(svc)] / WALK_MPH * 60.0
+        walk_min = walks[id(svc)] / walk_mph * 60.0
         # inv_v[id(svc)] is 60/speed in min/mi, pre-shaped to broadcast against
         # (n, cells): a python scalar for exogenous services (old path, bitwise
         # unchanged) or an (n, 1) per-draw column where speed is derived.
@@ -414,12 +437,13 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         W = np.stack([d(s) for s in union])                  # (S, K)
         if legs == 2:
             W = (W[:, :, None] + W[:, None, :]).reshape(len(union), -1)
-        uniq, inv = np.unique(np.round(W, 9).T, axis=0, return_inverse=True)
+        uniq, inv = np.unique(np.round(W, SUBCELL_MERGE_DECIMALS).T, axis=0,
+                              return_inverse=True)
         subw = np.zeros(len(uniq))
         np.add.at(subw, inv, 1.0 / W.shape[1])
         W = uniq.T                                           # (S, Q)
         if over.get("walk_spread"):   # +/-15% walk-taste axis (sensitivity)
-            t, tw = np.array([0.85, 1.0, 1.15]), np.array([0.25, 0.5, 0.25])
+            t, tw = np.array(WALK_SPREAD_TASTE), np.array(WALK_SPREAD_WEIGHTS)
             W = (W[:, :, None] * t[None, None, :]).reshape(len(union), -1)
             subw = (subw[:, None] * tw[None, :]).ravel()
         return {id(s): W[i] for i, s in enumerate(union)}, subw
@@ -474,10 +498,10 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             dv = ls1 - ls0                                   # (n, bins*Q)
             e = np.exp(np.clip(dv, -DV_CLIP, DV_CLIP))[:, :, None]
             if market == "visitor":
-                S0 = np.clip(p["s0v"], 1e-6, 0.95)[:, None, None]
+                S0 = np.clip(p["s0v"], S0_CLIP_LO, S0_CLIP_HI)[:, None, None]
                 P = wts_e[:, :, None]
             else:
-                S0 = np.clip(s0, 1e-6, 0.95)[:, None, :]
+                S0 = np.clip(s0, S0_CLIP_LO, S0_CLIP_HI)[:, None, :]
                 P = wts_e[:, :, None] * cf[:, None, :]
             S1 = S0 * e / (S0 * e + (1 - S0))                # pivot per sub-cell
             pn = 1.0 if pnew is None else pnew[:, :, None]
@@ -612,7 +636,7 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         # sensitivity probe: LODES is commute-only, so the non-work market
         # inherits the work O-D shape; this tilts it toward shorter trips
         # (exp weight, L = 4 mi) for the non-work response only
-        L = 4.0
+        L = NONWORK_TILT_L
         def tilt(w, d):
             t = w * np.exp(-d / L)[None, :]
             return t / t.sum(axis=1, keepdims=True)
@@ -766,7 +790,7 @@ def main(path):
     def point(**kv):
         kv2 = dict(central); kv2.update({k: v for k, v in kv.items()
                                          if k not in ("cfg_patch",)})
-        return pct(run(cor, n=4000, cfg_patch=kv.get("cfg_patch"),
+        return pct(run(cor, n=SENS_N, cfg_patch=kv.get("cfg_patch"),
                        linear_wait=kv.get("linear_wait", False),
                        no_transfer=kv.get("no_transfer", False),
                        no_visitor=kv.get("no_visitor", False),
@@ -775,65 +799,75 @@ def main(path):
                                        "no_visitor")})["uncapped"]["blend_ev"], 50)
     base = point()
     rows = []
-    def sens(label, **kv):
+    # spec 08 A2/§3: each row carries a stable machine `id` (the join key the
+    # registry claims) ALONGSIDE the display `label` (byte-unchanged). Ids are
+    # emitted MECHANICALLY for prior rows (f"{k}_lo"/f"{k}_hi") and passed
+    # explicitly for the hand rows; walk_mph rows read the registry band.
+    def sens(label, sid, **kv):
         v = point(**kv)
-        rows.append((label, v, 100 * (v - base) / base))
-    sens("anchor -> low", anchor=cfg["anchor_low"])
-    sens("anchor -> high", anchor=cfg["anchor_high"])
+        rows.append((label, v, 100 * (v - base) / base, sid))
+    sens("anchor -> low", "anchor_lo", anchor=cfg["anchor_low"])
+    sens("anchor -> high", "anchor_hi", anchor=cfg["anchor_high"])
     for k in PRIORS:
         lo, hi, _ = PRIORS[k]
-        sens(f"{k} -> {lo}", **{k: lo})
-        sens(f"{k} -> {hi}", **{k: hi})
-    sens("asc -> 0.55 (untrimmed)", asc=0.55)
-    sens("logsum variety bonus (rejected)", variety_logsum=True)
-    sens("linear h/2 wait (old spec)", linear_wait=True)
-    sens("no transfer market", no_transfer=True)
-    sens("no visitor market", no_visitor=True)
-    sens("no sub-half-mile bin (old defn)", no_bin0=1)
-    sens("non-work trips shorter (4-mi tilt)", nonwork_short=1)
-    sens("knife-edge choice (old spec)", smooth_k=0)
-    sens("walk-taste spread +/-15%", walk_spread=1)
-    sens("new-line stops offset 0.5 mi",
+        sens(f"{k} -> {lo}", f"{k}_lo", **{k: lo})
+        sens(f"{k} -> {hi}", f"{k}_hi", **{k: hi})
+    # spec 08 §7 mandated point rows: walk_mph {2.5, 3.5}, generated from the
+    # registry band the way prior lo/hi rows are (over-key threaded through
+    # point() -> run(); walk_mph is not a PRIORS key, so no pin collision).
+    wlo, whi = band("walk_mph")
+    sens(f"walk_mph -> {wlo}", "walk_mph_lo", walk_mph=wlo)
+    sens(f"walk_mph -> {whi}", "walk_mph_hi", walk_mph=whi)
+    sens("asc -> 0.55 (untrimmed)", "asc_untrimmed", asc=0.55)
+    sens("logsum variety bonus (rejected)", "variety_logsum", variety_logsum=True)
+    sens("linear h/2 wait (old spec)", "linear_wait", linear_wait=True)
+    sens("no transfer market", "no_transfer", no_transfer=True)
+    sens("no visitor market", "no_visitor", no_visitor=True)
+    sens("no sub-half-mile bin (old defn)", "no_bin0", no_bin0=1)
+    sens("non-work trips shorter (4-mi tilt)", "nonwork_short", nonwork_short=1)
+    sens("knife-edge choice (old spec)", "smooth_k", smooth_k=0)
+    sens("walk-taste spread +/-15%", "walk_spread", walk_spread=1)
+    sens("new-line stops offset 0.5 mi", "grid_phase_half",
          cfg_patch={"service_new": dict(sn, grid_phase=0.5)})
     if "rapid" in cfg["services_base"] and cfg.get("rapid_alt"):
-        sens("rapid base -> GTFS current",
+        sens("rapid base -> GTFS current", "rapid_gtfs",
              cfg_patch={"services_base": {"rapid": dict(
                  cfg["services_base"]["rapid"], **cfg["rapid_alt"])}})
     # spec 02 §4.9 governance toggle: restore the old scalar-speed path (uses
     # the config's exogenous fallback speed) -- should reproduce the pre-R6
     # headline, since central derived speed ~= the 30-mph fallback.
-    sens("exogenous speed (old spec)", exogenous_speed=1)
+    sens("exogenous speed (old spec)", "exogenous_speed", exogenous_speed=1)
     # spec 02 §4.9b jerk-kinematics rows (grade-separated services only): the
     # accel/jerk override keys on the derived_speed block. The comfort band is
     # ~0.5-1.0 m/s^3; the trapezoid row (j->inf, cap retained) is the R6
     # regression and should reproduce the pre-JK central to float precision.
     if "derived_speed" in sn:
         ds = sn["derived_speed"]
-        sens("jerk 0.5 (comfort floor)",
+        sens("jerk 0.5 (comfort floor)", "jk_lo",
              cfg_patch={"service_new": dict(sn,
                         derived_speed=dict(ds, jerk=0.5))})
-        sens("jerk 1.0 (comfort ceiling)",
+        sens("jerk 1.0 (comfort ceiling)", "jk_hi",
              cfg_patch={"service_new": dict(sn,
                         derived_speed=dict(ds, jerk=1.0))})
-        sens("accel 1.3 (performance)",
+        sens("accel 1.3 (performance)", "a_comfort_hi",
              cfg_patch={"service_new": dict(sn,
                         derived_speed=dict(ds, accel=1.3))})
-        sens("trapezoid kinematics (R6)",
+        sens("trapezoid kinematics (R6)", "jk_trapezoid",
              cfg_patch={"service_new": dict(sn,
                         derived_speed=dict(ds, jerk=1e9))})
-    sens("new line 10/20-min headway",
+    sens("new line 10/20-min headway", "headway_10_20",
          cfg_patch={"service_new": dict(sn, headway={"peak": 10.0,
                                                      "offpeak": 20.0})})
-    sens("flat 5-min all day (old spec)",
+    sens("flat 5-min all day (old spec)", "headway_flat5",
          cfg_patch={"service_new": dict(sn, headway=5.0)})
-    sens("new stop spacing 0.5 mi",
+    sens("new stop spacing 0.5 mi", "spacing_05",
          cfg_patch={"service_new": dict(sn, spacing=0.5)})
-    sens("new stop spacing 1.5 mi",
+    sens("new stop spacing 1.5 mi", "spacing_15",
          cfg_patch={"service_new": dict(sn, spacing=1.5)})
 
     print(f"\n--- one-at-a-time sensitivity (central={base:,.0f}, "
           f"uncapped expected blend) ---")
-    for label, v, d in sorted(rows, key=lambda r: -abs(r[2])):
+    for label, v, d, _ in sorted(rows, key=lambda r: -abs(r[2])):
         print(f"  {label:32s}: {v:8,.0f}  ({d:+.1f}%)")
 
     # rail-ASC premium bracket (spec 05 §3.4): central points at the
@@ -882,16 +916,53 @@ def main(path):
                         for hh in heads]
             print(f"  {v} mph" + "".join(f"  {x:7,.0f}" for x in sweep[v]))
 
+    # ---- width sensitivities (spec 08 §4) ---------------------------------
+    # The Dirichlet concentrations and the S0 lognormal jitter govern band
+    # WIDTH, not the central: a point() row pins fix_bins and is vacuously 0.0%
+    # (the draft's rejected design). Instead: full-headline reruns (N draws,
+    # jitters ON) under each width variant, on the SAME prior draws as the
+    # headline (common random numbers) so only the jitter streams differ. These
+    # are SEPARATE run() calls -- the headline `res` above is already computed
+    # and untouched. Report blend P10/P50/P90 and the P90-P10 band delta vs the
+    # headline. Expected: P50 ~ unchanged (Dirichlet mean-preserving, lognormal
+    # median-preserving), the band moves.
+    shared = draw_params(N, val("seed"))
+    hb = summary["uncapped"]["blend"]
+    head_band = hb[2] - hb[0]
+    width_specs = [
+        ("dirichlet_half",   "Dirichlet concentration x0.5 (all 4 sites: looser bin shapes)",
+         {"dir_scale": 0.5}),
+        ("dirichlet_double", "Dirichlet concentration x2 (all 4 sites: tighter bin shapes)",
+         {"dir_scale": 2.0}),
+        ("s0se_half",        "S0 lognormal jitter x0.5 (tighter base-share draws)",
+         {"s0se_scale": 0.5}),
+        ("s0se_double",      "S0 lognormal jitter x2 (wider base-share draws)",
+         {"s0se_scale": 2.0}),
+    ]
+    width_sens = []
+    print(f"\n--- width sensitivities (spec 08 §4: full reruns, jitters ON, "
+          f"shared draws; headline band P90-P10 = {head_band:,.0f}) ---")
+    for sid, wlabel, wover in width_specs:
+        b = run(cor, params=shared, **wover)["uncapped"]["blend"]
+        p10, p50, p90 = pct(b, 10), pct(b, 50), pct(b, 90)
+        bw = p90 - p10
+        width_sens.append({"id": sid, "label": wlabel,
+                           "blend": [p10, p50, p90], "band": bw,
+                           "band_delta": bw - head_band})
+        print(f"  {wlabel:56s}: P50 {p50:8,.0f}  band {bw:8,.0f}"
+              f"  ({bw - head_band:+8,.0f} vs headline)")
+
     dest = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "..", "outputs", f"results_{cor.name}.json")
     with open(dest, "w", encoding="utf-8") as f:
         json.dump({"config": cfg, "summary": summary,
                    "reference": REFERENCE,
-                   "sensitivity": [{"label": l, "value": v, "pct": d}
-                                   for l, v, d in rows],
+                   "sensitivity": [{"id": i, "label": l, "value": v, "pct": d}
+                                   for l, v, d, i in rows],
                    "sweep": {str(k): sweep[k] for k in keys},
                    "sweep_axis": axis,
-                   "central_blend": base}, f, indent=2)
+                   "central_blend": base,
+                   "width_sensitivities": width_sens}, f, indent=2)
     print(f"\n-> {dest}")
 
 
