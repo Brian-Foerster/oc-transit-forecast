@@ -134,8 +134,15 @@ ENVELOPES = [("uncapped", None)]
 # measured OCTA bus points, stays for the bus backtest/calibration experiments.
 A_COMFORT = 1.0          # m/s^2, REM-class comfortable accel(=decel): sets the
                          # per-stop time lost vs cruising, grade-separated only
+J_COMFORT = 0.75         # m/s^3, service jerk limit (spec 02 §4.9b). Passenger
+                         # comfort standards band the sustained jerk at
+                         # ~0.5-1.0 (EN 13452 family); 0.75 central, the band
+                         # edges are sensitivity rows. j->inf recovers R6's
+                         # trapezoid (the accel/decel time lost is v/a, no jerk
+                         # ramp), retained as the regression row.
 KMH_PER_MPH = 1.609344   # exact
 MPS_PER_KMH = 1000.0 / 3600.0
+M_PER_MI = KMH_PER_MPH * 1000.0   # 1609.344 m, exact
 # Two measured points on the shared Harbor street (avg mph, stop spacing mi):
 # Route 43 local and Route 543 rapid, both in this repo's GTFS/anchor
 # provenance. Two equations identify the street variant's per-stop penalty and
@@ -147,13 +154,72 @@ TSP_SPEEDUP = 0.075      # 2024 OCTA TSP study ~7-8% corridor speed-up would
                          # raise v_street; informational only, no consumer yet
 
 
-def grade_sep_min_per_mile(v_cruise_kmh, dwell_s, spacing_mi):
+def s_curve_phase_time(dv_mps, accel=A_COMFORT, jerk=J_COMFORT):
+    """Time (s) for one jerk-limited (S-curve) speed change of magnitude
+    dv_mps at service accel `accel` and jerk limit `jerk`, elementwise.
+
+    If the change is large enough that acceleration saturates at `accel`
+    (dv >= accel^2/jerk), the profile is jerk-up / hold / jerk-down and takes
+    dv/accel + accel/jerk (the extra accel/jerk over the trapezoid dv/accel is
+    the two jerk ramps). Otherwise acceleration never reaches `accel` and the
+    triangular-accel profile takes 2*sqrt(dv/jerk). At these speeds
+    accel^2/jerk is only 1-2 m/s so the saturated branch always binds, but
+    the sub-saturated branch is implemented for correctness (j->inf makes the
+    ramp term vanish, recovering the R6 trapezoid dv/accel)."""
+    dv = np.asarray(dv_mps, float)
+    a_sq_over_j = accel * accel / jerk
+    saturated = dv / accel + accel / jerk
+    triangle = 2.0 * np.sqrt(np.maximum(dv, 0.0) / jerk)
+    return np.where(dv >= a_sq_over_j, saturated, triangle)
+
+
+def stop_run_time(d_m, v_cruise_mps, accel=A_COMFORT, jerk=J_COMFORT):
+    """Stop-to-stop run time (s) over distance d_m aiming for cruise speed
+    v_cruise_mps, jerk-limited S-curve, elementwise over draws (v may be an
+    (n,) array; d/accel/jerk broadcast).
+
+    Antisymmetry identity (the non-obvious step): a jerk-limited phase from 0
+    to v is antisymmetric about its midpoint, so it covers exactly
+    v*t_phase/2 -- i.e. an accel+decel with no cruise covers v*t_phase. Hence
+    cruise is REACHABLE within d iff v*t_phase(v) <= d; then the run is
+    d/v + t_phase (pure-cruise time plus one full phase-time of excess:
+    accel and decel each waste t_phase/2 vs cruising the same distance).
+    When d is too short to reach v (the reachability cap, materially new at
+    tight spacings), the train peaks at v_p < v where a bare accel+decel just
+    fills d: v_p^2/accel + v_p*accel/jerk = d, whose positive root is the
+    quadratic below; the run is then two phases, 2*t_phase(v_p)."""
+    v = np.asarray(v_cruise_mps, float)
+    d = np.asarray(d_m, float)
+    tph = s_curve_phase_time(v, accel, jerk)
+    reachable = v * tph <= d
+    t_reach = d / v + tph
+    # peak speed when v is unreachable within d (depends only on d, accel,
+    # jerk -- not on the target v). Positive root of the phase-distance
+    # quadratic; valid while v_p >= accel^2/jerk (the fully-jerk-limited
+    # triangle sub-case does not bind at these d -- asserted below).
+    v_p = (-accel * accel / jerk
+           + np.sqrt(accel**4 / jerk**2 + 4.0 * accel * d)) / 2.0
+    capped = ~reachable
+    if np.any(capped):
+        vp_b = np.broadcast_to(v_p, capped.shape)
+        assert np.all(vp_b[capped] >= accel * accel / jerk), (
+            "v_p below accel^2/jerk: the jerk-limited triangle sub-case "
+            "binds and the quadratic root is invalid at this spacing")
+    t_cap = 2.0 * s_curve_phase_time(v_p, accel, jerk)
+    return np.where(reachable, t_reach, t_cap)
+
+
+def grade_sep_min_per_mile(v_cruise_kmh, dwell_s, spacing_mi,
+                           accel=A_COMFORT, jerk=J_COMFORT):
     """Grade-separated running time (min/mi), elementwise over draws. No signal
-    delay; the per-stop loss is the accel+decel time vs cruising at A_COMFORT
-    (loss_s = v_cruise_mps / A_COMFORT)."""
-    v_mph = v_cruise_kmh / KMH_PER_MPH
-    loss_s = (v_cruise_kmh * MPS_PER_KMH) / A_COMFORT
-    return 60.0 / v_mph + (dwell_s + loss_s) / 60.0 / spacing_mi
+    delay; the per-stop excess over cruising is the jerk-limited S-curve phase
+    time (spec 02 §4.9b), and the reached speed is capped to v_p when the stop
+    spacing is too short to attain v_cruise. j->inf with the cap retained is
+    R6's trapezoid (the regression row)."""
+    v_mps = np.asarray(v_cruise_kmh, float) * MPS_PER_KMH
+    d_m = spacing_mi * M_PER_MI
+    t_run = stop_run_time(d_m, v_mps, accel, jerk)
+    return (t_run + dwell_s) / 60.0 / spacing_mi
 
 
 def calibrate_street(points=STREET_CAL_POINTS):
@@ -180,9 +246,14 @@ def derived_speed_mph(svc, p, variant=None):
     """Average speed (mph) for a service carrying a derived_speed block.
     Grade-separated -> per-draw (n,) array (v_cruise/dwell are priors in `p`);
     street -> scalar (calibrated constants only)."""
-    variant = variant or svc["derived_speed"]["variant"]
+    ds = svc["derived_speed"]
+    variant = variant or ds["variant"]
     if variant == "grade_separated":
-        mpm = grade_sep_min_per_mile(p["v_cruise"], p["dwell"], svc["spacing"])
+        # optional accel/jerk override keys default to the module constants
+        # (spec 02 §4.9b) -- the sensitivity-row / future-variant mechanism.
+        mpm = grade_sep_min_per_mile(p["v_cruise"], p["dwell"], svc["spacing"],
+                                     accel=ds.get("accel", A_COMFORT),
+                                     jerk=ds.get("jerk", J_COMFORT))
     elif variant == "street":
         mpm = street_min_per_mile(svc["spacing"])
     else:
@@ -642,7 +713,10 @@ def main(path):
     vc_c = sum(PRIORS["v_cruise"][:2]) / 2.0     # central grade-sep cruise, km/h
     dw_c = sum(PRIORS["dwell"][:2]) / 2.0        # central station dwell, s
     if "derived_speed" in sn:
-        spd = 60.0 / grade_sep_min_per_mile(vc_c, dw_c, sn["spacing"])
+        # float(): grade_sep_min_per_mile now returns a 0-d array for scalar
+        # inputs (np.where in the jerk-limited stop_run_time), so coerce before
+        # formatting -- the per-draw util path stays (n,) via inv_speed.
+        spd = 60.0 / float(grade_sep_min_per_mile(vc_c, dw_c, sn["spacing"]))
         sstr = (f"{spd:.1f} mph derived ({vc_c:.0f} km/h cruise / {dw_c:.0f}s "
                 f"dwell)")
     else:
@@ -743,6 +817,24 @@ def main(path):
     # the config's exogenous fallback speed) -- should reproduce the pre-R6
     # headline, since central derived speed ~= the 30-mph fallback.
     sens("exogenous speed (old spec)", exogenous_speed=1)
+    # spec 02 §4.9b jerk-kinematics rows (grade-separated services only): the
+    # accel/jerk override keys on the derived_speed block. The comfort band is
+    # ~0.5-1.0 m/s^3; the trapezoid row (j->inf, cap retained) is the R6
+    # regression and should reproduce the pre-JK central to float precision.
+    if "derived_speed" in sn:
+        ds = sn["derived_speed"]
+        sens("jerk 0.5 (comfort floor)",
+             cfg_patch={"service_new": dict(sn,
+                        derived_speed=dict(ds, jerk=0.5))})
+        sens("jerk 1.0 (comfort ceiling)",
+             cfg_patch={"service_new": dict(sn,
+                        derived_speed=dict(ds, jerk=1.0))})
+        sens("accel 1.3 (performance)",
+             cfg_patch={"service_new": dict(sn,
+                        derived_speed=dict(ds, accel=1.3))})
+        sens("trapezoid kinematics (R6)",
+             cfg_patch={"service_new": dict(sn,
+                        derived_speed=dict(ds, jerk=1e9))})
     sens("new line 10/20-min headway",
          cfg_patch={"service_new": dict(sn, headway={"peak": 10.0,
                                                      "offpeak": 20.0})})
@@ -783,7 +875,8 @@ def main(path):
         axis, keys = "grade_separated_cruise_kmh", [60, 70, 80, 90]
         print("               " + "".join(f"  h={hh:>2}min" for hh in heads))
         for vc in keys:
-            mph = 60.0 / grade_sep_min_per_mile(float(vc), dw_c, sn["spacing"])
+            mph = 60.0 / float(grade_sep_min_per_mile(float(vc), dw_c,
+                                                       sn["spacing"]))
             sweep[vc] = [point(v_cruise=float(vc), cfg_patch={"service_new": dict(
                             sn, headway={"peak": float(hh), "offpeak": 2.0 * hh})})
                          for hh in heads]

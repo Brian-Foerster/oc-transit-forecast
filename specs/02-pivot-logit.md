@@ -192,6 +192,64 @@ exogenous-speed row reproduces the pre-R6 headline; ABC weights/ESS/posterior
 and outputs/backtest_543.json byte-identical (backtest untouched, only the
 forward forecast moves) -- model.py grade_sep_min_per_mile / calibrate_street.)
 
+### 4.9b Jerk-limited kinematics (landed 2026-07-11)
+
+The grade-separated per-stop loss is refined from R6's trapezoid (instant
+jerk) to the realistic jerk-limited S-curve. Real passenger service ramps
+acceleration at a finite jerk j; each speed change of magnitude v costs a
+phase time
+
+    t_phase(v) = v/a + a/j     (a saturates: v >= a^2/j; else 2*sqrt(v/j)),
+
+the extra a/j over the trapezoid v/a being the two jerk ramps. A jerk-limited
+phase is antisymmetric about its midpoint, so it covers exactly v*t_phase/2 --
+hence a full accel+decel (no cruise) covers v*t_phase, and cruise is REACHABLE
+between stops iff v*t_phase(v) <= d (d = stop spacing in m). When reachable the
+run is d/v + t_phase (pure-cruise time plus one full phase-time of excess:
+accel and decel each waste t_phase/2). Constants A_COMFORT = 1.0 m/s^2
+(unchanged) and J_COMFORT = 0.75 m/s^3 -- passenger-comfort standards band
+sustained jerk at ~0.5-1.0 (EN 13452 family); 0.75 central, band edges are
+rows. Optional accel/jerk keys on the derived_speed block override them (the
+row mechanism; a future street-running-rail variant could use them too).
+
+The reachability cap is the materially new realism at TIGHT spacings: when d
+is too short to attain v the train peaks at v_p < v where a bare accel+decel
+just fills d, v_p^2/a + v_p*a/j = d, i.e.
+
+    v_p = ( -a^2/j + sqrt(a^4/j^2 + 4*a*d) ) / 2,
+
+and the run is 2*t_phase(v_p). At the design point (80 km/h, a=1.0, j=0.75,
+1.0-mi, 25 s dwell) cruise is reachable (523 m < 1609 m), t_phase 23.56 s,
+t_run 95.98 s -> 29.76 mph (R6's trapezoid gave 30.09; the jerk correction is
+~1%). At 0.25-mi (402 m) cruise is UNreachable: v_p 19.40 m/s (~70 km/h),
+avg ~13.5 mph including dwell -- the sweep/spacing rows at 0.25-0.5 mi are now
+physical rather than silently assuming a speed the train cannot reach.
+
+j->inf recovers R6's trapezoid EXACTLY in its domain of validity (reachable
+spacings, to float precision -- the 1.0-mi "trapezoid kinematics (R6)" row
+reproduces the pre-JK central 12,055.96 to ~1e-8). Note the j->inf limit still
+CAPS via v_p (with a/j->0, v_p = sqrt(a*d)) at short spacings where the raw R6
+trapezoid never did -- that was the gap -- so the "trapezoid kinematics" row is
+defined as j->inf WITH the reachability cap retained.
+
+The STREET (bus) variant is EXEMPT: it is calibrated from two measured
+end-to-end OCTA speeds (43/543), which already embed real-world jerk in their
+two calibration points, so imposing an S-curve on top would double-count.
+
+Actuals (uncapped blend P50 11,969 -> 11,949; central tornado 12,056 ->
+12,036, the ~20-boarding/~0.17% jerk charge; bands 9,956/13,998 ->
+9,938/13,971): jerk 0.5/1.0 rows -0.08%/+0.04% (well under +-1%), accel 1.3
++0.60%, trapezoid (R6) +0.17%; the 0.5-mi spacing row eases +16.9% -> +16.7%
+(jerk charges the tighter grid's extra stops), 1.5-mi -20.2% -> -20.1%. ABC
+weights/ESS/posterior and outputs/backtest_543.json byte-identical (backtest
+uses config scalars, untouched; only service_new's derived speed moved) --
+model.py s_curve_phase_time / stop_run_time / grade_sep_min_per_mile.
+
+Known limitation (logged): the running way is still uniform -- grade profile,
+curves, and civil speed restrictions are ignored (a real alignment would
+impose local speed caps below cruise). One step past R6's dwell-loading
+feedback note; both are stage-3 (STOPS) concerns.
+
 ## 5. Validation gates (standing; must hold after any change)
 
 - Regression toggles reproduce prior behavior: smooth_k=0, scalar

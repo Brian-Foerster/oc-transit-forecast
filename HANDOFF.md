@@ -18,15 +18,18 @@ for honest uncertainty, anchored to observed boardings, built to be run in
 seconds instead of the person-months a STOPS run costs.
 
 **Current headline (2026-07-11, measured anchor; launch-equivalent ABC
-target; average speed DERIVED, spec 02 §4.9): uncapped ~12,000 weekday
-boardings (P10–P90 9,956–13,998), implied uplift +31/+45/+61%;
-backtest-calibrated (ABC) ~11,833 (10,377–13,395), shown SIDE BY SIDE.**
-The derived-speed landing (R6) restated the headline deliberately: the central
-barely moved (speed's central still ~30 mph), the bands widened slightly
-(speed is now uncertain), and the stop-spacing sensitivity rows shrank toward
-physical honesty (0.5-mi +23.6%→+16.9%, 1.5-mi −22.3%→−20.2%). The backtest
-and the ABC weights/ESS/posterior are byte-identical — only the forward
-forecast moved. The ABC target was retargeted (spec 02 §4.6) from the 543's
+target; average speed DERIVED with jerk-limited kinematics, spec 02
+§4.9/§4.9b): uncapped ~11,950 weekday boardings (P10–P90 9,938–13,971),
+implied uplift +31/+44/+60%; backtest-calibrated (ABC) ~11,811
+(10,356–13,370), shown SIDE BY SIDE.** The derived-speed landing (R6)
+restated the headline deliberately: the central barely moved (speed's central
+still ~30 mph), the bands widened slightly (speed is now uncertain), and the
+stop-spacing sensitivity rows shrank toward physical honesty (0.5-mi
++23.6%→+16.7%, 1.5-mi −22.3%→−20.1%). The jerk-limited refinement (§4.9b,
+2026-07-11) then charged the realistic S-curve (~1% off the design-point speed,
+29.8 mph) and a reachability cap at tight spacings, nudging the central ~20
+boardings (12,056→12,036 tornado). The backtest and the ABC
+weights/ESS/posterior stay byte-identical — only the forward forecast moved. The ABC target was retargeted (spec 02 §4.6) from the 543's
 matured six-year average (mu=4,200) to a launch-equivalent mu=5,938 (FY2017
 measured 4,615/wd × OCTA's measured FY2013/FY2017 bus-UPT back-trend 1.2868,
 NTD ID 90036); the matured 4,200 is kept as a sensitivity row (calibrated
@@ -151,18 +154,24 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
   vs the service's stop grid (weighted by `ovt`), plus `asc` for the new
   line only. Headways may be scalar or `{peak, offpeak}`; per-period
   utilities blend by the `pkshare` prior (45–60%).
-- **Derived average speed (spec 02 §4.9).** A service carrying a
-  `derived_speed` block gets its average speed DERIVED per draw from cruise +
-  dwell priors and its spacing (`grade_sep_min_per_mile` / `derived_speed_mph`,
-  module-level + unit-testable), so `util()`'s `60/speed` becomes an `(n,1)`
-  column via the `inv_speed` helper; exogenous services stay a scalar (old path
-  bitwise unchanged). Harbor's `service_new` uses the grade-separated variant
-  (`A_COMFORT = 1.0` m/s² per-stop loss, no signals); the two new priors
+- **Derived average speed (spec 02 §4.9; jerk-limited §4.9b).** A service
+  carrying a `derived_speed` block gets its average speed DERIVED per draw from
+  cruise + dwell priors and its spacing (`grade_sep_min_per_mile` /
+  `derived_speed_mph`, module-level + unit-testable), so `util()`'s `60/speed`
+  becomes an `(n,1)` column via the `inv_speed` helper; exogenous services stay
+  a scalar (old path bitwise unchanged). Harbor's `service_new` uses the
+  grade-separated variant (`A_COMFORT = 1.0` m/s², no signals) with jerk-limited
+  S-curve kinematics (`J_COMFORT = 0.75` m/s³; per-stop loss = phase time
+  `v/a + a/j`, and speed is capped to the reachable peak `v_p` when the spacing
+  is too short — `s_curve_phase_time` / `stop_run_time`; optional `accel`/`jerk`
+  override keys on the block are the row mechanism). The two new priors
   `v_cruise` (70–90 km/h) / `dwell` (20–30 s) are appended LAST in `PRIORS`.
   The street variant (`calibrate_street`) is solved in code from the 43/543
-  measured points and prices hypothetical bus designs only. Governance: `over`
-  key `exogenous_speed=1` (sensitivity row "exogenous speed (old spec)")
-  restores the config scalar. The design sweep's speed axis is now the
+  measured points, prices hypothetical bus designs only, and is exempt from the
+  S-curve (its measured end-to-end speeds already embed jerk). Governance:
+  `over` key `exogenous_speed=1` (sensitivity row "exogenous speed (old spec)")
+  restores the config scalar; `j→∞` with the cap retained is the "trapezoid
+  kinematics (R6)" regression row. The design sweep's speed axis is now the
   grade-separated cruise axis (`sweep_axis` in the results JSON). Streetcar
   stays exogenous.
 - **Each sub-rider takes their best service — deliberately NOT a logsum.**

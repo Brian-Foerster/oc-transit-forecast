@@ -42,19 +42,25 @@ features (see `scripts/model.py`):
   decomposition `min/mi = 60/v_cruise + (dwell + accel/decel loss)/(60·spacing)`.
   The proposed elevated automated light-metro line uses the grade-separated
   variant (no signal delay; per-stop loss = accel+decel time at a comfortable
-  1.0 m/s²); at the prior-central 80 km/h cruise / 25 s dwell / 1-mi spacing
-  this gives ~30 mph, independently validating the old 30-mph value (kept as
-  the exogenous fallback; the `exogenous speed (old spec)` sensitivity row and
-  the `exogenous_speed=1` governance toggle restore the scalar path). The
-  street variant is calibrated **in code** from two measured OCTA points
-  (Route 43 = 11.4 mph @ 0.25-mi, Route 543 = 12.8 mph @ 1.0-mi → per-stop
-  penalty ~0.19 min, no-stop street speed ~13.3 mph) and prices hypothetical
-  bus designs; the measured base services keep their config scalar speeds
-  (measured stays measured). The design sweep's speed axis is now the
-  grade-separated **cruise** axis (60–90 km/h), and the stop-spacing
-  sensitivity rows now recompute speed — so a tighter 0.5-mi grid is charged
-  its added stops (that row shrank +23.6% → +16.9%; the 1.5-mi row eased
-  −22.3% → −20.2%).
+  1.0 m/s²) with **jerk-limited (S-curve) kinematics** (§4.9b): acceleration
+  ramps at a finite jerk 0.75 m/s³ (comfort band ~0.5–1.0), and if the stop
+  spacing is too short to reach cruise the reached speed is **capped** to the
+  attainable peak (at 0.25-mi the train physically tops out near 70 km/h, not
+  80). At the prior-central 80 km/h cruise / 25 s dwell / 1-mi spacing this
+  gives ~29.8 mph (the ~1% jerk correction off R6's 30.09), still validating
+  the old 30-mph value (kept as the exogenous fallback; the `exogenous speed
+  (old spec)` sensitivity row and the `exogenous_speed=1` governance toggle
+  restore the scalar path; `j→∞` with the cap retained is the `trapezoid
+  kinematics (R6)` regression row). The street variant is calibrated **in
+  code** from two measured OCTA points (Route 43 = 11.4 mph @ 0.25-mi, Route
+  543 = 12.8 mph @ 1.0-mi → per-stop penalty ~0.19 min, no-stop street speed
+  ~13.3 mph), prices hypothetical bus designs, and is exempt from the S-curve
+  (its measured end-to-end speeds already embed real jerk); the measured base
+  services keep their config scalar speeds (measured stays measured). The
+  design sweep's speed axis is now the grade-separated **cruise** axis
+  (60–90 km/h), and the stop-spacing sensitivity rows now recompute speed — so
+  a tighter 0.5-mi grid is charged its added stops (that row shrank +23.6% →
+  +16.7%; the 1.5-mi row eased −22.3% → −20.1%).
 - **Arrival-strategy wait structure.** Walk-access wait is
   `min(headway/2, w0 + lambda*headway)` -- the closed form of a rider choosing
   between random and schedule-timed arrival. Transfers get
@@ -97,14 +103,15 @@ features (see `scripts/model.py`):
   all structural knobs appear in the one-at-a-time sensitivity table.
 
 **Headline (2026-07, measured anchor; launch-equivalent ABC target; average
-speed now DERIVED, spec 02 §4.9): uncapped blend P50 = 11,969 (P10-P90
-9,956-13,998), implied corridor uplift +31/+45/+61%; backtest-calibrated
-P50 = 11,833 (10,377-13,395). The calibration's main effect is on the new-line
-ASC: posterior 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 -- now near the prior
-midpoint, since the launch-equivalent target (mu=5,938) sits close to the
-model's backtest mass (P50 6,169). The matured-target row (mu=4,200) still
-gives 10,754 (9,095-12,330), posterior 0.06/0.11/0.16 -- the old central, kept
-as a sensitivity.**
+speed now DERIVED with jerk-limited kinematics, spec 02 §4.9/§4.9b): uncapped
+blend P50 = 11,949 (P10-P90 9,938-13,971), implied corridor uplift
++31/+44/+60%; backtest-calibrated P50 = 11,811 (10,356-13,370). The
+calibration's main effect is on the new-line ASC: posterior 0.14/0.19/0.24 vs
+prior 0.09/0.20/0.31 -- now near the prior midpoint, since the
+launch-equivalent target (mu=5,938) sits close to the model's backtest mass
+(P50 6,169). The matured-target row (mu=4,200) still gives 10,733
+(9,063-12,306), posterior 0.06/0.11/0.16 -- the old central, kept as a
+sensitivity.**
 
 ## Backtest (scripts/backtest_543.py)
 
@@ -129,10 +136,10 @@ the existing Route 43 local, both retained):
 - the residual is what the ABC treatment consumes: reweighting draws by the
   launch-equivalent target (kernel mu = 5,938) leaves the new-line ASC near
   0.19 (prior midpoint 0.20) and pulls the forward headline only slightly,
-  11,969 -> 11,833 (ESS 15,090, up from the matured target's 8,624 because
+  11,949 -> 11,811 (ESS 15,090, up from the matured target's 8,624 because
   the target now sits inside the prediction mass). The retired matured target
   (mu = 4,200) concentrated the ASC near 0.11 and pulled the headline to
-  10,754 (ESS 8,624) -- kept as a sensitivity row (README known issue 15,
+  10,733 (ESS 8,624) -- kept as a sensitivity row (README known issue 15,
   closed).
 
 Caveats: 2022 LODES / 2023 ACS proxy for 2013 markets; the 2013 Route 43's
@@ -142,8 +149,8 @@ covers).
 
 ## Reading the outputs (two easy stumbles)
 
-- The sensitivity tornado's central (12,056) is the *expected* fold/retain
-  blend at fixed bins, n=4,000; the headline P50 (11,969) is the full-MC
+- The sensitivity tornado's central (12,036) is the *expected* fold/retain
+  blend at fixed bins, n=4,000; the headline P50 (11,949) is the full-MC
   coin-flip blend at n=40,000. They differ by <1% by construction; the
   tornado measures deltas, not the headline.
 - The design sweep's "h=5" cell is 5-min peak / 10-min off-peak (sweep
@@ -372,4 +379,10 @@ and become live sensitivity rows when W1 lands.
     overwrite measurement. It also gives item 9 a physical reading: the 543's
     corridor-doc 15 mph sits ABOVE this street curve's 12.8 mph @ 1.0-mi, so
     that doc value implies TSP/priority the current street does not have — the
-    "rapid → GTFS current" sensitivity row already brackets it.
+    "rapid → GTFS current" sensitivity row already brackets it. (c) **Uniform
+    running way** (spec 02 §4.9b, jerk-limited kinematics landed 2026-07-11):
+    the grade-separated S-curve now models finite jerk (0.75 m/s³) and caps
+    speed to what the stop spacing allows, but the alignment is still treated
+    as uniform — grade profile, curves, and civil speed restrictions (which
+    would impose local caps below cruise) are ignored. A stage-3 (STOPS)
+    concern, like the dwell-loading feedback.
