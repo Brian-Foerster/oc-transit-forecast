@@ -118,16 +118,27 @@ the ASC at 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 (matured-target row:
     scripts/reweight_abc.py                   # -> outputs/abc_harbor.json (ABC treatment)
     scripts/make_charts.py harbor             # -> outputs/*.png
     scripts/bca_export.py harbor [--seed-check]  # OPTIONAL: -> outputs/bca_export_harbor.json.gz (spec 06 B4 BCA handoff; post-ABC, gitignored)
+    scripts/check_assumptions.py [--appendix] # STANDING GATE (spec 08): 7 registry checks, exit nonzero on drift; --appendix regenerates outputs/assumptions.{md,json}
 
-`data/derived` is committed, so **model.py runs with zero downloads** on a
-fresh clone. Everything is plain numpy/pandas/matplotlib (requirements.txt);
-model runs take seconds (N=40,000 draws, vectorized, seed=42).
+`data/derived` is committed, so **model.py `run()` and a fresh clone's
+committed outputs need zero downloads**; but `model.py main()`'s FULL
+sensitivity table now rebuilds a scratch corridor for the `intra_tract_alt`
+row (`build_corridor.py`, which reads `data/raw`), so regenerating the full
+table from scratch needs the raw data (accepted, spec 08 §9 Q6; README issue
+26). `check_assumptions.py` joins `test_bca_export.py` as a standing gate —
+run it (green: 0 failures, spec-pending warnings counted) before any commit
+that touches values, rows, specs, or the README. Everything is plain
+numpy/pandas/matplotlib (requirements.txt); model runs take seconds
+(N=40,000 draws, vectorized, seed=42).
 
 ## Files
 
 | File | Role |
 |---|---|
-| `config/harbor.json` | The corridor definition: anchor range + derivation note, base services (Route 43 local, Route 543 rapid) with speed/headway/stop-spacing, the proposed line, visitor-market parameters. Change the design here. Spec 06 added a `bca` block (`routes_removed` per scenario + `rev_hours_weekday` per route for the BCA's avoided base O&M, plus prose notes that are NOT shipped in the export) and an optional `fare_base` (defaults to `DEFAULT_FARE`, the OCTA flat cash fare in `model.py`). |
+| `config/harbor.json` | The corridor definition: anchor range + derivation note, base services (Route 43 local, Route 543 rapid) with speed/headway/stop-spacing, the proposed line, visitor-market parameters. Change the design here. Spec 06 added a `bca` block (`routes_removed` per scenario + `rev_hours_weekday` per route for the BCA's avoided base O&M, plus prose notes that are NOT shipped in the export) and an optional `fare_base` (defaults to `DEFAULT_FARE`, the OCTA flat cash fare in `model.py`). Spec 08 A2b promoted `anchor_derivation` (trend / corr_share / uniformity) to structured keys the registry owns. |
+| `config/backtest_543.json` | The 2013 Bravo! 543 backtest world, promoted out of `backtest_543.py` (spec 08 A2b): the 2013 local/rapid services + the Route-43 route-total anchor leaf. `backtest_543.py` reads it and computes the anchor band in code from the SHARED `corr_share` (read from `config/harbor.json`, never duplicated). |
+| `scripts/assumptions.py` | The assumptions registry (spec 08): single source of every asserted value (`val(id)` / `band(id)` / `build_priors()`) and every structural choice, keyed by stable id with tier / basis / dated history / per-artifact sensitivity rows / disposition bookkeeping. Dependency-free; code imports from here. |
+| `scripts/check_assumptions.py` | Enforces the registry (spec 08 §5): seven checks — schema, coverage, no-orphans, prior-order fingerprint, materiality, pointers, citation sync — exit nonzero on any failure (spec-pending dispositions are counted warnings). `--appendix` regenerates `outputs/assumptions.{md,json}`. A standing gate. |
 | `scripts/download_data.py` | Fetches the raw sources incl. the OCTA performance-report PDFs (URLs inside; note the %20 filename quirk). |
 | `scripts/anchor_from_apc.py` | Anchor derivation from MEASURED route-level boardings (data table + source URLs + the trend assumptions). |
 | `scripts/build_derived.py` | Raw → `oc_tracts.csv` (614 OC tract centroids), `oc_b08141.csv` (ACS workers/transit × vehicle availability, estimates AND margins of error), `oc_tract_od.csv.gz` (LODES commute flows aggregated to 178,900 OC tract pairs). |
@@ -139,7 +150,8 @@ model runs take seconds (N=40,000 draws, vectorized, seed=42).
 | `scripts/make_charts.py` | Interval chart (anchor, uncapped, ABC-calibrated) and sensitivity tornado. |
 | `scripts/bca_export.py` | Freezes the stage-2 per-draw BCA quantity streams (spec 06 §3) to `outputs/bca_export_<corridor>.json.gz` — the file interface the downstream `transit-benefit-cost` wrapper prices. Runs `run()` once per design point, packages the welfare / car-mile / fare-burden arrays + ABC weights (harbor) at float32; `--seed-check` adds a seed+1 companion (gate G4). Computes NO prices or valuation. Optional; not on the critical path; output gitignored. |
 | `scripts/test_bca_export.py` | Executable statement of the §3 interface contract: schema shape, array lengths (N), `abc_weights` present iff a calibration target exists, and the round-trip P50 vs the committed reference to 4 significant figures. Run the exports first. |
-| `outputs/results_harbor.json` | Summary percentiles, full sensitivity table, design sweep. |
+| `outputs/results_harbor.json` | Summary percentiles, full sensitivity table (each row carries a stable `id` + display `label`), design sweep, width sensitivities. |
+| `outputs/assumptions.md` / `.json` | Generated by `check_assumptions.py --appendix` (committed, byte-deterministic): the auditable inventory — unpropagated exposures sorted by effect, priors (already-propagated), width sensitivities, rowless dispositions with accepted stamps, basis census + what-changed. The `.json` is the schema-versioned cross-repo artifact. |
 | `outputs/records_request_draft.md` | Ready-to-send CPRA request for route/stop-level APC + on-board transfer rate (anchor research came up dry online). |
 
 ## Model internals (scripts/model.py)

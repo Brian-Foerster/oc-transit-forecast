@@ -258,7 +258,21 @@ feedback note; both are stage-3 (STOPS) concerns.
   calibration experiment; joint ABC ESS >= 1,000/40,000; seed-drift on
   calibrated P50 <= 2%.
 - Design-sweep continuity: max adjacent-cell step <= 8%.
-- Every new structural choice gets a sensitivity row the same commit.
+- `scripts/check_assumptions.py` green (spec 08 §5): schema, row coverage,
+  no orphans, prior-order fingerprint, materiality, pointer resolution, and
+  citation sync — 0 failures (spec-pending dispositions are counted
+  warnings). This gate is where rule 2 (below) is now enforced.
+- **Rule 2 (every structural knob is exposed) is enforced through the
+  assumptions registry, which is the authoritative mechanization.** Each
+  asserted quantity is a `scripts/assumptions.py` entry and each structural
+  choice claims a one-at-a-time sensitivity row keyed by a stable id (per
+  artifact); `check_assumptions.py` check 2/3 fail if a claimed row is
+  missing or a present row is unclaimed, so a knob cannot be added without
+  its row and its registry entry in the same commit. This bullet no longer
+  restates the numeric rule — the registry's row-coverage semantics are the
+  single source (e.g. the pedestrian walk speed 3.0 [walk_mph] and the
+  service jerk limit 0.75 [j_comfort] are registry-owned, and their
+  band-edge rows generate from the entry, not from hand-typed labels).
 
 ## 6. Runtime
 

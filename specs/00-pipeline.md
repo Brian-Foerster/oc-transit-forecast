@@ -101,6 +101,14 @@ final ridership; stage 3 is the number of record.
    lenses" silently become a cascade of speculative elasticities. Value
    uplift and user benefits are presented as alternative measurements of
    the same benefit, never summed.
+6. **Every asserted quantity is an assumptions-registry entry;
+   `check_assumptions.py` green is a standing validation gate.** The
+   single-source registry (`scripts/assumptions.py`, spec 08) owns every
+   value code imports and enumerates every structural choice as a
+   sensitivity row keyed by a stable id; the enforcement script mechanizes
+   governance rules 2–3 (row coverage, no orphans) and the citation-drift
+   check. It runs green before any commit that touches values, rows, specs,
+   or the README.
 
 ## 5. Validation registry
 

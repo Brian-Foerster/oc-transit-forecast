@@ -184,8 +184,17 @@ covers).
       backtest_543.py   backtest vs the 2013 Bravo! 543 launch
       reweight_abc.py   backtest-calibrated (ABC) treatment + ASC posterior
       make_charts.py    interval + tornado charts -> outputs/
+      assumptions.py    single-source registry of every asserted value +
+                        structural choice (spec 08); code imports from here
+      check_assumptions.py  the seven §5 enforcement checks + `--appendix`
     data/derived/      small reproducible tables (committed)
     outputs/           results json + charts (committed)
+
+**Assumptions inventory.** Every value the model imports and every structural
+knob is one entry in `scripts/assumptions.py`; `python scripts/check_assumptions.py`
+enforces coverage/no-orphans/pointers/citations and `--appendix` regenerates
+`outputs/assumptions.md` + `outputs/assumptions.json` (the auditable inventory:
+unpropagated exposures, priors, width sensitivities, dispositions, basis census).
 
 `data/raw` is gitignored (~180 MB); `data/derived` is enough to run the model
 without any downloads. To rebuild from scratch: `python scripts/download_data.py`
@@ -386,3 +395,11 @@ and become live sensitivity rows when W1 lands.
     as uniform — grade profile, curves, and civil speed restrictions (which
     would impose local caps below cruise) are ignored. A stage-3 (STOPS)
     concern, like the dwell-loading feedback.
+26. **Assumptions registry landed (spec 08, 2026-07-14):** every asserted
+    value and structural choice is now a single-source `scripts/assumptions.py`
+    entry, enforced by `scripts/check_assumptions.py` (a standing gate).
+    Accepted disposition: the `intra_tract_alt` rebuilt-variant row makes
+    `model.py main()`'s FULL sensitivity table rebuild a scratch corridor via
+    `build_corridor.py`, which reads `data/raw` — so the zero-download property
+    holds for `run()` and a fresh clone's committed outputs, but NOT for
+    regenerating the full table from scratch (spec 08 §9 Q6).

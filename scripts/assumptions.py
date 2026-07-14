@@ -423,13 +423,18 @@ ASSUMPTIONS = {
         "value": 20, "units": "utils", "band": None, "basis": "definitional",
         "history": [("2026-07-11", 20, "definitional",
                      "spec08 A1 harvest -- introduced spec02")],
-        "provenance": "symmetric +/-20 clamp on dv before exp() -- numerical "
-                      "overflow guard, not a behavioral bound; verified NOT to "
-                      "bind at central (widening DV_CLIP 20->1000 left the central "
-                      "point at 12035.819133041561 unchanged, A2a report), so the "
-                      "no-row reason is non-binding (evidence-backed), not "
-                      "definitional (spec 08 A2b addendum 0b)",
-        "rows": {}, "no_row_reason": "non-binding:db4af97",
+        "provenance": "symmetric +/-20 clamp on dv before exp() -- a numerical "
+                      "overflow guard, NOT a behavioral bound (its own definition, "
+                      "not a swept assumption); verified never to bind at central "
+                      "(widening DV_CLIP 20->1000 left the central point at "
+                      "12035.819133041561 unchanged, A2a report). Basis AND no-row "
+                      "reason are both DEFINITIONAL: an overflow clamp is a "
+                      "definition, so it is not laundered through 'non-binding' "
+                      "(spec 08 A3 handoff -- resolving the A2b addendum-0b "
+                      "contradiction the simple direction: a definitional guard "
+                      "stays definitional; s0_pivot_clip's 0.95 ceiling, a REAL "
+                      "max-share judgment, keeps its non-binding disposition)",
+        "rows": {}, "no_row_reason": "definitional",
         "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
@@ -700,7 +705,7 @@ ASSUMPTIONS = {
     "eq_days": {
         "title": "weekday-to-annual equivalent service days",
         "tier": "constant", "status": "active",
-        "value": [300, 330], "units": "days/yr", "band": None,
+        "value": [300, 330], "units": "days/yr", "band": (300, 330),
         "basis": "judgment",
         "history": [("2026-07-11", [300, 330], "judgment",
                      "spec08 A1 harvest -- introduced spec06")],
@@ -1286,8 +1291,13 @@ class GeneratedPriors(dict):
 
 def val(assumption_id):
     """The imported literal value of an OWNED-tier (prior/constant) entry.
-    Priors return the (lo, hi, shape) 3-tuple."""
-    return ASSUMPTIONS[assumption_id]["value"]
+    Priors return the (lo, hi, shape) 3-tuple. List/dict values are returned as
+    a shallow copy so a consumer that mutates the result cannot corrupt the
+    registry's single source (spec 08 A3 handoff)."""
+    v = ASSUMPTIONS[assumption_id]["value"]
+    if isinstance(v, (list, dict)):
+        return v.copy()
+    return v
 
 
 def band(assumption_id):
@@ -1311,6 +1321,4 @@ def build_priors():
     orders = [e["order"] for _, e in priors]
     assert orders == list(range(len(priors))), (
         f"prior `order` ints are not exactly 0..{len(priors) - 1}: {orders}")
-    out = GeneratedPriors((k, e["value"]) for k, e in priors)
-    out.source = "assumptions.build_priors (spec 08)"
-    return out
+    return GeneratedPriors((k, e["value"]) for k, e in priors)

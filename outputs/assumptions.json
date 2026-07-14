@@ -1,0 +1,1093 @@
+{
+  "basis_census": {
+    "definitional": 24,
+    "judgment": 35,
+    "literature": 8,
+    "locally-calibrated": 1,
+    "measured": 18
+  },
+  "dispositions": [
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "anchor_trend",
+      "no_row_reason": "covered-elsewhere:anchor_lo",
+      "tier": "config"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "locally-calibrated",
+      "id": "asc_calibrated",
+      "no_row_reason": "covered-elsewhere:asc_untrimmed",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "backtest_world",
+      "no_row_reason": "covered-elsewhere:bt_flat15",
+      "tier": "config"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "bca_config",
+      "no_row_reason": "spec-pending:06§E4",
+      "tier": "config"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "judgment",
+      "id": "bin_edges",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "buffer_mi",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "corr_share",
+      "no_row_reason": "covered-elsewhere:anchor_lo",
+      "tier": "config"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "cross_far",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "cross_near",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "default_fare",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "dv_clip",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "judgment",
+      "id": "eq_days",
+      "no_row_reason": "spec-pending:06§E4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "ess_min",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "feeder_downsample",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "intra_clip",
+      "no_row_reason": "covered-elsewhere:intra_tract_alt",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "judgment",
+      "id": "intra_divisor_alt",
+      "no_row_reason": "covered-elsewhere:intra_tract_alt",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "kmh_per_mph",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "mi_lat",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "mi_per_deg_lon",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "min_feeder_mi",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "moe_z",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "n",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "judgment",
+      "id": "nonwork_tilt_l",
+      "no_row_reason": "covered-elsewhere:nonwork_short",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "obs_543",
+      "no_row_reason": "covered-elsewhere:543_matured_s500",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "obs_543_fy2017",
+      "no_row_reason": "covered-elsewhere:543_launch14_s500",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "oc_ref_lat",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "judgment",
+      "id": "s0_pivot_clip",
+      "no_row_reason": "non-binding:db4af97",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "se_cap",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "seed",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "sens_n",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "street_cal_local",
+      "no_row_reason": "spec-pending:02§4.9",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "street_cal_rapid",
+      "no_row_reason": "spec-pending:02§4.9",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "streetcar_anchor_derivation",
+      "no_row_reason": "covered-elsewhere:anchor_lo",
+      "tier": "config"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "subcell_merge_decimals",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "subk",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "tie_epsilon",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "literature",
+      "id": "tsp_speedup",
+      "no_row_reason": "spec-pending:02§4.9",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "upt_fy2013_mb",
+      "no_row_reason": "covered-elsewhere:543_launch14_s500",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "measured",
+      "id": "upt_fy2017_mb",
+      "no_row_reason": "covered-elsewhere:543_launch14_s500",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "visitor_alpha_floor",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "judgment",
+      "id": "visitor_config",
+      "no_row_reason": "covered-elsewhere:no_visitor",
+      "tier": "config"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "judgment",
+      "id": "walk_spread_grid",
+      "no_row_reason": "covered-elsewhere:walk_spread",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-11"
+      ],
+      "basis": "definitional",
+      "id": "xfer_buffer_mi",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    }
+  ],
+  "exposures": [
+    {
+      "basis": "judgment",
+      "effect_pct": 53.8,
+      "id": "streetcar_service_new",
+      "rows": [
+        [
+          "streetcar",
+          "grid_phase_half"
+        ],
+        [
+          "streetcar",
+          "headway_10_20"
+        ],
+        [
+          "streetcar",
+          "headway_flat5"
+        ],
+        [
+          "streetcar",
+          "spacing_05"
+        ],
+        [
+          "streetcar",
+          "spacing_15"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": 53.6,
+      "id": "backtest_service_new",
+      "rows": [
+        [
+          "backtest",
+          "bt_flat15"
+        ],
+        [
+          "backtest",
+          "bt_20min"
+        ],
+        [
+          "backtest",
+          "bt_13mph"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": 38.3,
+      "id": "backtest_service_base",
+      "rows": [
+        [
+          "backtest",
+          "bt_base20"
+        ],
+        [
+          "backtest",
+          "bt_base_10_15"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 37.5,
+      "id": "variety_logsum",
+      "rows": [
+        [
+          "harbor",
+          "variety_logsum"
+        ],
+        [
+          "streetcar",
+          "variety_logsum"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": 21.1,
+      "id": "streetcar_anchor",
+      "rows": [
+        [
+          "streetcar",
+          "anchor_lo"
+        ],
+        [
+          "streetcar",
+          "anchor_hi"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 20.1,
+      "id": "harbor_service_new",
+      "rows": [
+        [
+          "harbor",
+          "grid_phase_half"
+        ],
+        [
+          "harbor",
+          "rapid_gtfs"
+        ],
+        [
+          "harbor",
+          "headway_10_20"
+        ],
+        [
+          "harbor",
+          "headway_flat5"
+        ],
+        [
+          "harbor",
+          "spacing_05"
+        ],
+        [
+          "harbor",
+          "spacing_15"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": 11.7,
+      "id": "harbor_anchor",
+      "rows": [
+        [
+          "harbor",
+          "anchor_lo"
+        ],
+        [
+          "harbor",
+          "anchor_hi"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 11.6,
+      "id": "no_transfer",
+      "rows": [
+        [
+          "harbor",
+          "no_transfer"
+        ],
+        [
+          "streetcar",
+          "no_transfer"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "literature",
+      "effect_pct": 6.4,
+      "id": "walk_mph",
+      "rows": [
+        [
+          "harbor",
+          "walk_mph_lo"
+        ],
+        [
+          "harbor",
+          "walk_mph_hi"
+        ],
+        [
+          "streetcar",
+          "walk_mph_lo"
+        ],
+        [
+          "streetcar",
+          "walk_mph_hi"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 5.2,
+      "id": "no_bin0",
+      "rows": [
+        [
+          "harbor",
+          "no_bin0"
+        ],
+        [
+          "streetcar",
+          "no_bin0"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 4.1,
+      "id": "linear_wait",
+      "rows": [
+        [
+          "harbor",
+          "linear_wait"
+        ],
+        [
+          "streetcar",
+          "linear_wait"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 3.4,
+      "id": "nonwork_short",
+      "rows": [
+        [
+          "harbor",
+          "nonwork_short"
+        ],
+        [
+          "streetcar",
+          "nonwork_short"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 3.4,
+      "id": "smooth_k",
+      "rows": [
+        [
+          "harbor",
+          "smooth_k"
+        ],
+        [
+          "streetcar",
+          "smooth_k"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 0.9,
+      "id": "no_visitor",
+      "rows": [
+        [
+          "harbor",
+          "no_visitor"
+        ],
+        [
+          "streetcar",
+          "no_visitor"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": 0.8,
+      "id": "s0_se_width",
+      "rows": [
+        [
+          "width",
+          "s0se_half"
+        ],
+        [
+          "width",
+          "s0se_double"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "literature",
+      "effect_pct": 0.6,
+      "id": "a_comfort",
+      "rows": [
+        [
+          "harbor",
+          "a_comfort_hi"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 0.4,
+      "id": "dirichlet_strength",
+      "rows": [
+        [
+          "width",
+          "dirichlet_half"
+        ],
+        [
+          "width",
+          "dirichlet_double"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "literature",
+      "effect_pct": 0.2,
+      "id": "j_comfort",
+      "rows": [
+        [
+          "harbor",
+          "jk_lo"
+        ],
+        [
+          "harbor",
+          "jk_hi"
+        ],
+        [
+          "harbor",
+          "jk_trapezoid"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 0.1,
+      "id": "exogenous_speed",
+      "rows": [
+        [
+          "harbor",
+          "exogenous_speed"
+        ],
+        [
+          "streetcar",
+          "exogenous_speed"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 0.1,
+      "id": "walk_spread",
+      "rows": [
+        [
+          "harbor",
+          "walk_spread"
+        ],
+        [
+          "streetcar",
+          "walk_spread"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "definitional",
+      "effect_pct": 0.1,
+      "id": "intra_divisor",
+      "rows": [
+        [
+          "harbor",
+          "intra_tract_alt"
+        ],
+        [
+          "streetcar",
+          "intra_tract_alt"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "abc_sigma",
+      "rows": [
+        [
+          "abc",
+          "543_launch_s350"
+        ],
+        [
+          "abc",
+          "543_launch_s800"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "mu_matured",
+      "rows": [
+        [
+          "abc",
+          "543_matured_s500"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "upt_fy2014_mb",
+      "rows": [
+        [
+          "abc",
+          "543_launch14_s500"
+        ]
+      ],
+      "tier": "constant"
+    }
+  ],
+  "n_entries": 86,
+  "priors": [
+    {
+      "basis": "judgment",
+      "id": "asc",
+      "tornado_pct": 54.0
+    },
+    {
+      "basis": "judgment",
+      "id": "bivt",
+      "tornado_pct": 7.2
+    },
+    {
+      "basis": "judgment",
+      "id": "lam",
+      "tornado_pct": 5.3
+    },
+    {
+      "basis": "judgment",
+      "id": "w0",
+      "tornado_pct": 5.3
+    },
+    {
+      "basis": "judgment",
+      "id": "kappa",
+      "tornado_pct": 3.4
+    },
+    {
+      "basis": "judgment",
+      "id": "tau",
+      "tornado_pct": 2.8
+    },
+    {
+      "basis": "judgment",
+      "id": "pkshare",
+      "tornado_pct": 1.1
+    },
+    {
+      "basis": "judgment",
+      "id": "xcap",
+      "tornado_pct": 1.1
+    },
+    {
+      "basis": "literature",
+      "id": "ovt",
+      "tornado_pct": 1.0
+    },
+    {
+      "basis": "literature",
+      "id": "v_cruise",
+      "tornado_pct": 0.9
+    },
+    {
+      "basis": "judgment",
+      "id": "ws",
+      "tornado_pct": 0.7
+    },
+    {
+      "basis": "literature",
+      "id": "dwell",
+      "tornado_pct": 0.6
+    },
+    {
+      "basis": "judgment",
+      "id": "phi",
+      "tornado_pct": 0.5
+    },
+    {
+      "basis": "judgment",
+      "id": "s0v",
+      "tornado_pct": 0.3
+    },
+    {
+      "basis": "judgment",
+      "id": "pcar0",
+      "tornado_pct": 0.0
+    },
+    {
+      "basis": "judgment",
+      "id": "pcar1",
+      "tornado_pct": 0.0
+    },
+    {
+      "basis": "judgment",
+      "id": "pcar2",
+      "tornado_pct": 0.0
+    },
+    {
+      "basis": "judgment",
+      "id": "pcarv",
+      "tornado_pct": 0.0
+    },
+    {
+      "basis": "literature",
+      "id": "vot_behav",
+      "tornado_pct": 0.0
+    }
+  ],
+  "schema_version": "08-A3.1",
+  "spec_pending_warnings": [
+    {
+      "id": "bca_config",
+      "no_row_reason": "spec-pending:06§E4"
+    },
+    {
+      "id": "eq_days",
+      "no_row_reason": "spec-pending:06§E4"
+    },
+    {
+      "id": "street_cal_local",
+      "no_row_reason": "spec-pending:02§4.9"
+    },
+    {
+      "id": "street_cal_rapid",
+      "no_row_reason": "spec-pending:02§4.9"
+    },
+    {
+      "id": "tsp_speedup",
+      "no_row_reason": "spec-pending:02§4.9"
+    }
+  ],
+  "tier_census": {
+    "config": 12,
+    "constant": 45,
+    "prior": 19,
+    "structural": 10
+  },
+  "what_changed": [
+    {
+      "history": [
+        [
+          "2026-07-11",
+          "dirichlet_strength",
+          "judgment",
+          "spec08 A2 harvest -- introduced spec02, structural"
+        ],
+        [
+          "2026-07-14",
+          [
+            300,
+            300,
+            100,
+            400
+          ],
+          "judgment",
+          "spec08 A2b addendum 0c -- tier structural->constant; four concentrations single-sourced into run()"
+        ]
+      ],
+      "id": "dirichlet_strength"
+    },
+    {
+      "history": [
+        [
+          "2026-07-11",
+          "s0_se_width",
+          "locally-calibrated",
+          "spec08 A2 harvest -- introduced spec02"
+        ],
+        [
+          "2026-07-14",
+          "s0_se_width",
+          "measured",
+          "spec08 A2b addendum 0d -- basis measured (ACS delta-method SEs)"
+        ]
+      ],
+      "id": "s0_se_width"
+    }
+  ],
+  "width_sensitivities": [
+    {
+      "band": 4035.0351826148453,
+      "band_delta": 1.7275227941663616,
+      "corridor": "harbor",
+      "id": "dirichlet_half",
+      "label": "Dirichlet concentration x0.5 (all 4 sites: looser bin shapes)",
+      "pct_of_headline_band": 0.04
+    },
+    {
+      "band": 4017.359947972185,
+      "band_delta": -15.947711848493782,
+      "corridor": "harbor",
+      "id": "dirichlet_double",
+      "label": "Dirichlet concentration x2 (all 4 sites: tighter bin shapes)",
+      "pct_of_headline_band": -0.4
+    },
+    {
+      "band": 4030.0018959571444,
+      "band_delta": -3.305763863534594,
+      "corridor": "harbor",
+      "id": "s0se_half",
+      "label": "S0 lognormal jitter x0.5 (tighter base-share draws)",
+      "pct_of_headline_band": -0.08
+    },
+    {
+      "band": 4064.256686132083,
+      "band_delta": 30.94902631140394,
+      "corridor": "harbor",
+      "id": "s0se_double",
+      "label": "S0 lognormal jitter x2 (wider base-share draws)",
+      "pct_of_headline_band": 0.77
+    },
+    {
+      "band": 2288.192193850932,
+      "band_delta": -3.4623883055219267,
+      "corridor": "streetcar",
+      "id": "dirichlet_half",
+      "label": "Dirichlet concentration x0.5 (all 4 sites: looser bin shapes)",
+      "pct_of_headline_band": -0.15
+    },
+    {
+      "band": 2290.7688222058323,
+      "band_delta": -0.8857599506218321,
+      "corridor": "streetcar",
+      "id": "dirichlet_double",
+      "label": "Dirichlet concentration x2 (all 4 sites: tighter bin shapes)",
+      "pct_of_headline_band": -0.04
+    },
+    {
+      "band": 2298.651266641078,
+      "band_delta": 6.996684484623984,
+      "corridor": "streetcar",
+      "id": "s0se_half",
+      "label": "S0 lognormal jitter x0.5 (tighter base-share draws)",
+      "pct_of_headline_band": 0.31
+    },
+    {
+      "band": 2273.0411367409697,
+      "band_delta": -18.61344541548442,
+      "corridor": "streetcar",
+      "id": "s0se_double",
+      "label": "S0 lognormal jitter x2 (wider base-share draws)",
+      "pct_of_headline_band": -0.81
+    }
+  ]
+}

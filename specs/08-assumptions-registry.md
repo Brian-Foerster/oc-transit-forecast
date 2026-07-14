@@ -1,10 +1,25 @@
 # Spec 08 — Assumptions registry: single-source values, enforced legibility
 
-Status: DRAFT 2026-07-11, revised same day after a three-lens adversarial
-review (architecture, governance, code feasibility); all blocking and major
-findings incorporated. Extends the spec 05 typing move from DISPLAY-ONLY
-data to RULE-BEARING, code-feeding data — a deliberate escalation, named as
-such: this is the repo's first data structure that code imports values from.
+Status: **BUILT 2026-07-14** (A1 + A2a + A2b + A3 landed on branch
+`spec08-assumptions`). Originally DRAFT 2026-07-11, revised same day after a
+three-lens adversarial review (architecture, governance, code feasibility);
+all blocking and major findings incorporated. Extends the spec 05 typing move
+from DISPLAY-ONLY data to RULE-BEARING, code-feeding data — a deliberate
+escalation, named as such: this is the repo's first data structure that code
+imports values from.
+
+> **Landed (A3, 2026-07-14).** `scripts/assumptions.py` (86 entries: 19
+> prior + 45 constant + 12 config + 10 structural) is the single source;
+> `scripts/check_assumptions.py` runs the seven §5 checks and is a standing
+> validation gate (green on the repo as landed: 0 failures, 5 spec-pending
+> warnings counted; 135 claimed rows == 135 present rows across
+> harbor/streetcar/abc/backtest/width). `--appendix` regenerates the
+> committed inventory `outputs/assumptions.{md,json}` (schema-versioned,
+> byte-deterministic). The top unpropagated exposure is
+> `streetcar_service_new` (±53.8%, the 1.5-mi stop-spacing design row);
+> `asc` leads the priors' tornado (54.0%) but is already propagated into the
+> band. Negative tests (scratch, uncommitted) confirm checks 2, 3, 4 and 7
+> each fail on a deliberately broken copy.
 
 > Problem statement, from observed failure modes: (1) INVENTORY OPACITY —
 > no artifact enumerates the model's assumptions; auditing means reading
@@ -305,3 +320,24 @@ appendix section 4.
   id-converted live text; the fingerprint, not the order field, is the
   reorder guard. Stated here so nobody mistakes the registry for more
   than it is — the review gates remain the last line.
+- **Q5 — check-1 band scoping RATIFIED (A3, 2026-07-14):** the A2b-landed
+  clause (bands exist to SOURCE band-edge rows, so the band requirement is
+  scoped to entries that own such rows) is adopted, and its mechanization is
+  fixed here: `check_assumptions.py` check 1 requires a non-null `band` for a
+  prior/constant entry EXCEPT when `basis ∈ {definitional, measured}` (a
+  chosen point with no propagated band — unit conversions, clips, thresholds,
+  grids, seeds, and single-point measurements whose alternative readings are
+  categorical rows, not a swept band) OR the entry is rowless-dispositioned.
+  Priors always carry a derived band. This passes the landed registry
+  faithfully (e.g. `upt_fy2014_mb` / `mu_matured` own ABC-kernel rows, not
+  band edges, so they keep `band=None`; `walk_mph` / `abc_sigma` /
+  `dirichlet_strength` own band-edge rows and must carry a band).
+- **Q6 — model.py full-table now needs `data/raw` (accepted, A3):** the
+  A2b `intra_tract_alt` rebuilt-variant row makes `model.py main()` rebuild a
+  scratch corridor via `build_corridor.py`, which reads `data/raw`. The
+  zero-download property (README) still holds for `run()` and for a fresh
+  clone's committed outputs, but NOT for regenerating the full sensitivity
+  table from scratch. Accepted disposition: the rebuilt-variant row is worth
+  the dependency; the note is recorded in the README known-issues log and
+  HANDOFF rather than engineered around with a graceful skip (which would
+  silently drop a coverage row and trip check 2).
