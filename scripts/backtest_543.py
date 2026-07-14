@@ -98,6 +98,22 @@ def main():
     # the central prediction) -- they were stdout-only and unverifiable before,
     # so the registry could not claim them (spec 08 §5 check 2). Additive: the
     # predicted/observed/uplift values are byte-unchanged.
+    # NOTE (spec 08 A3, saves the next reviewer a re-derivation): bt_flat15
+    # and bt_base_10_15 land BYTE-IDENTICAL values (confirmed in
+    # outputs/backtest_543.json -- same value/pct to full float precision).
+    # This is not a bug. The 2013 default world already has base 43 at flat
+    # 15-min and 543 at 10-min peak/15-min off-peak (config/backtest_543.json).
+    # bt_flat15 patches ONLY 543's headway to flat 15 (so 43=flat15, 543=flat15
+    # -- equal headway, both lines, both TOD periods); bt_base_10_15 patches
+    # ONLY 43's headway to 10/15 (so 43=10/15, 543=10/15 -- equal headway
+    # again, just the other split). Speed and spacing for both lines are
+    # untouched in both patches. Whenever the two lines share the SAME
+    # headway in every TOD period, the wait term is identical for both
+    # choices and cancels out of the 43-vs-543 utility DIFFERENCE -- so the
+    # split is driven entirely by the (here, identical) non-wait terms,
+    # regardless of what the shared headway value actually is (flat 15 vs a
+    # 10/15 split). That is why these two differently-motivated patches
+    # collapse to the same predicted value.
     sens_rows = []
     for sid, label, patch, kv in [
         ("bt_asc0", "no Bravo branding (asc=0)", None, {"asc": 0.0}),

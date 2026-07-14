@@ -4,9 +4,19 @@
     "judgment": 35,
     "literature": 8,
     "locally-calibrated": 1,
-    "measured": 18
+    "measured": 22
   },
   "dispositions": [
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-14"
+      ],
+      "basis": "measured",
+      "id": "acs_2023",
+      "no_row_reason": "covered-elsewhere:anchor_lo",
+      "tier": "data"
+    },
     {
       "accepted": [
         "owner-directive 2026-07-11",
@@ -150,6 +160,16 @@
     {
       "accepted": [
         "owner-directive 2026-07-11",
+        "2026-07-14"
+      ],
+      "basis": "measured",
+      "id": "gtfs_2026_07",
+      "no_row_reason": "covered-elsewhere:rapid_gtfs",
+      "tier": "data"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
         "2026-07-11"
       ],
       "basis": "definitional",
@@ -176,6 +196,16 @@
       "id": "kmh_per_mph",
       "no_row_reason": "definitional",
       "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-14"
+      ],
+      "basis": "measured",
+      "id": "lodes_2022",
+      "no_row_reason": "spec-pending:02§4.8",
+      "tier": "data"
     },
     {
       "accepted": [
@@ -236,6 +266,16 @@
       "id": "nonwork_tilt_l",
       "no_row_reason": "covered-elsewhere:nonwork_short",
       "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directive 2026-07-11",
+        "2026-07-14"
+      ],
+      "basis": "measured",
+      "id": "ntd_snapshot_2026_07",
+      "no_row_reason": "covered-elsewhere:543_launch14_s500",
+      "tier": "data"
     },
     {
       "accepted": [
@@ -856,105 +896,124 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 86,
+  "n_entries": 90,
   "priors": [
     {
       "basis": "judgment",
+      "extras_pct": 38.1,
       "id": "asc",
-      "tornado_pct": 54.0
+      "tornado_pct": 25.7
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "bivt",
       "tornado_pct": 7.2
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "lam",
       "tornado_pct": 5.3
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "w0",
       "tornado_pct": 5.3
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "kappa",
       "tornado_pct": 3.4
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "tau",
       "tornado_pct": 2.8
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "pkshare",
       "tornado_pct": 1.1
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "xcap",
       "tornado_pct": 1.1
     },
     {
       "basis": "literature",
+      "extras_pct": null,
       "id": "ovt",
       "tornado_pct": 1.0
     },
     {
       "basis": "literature",
+      "extras_pct": null,
       "id": "v_cruise",
       "tornado_pct": 0.9
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "ws",
       "tornado_pct": 0.7
     },
     {
       "basis": "literature",
+      "extras_pct": null,
       "id": "dwell",
       "tornado_pct": 0.6
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "phi",
       "tornado_pct": 0.5
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "s0v",
       "tornado_pct": 0.3
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "pcar0",
       "tornado_pct": 0.0
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "pcar1",
       "tornado_pct": 0.0
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "pcar2",
       "tornado_pct": 0.0
     },
     {
       "basis": "judgment",
+      "extras_pct": null,
       "id": "pcarv",
       "tornado_pct": 0.0
     },
     {
       "basis": "literature",
+      "extras_pct": null,
       "id": "vot_behav",
       "tornado_pct": 0.0
     }
   ],
-  "schema_version": "08-A3.1",
+  "schema_version": "08-A3.2",
   "spec_pending_warnings": [
     {
       "id": "bca_config",
@@ -963,6 +1022,10 @@
     {
       "id": "eq_days",
       "no_row_reason": "spec-pending:06§E4"
+    },
+    {
+      "id": "lodes_2022",
+      "no_row_reason": "spec-pending:02§4.8"
     },
     {
       "id": "street_cal_local",
@@ -980,6 +1043,7 @@
   "tier_census": {
     "config": 12,
     "constant": 45,
+    "data": 4,
     "prior": 19,
     "structural": 10
   },

@@ -63,7 +63,10 @@ NO_ROW_PREFIX = ("covered-elsewhere:", "width-block:", "spec-pending:",
 OWNED_TIERS = ("prior", "constant")
 BASES = {"measured", "locally-calibrated", "literature", "judgment",
          "definitional"}
-ARTIFACTS = ("harbor", "streetcar", "abc", "backtest", "width")
+# NOTE: no "wrapper"/"network" artifact is scanned yet (spec 08 §5 check 2,
+# corrected A3: the wrapper-artifact scan ships with W1's landing commit, not
+# before -- the eq_days/bca_config spec-pending:06§E4 dispositions surface
+# today only as check-1 warnings).
 
 MATERIAL_PCT = 2.0            # §5 materiality threshold
 ANCHOR_TOL = 25.0            # §6 round-to-nearest-50 tolerance (half of 50)
@@ -592,7 +595,7 @@ def print_report(results):
 # ===========================================================================
 # APPENDIX (spec 08 §6)
 # ===========================================================================
-SCHEMA_VERSION = "08-A3.1"
+SCHEMA_VERSION = "08-A3.2"
 
 
 def _esc(s):
@@ -609,9 +612,37 @@ def _fmt_pct(x):
 
 
 def _sort_key(item):
-    # primary: |effect| desc (None last); secondary: id asc
-    eff, aid = item
+    # primary: |effect| desc (None last); secondary: id asc. item[0] is the
+    # effect and item[1] the id for both 2-tuples (exposures) and 3-tuples
+    # (priors, which carry a trailing extras-effect) -- extra elements are
+    # ignored by the key.
+    eff, aid = item[0], item[1]
     return (-(eff if eff is not None else -1.0), aid)
+
+
+# priors' "tornado" column claims to be "already propagated into the
+# headline band" (spec 08 §5/§9 Q3) -- true only of the AUTO lo/hi edge rows
+# (the literal swept prior support). A prior's `extras` (e.g. asc's untrimmed
+# 0.55 probe, OUTSIDE the trimmed 0-0.40 support) are NOT part of that
+# propagated band, so they are reported SEPARATELY, never folded into the
+# max. BOTH are restricted to the corridor artifacts -- `extras` may also
+# claim a `backtest` row (asc's bt_asc0, an unrelated no-Bravo-branding
+# probe), which is not a corridor edge and must not dominate either figure
+# (spec 08 A3 fix: this bug is what let asc's tornado read a bogus 54.0%,
+# bt_asc0's own pct, instead of a real corridor number).
+CORRIDOR_ARTIFACTS = ("harbor", "streetcar")
+
+
+def _prior_effects(aid, e, pct):
+    auto_ids = {f"{aid}_lo", f"{aid}_hi"}
+    auto_effs, extra_effs = [], []
+    for art, rid in claimed_rows(aid, e):
+        if art not in CORRIDOR_ARTIFACTS or (art, rid) not in pct:
+            continue
+        (auto_effs if rid in auto_ids else extra_effs).append(abs(pct[(art, rid)]))
+    tornado = max(auto_effs) if auto_effs else None
+    extras_pct = max(extra_effs) if extra_effs else None
+    return tornado, extras_pct
 
 
 def build_appendix():
@@ -620,16 +651,12 @@ def build_appendix():
 
     # ---- section data ----
     exposures = []          # (effect, aid) for constant/config/data/structural
-    priors = []             # (effect, aid)
+    priors = []             # (tornado, aid, extras_pct)
     for aid, e in entries.items():
         tier = e["tier"]
         if tier == "prior":
-            eff = entry_effect(aid, e, pct, arts)
-            # priors' effect from their auto lo/hi rows
-            claims = claimed_rows(aid, e)
-            effs = [abs(pct[(art, rid)]) for art, rid in claims
-                    if (art, rid) in pct]
-            priors.append((max(effs) if effs else None, aid))
+            tornado, extras_pct = _prior_effects(aid, e, pct)
+            priors.append((tornado, aid, extras_pct))
         elif tier in ("constant", "config", "data", "structural"):
             if owns_rows(e):
                 exposures.append((entry_effect(aid, e, pct, arts), aid))
@@ -727,15 +754,22 @@ def write_appendix():
     L.append("")
     L.append("Reported SEPARATELY from the exposure sort (spec 08 §5): a prior's "
              "spread is already in the P10-P90 band. Below is each prior's "
-             "one-at-a-time tornado contribution (max |lo/hi| over the corridor "
-             "rows), for reference only.")
+             "one-at-a-time tornado contribution (max |lo/hi| over the "
+             "CORRIDOR rows only -- harbor/streetcar, never `backtest` -- for "
+             "reference only). A separate `extras` column reports any probe "
+             "rows OUTSIDE the swept prior support (e.g. asc's untrimmed 0.55 "
+             "probe): these are NOT part of the propagated band and are never "
+             "folded into the tornado max (spec 08 A3 fix: the prior version "
+             "of this table let asc's backtest-only `bt_asc0` probe, an "
+             "unrelated no-Bravo-branding read, masquerade as its corridor "
+             "tornado).")
     L.append("")
-    L.append("| tornado | id | title | basis |")
-    L.append("|---:|---|---|---|")
-    for eff, aid in d["priors"]:
+    L.append("| tornado | id | title | basis | extras (corridor-only probes) |")
+    L.append("|---:|---|---|---|---:|")
+    for eff, aid, extras_pct in d["priors"]:
         e = entries[aid]
         L.append(f"| {_fmt_pct(eff)} | {_esc(aid)} | {_esc(e['title'])} | "
-                 f"{e['basis']} |")
+                 f"{e['basis']} | {_fmt_pct(extras_pct)} |")
     L.append("")
 
     L.append("## 3. Width sensitivities (band-width, not central)")
@@ -809,8 +843,8 @@ def write_appendix():
             for eff, aid in d["exposures"]],
         "priors": [
             {"id": aid, "basis": entries[aid]["basis"],
-             "tornado_pct": eff_num(eff)}
-            for eff, aid in d["priors"]],
+             "tornado_pct": eff_num(eff), "extras_pct": eff_num(extras_pct)}
+            for eff, aid, extras_pct in d["priors"]],
         "width_sensitivities": d["width_rows"],
         "dispositions": d["dispositions"],
         "what_changed": d["changed"],

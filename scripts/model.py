@@ -756,7 +756,13 @@ def main(path):
     print(f"=== {cfg['title']} : {sstr} / {hstr}"
           f" / {sn['spacing']:.2f}-mi stops ===")
 
-    res = run(cor)
+    # spec 08 A3 fix: pass the registry seed explicitly (byte-identical today
+    # -- both are 42 -- but the width block below already reads val("seed")
+    # for its shared draws; leaving this call on run()'s bare function
+    # default would let a future seed change silently diverge the headline
+    # run from the width-block draws it's supposed to share common random
+    # numbers with).
+    res = run(cor, seed=val("seed"))
     summary = {}
     bands = {}
     for key in ("ratio_fold", "ratio_retain"):

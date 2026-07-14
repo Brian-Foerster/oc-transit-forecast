@@ -8,18 +8,27 @@ from DISPLAY-ONLY data to RULE-BEARING, code-feeding data — a deliberate
 escalation, named as such: this is the repo's first data structure that code
 imports values from.
 
-> **Landed (A3, 2026-07-14).** `scripts/assumptions.py` (86 entries: 19
-> prior + 45 constant + 12 config + 10 structural) is the single source;
-> `scripts/check_assumptions.py` runs the seven §5 checks and is a standing
-> validation gate (green on the repo as landed: 0 failures, 5 spec-pending
-> warnings counted; 135 claimed rows == 135 present rows across
-> harbor/streetcar/abc/backtest/width). `--appendix` regenerates the
-> committed inventory `outputs/assumptions.{md,json}` (schema-versioned,
-> byte-deterministic). The top unpropagated exposure is
-> `streetcar_service_new` (±53.8%, the 1.5-mi stop-spacing design row);
-> `asc` leads the priors' tornado (54.0%) but is already propagated into the
-> band. Negative tests (scratch, uncommitted) confirm checks 2, 3, 4 and 7
-> each fail on a deliberately broken copy.
+> **Landed (A3, 2026-07-14; response to whole-branch review same day).**
+> `scripts/assumptions.py` (90 entries: 19 prior + 45 constant + 12 config +
+> 10 structural + 4 data — the data tier landed in the review response;
+> see §2/§7) is the single source; `scripts/check_assumptions.py` runs the
+> seven §5 checks and is a standing validation gate (green on the repo as
+> landed: 0 failures, 6 spec-pending warnings counted — `lodes_2022` joins
+> the original five once the data tier exists to carry it; 135 claimed rows
+> == 135 present rows across harbor/streetcar/abc/backtest/width).
+> `--appendix` regenerates the committed inventory
+> `outputs/assumptions.{md,json}` (schema-versioned, byte-deterministic).
+> The top unpropagated exposure is `streetcar_service_new` (±53.8%, the
+> 1.5-mi stop-spacing design row); `asc` leads the priors' tornado at 25.7%
+> (`asc_lo`, streetcar corridor-only, auto edge — already propagated into
+> the band) — NOT the 54.0% originally reported here, which was `bt_asc0`'s
+> own pct (an unrelated backtest no-Bravo-branding probe) leaking through
+> the priors-section max; its untrimmed extra `asc_untrimmed` reaches
+> further still (38.1%, harbor) but sits outside the trimmed 0–0.40 prior
+> support, so it is reported separately and is NOT part of the propagated
+> band (review finding; see §5 check 5 and the appendix §2 `extras` column).
+> Negative tests (scratch, uncommitted) confirm checks 2, 3, 4 and 7 each
+> fail on a deliberately broken copy.
 
 > Problem statement, from observed failure modes: (1) INVENTORY OPACITY —
 > no artifact enumerates the model's assumptions; auditing means reading
@@ -204,15 +213,19 @@ Exit nonzero on violation; checks:
    files (both corridors), `abc_harbor.json` (kernel keys, sensitivity =
    tag != "central"), `backtest_543.json` (which A2 extends to carry its
    sensitivity rows — today they are stdout-only, unverifiable),
-   width blocks. `wrapper`/`network` artifact values are defined now and
-   FAIL when their artifact exists in outputs/ but the row doesn't —
-   `wrapper-pending` flips to failing the moment `outputs/bca_*.json`
-   BCA results exist (closure is mechanical, not aspirational; the
-   conversion work item rides W1's landing commit).
+   width blocks. `wrapper`/`network` are NOT YET scanned artifacts — as
+   ratified at review, the draft overclaimed this as already mechanical.
+   `check_assumptions.py` today has no `wrapper`/`network` entry in its
+   artifact list (`load_artifacts()`/`present`), so the `eq_days` /
+   `bca_config` `spec-pending:06§E4` dispositions surface only as check-1
+   WARNINGS, not a check-2 fail-flip. The wrapper-artifact scan — closing
+   that gap so `wrapper-pending` actually FAILS once `outputs/bca_*.json`
+   exists — SHIPS WITH W1's landing commit, not before: a stated future
+   commitment, not present-tense behavior.
 3. **No orphans**, keyed (artifact, row-id): every row-id in every scanned
    artifact is claimed by exactly one entry. This forces harvest
-   completeness (60 harbor rows, 55 streetcar — counted, not "~50") and
-   makes rule-2 evasion by omission fail loudly.
+   completeness (63 harbor rows, 58 streetcar (as landed) — counted, not
+   "~50") and makes rule-2 evasion by omission fail loudly.
 4. **Prior integrity**: `build_priors()` provenance sentinel on
    `model.PRIORS`; count matches the contract test; ordered-tuple hash
    matches the committed fingerprint (the reorder guard).
@@ -274,6 +287,21 @@ kwargs forwarding, stated here as the standing constraint: over-key names
 must never shadow a PRIORS key). Width block per §4. Everything else
 rowless gets a closed-enum disposition + accepted stamp, visible in
 appendix section 4.
+
+**Logged deviation (A3, 2026-07-14, response to whole-branch review):** the
+"ONE data-tier entry for the 543 measurements" above did NOT land as
+planned. `OBS_543` and `OBS_543_FY2017` are CONSTANT-tier entries
+(`obs_543`, `obs_543_fy2017`), not a single data-tier entry, because
+`backtest_543.py` / `reweight_abc.py` import their literal values via
+`val()` — and data-tier entries are NOT owned (§2: no `value` field, so
+there is nothing for code to import). This is a stated, reviewed deviation
+from this section's original plan, not a silent drop: the two constant
+entries cross-reference each other's provenance, and the new
+`ntd_snapshot_2026_07` data-tier entry (added in the review response, §2)
+now separately carries the dataset-VINTAGE side of the assumption — which
+NTD monthly-release snapshot the UPT leaves were pulled from — disposed
+`covered-elsewhere:543_launch14_s500`, the same vintage-choice-sensitivity
+row those constant entries already point at.
 
 ## 8. Work items (SDD, one branch)
 

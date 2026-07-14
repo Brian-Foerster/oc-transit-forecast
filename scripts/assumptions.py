@@ -1276,6 +1276,126 @@ ASSUMPTIONS = {
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "ACS refresh / observed base shares",
     },
+
+    # ===== data tier (dataset vintages; NOT owned) ==========================
+    # Names the dataset RELEASE the pipeline reads, not a code-owned literal --
+    # data-tier entries carry no 'value' (spec 08 §2: NOT owned; code never
+    # imports one). Basis "measured" throughout: each is a real published
+    # dataset release; the ASSUMPTION being registered is the VINTAGE CHOICE
+    # (which release, fetched/pulled when), not a judgment about the data
+    # itself -- the vintage-choice risk is documented per-entry as a
+    # provenance caveat instead (spec 08 A3 harvest, closing the §2/§7 gap:
+    # this module previously had ZERO data-tier entries despite both sections
+    # promising them).
+    "lodes_2022": {
+        "title": "LODES8 commute O-D vintage (ca_od_main_JT00_2022)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-14", "LODES8 ca_od_main_JT00_2022", "measured",
+                     "spec08 A3 harvest -- introduced spec01/spec02, "
+                     "scripts/build_derived.py")],
+        "provenance": "US Census LEHD LODES8 CA commute O-D, block level, "
+                      "aggregated to OC tract pairs (scripts/build_derived.py "
+                      "reads ca_od_main_JT00_2022.csv.gz; scripts/download_data.py "
+                      "is the fetch). The dataset itself is measured; the "
+                      "ASSUMPTION is the VINTAGE CHOICE -- 2022 is the latest "
+                      "LODES8 release at build time and proxies BOTH the 2013 "
+                      "backtest market and the present-day forward corridors "
+                      "with a post-COVID, WFH-reshaped commute SHAPE (spec 02 "
+                      "§4.8; the vintage gap is also named in the ABC sigma "
+                      "rationale, reweight_abc.py). Mandated sensitivity: "
+                      "rebuild bins with pre-COVID LODES 2019 (spec 02 §4.8 "
+                      "rebuilt-variant row), not yet landed -- hence the row "
+                      "is spec-pending, not disposed",
+        "rows": {}, "no_row_reason": "spec-pending:02§4.8",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
+        "logged": None, "upgrade": "LODES 2019 rebuilt-variant row (spec 02 §4.8)",
+    },
+    "acs_2023": {
+        "title": "ACS 2023 5-yr B08141 vintage (workers x vehicle availability x transit use)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-14", "ACS 2023 5-yr B08141", "measured",
+                     "spec08 A3 harvest -- introduced spec01/spec02, "
+                     "scripts/build_derived.py")],
+        "provenance": "Census ACS 2023 5-yr B08141 table-based summary file, "
+                      "tract level (scripts/build_derived.py reads "
+                      "acsdt5y2023-b08141.dat; scripts/download_data.py is the "
+                      "fetch). The dataset itself is measured; the ASSUMPTION "
+                      "is the VINTAGE CHOICE -- the 2019-2023 pooled window "
+                      "proxies the 2013 backtest market the same way the "
+                      "LODES entry's caveat does (reweight_abc.py's ABC sigma "
+                      "rationale bundles '2023 ACS proxying the 2013 market' "
+                      "alongside the LODES commute-shape issue). UNLIKE "
+                      "LODES, no spec section or rebuilt-variant mechanism "
+                      "targets an alternate ACS vintage specifically, so "
+                      "spec-pending:02§4.8 would overclaim a landing that "
+                      "isn't scoped for ACS. LEAST-BAD DISPOSITION (spec 08 "
+                      "A3 handoff, flagged for owner review): pointed at "
+                      "anchor_lo/anchor_hi, since ACS's single most "
+                      "consequential registry-visible role is the 0.86-ACS "
+                      "reading of corr_share (vs 0.75-LODES), already swept "
+                      "by that row (see the corr_share entry) -- but this "
+                      "does NOT cover ACS's other role feeding S0 base-transit "
+                      "shares directly into every draw (only the SE-WIDTH of "
+                      "that role is swept, via s0_se_width, which stresses "
+                      "the CURRENT vintage's own measurement uncertainty, not "
+                      "a vintage SWAP). Recorded here as an imperfect fit, not "
+                      "a clean covered-elsewhere claim",
+        "rows": {}, "no_row_reason": "covered-elsewhere:anchor_lo",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
+        "logged": None, "upgrade": "ACS vintage rebuilt-variant row (mechanism TBD)",
+    },
+    "gtfs_2026_07": {
+        "title": "OCTA GTFS fetch vintage (2026-07)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-14", "OCTA GTFS 2026-07", "measured",
+                     "spec08 A3 harvest -- introduced spec01/spec02, "
+                     "scripts/download_data.py")],
+        "provenance": "OCTA's published GTFS feed (octa.net/current/"
+                      "google_transit.zip), fetched 2026-07 -- shapes, "
+                      "headways, scheduled speeds (scripts/download_data.py; "
+                      "consumed by build_corridor.py and the rapid_alt config "
+                      "branch). The dataset itself is measured; the "
+                      "ASSUMPTION is the FETCH-DATE vintage. The base-service "
+                      "`rapid_gtfs` row (owned by harbor_service_new, 'rapid "
+                      "base -> GTFS current') is a REAL, already-landed "
+                      "sensitivity swapping the config's doc-value rapid base "
+                      "(15 mph/24-min) for the current GTFS reading (12.8 "
+                      "mph/20-min; README key provenance) -- it covers the "
+                      "GTFS-vintage exposure for the harbor rapid base "
+                      "specifically. It does NOT cover GTFS's other consumers "
+                      "(corridor shape geometry / feeder crossings in "
+                      "build_corridor.py, the street_cal_local/street_cal_rapid "
+                      "calibration points, or the streetcar corridor, which "
+                      "has no rapid base and so no rapid_gtfs row) -- a "
+                      "partial, not full, coverage; flagged for owner review",
+        "rows": {}, "no_row_reason": "covered-elsewhere:rapid_gtfs",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
+        "logged": None, "upgrade": "GTFS refetch / periodic re-vintage",
+    },
+    "ntd_snapshot_2026_07": {
+        "title": "NTD monthly-release snapshot vintage (2026-07, behind the UPT leaves)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-14", "NTD 90036 snapshot 2026-07", "measured",
+                     "spec08 A3 harvest -- introduced spec02 s4.6 (R1), "
+                     "reweight_abc.py")],
+        "provenance": "the dual-source-verified 2026-07 pull of NTD ID 90036 "
+                      "monthly-release data (Socrata 8bui-9xvu + the TS2.1 "
+                      "2018-release Excel via Wayback, reweight_abc.py "
+                      "docstring) behind the upt_fy2013_mb / upt_fy2014_mb / "
+                      "upt_fy2017_mb / obs_543_fy2017 constant-tier leaves "
+                      "(spec 08 §7: these landed as constant tier, not the "
+                      "single data-tier entry originally planned, because "
+                      "code imports their literal values -- see §7 note). "
+                      "The dataset itself is measured; the ASSUMPTION is the "
+                      "SNAPSHOT vintage (which NTD report-year reading to "
+                      "trust). Its defensible alternate reading is exactly "
+                      "the FY2013-vs-FY2014 back-trend spread those three "
+                      "leaf entries already point at the 543_launch14_s500 "
+                      "row for -- a genuine, already-owned covering row",
+        "rows": {}, "no_row_reason": "covered-elsewhere:543_launch14_s500",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
+        "logged": None, "upgrade": "NTD annual refresh",
+    },
 }
 
 
