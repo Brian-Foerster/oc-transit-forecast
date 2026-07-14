@@ -1,0 +1,20 @@
+{
+  "name": "backtest_543",
+  "title": "Bravo! 543 launch (June 2013) -- corridor natural experiment",
+  "note": "The 2013 backtest world, promoted out of backtest_543.py into config (spec 08 A2b): the last structured citation-drift nest. backtest_543.py reads this file (encoding utf-8), overlays these onto the Harbor corridor (data/derived/corridor_harbor.json), and computes the anchor band in code. Everything else (visitor block, ACS/LODES markets) stays the Harbor corridor's.",
+  "services_base": {
+    "local": {"speed": 12.0, "headway": 15.0, "spacing": 0.25,
+              "note": "2013 Route 43 local only: ~12 mph, ~15-min headway, 1/4-mi stops"}
+  },
+  "service_new": {
+    "speed": 15.0,
+    "headway": {"peak": 10.0, "offpeak": 15.0},
+    "spacing": 1.0,
+    "note": "actual June-2013 launch service: 543 at 15 mph, 10-min peak / 15-min off-peak, ~1-mi stops, Bravo branding (asc prior applies); 43 RETAINED"
+  },
+  "anchor": {
+    "route43_total": 13000,
+    "corr_share_source": "config/harbor.json: anchor_derivation.corr_share",
+    "note": "corridor anchor = Route 43 ~13,000 route-total at 2013 launch (LEAF) x the SHARED corr_share band. corr_share is NOT duplicated here: backtest_543.py reads it from the Harbor corridor config it already loads (harbor anchor_derivation.corr_share = 0.75-0.86), so the 2013 backtest and the forward Harbor anchor cite ONE registry entry (spec 08 §2: one assumption, two citing derivations). The band 9,750-11,180 is COMPUTED in code (13,000 x 0.75, 13,000 x 0.86)."
+  }
+}

@@ -12,5 +12,44 @@
     4.711850211971824,
     9.216910380060828,
     15.849749723688422
+  ],
+  "sensitivity_central": 6302.717003411939,
+  "sensitivity": [
+    {
+      "id": "bt_asc0",
+      "label": "no Bravo branding (asc=0)",
+      "value": 2897.078352713893,
+      "pct": -54.034452901096834
+    },
+    {
+      "id": "bt_flat15",
+      "label": "543 flat 15-min (old spec)",
+      "value": 4768.04256755778,
+      "pct": -24.34941050063603
+    },
+    {
+      "id": "bt_20min",
+      "label": "543 at 20-min all day",
+      "value": 2922.0660477973015,
+      "pct": -53.63799380147549
+    },
+    {
+      "id": "bt_13mph",
+      "label": "543 at 13 mph (weaker TSP)",
+      "value": 5026.078113779072,
+      "pct": -20.25537381643133
+    },
+    {
+      "id": "bt_base20",
+      "label": "43 base 20-min headway",
+      "value": 8716.446617127549,
+      "pct": 38.29665225979449
+    },
+    {
+      "id": "bt_base_10_15",
+      "label": "43 base 10-min pk/15 off",
+      "value": 4768.04256755778,
+      "pct": -24.34941050063603
+    }
   ]
 }

@@ -57,7 +57,11 @@ interface (the node wrapper reads JSON, not Python). Entry schema:
     "no_row_reason": None,   # closed enum + detail, required iff rows empty:
                              # definitional | covered-elsewhere:<row-id> |
                              # quality-knob | width-block:<block-id> |
-                             # spec-pending:<spec §>
+                             # spec-pending:<spec §> | non-binding:<evidence-ref>
+                             # (A2b: non-binding is a REAL judgment/behavioral
+                             # assumption that provably never binds at central --
+                             # the evidence-ref cites the empirical check; it is
+                             # NOT "definitional" and must not be laundered as such)
     "accepted": None,        # (owner-ref, date) — REQUIRED non-null for every
                              # rowless or definitional entry (see §9 Q1)
     "logged": "README known-issue 25 addendum",
@@ -172,7 +176,15 @@ Exit nonzero on violation; checks:
 
 1. **Schema**: required fields per tier; `rows` non-empty per artifact OR
    closed-enum `no_row_reason` + non-null `accepted`; bands required for
-   prior/constant EXCEPT basis=definitional; history non-empty and dated.
+   prior/constant EXCEPT basis=definitional. Bands exist to SOURCE band-edge
+   rows, so the requirement is scoped to entries that own such rows: a
+   rowless-dispositioned entry, or a definitional-VALUE constant (a chosen
+   point with no propagated band — unit conversions, clips, thresholds, grids,
+   seeds, per the §2 schema), may carry `band=None` regardless of `basis`
+   (A2a already ships judgment-basis grid/clip entries this way; A2b's
+   asc_calibrated/intra_divisor_alt follow). A width-block owner instead
+   carries the joint ×-scale band whose edges ARE its two width rows (§5
+   check 5). `history` non-empty and dated.
 2. **Coverage**: every claimed row-id exists in its artifact — results
    files (both corridors), `abc_harbor.json` (kernel keys, sensitivity =
    tag != "central"), `backtest_543.json` (which A2 extends to carry its

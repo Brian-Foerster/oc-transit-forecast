@@ -59,6 +59,11 @@ S0_CLIP_LO, S0_CLIP_HI = val("s0_pivot_clip")  # S0 pivot clips (1e-6 floor, 0.9
 SUBCELL_MERGE_DECIMALS = val("subcell_merge_decimals")  # round(W, 9) sub-cell merge epsilon
 WALK_SPREAD_TASTE, WALK_SPREAD_WEIGHTS = val("walk_spread_grid")  # +/-15% walk-taste grid
 NONWORK_TILT_L = val("nonwork_tilt_l")   # non-work shorter-trip exp-tilt scale (mi)
+# spec 08 A2b: the four Dirichlet bin-shape concentrations (walk/transfer/
+# visitor/car-frac), single-sourced from the registry (was four bare literals
+# 300/300/100/400 in run()). dirichlet_strength is now a constant-tier entry;
+# the width block still scales all four jointly (dir_scale).
+DIR_WALK, DIR_XFER, DIR_VIS, DIR_CF = val("dirichlet_strength")
 
 # Reference classes are DISPLAY-ONLY (spec 05 §4): printed beside the
 # forecast, never used to cap, reweight, or filter draws (standing user
@@ -342,15 +347,15 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     # unchanged); they bind only in the not-fixed jitter path, which is exactly
     # why band-WIDTH needs full reruns rather than a vacuous fix_bins point row.
     fixed = "fix_bins" in over
-    ww = np.tile(cor.ww, (n, 1)) if fixed else rng.dirichlet(cor.ww * 300 * dir_scale, n)
-    xw = np.tile(cor.xw, (n, 1)) if fixed else rng.dirichlet(cor.xw * 300 * dir_scale, n)
+    ww = np.tile(cor.ww, (n, 1)) if fixed else rng.dirichlet(cor.ww * DIR_WALK * dir_scale, n)
+    xw = np.tile(cor.xw, (n, 1)) if fixed else rng.dirichlet(cor.xw * DIR_XFER * dir_scale, n)
     vw_base = np.array(cfg["visitor"]["bin_weights"], float)
     vw_base = vw_base / vw_base.sum()
     vw = (np.tile(vw_base, (n, 1)) if fixed
-          else rng.dirichlet(np.maximum(vw_base, VIS_ALPHA_FLOOR) * 100 * dir_scale, n))
+          else rng.dirichlet(np.maximum(vw_base, VIS_ALPHA_FLOOR) * DIR_VIS * dir_scale, n))
     s0 = cor.s0[None, :] * (1.0 if fixed
                             else rng.lognormal(0.0, cor.s0_se * s0se_scale, (n, 3)))
-    cf = np.tile(cor.cf, (n, 1)) if fixed else rng.dirichlet(cor.cf * 400 * dir_scale, n)
+    cf = np.tile(cor.cf, (n, 1)) if fixed else rng.dirichlet(cor.cf * DIR_CF * dir_scale, n)
     if over.get("no_bin0"):        # drop the 0-0.5-mi bin (old market defn)
         for arr in (ww, xw, vw):
             arr[:, 0] = 0.0
@@ -711,6 +716,23 @@ def wpct(x, w, q):
     return float(np.interp(q / 100.0, cw / cw[-1], x[i]))
 
 
+def _intra_tract_alt_corridor(cor):
+    """Build (fresh) and load the intra-tract rebuilt-variant corridor for the
+    intra_tract_alt sensitivity row (spec 08 §4). build_corridor rebuilds a
+    SCRATCH derived file with the alternative intra-tract distance rule
+    (sqrt(ALAND)/intra_divisor_alt); everything else rebuilds byte-identically so
+    the row isolates the imputation effect. The scratch file is gitignored, never
+    committed. build_corridor is imported LAZILY here (it pulls in pandas and is
+    a build-stage module) so importing model stays lightweight and the
+    dependency graph stays acyclic (build_corridor imports no pipeline module)."""
+    import build_corridor as bc
+    here = os.path.dirname(os.path.abspath(__file__))
+    cfg_path = os.path.join(here, "..", "config", f"{cor.name}.json")
+    dest = bc.variant_path(cor.name, "intra_tract_alt")
+    bc.main(cfg_path, dest=dest, **bc.VARIANTS["intra_tract_alt"])
+    return Corridor(dest)
+
+
 def main(path):
     cor = Corridor(path)
     cfg = cor.cfg
@@ -787,10 +809,14 @@ def main(path):
     # ---- one-at-a-time sensitivity (uncapped expected blend P50) ----------
     central = {k: (lo + hi) / 2 for k, (lo, hi, _) in PRIORS.items()}
     central["fix_bins"] = 1
-    def point(**kv):
+    def point(_cor=None, **kv):
+        # _cor overrides the corridor the point runs against (spec 08 §4
+        # rebuilt-variant: the intra_tract_alt row runs central params against a
+        # SCRATCH corridor rebuilt with the alternative intra-tract distance rule).
+        c = cor if _cor is None else _cor
         kv2 = dict(central); kv2.update({k: v for k, v in kv.items()
                                          if k not in ("cfg_patch",)})
-        return pct(run(cor, n=SENS_N, cfg_patch=kv.get("cfg_patch"),
+        return pct(run(c, n=SENS_N, cfg_patch=kv.get("cfg_patch"),
                        linear_wait=kv.get("linear_wait", False),
                        no_transfer=kv.get("no_transfer", False),
                        no_visitor=kv.get("no_visitor", False),
@@ -864,6 +890,14 @@ def main(path):
          cfg_patch={"service_new": dict(sn, spacing=0.5)})
     sens("new stop spacing 1.5 mi", "spacing_15",
          cfg_patch={"service_new": dict(sn, spacing=1.5)})
+    # spec 08 §4 REBUILT-VARIANT row: the alternative intra-tract distance rule
+    # (sqrt(ALAND)/intra_divisor_alt vs the L/3 central). Unlike every other row,
+    # it changes the INPUT derived file, not a param/config -- so it rebuilds a
+    # SCRATCH corridor (build_corridor --variant, gitignored) and runs central
+    # params against it. The "(rebuilt inputs)" label makes the different-input
+    # semantics visible (spec 08 §4/§7).
+    sens("intra-tract dist rule alt (rebuilt inputs)", "intra_tract_alt",
+         _cor=_intra_tract_alt_corridor(cor))
 
     print(f"\n--- one-at-a-time sensitivity (central={base:,.0f}, "
           f"uncapped expected blend) ---")
@@ -875,7 +909,7 @@ def main(path):
     # not a point -- the constant has the least local support of any
     # parameter for a rail-class product calibrated on bus experiments.
     if cfg.get("asc_bracket"):
-        a0 = cfg.get("asc_calibrated", 0.109)
+        a0 = cfg.get("asc_calibrated", val("asc_calibrated"))
         print(f"\n--- rail-ASC premium bracket (calibrated asc={a0:.3f} "
               f"from the BUS 543 experiment; bracket borrowed from the "
               f"metro scenario -- README issue 14) ---")

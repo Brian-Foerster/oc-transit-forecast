@@ -2,13 +2,15 @@
 Backtest: predict the Bravo! 543's own 2013 launch and compare to what
 actually happened -- the corridor's natural experiment.
 
-Setup (2013):
+Setup (2013) -- the world now lives in config/backtest_543.json (spec 08 A2b):
   base system : Route 43 local only -- ~12 mph, ~15-min headway, 1/4-mi stops
   build       : add 543 -- 15 mph, 10-min peak / 15-min off-peak (actual
                 launch service), ~1-mi stops, Bravo branding (asc prior
                 applies); 43 RETAINED
-  anchor      : Route 43 ~13,000 route-total at launch x corridor share
-                0.75-0.86 -> 9,750-11,180 corridor boardings
+  anchor      : Route 43 ~13,000 route-total at launch (config leaf) x the
+                SHARED corridor share 0.75-0.86 (config/harbor.json
+                anchor_derivation.corr_share, cited by the forward anchor too)
+                -> 9,750-11,180 corridor boardings, computed in code
 
 Observed outcome (MEASURED, 2026-07 -- OCTA quarterly performance reports,
 scripts/anchor_from_apc.py): 543 weekday boardings FY2017 = 4,615,
@@ -33,19 +35,30 @@ if hasattr(sys.stdout, "reconfigure"):
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OBS_543 = val("obs_543")   # measured FY2019 wd .. FY2017 wd (anchor_from_apc.py)
+SENS_N = val("sens_n")     # point-sensitivity draw count (unified with model.py)
+BT_CONFIG = os.path.join(HERE, "..", "config", "backtest_543.json")
 
 
 def backtest_corridor():
-    """The June-2013 configuration (shared with reweight_abc.py)."""
+    """The June-2013 configuration (shared with reweight_abc.py). The 2013 world
+    -- the local/rapid services and the Route-43 route-total anchor LEAF -- lives
+    in config/backtest_543.json (spec 08 A2b: the last structured citation-drift
+    nest, promoted out of this module). The corridor SHARE is not duplicated
+    here: it is the SAME corr_share the forward Harbor anchor derivation cites,
+    read from the Harbor corridor config this function already loads (one
+    assumption, two citing derivations -- spec 08 §2). The anchor band is
+    COMPUTED (route43_total x corr_share = 9,750-11,180)."""
     cor = Corridor(os.path.join(HERE, "..", "data", "derived",
                                 "corridor_harbor.json"))
+    bt = json.load(open(BT_CONFIG, encoding="utf-8"))
     cfg = copy.deepcopy(cor.cfg)
-    cfg["anchor_low"], cfg["anchor_high"] = 9750, 11180
-    cfg["services_base"] = {"local": {"speed": 12.0, "headway": 15.0,
-                                      "spacing": 0.25}}
-    cfg["service_new"] = {"speed": 15.0,
-                          "headway": {"peak": 10.0, "offpeak": 15.0},
-                          "spacing": 1.0}   # actual June-2013 launch service
+    corr_share = cfg["anchor_derivation"]["corr_share"]     # SHARED w/ forward
+    total = bt["anchor"]["route43_total"]                   # ~13,000 (2013 leaf)
+    lo, hi = total * corr_share[0], total * corr_share[1]
+    assert (lo, hi) == (9750.0, 11180.0), (lo, hi)          # byte-identity guard
+    cfg["anchor_low"], cfg["anchor_high"] = lo, hi
+    cfg["services_base"] = bt["services_base"]
+    cfg["service_new"] = bt["service_new"]
     cor.cfg = cfg
     return cor
 
@@ -78,29 +91,38 @@ def main():
     # prediction is unchanged (inside the byte-identical gate).
     central = {k: (lo + hi) / 2 for k, (lo, hi, _) in PRIORS.items()}
     central["fix_bins"] = 1
-    b0 = pct(run(cor, n=4000, **central)["uncapped"]["retain"]["newline"], 50)
+    b0 = pct(run(cor, n=SENS_N, **central)["uncapped"]["retain"]["newline"], 50)
     print(f"\ncentral 543 prediction: {b0:,.0f}")
-    for label, patch, kv in [
-        ("no Bravo branding (asc=0)", None, {"asc": 0.0}),
-        ("543 flat 15-min (old spec)", {"service_new": dict(
+    # spec 08 A2b: the six backtest sensitivity rows now carry a stable machine
+    # `id` and are WRITTEN into backtest_543.json (a `sensitivity` block, pct vs
+    # the central prediction) -- they were stdout-only and unverifiable before,
+    # so the registry could not claim them (spec 08 §5 check 2). Additive: the
+    # predicted/observed/uplift values are byte-unchanged.
+    sens_rows = []
+    for sid, label, patch, kv in [
+        ("bt_asc0", "no Bravo branding (asc=0)", None, {"asc": 0.0}),
+        ("bt_flat15", "543 flat 15-min (old spec)", {"service_new": dict(
             cfg["service_new"], headway=15.0)}, {}),
-        ("543 at 20-min all day", {"service_new": dict(
+        ("bt_20min", "543 at 20-min all day", {"service_new": dict(
             cfg["service_new"], headway=20.0)}, {}),
-        ("543 at 13 mph (weaker TSP)", {"service_new": dict(
+        ("bt_13mph", "543 at 13 mph (weaker TSP)", {"service_new": dict(
             cfg["service_new"], speed=13.0)}, {}),
-        ("43 base 20-min headway", {"services_base": {"local": {
+        ("bt_base20", "43 base 20-min headway", {"services_base": {"local": {
             "speed": 12.0, "headway": 20.0, "spacing": 0.25}}}, {}),
-        ("43 base 10-min pk/15 off", {"services_base": {"local": {
+        ("bt_base_10_15", "43 base 10-min pk/15 off", {"services_base": {"local": {
             "speed": 12.0, "headway": {"peak": 10.0, "offpeak": 15.0},
             "spacing": 0.25}}}, {}),
     ]:
         d = dict(central); d.update(kv)
-        v = pct(run(cor, n=4000, cfg_patch=patch, **d)
+        v = pct(run(cor, n=SENS_N, cfg_patch=patch, **d)
                 ["uncapped"]["retain"]["newline"], 50)
+        sens_rows.append({"id": sid, "label": label, "value": v,
+                          "pct": 100 * (v - b0) / b0})
         print(f"  {label:28s}: {v:8,.0f}  ({100*(v-b0)/b0:+.1f}%)")
 
     out = {"predicted_543": [pct(new, 10), pct(new, 50), pct(new, 90)],
-           "observed_543": list(OBS_543), "uplift_pct": up}
+           "observed_543": list(OBS_543), "uplift_pct": up,
+           "sensitivity_central": b0, "sensitivity": sens_rows}
     with open(os.path.join(HERE, "..", "outputs", "backtest_543.json"), "w",
               encoding="utf-8") as f:
         json.dump(out, f, indent=2)

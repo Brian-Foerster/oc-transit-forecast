@@ -2,6 +2,9 @@
 data/raw/
 # BCA exports -- regenerable and heavy (several MB); scripts/bca_export.py
 outputs/bca_export_*.json.gz
+# spec 08 §4 rebuilt-variant SCRATCH corridors -- regenerable, never committed
+# (build_corridor.py --variant / model.py intra_tract_alt row)
+data/derived/corridor_*.variant_*.json
 __pycache__/
 *.pyc
 

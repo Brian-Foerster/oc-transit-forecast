@@ -171,6 +171,11 @@
   "anchor_low": 3600,
   "anchor_high": 5500,
   "anchor_note": "MEASURED but WEAK -- read spec 05 §3.3 before quoting. Composite of partial overlaps, not a co-located pair: parallel carriers Rt 60 (shape-share 0.29), 64 (0.35), 560 (0.56), 150 (0.41) x FY2019 weekday boardings (route_boardings.csv / 318) = ~5,034 raw corridor boardings, x uniformity 0.80-1.10 (boardings not uniform along routes) x FY2019->present trend 0.90-0.99 (anchor_from_apc.py). scripts/anchor_streetcar.py reproduces. NOT included: SARTC Metrolink/Amtrak transfers (no OCTA GTFS; partially via tau), greenfield PE-ROW new access (out of scope by construction -- upside risk). Crossing routes (43/543/53/47/57/83...) enter via the transfer market.",
+  "anchor_derivation": {
+    "uniformity": [0.80, 1.10],
+    "trend": [0.90, 0.99],
+    "note": "spec 08 A2b: the along-route uniformity band and the FY2019->present trend, promoted from anchor_note prose to structured keys (assumptions registry entry streetcar_anchor_derivation). The ~5,034 raw corridor boardings and the per-carrier shape-shares (0.29/0.35/0.56/0.41) stay in the prose -- they are measured shape overlaps (data), not a clean band. anchor_low/high (3600/5500) cross-check against 5034 x uniformity x trend within rounding-to-50 (3600~=5034x0.80x0.90=3624; 5500~=5034x1.10x0.99=5482)."
+  },
   "services_base": {
     "local": {
       "speed": 11.4,

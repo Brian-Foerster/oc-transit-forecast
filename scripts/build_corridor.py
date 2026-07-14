@@ -13,6 +13,13 @@ For a corridor defined by a GTFS route shape (optionally windowed):
     pivot; the feeder gates only *whether* access exists.
 
 usage: python build_corridor.py config/harbor.json
+       python build_corridor.py config/harbor.json --variant intra_tract_alt
+         (spec 08 §4 rebuilt-variant: rebuilds with the ALTERNATIVE intra-tract
+          distance rule sqrt(ALAND)/intra_divisor_alt into a SCRATCH derived file
+          -- data/derived/corridor_<name>.variant_<v>.json, gitignored, never
+          committed -- that the model's intra_tract_alt sensitivity row runs
+          against. Everything else rebuilds byte-identically, so the row isolates
+          the intra-tract imputation effect.)
 """
 import json, math, os, sys
 import numpy as np
@@ -128,7 +135,10 @@ def bin_flows(dists, weights, extra=None):
     return w, centers, counts, ecenters
 
 
-def main(cfg_path):
+def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None):
+    """Build a corridor derived file. intra_divisor / dest default to the
+    committed pipeline (byte-identical); the spec 08 §4 rebuilt-variant passes
+    intra_divisor_alt + a scratch dest to isolate the intra-tract rule effect."""
     cfg = json.load(open(cfg_path, encoding="utf-8"))
     trips, shapes, st, wk = load_gtfs()
     base_rts = ([cfg["corridor_route"]] if cfg.get("corridor_route") else [])
@@ -196,7 +206,7 @@ def main(cfg_path):
     d = (both["h"].map(posmap) - both["w"].map(posmap)).abs()
     alandmap = dict(zip(tr["GEOID"], tr["aland_sqmi"]))
     intra = both["h"] == both["w"]
-    d[intra] = (both.loc[intra, "h"].map(alandmap).pow(0.5) / INTRA_DIVISOR
+    d[intra] = (both.loc[intra, "h"].map(alandmap).pow(0.5) / intra_divisor
                 ).clip(*INTRA_CLIP)
     print(f"  intra-tract walk flows: {int(both.loc[intra, 'n'].sum()):,} jobs "
           f"({100 * both.loc[intra, 'n'].sum() / both['n'].sum():.0f}% of walk market)")
@@ -283,7 +293,7 @@ def main(cfg_path):
                     for f in feeders],
         "one_end_jobs_total": int(od[hin ^ win]["n"].sum()),
     }
-    dest = os.path.join(DER, f"corridor_{cfg['name']}.json")
+    dest = dest or os.path.join(DER, f"corridor_{cfg['name']}.json")
     with open(dest, "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)
     print(f"  walk market: {out['walk_bins']['jobs']:,} jobs, "
@@ -294,6 +304,27 @@ def main(cfg_path):
     print(f"  -> {dest}")
 
 
+def variant_path(name, variant):
+    """SCRATCH derived-file path for a rebuilt variant (spec 08 §4). Gitignored
+    (data/derived/*.variant_*.json), never committed."""
+    return os.path.join(DER, f"corridor_{name}.variant_{variant}.json")
+
+
+# spec 08 §4 rebuilt variants: {id: intra_divisor override}. Adding the §4.8
+# LODES-2019 row later extends this mapping (a different override axis).
+VARIANTS = {"intra_tract_alt": {"intra_divisor": val("intra_divisor_alt")}}
+
+
 if __name__ == "__main__":
-    main(sys.argv[1])
+    args = sys.argv[1:]
+    if "--variant" in args:
+        cfg_path = args[0]
+        variant = args[args.index("--variant") + 1]
+        assert variant in VARIANTS, f"unknown variant {variant!r}"
+        name = json.load(open(cfg_path, encoding="utf-8"))["name"]
+        main(cfg_path, dest=variant_path(name, variant), **VARIANTS[variant])
+        print(f"  (rebuilt-variant {variant}: intra-tract distance rule "
+              f"sqrt(ALAND)/{VARIANTS[variant]['intra_divisor']}, clip unchanged)")
+    else:
+        main(args[0])
 

@@ -87,9 +87,11 @@ ASSUMPTIONS = {
                       "the ABC-calibrated posterior is reported separately "
                       "(README issue 14)",
         "rows": "auto",
-        # prior EXTRA (spec 08 §2): the untrimmed asc=0.55 probe, beyond the
-        # auto lo/hi edge rows -- per-artifact, present in both corridor results.
-        "extras": {"harbor": ["asc_untrimmed"], "streetcar": ["asc_untrimmed"]},
+        # prior EXTRA (spec 08 §2): the untrimmed asc=0.55 probe (both corridor
+        # results) and the no-Bravo-branding asc=0 probe in the backtest artifact
+        # -- per-artifact, beyond the auto lo/hi edge rows.
+        "extras": {"harbor": ["asc_untrimmed"], "streetcar": ["asc_untrimmed"],
+                   "backtest": ["bt_asc0"]},
         "no_row_reason": None, "accepted": None,
         "logged": "README known-issue 14", "upgrade": "ABC posterior / observed launch",
     },
@@ -377,8 +379,12 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca")],
         "provenance": "measured OCTA Route 43 local avg speed at 0.25-mi stop "
                       "spacing (this repo's GTFS/anchor provenance); one of two "
-                      "points identifying the street-variant speed curve",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "points identifying the street-variant speed curve, which "
+                      "only prices HYPOTHETICAL bus designs -- no live config uses "
+                      "the derived_speed street variant yet, so no row (measured "
+                      "stays measured; base services keep their config scalars)",
+        "rows": {}, "no_row_reason": "spec-pending:02§4.9",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "APC/GTFS speed re-measure",
     },
     "street_cal_rapid": {
@@ -390,8 +396,11 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca")],
         "provenance": "measured OCTA Route 543 rapid avg speed at 1.0-mi stop "
                       "spacing (this repo's GTFS/anchor provenance); one of two "
-                      "points identifying the street-variant speed curve",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "points identifying the street-variant speed curve, which "
+                      "only prices HYPOTHETICAL bus designs -- no live config uses "
+                      "the derived_speed street variant yet, so no row",
+        "rows": {}, "no_row_reason": "spec-pending:02§4.9",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "APC/GTFS speed re-measure",
     },
     "tsp_speedup": {
@@ -416,8 +425,11 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "symmetric +/-20 clamp on dv before exp() -- numerical "
                       "overflow guard, not a behavioral bound; verified NOT to "
-                      "bind at central (max|dv| << 20), so a point row is 0.0%",
-        "rows": {}, "no_row_reason": "definitional",
+                      "bind at central (widening DV_CLIP 20->1000 left the central "
+                      "point at 12035.819133041561 unchanged, A2a report), so the "
+                      "no-row reason is non-binding (evidence-backed), not "
+                      "definitional (spec 08 A2b addendum 0b)",
+        "rows": {}, "no_row_reason": "non-binding:db4af97",
         "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
@@ -467,11 +479,14 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", (1e-6, 0.95), "judgment",
                      "spec08 A2 harvest -- introduced spec02")],
         "provenance": "np.clip on S0 before the pivot: 1e-6 numerical floor and "
-                      "0.95 max-share ceiling (a real max-share assumption, spec "
-                      "08 s7). Neither binds at central (max base transit share "
-                      "<< 0.95, s0v<=0.30), so a point row would be vacuously "
-                      "0.0% -- rowless, not counterfactual",
-        "rows": {}, "no_row_reason": "definitional",
+                      "0.95 max-share ceiling (a REAL max-share assumption, basis "
+                      "judgment, spec 08 s7). Neither binds at central (max base "
+                      "transit share 0.227 << 0.95, s0v<=0.30), so a point row is "
+                      "vacuously 0.0% -- rowless via the non-binding disposition, "
+                      "NOT laundered as definitional (spec 08 A2b addendum 0b: the "
+                      "0.95 ceiling is a judgment assumption that provably never "
+                      "binds, not a definition)",
+        "rows": {}, "no_row_reason": "non-binding:db4af97",
         "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
@@ -515,6 +530,30 @@ ASSUMPTIONS = {
         "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
+    "asc_calibrated": {
+        "title": "calibrated new-line ASC (matured-era posterior central; display)",
+        "tier": "constant", "status": "active",
+        "value": 0.109, "units": "util", "band": None,
+        "basis": "locally-calibrated",
+        "history": [("2026-07-14", 0.109, "locally-calibrated",
+                     "spec08 A2b harvest -- model.py asc_bracket fallback, spec05 s3.4")],
+        "provenance": "the MATURED-era ABC posterior ASC central from the bus 543 "
+                      "experiment, used as the display anchor for the streetcar "
+                      "rail-ASC premium bracket (config asc_calibrated x "
+                      "{1.0,1.5,2.0}; model.py stdout only -- NOT in results JSON). "
+                      "VALUE UNCHANGED at 0.109: it feeds display output, so "
+                      "revaluing would breach the byte-identity gate. The streetcar "
+                      "config carries its own 0.109; this constant single-sources "
+                      "the model.py fallback literal (spec 08 A2b addendum 0a). "
+                      "Rowless: the ASC's ridership channel is fully swept by the "
+                      "asc PRIOR rows (asc_lo/asc_hi/asc_untrimmed)",
+        "rows": {}, "no_row_reason": "covered-elsewhere:asc_untrimmed",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": "README known-issue 14",
+        "upgrade": "refresh to the launch-equivalent posterior (0.19, abc_harbor "
+                   "central-kernel asc P50) or compute from abc_harbor.json -- a "
+                   "deliberate revaluation, own commit",
+    },
 
     # ---- reweight_abc.py -------------------------------------------------
     "upt_fy2013_mb": {
@@ -526,8 +565,11 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db")],
         "provenance": "NTD ID 90036 annual bus UPT (MB, DO+PT), FY2013; "
                       "dual-source verified (Socrata 8bui-9xvu + TS2.1 2018 "
-                      "Excel); the central back-trend numerator",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "Excel); the central back-trend numerator (feeds the CENTRAL "
+                      "kernel 543_launch_s500, which is not a sensitivity row). Its "
+                      "vintage-choice sensitivity is the FY2014 alternative reading",
+        "rows": {}, "no_row_reason": "covered-elsewhere:543_launch14_s500",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "NTD annual refresh",
     },
     "upt_fy2014_mb": {
@@ -538,8 +580,12 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 48_561_206, "measured",
                      "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db")],
         "provenance": "NTD ID 90036 annual bus UPT (MB, DO+PT), FY2014; the "
-                      "FY2014-vintage back-trend numerator (543_launch14 row)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "FY2014-vintage back-trend numerator. Owns the "
+                      "543_launch14_s500 ABC kernel row -- the defensible alternate "
+                      "reading of 'launch-equivalent' (mu ~5,647 vs the FY2013 "
+                      "central ~5,938), exposed not silently chosen against",
+        "rows": {"abc": ["543_launch14_s500"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "NTD annual refresh",
     },
     "upt_fy2017_mb": {
@@ -550,8 +596,11 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 39_686_125, "measured",
                      "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db")],
         "provenance": "NTD ID 90036 annual bus UPT (MB, DO+PT), FY2017; the "
-                      "back-trend denominator (matches the FY2017 543 vintage)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "back-trend denominator (matches the FY2017 543 vintage). "
+                      "Shared by both the central (FY2013) and FY2014 back-trends; "
+                      "its vintage-choice sensitivity is the 543_launch14_s500 row",
+        "rows": {}, "no_row_reason": "covered-elsewhere:543_launch14_s500",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "NTD annual refresh",
     },
     "obs_543_fy2017": {
@@ -563,8 +612,12 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db")],
         "provenance": "earliest measured 543 weekday boardings, FY2017 "
                       "(anchor_from_apc.py); scaled by the NTD back-trend to "
-                      "the launch-equivalent target MU_LAUNCH (spec 02 s4.6)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "the launch-equivalent target MU_LAUNCH (spec 02 s4.6). A "
+                      "measured factor of BOTH the central (FY2013 back-trend) and "
+                      "the FY2014-vintage kernels; its readings are exposed by the "
+                      "543_launch14_s500 alternative-vintage row",
+        "rows": {}, "no_row_reason": "covered-elsewhere:543_launch14_s500",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "APC records request",
     },
     "mu_matured": {
@@ -576,8 +629,10 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db")],
         "provenance": "old six-year-average 543 target; superseded by the "
                       "launch-equivalent retarget but retained as the "
-                      "543_matured_s500 sensitivity kernel (spec 02 s4.6)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "543_matured_s500 sensitivity kernel (spec 02 s4.6), which "
+                      "this entry owns in the ABC artifact",
+        "rows": {"abc": ["543_matured_s500"]},
+        "no_row_reason": None, "accepted": None,
         "logged": "README known-issue 15", "upgrade": "APC records request",
     },
     "abc_sigma": {
@@ -590,8 +645,10 @@ ASSUMPTIONS = {
         "provenance": "central 500 retains the ~400 structural-error floor "
                       "(post-COVID 2022 LODES shape, 2023 ACS proxying 2013, "
                       "unknown 2013 peak headway) plus back-trend vintage "
-                      "spread; 350/800 are the width sensitivities",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "spread; 350/800 are the width sensitivities, owned here as "
+                      "the 543_launch_s350 / 543_launch_s800 ABC kernel rows",
+        "rows": {"abc": ["543_launch_s350", "543_launch_s800"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "STOPS calibration / observed launch",
     },
     "seed": {
@@ -629,8 +686,13 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "measured 543 weekday boardings, FY2019 low .. FY2017 "
                       "high (anchor_from_apc.py); the observed-outcome display "
-                      "range printed and exported beside the backtest prediction",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "range printed and exported beside the backtest prediction "
+                      "(backtest_543.json / abc_harbor.json observed_543). A "
+                      "DISPLAY range, not a swept input -- the target-level "
+                      "uncertainty it represents is bracketed by the ABC kernels "
+                      "(matured 4,200 sits inside 3,700-4,600)",
+        "rows": {}, "no_row_reason": "covered-elsewhere:543_matured_s500",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "APC records request",
     },
 
@@ -643,8 +705,12 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", [300, 330], "judgment",
                      "spec08 A1 harvest -- introduced spec06")],
         "provenance": "weekday->annual conversion band (anchor_from_apc "
-                      "convention); low 300, high 330 equivalent service days",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "convention); low 300, high 330 equivalent service days. "
+                      "Exported to bca_export (eq_days); its band sweep is a "
+                      "BCA-wrapper row, spec-pending until the welfare BCA results "
+                      "file exists (spec 08 §5 check 2 wrapper-pending)",
+        "rows": {}, "no_row_reason": "spec-pending:06§E4",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": "OCTA service-calendar day counts",
     },
 
@@ -655,9 +721,12 @@ ASSUMPTIONS = {
         "value": 0.9, "units": "mi", "band": None, "basis": "definitional",
         "history": [("2026-07-11", 0.9, "definitional",
                      "spec08 A1 harvest -- introduced spec01/spec02")],
-        "provenance": "centroid-within distance for corridor tract membership",
-        "rows": {}, "no_row_reason": None, "accepted": None,
-        "logged": None, "upgrade": None,
+        "provenance": "centroid-within distance for corridor tract membership; a "
+                      "build-geometry knob (a rebuilt-variant sensitivity is "
+                      "possible but not mandated -- disposition-only, spec 08 A2b)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "corridor-membership rebuilt-variant sensitivity",
     },
     "xfer_buffer_mi": {
         "title": "transfer feeder-access buffer",
@@ -666,9 +735,11 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 0.9, "definitional",
                      "spec08 A1 harvest -- introduced spec01/spec02")],
         "provenance": "outside-tract to feeder-crossing access distance for "
-                      "the transfer market",
-        "rows": {}, "no_row_reason": None, "accepted": None,
-        "logged": None, "upgrade": None,
+                      "the transfer market; a build-geometry knob (rebuilt-variant "
+                      "sensitivity possible, not mandated -- disposition-only)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "transfer-access rebuilt-variant sensitivity",
     },
     "cross_near": {
         "title": "feeder crossing near-threshold",
@@ -677,9 +748,11 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 0.25, "definitional",
                      "spec08 A1 harvest -- introduced spec01/spec02")],
         "provenance": "|offset| below which a feeder is 'on' the corridor line "
-                      "(crossing test)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
-        "logged": None, "upgrade": None,
+                      "(crossing test); a build-geometry knob (rebuilt-variant "
+                      "sensitivity possible, not mandated -- disposition-only)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "crossing-test rebuilt-variant sensitivity",
     },
     "cross_far": {
         "title": "feeder crossing far-threshold",
@@ -688,9 +761,11 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 1.0, "definitional",
                      "spec08 A1 harvest -- introduced spec01/spec02")],
         "provenance": "|offset| beyond which a feeder must reach on both sides "
-                      "(genuine-crossing test)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
-        "logged": None, "upgrade": None,
+                      "(genuine-crossing test); a build-geometry knob "
+                      "(rebuilt-variant sensitivity possible, not mandated)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "crossing-test rebuilt-variant sensitivity",
     },
     "bin_edges": {
         "title": "distance-bin edges (walk & transfer markets)",
@@ -700,9 +775,12 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", [0.0, 0.5, 2.5, 4.75, 7.5, 10.25, 12.6],
                      "judgment", "spec08 A1 harvest -- introduced spec02")],
         "provenance": "on-line distance-bin partition; first bin 0-0.5 mi "
-                      "carries the intra-tract flows",
-        "rows": {}, "no_row_reason": None, "accepted": None,
-        "logged": None, "upgrade": None,
+                      "carries the intra-tract flows. A discretization-resolution "
+                      "knob (a finer partition / rebuilt-variant sensitivity is "
+                      "possible, not mandated -- disposition-only, spec 08 A2b)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "finer partition / rebuilt-variant sensitivity",
     },
     "intra_clip": {
         "title": "intra-tract imputed-distance clip bounds",
@@ -711,9 +789,12 @@ ASSUMPTIONS = {
         "basis": "definitional",
         "history": [("2026-07-11", (0.10, 0.45), "definitional",
                      "spec08 A1 harvest -- introduced spec02")],
-        "provenance": "clamp on the sqrt(ALAND)/3 imputed along-line distance "
-                      "for intra-tract walk flows",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "provenance": "clamp on the sqrt(ALAND)/intra_divisor imputed along-line "
+                      "distance for intra-tract walk flows; the clip is part of "
+                      "the intra-tract distance RULE whose sensitivity is the "
+                      "rebuilt-variant intra_tract_alt row (owned by intra_divisor)",
+        "rows": {}, "no_row_reason": "covered-elsewhere:intra_tract_alt",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "intra_divisor": {
@@ -724,8 +805,31 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 3.0, "definitional",
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "E|dx| of two uniform points on [0, L] is L/3; the 1-D "
-                      "projection factor for intra-tract flow distance",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "projection factor for intra-tract flow distance. The "
+                      "ALTERNATIVE imputation sqrt(ALAND)/intra_divisor_alt is the "
+                      "spec 08 §4 rebuilt-variant intra_tract_alt row: a SCRATCH "
+                      "corridor rebuilt with the alt divisor (build_corridor "
+                      "--variant), rows in BOTH corridor results",
+        "rows": {"harbor": ["intra_tract_alt"], "streetcar": ["intra_tract_alt"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "intra_divisor_alt": {
+        "title": "intra-tract imputed-distance ALTERNATIVE divisor (rebuilt row)",
+        "tier": "constant", "status": "active",
+        "value": 2.0, "units": "dimensionless", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-14", 2.0, "judgment",
+                     "spec08 A2b -- intra_tract_alt rebuilt-variant divisor")],
+        "provenance": "the alternative intra-tract distance rule sqrt(ALAND)/2 "
+                      "(vs the L/3 central), clip [0.10, 0.45] UNCHANGED; consumed "
+                      "by build_corridor --variant intra_tract_alt to rebuild a "
+                      "scratch corridor the intra_tract_alt sensitivity row runs "
+                      "against (spec 08 §4/§7). The '0.9 clip scale' hint in the "
+                      "original draft was ambiguous -- resolved to clip-unchanged "
+                      "and documented (spec 08 A2b brief)",
+        "rows": {}, "no_row_reason": "covered-elsewhere:intra_tract_alt",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "moe_z": {
@@ -738,7 +842,8 @@ ASSUMPTIONS = {
         "provenance": "Census publishes 90% margins of error; SE = MOE / 1.645 "
                       "(documented conversion, spec 08 s4 -- reclassified "
                       "definitional, no counterfactual row)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "se_cap": {
@@ -748,8 +853,11 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 0.5, "definitional",
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "clamp on the delta-method relative SE of S0 shares "
-                      "(guards degenerate small-cell ACS estimates)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+                      "(guards degenerate small-cell ACS estimates); a numerical "
+                      "guard, superseded in effect by the s0_se_width block which "
+                      "scales the jitter width",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "feeder_downsample": {
@@ -760,7 +868,8 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "max vertices sampled per feeder shape for the crossing "
                       "test (compute knob)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "min_feeder_mi": {
@@ -770,9 +879,11 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", 1.0, "definitional",
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "feeders shorter than this are ignored as crossing "
-                      "candidates",
-        "rows": {}, "no_row_reason": None, "accepted": None,
-        "logged": None, "upgrade": None,
+                      "candidates; a build-geometry knob (rebuilt-variant "
+                      "sensitivity possible, not mandated -- disposition-only)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "feeder-length rebuilt-variant sensitivity",
     },
     "mi_lat": {
         "title": "miles per degree latitude (flat-earth projection)",
@@ -782,7 +893,8 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "flat-earth projection constant (miles per degree "
                       "latitude at OC's latitude)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "mi_per_deg_lon": {
@@ -793,7 +905,8 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "flat-earth projection base; scaled by cos(oc_ref_lat) "
                       "to give MI_LON",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
     "oc_ref_lat": {
@@ -804,7 +917,8 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "reference latitude for the flat-earth longitude scale "
                       "(the cos factor in MI_LON)",
-        "rows": {}, "no_row_reason": None, "accepted": None,
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
         "logged": None, "upgrade": None,
     },
 
@@ -920,10 +1034,13 @@ ASSUMPTIONS = {
 
     # ===== config tier (corridor-owned; entry points at a config key) =======
     # NOT owned here -- the entry names a structured config key and claims the
-    # per-artifact rows those config values drive. Harbor and streetcar anchors
-    # are SEPARATE entries (spec 08 §3: "anchor -> low" means DIFFERENT
-    # assumptions per corridor). The anchor_derivation structured-key promotion
-    # (trend / corr_share) and full pointer resolution are A2b.
+    # per-artifact rows those config values drive (or a disposition where the
+    # config value has no own row). Harbor and streetcar anchors are SEPARATE
+    # entries (spec 08 §3: "anchor -> low" means DIFFERENT assumptions per
+    # corridor). A2b promoted the anchor_derivation structured keys (trend /
+    # corr_share / uniformity), the 2013 backtest world (config/backtest_543.json),
+    # and the visitor / bca config blocks -- each a resolvable structured-key
+    # pointer (spec 08 §5 check 6: no prose-blob pointers).
     "harbor_anchor": {
         "title": "Harbor corridor anchor band (weekday boardings)",
         "tier": "config", "status": "active", "basis": "measured",
@@ -932,7 +1049,10 @@ ASSUMPTIONS = {
                      "spec08 A2 harvest -- config anchor_low/high")],
         "provenance": "543 + 43 FY2019 route totals x FY2019->FY2024 trend x "
                       "corridor share (anchor_from_apc.py / route43_share.py); "
-                      "the anchor_lo/anchor_hi sensitivity rows sweep the band",
+                      "the trend + corr_share bands are now the structured "
+                      "anchor_derivation keys (entries anchor_trend / corr_share), "
+                      "cross-checked to give 7650/9650 within rounding-to-50; the "
+                      "anchor_lo/anchor_hi sensitivity rows sweep the band",
         "rows": {"harbor": ["anchor_lo", "anchor_hi"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "APC records request",
@@ -978,33 +1098,174 @@ ASSUMPTIONS = {
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "OCTA project design docs",
     },
+    "anchor_trend": {
+        "title": "Harbor anchor FY2019->FY2024 system trend band",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/harbor.json: anchor_derivation.trend",
+        "history": [("2026-07-14", (0.90, 0.99), "measured",
+                     "spec08 A2b -- promoted from anchor_note prose")],
+        "provenance": "the FY2019->FY2024 per-month system ridership ratio 0.94 "
+                      "(range 0.90-0.99 covering route-share drift + COVID-window "
+                      "bias), a factor of the forward Harbor anchor band; its "
+                      "sensitivity is carried by the anchor_lo/anchor_hi sweep",
+        "rows": {}, "no_row_reason": "covered-elsewhere:anchor_lo",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "APC records request",
+    },
+    "corr_share": {
+        "title": "Route-43 corridor share (SHARED: forward anchor + 2013 backtest)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/harbor.json: anchor_derivation.corr_share",
+        "history": [("2026-07-14", (0.75, 0.86), "measured",
+                     "spec08 A2b -- promoted from prose; ONE entry, two derivations")],
+        "provenance": "Route 43's boarding share inside the 12.1-mi corridor, "
+                      "0.75 (LODES) - 0.86 (ACS), scripts/route43_share.py. The "
+                      "SAME assumption in TWO derivations (spec 08 §2): the forward "
+                      "Harbor anchor (543 + 43 x corr_share) AND the 2013 backtest "
+                      "anchor (route43_total ~13,000 x corr_share -> 9,750-11,180, "
+                      "backtest_543.py reads this key). Physically single-sourced "
+                      "in config/harbor.json; the backtest reads it from the Harbor "
+                      "corridor config, never duplicated. Sensitivity via anchor_lo",
+        "rows": {}, "no_row_reason": "covered-elsewhere:anchor_lo",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "APC records request / on-board survey",
+    },
+    "streetcar_anchor_derivation": {
+        "title": "OC Streetcar anchor derivation bands (uniformity + trend)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/streetcar.json: anchor_derivation "
+                      "(uniformity / trend)",
+        "history": [("2026-07-14", ((0.80, 1.10), (0.90, 0.99)), "measured",
+                     "spec08 A2b -- promoted the clean band quantities from prose")],
+        "provenance": "the along-route uniformity band 0.80-1.10 and the "
+                      "FY2019->present trend 0.90-0.99 that scale the ~5,034 raw "
+                      "composite-carrier corridor boardings (anchor_streetcar.py). "
+                      "The per-carrier shape-shares (0.29/0.35/0.56/0.41) and the "
+                      "~5,034 raw stay in prose -- measured shape overlaps, not a "
+                      "clean band (spec 08 §2: document, do not invent). Cross-check "
+                      "3600/5500 = 5034 x uniformity x trend within rounding-to-50; "
+                      "sensitivity via the streetcar anchor_lo/anchor_hi sweep",
+        "rows": {}, "no_row_reason": "covered-elsewhere:anchor_lo",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "APC records request",
+    },
+    "backtest_world": {
+        "title": "2013 Bravo! 543 backtest world (promoted config file)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/backtest_543.json",
+        "history": [("2026-07-14", "backtest_543", "measured",
+                     "spec08 A2b -- 2013 world promoted out of backtest_543.py")],
+        "provenance": "the June-2013 backtest scenario -- the 2013 local/rapid "
+                      "services and the Route-43 route-total anchor LEAF (~13,000) "
+                      "-- promoted from hardcoded backtest_543.py into config "
+                      "(spec 08 §2: the last structured citation-drift nest). The "
+                      "corridor share is NOT here (the shared corr_share entry); "
+                      "the anchor band 9,750-11,180 is computed in code. The 2013 "
+                      "services' sensitivities are the bt_* rows (owned by the "
+                      "backtest_service_* entries)",
+        "rows": {}, "no_row_reason": "covered-elsewhere:bt_flat15",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "APC records request",
+    },
+    "backtest_service_new": {
+        "title": "2013 launch 543 service (backtest artifact)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/backtest_543.json: service_new",
+        "history": [("2026-07-14", "service_new", "measured",
+                     "spec08 A2b -- owns the 543-service backtest sensitivity rows")],
+        "provenance": "the actual June-2013 launch service (15 mph, 10-min peak / "
+                      "15-min off-peak, ~1-mi stops). Owns the backtest 543-service "
+                      "sensitivity rows: bt_flat15 (old flat-15 spec), bt_20min "
+                      "(20-min all day), bt_13mph (weaker TSP)",
+        "rows": {"backtest": ["bt_flat15", "bt_20min", "bt_13mph"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "OCTA 2013 service records",
+    },
+    "backtest_service_base": {
+        "title": "2013 Route 43 local base service (backtest artifact)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/backtest_543.json: services_base.local",
+        "history": [("2026-07-14", "services_base", "measured",
+                     "spec08 A2b -- owns the 43-base backtest sensitivity rows")],
+        "provenance": "the 2013 Route 43 local (~12 mph, ~15-min, 1/4-mi stops); "
+                      "the 2013 peak headway is unknown so the sensitivity rows "
+                      "bt_base20 (flat 20-min) and bt_base_10_15 (10-min peak / "
+                      "15 off) bracket it",
+        "rows": {"backtest": ["bt_base20", "bt_base_10_15"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "OCTA 2013 service records",
+    },
+    "visitor_config": {
+        "title": "visitor-market bin weights (corridor configs)",
+        "tier": "config", "status": "active", "basis": "judgment",
+        "config_key": "config/{harbor,streetcar}.json: visitor.bin_weights",
+        "history": [("2026-07-14", "visitor.bin_weights", "judgment",
+                     "spec08 A2b -- config-block pointer")],
+        "provenance": "the resort/civic visitor market's distance-bin weights "
+                      "(the load-bearing visitor config; visitor.share / visitor.S0 "
+                      "mirror the phi / s0v priors and are consumed through them). "
+                      "The whole visitor market's contribution is bounded by the "
+                      "no_visitor toggle row; the 0-0.5-mi split by no_bin0",
+        "rows": {}, "no_row_reason": "covered-elsewhere:no_visitor",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "resort/civic-market survey",
+    },
+    "bca_config": {
+        "title": "BCA config block (routes removed + revenue vehicle-hours)",
+        "tier": "config", "status": "active", "basis": "measured",
+        "config_key": "config/{harbor,streetcar}.json: bca",
+        "history": [("2026-07-14", "bca", "measured",
+                     "spec08 A2b -- config-block pointer")],
+        "provenance": "the fold/retain routes_removed sets and the weekday revenue "
+                      "vehicle-hours (rev_hours_weekday, measured from OCTA GTFS) "
+                      "that feed the avoided base O&M in the welfare BCA wrapper "
+                      "(spec 06 §E4). Rows land in the BCA-wrapper artifact, which "
+                      "is spec-pending until the welfare BCA results file exists "
+                      "(spec 08 §5 check 2 wrapper-pending)",
+        "rows": {}, "no_row_reason": "spec-pending:06§E4",
+        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+        "logged": None, "upgrade": "OCTA service-calendar / cost model",
+    },
 
     # ===== width-block owners (spec 08 §4; rows in the 'width' artifact) =====
     # The band-WIDTH knobs. A point() row is vacuously 0.0% (it pins fix_bins),
     # so these are exercised by the width_sensitivities block: full reruns under
-    # x0.5/x2 scale factors (a scale over-key, NOT new priors). The raw
-    # concentration literals (300/300/100/400) remain in run(); single-sourcing
-    # them is an A2b/later cleanup -- the width rows already expose the effect.
+    # x0.5/x2 scale factors (a scale over-key, NOT new priors). dirichlet_strength
+    # now OWNS the four concentrations as a constant (single-sourced into run(),
+    # spec 08 A2b addendum 0c); s0_se_width stays structural (its "value" is the
+    # ACS delta-method SEs, data-derived, not a registry literal).
     "dirichlet_strength": {
-        "title": "Dirichlet bin-shape concentration (joint bin-shape trust)",
-        "tier": "structural", "status": "active", "basis": "judgment",
+        "title": "Dirichlet bin-shape concentrations (joint bin-shape trust)",
+        "tier": "constant", "status": "active",
+        "value": (300, 300, 100, 400),
+        "units": "concentration (walk/transfer/visitor/car_frac)",
+        "band": (0.5, 2.0), "basis": "judgment",
         "history": [("2026-07-11", "dirichlet_strength", "judgment",
-                     "spec08 A2 harvest -- introduced spec02")],
+                     "spec08 A2 harvest -- introduced spec02, structural"),
+                    ("2026-07-14", (300, 300, 100, 400), "judgment",
+                     "spec08 A2b addendum 0c -- tier structural->constant; four "
+                     "concentrations single-sourced into run()")],
         "provenance": "the four Dirichlet concentrations -- walk-bin 300, "
                       "transfer-bin 300, visitor-bin 100, car-frac 400 -- encode "
-                      "one 'how much do we trust the bin shapes' assumption; the "
-                      "width block scales all four jointly x0.5/x2 (spec 08 §4)",
+                      "one 'how much do we trust the bin shapes' assumption, now "
+                      "single-sourced (model.py DIR_WALK/DIR_XFER/DIR_VIS/DIR_CF). "
+                      "The band (0.5, 2.0) is the JOINT x-scale range the width "
+                      "block sweeps (NOT concentration bounds); its edges ARE the "
+                      "dirichlet_half (x0.5) / dirichlet_double (x2) width rows "
+                      "(spec 08 §4/§5 check 5 'band edges present as rows')",
         "rows": {"width": ["dirichlet_half", "dirichlet_double"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "on-board / APC bin-share observations",
     },
     "s0_se_width": {
         "title": "S0 base-share lognormal jitter width",
-        "tier": "structural", "status": "active", "basis": "locally-calibrated",
+        "tier": "structural", "status": "active", "basis": "measured",
         "history": [("2026-07-11", "s0_se_width", "locally-calibrated",
-                     "spec08 A2 harvest -- introduced spec02")],
+                     "spec08 A2 harvest -- introduced spec02"),
+                    ("2026-07-14", "s0_se_width", "measured",
+                     "spec08 A2b addendum 0d -- basis measured (ACS delta-method SEs)")],
         "provenance": "the S0 base-share jitter is lognormal(0, cor.s0_se) with "
-                      "cor.s0_se the ACS delta-method relative SEs (data); the "
+                      "cor.s0_se the ACS delta-method relative SEs (measured); the "
                       "width block scales that sigma x0.5/x2 (spec 08 §4)",
         "rows": {"width": ["s0se_half", "s0se_double"]},
         "no_row_reason": None, "accepted": None,
