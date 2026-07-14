@@ -26,6 +26,7 @@ import numpy as np
 from model import Corridor, run, draw_params, pct, wpct, N
 from reweight_abc import abc_weights, get_kernels, central_label
 from backtest_543 import backtest_corridor
+from assumptions import val
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -33,8 +34,8 @@ if hasattr(sys.stdout, "reconfigure"):
 HERE = os.path.dirname(os.path.abspath(__file__))
 DER = os.path.join(HERE, "..", "data", "derived")
 OUT = os.path.join(HERE, "..", "outputs")
-SEED = 42
-EQ_DAYS = [300, 330]                 # weekday->annual band (anchor_from_apc convention)
+SEED = val("seed")
+EQ_DAYS = val("eq_days")              # weekday->annual band (anchor_from_apc convention)
 
 # ABC kernels for a corridor that has a backtest target: (label, mu, sigma),
 # central first. Imported from reweight_abc (single source of truth) so the

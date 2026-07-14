@@ -25,13 +25,14 @@ also the ABC calibration target -- see reweight_abc.py.
 """
 import copy, json, os, sys
 import numpy as np
-from model import Corridor, run, pct
+from model import Corridor, run, pct, PRIORS
+from assumptions import val
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OBS_543 = (3700, 4600)   # measured FY2019 wd .. FY2017 wd (anchor_from_apc.py)
+OBS_543 = val("obs_543")   # measured FY2019 wd .. FY2017 wd (anchor_from_apc.py)
 
 
 def backtest_corridor():
@@ -68,11 +69,15 @@ def main():
           f"systemwide ridership decline; the 543-boardings comparison above "
           f"is the clean observable)")
 
-    # sensitivity of the prediction to the shakiest backtest assumptions
-    central = {"bivt": -0.0265, "ovt": 2.05, "asc": 0.20, "w0": 5.5,
-               "lam": 0.175, "xcap": 12.5, "tau": 0.325, "phi": 0.10,
-               "s0v": 0.20, "ws": 0.50, "kappa": 0.80, "pkshare": 0.525,
-               "fix_bins": 1}
+    # sensitivity of the prediction to the shakiest backtest assumptions.
+    # Prior-central pins are the PRIORS midpoints (spec 08: was a hardcoded dict
+    # duplicating the 12 pre-D3 midpoints -- a live citation-drift instance;
+    # now computed from PRIORS like model.py's central). Pinning the post-D3
+    # priors (vot_behav, pcar*, v_cruise, dwell) is a no-op for this 2013 bus
+    # backtest -- it sets no fares and no derived_speed block -- so the
+    # prediction is unchanged (inside the byte-identical gate).
+    central = {k: (lo + hi) / 2 for k, (lo, hi, _) in PRIORS.items()}
+    central["fix_bins"] = 1
     b0 = pct(run(cor, n=4000, **central)["uncapped"]["retain"]["newline"], 50)
     print(f"\ncentral 543 prediction: {b0:,.0f}")
     for label, patch, kv in [

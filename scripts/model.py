@@ -38,14 +38,19 @@ usage: python model.py data/derived/corridor_harbor.json
 """
 import copy, json, os, sys
 import numpy as np
+from assumptions import val, build_priors
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-N = 40000
-WALK_MPH = 3.0
-SUBK = 8   # rider-position quadrature nodes; 8 is exact for 0.25/0.5/1.0-mi grids
-DEFAULT_FARE = 2.00   # OCTA flat cash fare, $ (spec 06 D3; override via cfg["fare_base"])
+# Module constants single-sourced from the assumptions registry (spec 08);
+# local names kept so call sites don't churn.
+N = val("n")
+WALK_MPH = val("walk_mph")
+SUBK = val("subk")   # rider-position quadrature nodes; 8 is exact for 0.25/0.5/1.0-mi grids
+DEFAULT_FARE = val("default_fare")   # OCTA flat cash fare, $ (spec 06 D3; override via cfg["fare_base"])
+DV_CLIP = val("dv_clip")      # +/- clamp on dv before exp() (numerical overflow guard)
+TIE_EPS = val("tie_epsilon")  # best-service tie-break tolerance
 
 # Reference classes are DISPLAY-ONLY (spec 05 §4): printed beside the
 # forecast, never used to cap, reweight, or filter draws (standing user
@@ -87,38 +92,19 @@ REFERENCE = {
                          "overestimation ~106%; 84% off by more than +/-20%"},
 }
 
-# (lo, hi, shape): triangular = peaked at midpoint; uniform elsewhere
-PRIORS = {
-    "bivt":  (-0.035, -0.018, "tri"),  # in-vehicle time coef, util/min
-    "ovt":   (1.6, 2.5, "tri"),        # wait & walk weight relative to IVT
-    "asc":   (0.0, 0.40, "tri"),       # image/reliability constant (trimmed)
-    "w0":    (4.0, 7.0, "uni"),        # scheduled-arrival platform wait, min
-    "lam":   (0.10, 0.25, "uni"),      # schedule-delay slope
-    "xcap":  (10.0, 15.0, "uni"),      # transfer-wait cap, min
-    "tau":   (0.25, 0.40, "uni"),      # transfer share of base boardings
-    "phi":   (0.05, 0.15, "uni"),      # visitor share of base boardings
-    "s0v":   (0.10, 0.30, "uni"),      # visitor base transit share
-    "ws":    (0.40, 0.60, "uni"),      # work share of boardings
-    "kappa": (0.60, 1.00, "uni"),      # non-work responsiveness
-    "pkshare": (0.45, 0.60, "uni"),    # peak share of boardings (TOD blend)
-    # spec 06 D3/D7: appended LAST so draw_params consumes its rng stream in
-    # insertion order and every pre-existing prior's draws stay bit-identical
-    # (the append-last rule -- the repo was once bitten by rng reordering).
-    "vot_behav": (10.0, 22.0, "tri"),  # $/hr, behavioral VOT (fare response)
-    "pcar0":     (0.05, 0.25, "uni"),  # car-diversion prob, 0-vehicle segment
-    "pcar1":     (0.35, 0.65, "uni"),  # 1-vehicle segment
-    "pcar2":     (0.55, 0.85, "uni"),  # 2+-vehicle segment
-    "pcarv":     (0.00, 0.30, "uni"),  # visitor market
-    # pcar* are drawn and exported only (res["params"]); the BCA wrapper (B4)
-    # prices them -- model code must NOT consume them anywhere.
-    # spec 02 §4.9 (R6): grade-separated derived-speed priors, appended LAST
-    # after pcarv (the same append-last rng discipline) so every pre-existing
-    # prior's draws stay bit-identical. Consumed ONLY by the forward line's
-    # derived_speed block; central (80 km/h, 25 s) reproduces ~30 mph at 1-mi
-    # spacing. The measured base services keep their config scalar speeds.
-    "v_cruise": (70.0, 90.0, "uni"),   # km/h, grade-separated cruise (ALM)
-    "dwell":    (20.0, 30.0, "uni"),   # s, station dwell (ALM)
-}
+# (lo, hi, shape): triangular = peaked at midpoint; uniform elsewhere. The 19
+# priors now live in the assumptions registry (spec 08); PRIORS is GENERATED
+# from it, emitted sorted by `order`, so draw_params consumes the rng in that
+# exact insertion order. APPEND-LAST discipline is unchanged: a new prior takes
+# the next order int and is appended, never inserted -- the repo was once bitten
+# by rng reordering. The committed fingerprint in test_bca_export.py is the
+# reorder guard (updating that hash is the explicit act of appending); the
+# byte-identical regression gates remain the ultimate rng backstop.
+# Current order: bivt ovt asc w0 lam xcap tau phi s0v ws kappa pkshare (spec 02)
+# ; vot_behav (spec 06 D3); pcar0-2 pcarv (spec 06 D7; drawn & exported only,
+# model code must NOT consume them); v_cruise dwell (spec 02 §4.9 R6, consumed
+# only by the forward line's derived_speed block).
+PRIORS = build_priors()
 # cap treatments removed per user decision 2026-07: the headline is reported
 # uncapped NEXT TO the backtest-calibrated (ABC) treatment -- see reweight_abc.py.
 # The single-element list is retained deliberately: the (label, cap) loop
@@ -132,26 +118,26 @@ ENVELOPES = [("uncapped", None)]
 # two: the forward elevated automated light-metro line uses the grade-separated
 # variant (no signal delay); the street variant, calibrated in code from two
 # measured OCTA bus points, stays for the bus backtest/calibration experiments.
-A_COMFORT = 1.0          # m/s^2, REM-class comfortable accel(=decel): sets the
-                         # per-stop time lost vs cruising, grade-separated only
-J_COMFORT = 0.75         # m/s^3, service jerk limit (spec 02 §4.9b). Passenger
-                         # comfort standards band the sustained jerk at
+A_COMFORT = val("a_comfort")   # m/s^2, REM-class comfortable accel(=decel): sets
+                         # the per-stop time lost vs cruising, grade-separated only
+J_COMFORT = val("j_comfort")   # m/s^3, service jerk limit (spec 02 §4.9b).
+                         # Passenger comfort standards band the sustained jerk at
                          # ~0.5-1.0 (EN 13452 family); 0.75 central, the band
                          # edges are sensitivity rows. j->inf recovers R6's
                          # trapezoid (the accel/decel time lost is v/a, no jerk
                          # ramp), retained as the regression row.
-KMH_PER_MPH = 1.609344   # exact
-MPS_PER_KMH = 1000.0 / 3600.0
-M_PER_MI = KMH_PER_MPH * 1000.0   # 1609.344 m, exact
+KMH_PER_MPH = val("kmh_per_mph")   # exact
+MPS_PER_KMH = 1000.0 / 3600.0      # definitional unit arithmetic (stays computed)
+M_PER_MI = KMH_PER_MPH * 1000.0    # 1609.344 m, exact (derived from the leaf)
 # Two measured points on the shared Harbor street (avg mph, stop spacing mi):
 # Route 43 local and Route 543 rapid, both in this repo's GTFS/anchor
 # provenance. Two equations identify the street variant's per-stop penalty and
 # no-stop street speed; MEASURED STAYS MEASURED, so the base services keep
 # their own config scalar speeds and this curve only prices hypothetical bus
 # designs (sensitivity rows / future experiments).
-STREET_CAL_POINTS = ((11.4, 0.25), (12.8, 1.0))
-TSP_SPEEDUP = 0.075      # 2024 OCTA TSP study ~7-8% corridor speed-up would
-                         # raise v_street; informational only, no consumer yet
+STREET_CAL_POINTS = (val("street_cal_local"), val("street_cal_rapid"))
+TSP_SPEEDUP = val("tsp_speedup")   # 2024 OCTA TSP study ~7-8% corridor speed-up
+                         # would raise v_street; informational only, no consumer yet
 
 
 def s_curve_phase_time(dv_mps, accel=A_COMFORT, jerk=J_COMFORT):
@@ -453,7 +439,7 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             pnew = np.exp(us[0] - ls) if svcs[0][1] else None
             return ls, pnew
         best = us.max(axis=0)
-        pnew = (us[0] >= best - 1e-12).astype(float) if svcs[0][1] else None
+        pnew = (us[0] >= best - TIE_EPS).astype(float) if svcs[0][1] else None
         return best, pnew
 
     def um_split(dv, e, S0, P):
@@ -486,7 +472,7 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         for scen, svcs in systems.items():
             ls1, pnew = combine(svcs, market, dists_e, walks_e, period)
             dv = ls1 - ls0                                   # (n, bins*Q)
-            e = np.exp(np.clip(dv, -20, 20))[:, :, None]
+            e = np.exp(np.clip(dv, -DV_CLIP, DV_CLIP))[:, :, None]
             if market == "visitor":
                 S0 = np.clip(p["s0v"], 1e-6, 0.95)[:, None, None]
                 P = wts_e[:, :, None]
@@ -505,14 +491,14 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             ls1_ff = combine(svcs, market, dists_e, walks_e, period,
                              1.0, 0.0)[0]
             dv_ff = ls1_ff - ls0_ff
-            e_ff = np.exp(np.clip(dv_ff, -20, 20))[:, :, None]
+            e_ff = np.exp(np.clip(dv_ff, -DV_CLIP, DV_CLIP))[:, :, None]
             um_infra, um_margin = um_split(dv_ff, e_ff, S0, P)
             # no-ASC AND fare-free counterfactual (spec 06 D1/D3): re-combine
             # with the new line's ASC and the fare term BOTH zeroed, against
             # the fare-free base -- for monetization only.
             dv0 = combine(svcs, market, dists_e, walks_e, period,
                           0.0, 0.0)[0] - ls0_ff
-            e0 = np.exp(np.clip(dv0, -20, 20))[:, :, None]
+            e0 = np.exp(np.clip(dv0, -DV_CLIP, DV_CLIP))[:, :, None]
             um0_infra, um0_margin = um_split(dv0, e0, S0, P)
             # spec 06 B2/D7: signed diverted-car-trip-mile mass per
             # car-ownership segment, off the HEADLINE pivot only (no no-ASC

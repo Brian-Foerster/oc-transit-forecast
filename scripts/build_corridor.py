@@ -17,21 +17,31 @@ usage: python build_corridor.py config/harbor.json
 import json, math, os, sys
 import numpy as np
 import pandas as pd
+from assumptions import val
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAW = os.path.join(HERE, "..", "data", "raw")
 DER = os.path.join(HERE, "..", "data", "derived")
 GTFS = os.path.join(RAW, "gtfs")
 
-BUFFER_MI, XFER_BUFFER_MI = 0.9, 0.9
-CROSS_NEAR, CROSS_FAR = 0.25, 1.0     # crossing test thresholds (mi)
+# Constants single-sourced from the assumptions registry (spec 08); local names
+# kept. Derived values (MI_LON) stay computed from the leaves.
+BUFFER_MI = val("buffer_mi")
+XFER_BUFFER_MI = val("xfer_buffer_mi")
+CROSS_NEAR = val("cross_near")
+CROSS_FAR = val("cross_far")          # crossing test thresholds (mi)
 # first bin 0-0.5 mi: intra-tract flows enter with an imputed along-line
-# distance sqrt(ALAND)/3 (E|dx| of two uniform points, 1-D projection)
-EDGES = np.array([0.0, 0.5, 2.5, 4.75, 7.5, 10.25, 12.6])
-INTRA_CLIP = (0.10, 0.45)
+# distance sqrt(ALAND)/INTRA_DIVISOR (E|dx| of two uniform points, 1-D projection)
+EDGES = np.array(val("bin_edges"))
+INTRA_CLIP = val("intra_clip")
+INTRA_DIVISOR = val("intra_divisor")
+MOE_Z = val("moe_z")                  # ACS 90% MOE -> SE conversion
+SE_CAP = val("se_cap")                # relative-SE cap on base transit shares
+DOWNSAMPLE = val("feeder_downsample") # feeder polyline sample-step target
+MIN_FEEDER_MI = val("min_feeder_mi")  # shortest feeder shape considered
 
-MI_LAT = 69.05
-MI_LON = 69.17 * math.cos(math.radians(33.77))
+MI_LAT = val("mi_lat")
+MI_LON = val("mi_per_deg_lon") * math.cos(math.radians(val("oc_ref_lat")))
 
 
 def load_gtfs():
@@ -153,7 +163,7 @@ def main(cfg_path):
     def cm(i): return f"B08141_M{i:03d}"
     def agg(cols_e, cols_m):
         est = sum(m[x].sum() for x in cols_e)
-        se = math.sqrt(sum((m[x] / 1.645).pow(2).sum() for x in cols_m))
+        se = math.sqrt(sum((m[x] / MOE_Z).pow(2).sum() for x in cols_m))
         return est, se
     wk0, se_w0 = agg([c(2)], [cm(2)])
     wk1, se_w1 = agg([c(3)], [cm(3)])
@@ -170,9 +180,9 @@ def main(cfg_path):
         "car_frac": [round(wk0 / W, 4), round(wk1 / W, 4), round(wk2 / W, 4)],
         "S0_by_car": [round(t0 / max(wk0, 1), 4), round(t1 / max(wk1, 1), 4),
                       round(t2 / max(wk2, 1), 4)],
-        "S0_se_rel": [round(min(ratio_se_rel(t0, se_t0, wk0, se_w0), 0.5), 4),
-                      round(min(ratio_se_rel(t1, se_t1, wk1, se_w1), 0.5), 4),
-                      round(min(ratio_se_rel(t2, se_t2, wk2, se_w2), 0.5), 4)],
+        "S0_se_rel": [round(min(ratio_se_rel(t0, se_t0, wk0, se_w0), SE_CAP), 4),
+                      round(min(ratio_se_rel(t1, se_t1, wk1, se_w1), SE_CAP), 4),
+                      round(min(ratio_se_rel(t2, se_t2, wk2, se_w2), SE_CAP), 4)],
         "S0_overall": round(m[c(16)].sum() / m[c(1)].sum(), 4),
         "workers_total": int(m[c(1)].sum()),
     }
@@ -186,7 +196,7 @@ def main(cfg_path):
     d = (both["h"].map(posmap) - both["w"].map(posmap)).abs()
     alandmap = dict(zip(tr["GEOID"], tr["aland_sqmi"]))
     intra = both["h"] == both["w"]
-    d[intra] = (both.loc[intra, "h"].map(alandmap).pow(0.5) / 3.0
+    d[intra] = (both.loc[intra, "h"].map(alandmap).pow(0.5) / INTRA_DIVISOR
                 ).clip(*INTRA_CLIP)
     print(f"  intra-tract walk flows: {int(both.loc[intra, 'n'].sum()):,} jobs "
           f"({100 * both.loc[intra, 'n'].sum() / both['n'].sum():.0f}% of walk market)")
@@ -199,10 +209,10 @@ def main(cfg_path):
         if rid in cfg["excluded_feeders"]:
             continue
         res, fl = main_shape_xy(trips, shapes, wk, rid)
-        if res is None or fl < 1.0:
+        if res is None or fl < MIN_FEEDER_MI:
             continue
         fx, fy = res
-        step = max(1, len(fx) // 250)
+        step = max(1, len(fx) // DOWNSAMPLE)
         fx, fy = fx[::step], fy[::step]
         offs = np.empty(len(fx)); poss = np.empty(len(fx))
         for i in range(len(fx)):

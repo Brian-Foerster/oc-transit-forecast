@@ -77,24 +77,30 @@ import json, os, sys
 import numpy as np
 from model import Corridor, run, draw_params, pct, wpct, N
 from backtest_543 import backtest_corridor, OBS_543
+from assumptions import val, band
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SEED = 42
+SEED = val("seed")
+ESS_MIN = val("ess_min")   # kernel-too-tight warning floor (widen sigma, never filter)
 
 # NTD back-trend (data table + sources in the module docstring). Do NOT round
-# the ratio -- it is a measured quantity carried at full precision.
-UPT_FY2013_MB = 51_067_292
-UPT_FY2014_MB = 48_561_206
-UPT_FY2017_MB = 39_686_125
-OBS_543_FY2017 = 4615.0                            # earliest measured 543 wd
+# the ratio -- it is a measured quantity carried at full precision. The leaves
+# are single-sourced from the assumptions registry (spec 08); the back-trend
+# and MU_LAUNCH stay DERIVED (computed here from the UPT/observation leaves).
+UPT_FY2013_MB = val("upt_fy2013_mb")
+UPT_FY2014_MB = val("upt_fy2014_mb")
+UPT_FY2017_MB = val("upt_fy2017_mb")
+OBS_543_FY2017 = val("obs_543_fy2017")             # earliest measured 543 wd
 BACKTREND_13 = UPT_FY2013_MB / UPT_FY2017_MB       # 1.28678
 BACKTREND_14 = UPT_FY2014_MB / UPT_FY2017_MB       # 1.22363
 MU_LAUNCH = OBS_543_FY2017 * BACKTREND_13          # ~5,938.5  central
 MU_LAUNCH14 = OBS_543_FY2017 * BACKTREND_14        # ~5,647    FY2014-vintage row
-MU_MATURED = 4200.0                                # old six-year avg (row)
+MU_MATURED = val("mu_matured")                     # old six-year avg (row)
+SIG_C = val("abc_sigma")                           # central sigma (wd boardings)
+SIG_LO, SIG_HI = band("abc_sigma")                 # 350/800 width sensitivities
 
 # Five kernels: (label, mu, sigma, tag), CENTRAL FIRST. This is the single
 # source of truth -- bca_export, make_charts and the tests import get_kernels()
@@ -104,11 +110,11 @@ MU_MATURED = 4200.0                                # old six-year avg (row)
 # target flavor + sigma; two kernels now share sigma=500, which is why the
 # JSON is keyed by label rather than by bare sigma.
 KERNELS = [
-    ("543_launch_s500",   MU_LAUNCH,   500.0, "central"),
-    ("543_launch_s350",   MU_LAUNCH,   350.0, "sensitivity"),
-    ("543_launch_s800",   MU_LAUNCH,   800.0, "sensitivity"),
-    ("543_launch14_s500", MU_LAUNCH14, 500.0, "sensitivity"),   # FY2014 vintage
-    ("543_matured_s500",  MU_MATURED,  500.0, "sensitivity"),   # spec 02 §4.6
+    ("543_launch_s500",   MU_LAUNCH,   SIG_C,  "central"),
+    ("543_launch_s350",   MU_LAUNCH,   SIG_LO, "sensitivity"),
+    ("543_launch_s800",   MU_LAUNCH,   SIG_HI, "sensitivity"),
+    ("543_launch14_s500", MU_LAUNCH14, SIG_C,  "sensitivity"),   # FY2014 vintage
+    ("543_matured_s500",  MU_MATURED,  SIG_C,  "sensitivity"),   # spec 02 §4.6
 ]
 
 
@@ -186,7 +192,7 @@ def main(path):
         tag = _tag_of(label)
         d = {"mu": float(mu), "sigma": float(sigma), "ess": float(ess),
              "tag": tag, "forecast": {}, "posterior": {}}
-        if ess < 1000:
+        if ess < ESS_MIN:
             print(f"  WARNING {label}: ESS={ess:,.0f} < 1,000 -- kernel too "
                   f"tight; widen sigma rather than filter")
         for scen in ("fold", "retain"):
