@@ -94,7 +94,7 @@ ABC weights flush to zero, immaterial at the round-trip gate's tolerance):
     },
     "retain": { same }
   },
-  "params": { all 17 PRIORS keys (12 existing + vot_behav + pcar0/1/2/v), "anchor": [...] },
+  "params": { all 19 PRIORS keys (12 original + vot_behav + pcar0/1/2/v + v_cruise + dwell — B3/R6), "anchor": [...] },
   "abc_weights": { "543_matured_s500": [...], "543_matured_s350": [...],
                    "543_matured_s800": [...] },   // OPTIONAL; keyed by kernel
                                                   // label, not bare sigma, so the
@@ -482,7 +482,7 @@ writes the §3 schema (+ `--seed-check` companion at seed+1 for G4). Gates:
   §3.1 (which sizes the FLEET; it does not itself produce car-km — the
   feasibility audit corrected this citation). Priors anchored wide to
   SkyTrain/Copenhagen/NTD benchmarks; traction-carbon debit per D8.
-- **E6 — tests.** 131 existing tests stay green (endogenous mode untouched).
+- **E6 — tests.** The full engine suite as of the landing commit (160 at spec time) stays green (endogenous mode untouched).
   Pipeline-mode anchor **with the comparator explicitly configured**
   (economics-audit fix): `lifecycleCore` run with mohring_coef=0, labor=0,
   reliability off, γ=0, λ=1, quantities constructed from us_lrt's demand-side
@@ -537,7 +537,7 @@ writes the §3 schema (+ `--seed-check` companion at seed+1 for G4). Gates:
   keys appended last; accumulators draw nothing. (Mechanism verified:
   dict-order consumption at model.py:116–121; independent second stream
   at :156.)
-- **G2 (engine):** 131 tests green; configured pipeline-mode anchor within
+- **G2 (engine):** the full engine suite as of the landing commit (160 at spec time) green; configured pipeline-mode anchor within
   0.5% (per E6); invariants re-asserted.
 - **G3 (cross-model):** derived per-rider minutes (corridor-total
   denominator) reported against TBCR's old 12-min slider; disagreement is a
