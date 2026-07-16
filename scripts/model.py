@@ -301,7 +301,8 @@ class Corridor:
 
 
 def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
-        no_visitor=False, cfg_patch=None, smooth_k=SUBK, params=None, **over):
+        no_visitor=False, cfg_patch=None, smooth_k=SUBK, params=None,
+        anchor_add=None, **over):
     """Vectorized MC. `over` pins any PRIORS key / 'anchor'; `cfg_patch`
     deep-merges into the corridor config (service definitions etc.).
     smooth_k: sub-cell quadrature nodes for within-cell rider position
@@ -309,7 +310,11 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     params: pre-drawn prior dict from draw_params() -- pass the SAME dict
     to two run() calls for common random numbers (ABC); anchor and input
     jitters use a second child stream, so run(params=draw_params(n, s),
-    seed=s) is identical to run(seed=s)."""
+    seed=s) is identical to run(seed=s).
+    anchor_add: spec 07 §4.2 network anchor adjustment -- an (n,) array added
+    AFTER the anchor's uniform draw (see below). Default None is a no-op, so
+    every pre-existing call path is bytewise unchanged; built by
+    network_mechanics.anchor_adjustment (N1b)."""
     rng = np.random.default_rng(np.random.SeedSequence(seed).spawn(2)[1])
     cfg = copy.deepcopy(cor.cfg)
     if cfg_patch:
@@ -336,6 +341,17 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
              for k, v in params.items()}
     anchor = (np.full(n, float(over["anchor"])) if "anchor" in over
               else rng.uniform(cfg["anchor_low"], cfg["anchor_high"], n))
+    # spec 07 §4.2 anchor adjustment: an (n,) network term added AFTER the
+    # anchor's uniform draw AND after the over["anchor"] pin branch -- so the
+    # anchor->low/high sensitivity rows pin the MEASURED component yet RETAIN the
+    # network adjustment (pinned rows keep the network term). rng-NEUTRAL: the
+    # anchor is the first consumption on run()'s second stream, so adding a
+    # pre-computed array shifts NOTHING downstream (the always-consume guarantee
+    # is draw_params-only, so this is scoped to the unpinned path). Default None
+    # is a numerical no-op -> every pre-existing call path is bytewise identical
+    # (the byte-gate). anchor_add = omega*margin - fold_sub, per draw (N1b).
+    if anchor_add is not None:
+        anchor = anchor + np.asarray(anchor_add, dtype=float)
     bwait = p["bivt"] * p["ovt"]   # also the walk weight
     # spec 06 D3: base fare each service falls back to; per-service override
     # via svc["fare"]. At today's flat fare every fare term is exactly 0.
@@ -404,10 +420,22 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         return u
 
     base_svcs = [(s, False) for s in cfg["services_base"].values()]
+    # spec 07 §4.2.2 co-located base-service injection: a committed metro lives
+    # in services_base with svc["persistent"] = true. model.py otherwise hardcodes
+    # the scenario systems (fold=[new], retain=[new, local]), silently DELETING
+    # any other services_base entry when the candidate opens -- a committed line
+    # would vanish from the build world. Persistent services survive the
+    # candidate's fold in BOTH scenarios, so gate G2c holds: their utility is in
+    # ls0 (via base_svcs, always) AND ls1 (via the append here). Empty when no
+    # service carries the flag -> `systems` is bytewise identical to the old dict
+    # (the byte-gate). Same dict objects as base_svcs/union, so id()-keyed
+    # inv_v / subcell_walks already cover them.
+    persistent = [(s, False) for s in cfg["services_base"].values()
+                  if s.get("persistent")]
     systems = {
-        "fold":   [(cfg["service_new"], True)],
+        "fold":   [(cfg["service_new"], True)] + persistent,
         "retain": [(cfg["service_new"], True),
-                   (cfg["services_base"]["local"], False)],
+                   (cfg["services_base"]["local"], False)] + persistent,
     }
     union = list(cfg["services_base"].values()) + [cfg["service_new"]]
 

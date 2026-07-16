@@ -1,7 +1,7 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 37,
+    "judgment": 40,
     "literature": 10,
     "locally-calibrated": 1,
     "measured": 28
@@ -249,6 +249,16 @@
     },
     {
       "accepted": [
+        "spec07-N1a network-mechanics landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "feeder_headway_map",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-14"
       ],
@@ -395,6 +405,26 @@
       "basis": "definitional",
       "id": "oc_ref_lat",
       "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N1a network-mechanics landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "omega_allocation",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N1a network-mechanics landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "omega_stop_materialization",
+      "no_row_reason": "spec-pending:07§9-N4",
       "tier": "constant"
     },
     {
@@ -1034,7 +1064,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 101,
+  "n_entries": 104,
   "priors": [
     {
       "basis": "judgment",
@@ -1198,8 +1228,20 @@
       "no_row_reason": "spec-pending:07§9-N4"
     },
     {
+      "id": "feeder_headway_map",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
+    },
+    {
+      "id": "omega_allocation",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "omega_stop_materialization",
+      "no_row_reason": "spec-pending:07§9-N4"
     },
     {
       "id": "street_cal_local",
@@ -1216,7 +1258,7 @@
   ],
   "tier_census": {
     "config": 12,
-    "constant": 56,
+    "constant": 59,
     "data": 4,
     "prior": 19,
     "structural": 10

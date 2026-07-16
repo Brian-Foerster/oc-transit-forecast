@@ -25,11 +25,16 @@ import json, math, os, sys
 import numpy as np
 import pandas as pd
 from assumptions import val
+import network_mechanics as nm   # pure geometry; acyclic (nm imports no pipeline)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAW = os.path.join(HERE, "..", "data", "raw")
 DER = os.path.join(HERE, "..", "data", "derived")
 GTFS = os.path.join(RAW, "gtfs")
+# spec 07 §4.2.4 output routing: per-cycle NETWORKED rebuilds write
+# corridor_<candidate>_<fingerprint>.json into this gitignored run dir and NEVER
+# overwrite the committed derived files the backtest / export round-trip read.
+RUN_DIR = os.path.join(DER, "network_runs")
 
 # Constants single-sourced from the assumptions registry (spec 08); local names
 # kept. Derived values (MI_LON) stay computed from the leaves.
@@ -135,12 +140,39 @@ def bin_flows(dists, weights, extra=None):
     return w, centers, counts, ecenters
 
 
-def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None):
+def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None,
+         injected_lines=None, excluded_fold_routes=None):
     """Build a corridor derived file. intra_divisor / dest default to the
     committed pipeline (byte-identical); the spec 08 §4 rebuilt-variant passes
-    intra_divisor_alt + a scratch dest to isolate the intra-tract rule effect."""
+    intra_divisor_alt + a scratch dest to isolate the intra-tract rule effect.
+
+    spec 07 §4.2 networked rebuild (N1a). Both network args default empty, so a
+    plain build is bytewise identical (the empty-network verbatim rule -- gate
+    G1 -- holds by construction; the harness passes the committed FILE through
+    untouched when the network-before is empty and need not even call this):
+      * injected_lines: committed lines injected as SYNTHETIC FEEDERS (§4.2.1) --
+        list of {route, corridor_route | corridor_waypoints, window_mi, headway}.
+        Their config alignment is truncated to the committed window and appended
+        to `feeders` before node assignment; the {peak, offpeak} plan maps to the
+        feeder scalar as offpeak->midday (network_mechanics.feeder_headway).
+      * excluded_fold_routes: committed-fold routes appended to excluded_feeders
+        (§4.2.3 fold propagation) so a now-dead route is not double-booked as a
+        live feeder. Passed as a param, so the committed config file is never
+        mutated.
+    A networked rebuild (either arg non-empty) MUST route to an explicit dest
+    (build_corridor.networked_path) -- refusing to overwrite the committed
+    derived file (§4.2.4)."""
+    if (injected_lines or excluded_fold_routes) and dest is None:
+        raise ValueError(
+            "networked rebuild (injected_lines / excluded_fold_routes) needs an "
+            "explicit dest (build_corridor.networked_path) -- refusing to "
+            "overwrite the committed derived file (spec 07 §4.2.4)")
     cfg = json.load(open(cfg_path, encoding="utf-8"))
     trips, shapes, st, wk = load_gtfs()
+    # spec 07 §4.2.3 fold propagation: union the committed-fold routes into the
+    # excluded-feeder set (membership only; empty -> identical to the committed
+    # build). The base-service print loop stays on the config's own set.
+    excluded_set = set(cfg["excluded_feeders"]) | set(excluded_fold_routes or [])
     base_rts = ([cfg["corridor_route"]] if cfg.get("corridor_route") else [])
     for rid in dict.fromkeys(base_rts + cfg["excluded_feeders"]):
         hw = route_headways(trips, st, wk, rid)
@@ -216,7 +248,7 @@ def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None):
     routes = pd.read_csv(os.path.join(GTFS, "routes.txt"), dtype=str)
     feeders = []
     for rid in routes["route_id"]:
-        if rid in cfg["excluded_feeders"]:
+        if rid in excluded_set:                       # incl. §4.2.3 fold routes
             continue
         res, fl = main_shape_xy(trips, shapes, wk, rid)
         if res is None or fl < MIN_FEEDER_MI:
@@ -240,6 +272,34 @@ def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None):
                         "x": fx, "y": fy})
     print(f"  crossing feeders: {len(feeders)} "
           f"({[f['route'] for f in feeders]})")
+
+    # spec 07 §4.2.1 synthetic-feeder injection: committed lines enter the
+    # feeder-construction pass as synthetic routes. Their config alignment is
+    # truncated to the committed window (network_mechanics.truncate_polyline --
+    # new code; no shape-truncation path existed), the working object
+    # {route, node_pos, headway, x, y} is appended to `feeders` BEFORE the
+    # node-assignment loop, and the {peak, offpeak} plan maps to the midday
+    # feeder scalar as offpeak->midday (feeder_headway; the peak-mapped variant
+    # is the §10 G7 sensitivity row). Empty injected_lines -> feeders unchanged
+    # -> byte-identical build.
+    for inj in (injected_lines or []):
+        ix, iy = _injected_shape(inj, trips, shapes, wk)
+        full_len = nm.polyline_length(ix, iy)
+        iwin = inj.get("window_mi") or [0.0, full_len]   # NB: not `win` -- that
+        iw0 = 0.0 if iwin[0] is None else float(iwin[0])  # is the walk-flow mask
+        iw1 = full_len if iwin[1] is None else float(iwin[1])
+        tx, ty = nm.truncate_polyline(ix, iy, iw0, iw1)
+        offs = np.empty(len(tx)); poss = np.empty(len(tx))
+        for i in range(len(tx)):
+            offs[i], poss[i] = line.project(tx[i], ty[i])
+        j = int(np.argmin(np.abs(offs)))              # nearest-approach node
+        feeders.append({"route": str(inj["route"]),
+                        "node_pos": round(float(poss[j]), 2),
+                        "headway": nm.feeder_headway(inj.get("headway")),
+                        "x": tx, "y": ty})
+    if injected_lines:
+        print(f"  + {len(injected_lines)} injected committed line(s): "
+              f"{[str(i['route']) for i in injected_lines]}")
 
     # nearest crossing feeder for every non-corridor tract
     out_tr = tr[~tr["GEOID"].isin(cset)]
@@ -304,10 +364,31 @@ def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None):
     print(f"  -> {dest}")
 
 
+def _injected_shape(inj, trips, shapes, wk):
+    """Alignment (x, y) in the mi-scaled frame for an injected committed line,
+    from either an explicit corridor_waypoints polyline or a GTFS route id --
+    the same two sources build_corridor already reads for the corridor itself
+    (spec 07 §4.2.1: 'the alignment sources exist')."""
+    if inj.get("corridor_waypoints"):
+        wp = np.array(inj["corridor_waypoints"], float)
+        return wp[:, 1] * MI_LON, wp[:, 0] * MI_LAT
+    (ix, iy), _ = main_shape_xy(trips, shapes, wk, inj["corridor_route"])
+    return ix, iy
+
+
 def variant_path(name, variant):
     """SCRATCH derived-file path for a rebuilt variant (spec 08 §4). Gitignored
     (data/derived/*.variant_*.json), never committed."""
     return os.path.join(DER, f"corridor_{name}.variant_{variant}.json")
+
+
+def networked_path(name, fingerprint):
+    """spec 07 §4.2.4 output path for a per-cycle NETWORKED rebuild:
+    corridor_<name>_<fingerprint>.json in the gitignored run dir (never the
+    committed derived file). `fingerprint` is the network descriptor sha256
+    (network_mechanics.network_fingerprint)."""
+    os.makedirs(RUN_DIR, exist_ok=True)
+    return os.path.join(RUN_DIR, f"corridor_{name}_{fingerprint}.json")
 
 
 # spec 08 §4 rebuilt variants: {id: intra_divisor override}. Adding the §4.8

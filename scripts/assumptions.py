@@ -951,6 +951,70 @@ ASSUMPTIONS = {
         "logged": None, "upgrade": None,
     },
 
+    # ---- network_mechanics.py (spec 07 N1a network-sequencing mechanics) ---
+    # The three declared conventions §4.2 requires because no pipeline output
+    # allocates a line's boardings along its length or maps a committed plan to
+    # the feeder scalar. Each is imported (single-sourced into network_mechanics
+    # -- omega_allocation / omega_stop_materialization into omega(), the headway
+    # map into feeder_headway), so they are RULE-BEARING, not documentation. All
+    # rowless: the sensitivity rows they anticipate (uniform-along-line omega,
+    # the peak-mapped feeder headway -- spec 07 §8i / §10 G7) live in the
+    # network-sequence primary artifact, which does not exist until N4 -- hence
+    # spec-pending:07§9-N4, mirroring the N2 capital leaves. NO new priors
+    # (constant tier only; the prior-order fingerprint is untouched).
+    "omega_allocation": {
+        "title": "omega boardings-allocation rule along a committed line",
+        "tier": "constant", "status": "active",
+        "value": "worker_mass", "units": "choice", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-16", "worker_mass", "judgment",
+                     "spec07 N1a -- omega worker-mass vs uniform allocation")],
+        "provenance": "how omega(H, B) apportions committed line H's forecast "
+                      "along its length to its materialized stops (spec 07 §4.2): "
+                      "'worker_mass' (default) allocates proportional to "
+                      "corridor-tract worker mass; the 'uniform'-along-line "
+                      "variant is the §8i / §10 G7 sensitivity row (rows omega x "
+                      "{0.5, 1.5} + uniform). A DECLARED judgment -- no pipeline "
+                      "output allocates a line's boardings along its length",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N1a network-mechanics landing", "2026-07-16"),
+        "logged": None, "upgrade": "on-board / APC boarding-by-stop profile",
+    },
+    "omega_stop_materialization": {
+        "title": "omega stop-materialization spacing rule",
+        "tier": "constant", "status": "active",
+        "value": "line_spacing", "units": "choice", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-16", "line_spacing", "judgment",
+                     "spec07 N1a -- materialize stops every line-spacing mi")],
+        "provenance": "the rule network_mechanics.materialize_stops uses to place "
+                      "H's stops for the omega allocation (spec 07 §4.2: 'stops "
+                      "materialized every `spacing` mi along H's alignment "
+                      "polyline'). 'line_spacing' = every H-spacing mi from the "
+                      "window start; a finer/coarser materialization is the "
+                      "anticipated §10 G7 row (network-sequence artifact, N4)",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N1a network-mechanics landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineered stop plan per committed line",
+    },
+    "feeder_headway_map": {
+        "title": "synthetic-feeder headway mapping convention (offpeak->midday)",
+        "tier": "constant", "status": "active",
+        "value": "offpeak_to_midday", "units": "choice", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-16", "offpeak_to_midday", "judgment",
+                     "spec07 N1a -- committed {peak,offpeak} plan -> feeder scalar")],
+        "provenance": "how a committed line's {peak, offpeak} headway plan maps "
+                      "to the single midday scalar build_corridor's feeder "
+                      "convention carries when the line is injected as a synthetic "
+                      "feeder (spec 07 §4.2.1). 'offpeak_to_midday' is the declared "
+                      "convention; the peak-mapped variant is its §10 G7 "
+                      "sensitivity row (network-sequence artifact, N4)",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N1a network-mechanics landing", "2026-07-16"),
+        "logged": None, "upgrade": "committed-line published service plan",
+    },
+
     # ---- capcost.py (spec 04 capital rate card as code, spec 07 N2) -------
     # PRE-markup line-item leaves (2026 US$M) from costs/metro_cost_model.xlsx
     # §2 / spec 04 §2. capcost.capital() DERIVES the markup-inclusive

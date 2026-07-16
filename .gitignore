@@ -5,6 +5,9 @@ outputs/bca_export_*.json.gz
 # spec 08 §4 rebuilt-variant SCRATCH corridors -- regenerable, never committed
 # (build_corridor.py --variant / model.py intra_tract_alt row)
 data/derived/corridor_*.variant_*.json
+# spec 07 §4.2.4 per-cycle NETWORKED rebuilds -- regenerable, never committed
+# (build_corridor.networked_path; corridor_<name>_<fingerprint>.json)
+data/derived/network_runs/
 __pycache__/
 *.pyc
 
