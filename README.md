@@ -421,7 +421,8 @@ tornado (`bca_harbor.json`).
     −$4.2B central. It is a gate-2 **companion**, not a decision metric (spec 00
     §3 amendment); the negative reflects rail-class capital against a mid-size
     corridor — the honest read the pipeline exists to produce, not a number to
-    force. The W1 rider batch also added the `um_roh_*` and `fare_receipts_*`
-    export streams (un-blocking the tbc `roh` / `fare_sweep` tornado rows, both
-    0 at today's flat fare). Charts: `outputs/bca_harbor.png` +
+    force. The W1 rider batch also added the `um_roh_*` (rule-of-half welfare
+    alternative, ~3.4% divergence from exact-logsum by design) and
+    `fare_receipts_*` export streams (un-blocking the tbc `roh` / `fare_sweep`
+    tornado rows, the latter 0 at today's flat fare). Charts: `outputs/bca_harbor.png` +
     `bca_tornado_harbor.png` (`python scripts/make_charts.py bca harbor`).

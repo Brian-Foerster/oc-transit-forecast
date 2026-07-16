@@ -407,4 +407,4 @@ row those constant entries already point at.
   registry owns the row (the E5 new-line GoA4 O&M rows `om_lo/om_hi` stay
   engine-owned). Negative test (scratch, uncommitted): renaming an
   oc-claimed id in a copy of the tbc artifact fails BOTH check-2 (coverage)
-  and check-3 (orphan).
+  and check-3 (orphan). **Tie-break principle:** a wrapper row is oc-claimed when the swept knob is an oc-registry assumption (bca_config/avoidable_marginal, eq_days_330, abc kernels, pcar/vot_behav/kappa); it is engine-owned when the knob is a TBCR RANGES/profile parameter, even if it re-prices oc-exported quantities (no_asc_cs, transfer_fullod, roh, fare_sweep).

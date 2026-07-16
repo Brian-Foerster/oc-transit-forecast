@@ -99,6 +99,9 @@ ENGINE_OWNED_WRAPPER = frozenset({
     "ext_acc_hi", "ext_local_lo", "ext_local_hi", "transfer_fullod",
     "mohring_009", "growth_1", "avg_fare_lo", "avg_fare_hi", "crowding_haircut",
     "peak_hour_share_lo", "peak_hour_share_hi",
+    # pre-registered: un-blocked by the W1R um_roh_*/fare_receipts_* streams;
+    # engine-side re-pricings of oc streams (no_asc_cs precedent)
+    "roh", "fare_sweep",
 })
 
 
