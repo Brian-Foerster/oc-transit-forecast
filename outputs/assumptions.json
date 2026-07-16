@@ -1,10 +1,10 @@
 {
   "basis_census": {
-    "definitional": 24,
-    "judgment": 35,
-    "literature": 8,
+    "definitional": 25,
+    "judgment": 37,
+    "literature": 10,
     "locally-calibrated": 1,
-    "measured": 22
+    "measured": 28
   },
   "dispositions": [
     {
@@ -65,6 +65,116 @@
       "basis": "definitional",
       "id": "buffer_mi",
       "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "measured",
+      "id": "cap_car",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "cap_crossing_low",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "cap_crossing_ut",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "literature",
+      "id": "cap_delivery_ut",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "measured",
+      "id": "cap_depot",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "definitional",
+      "id": "cap_markup_low",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "literature",
+      "id": "cap_markup_ut",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "measured",
+      "id": "cap_occ",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "measured",
+      "id": "cap_route_km",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "measured",
+      "id": "cap_station",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N2 rate-card landing",
+        "2026-07-16"
+      ],
+      "basis": "measured",
+      "id": "cap_viaduct_km",
+      "no_row_reason": "spec-pending:07§9-N4",
       "tier": "constant"
     },
     {
@@ -924,7 +1034,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 90,
+  "n_entries": 101,
   "priors": [
     {
       "basis": "judgment",
@@ -1044,6 +1154,50 @@
   "schema_version": "08-A3.3",
   "spec_pending_warnings": [
     {
+      "id": "cap_car",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_crossing_low",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_crossing_ut",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_delivery_ut",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_depot",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_markup_low",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_markup_ut",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_occ",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_route_km",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_station",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "cap_viaduct_km",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
     },
@@ -1062,7 +1216,7 @@
   ],
   "tier_census": {
     "config": 12,
-    "constant": 45,
+    "constant": 56,
     "data": 4,
     "prior": 19,
     "structural": 10

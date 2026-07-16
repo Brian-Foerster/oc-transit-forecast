@@ -951,6 +951,175 @@ ASSUMPTIONS = {
         "logged": None, "upgrade": None,
     },
 
+    # ---- capcost.py (spec 04 capital rate card as code, spec 07 N2) -------
+    # PRE-markup line-item leaves (2026 US$M) from costs/metro_cost_model.xlsx
+    # §2 / spec 04 §2. capcost.capital() DERIVES the markup-inclusive
+    # coefficients (Fixed 183.6 / 23.4 route-km / 27.6 elevated / 33.96 station
+    # / 7.44 car) from these leaves x cap_markup_low (E55-locked). All rowless:
+    # the capital sensitivity rows (fixed_cost_share {1,0.5,0}, LOW|US-TYPICAL
+    # band, crossing sweep) are spec 07 §10 G7 rows in the network-sequence
+    # primary artifact, which does not exist until N4 -- hence spec-pending:
+    # 07§9-N4. NO tbc-wrapper capital rows exist to claim (the wrapper carries
+    # capital as a fixed K input, not a swept tornado row), so a covered-
+    # elsewhere claim would be spurious. NO new priors (constant tier only).
+    "cap_occ": {
+        "title": "operations control centre (fixed capital)",
+        "tier": "constant", "status": "active",
+        "value": 28.0, "units": "$M", "band": None, "basis": "measured",
+        "history": [("2026-07-16", 28.0, "measured",
+                     "spec07 N2 -- spec 04 §2 rate card as code")],
+        "provenance": "OCC fixed capital, REM-calibrated rate card "
+                      "(costs/metro_cost_model.xlsx §2, spec 04 §2). Part of the "
+                      "fixed term (OCC + depot) the §8j fixed_cost_share knob scales",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering cost reference / procurement",
+    },
+    "cap_depot": {
+        "title": "depot / maintenance facility (fixed capital, 1 per line)",
+        "tier": "constant", "status": "active",
+        "value": 125.0, "units": "$M", "band": None, "basis": "measured",
+        "history": [("2026-07-16", 125.0, "measured",
+                     "spec07 N2 -- spec 04 §2 rate card as code")],
+        "provenance": "depot fixed capital, REM-calibrated rate card (spec 04 "
+                      "§2); dimensioned for the 4-car option-preserving envelope "
+                      "(spec 04 §3.1). The '1 depot' quantity of the E55 gate; "
+                      "scaled with OCC by the §8j fixed_cost_share knob",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering cost reference / procurement",
+    },
+    "cap_route_km": {
+        "title": "at-grade civil per route-km (track+traction+CBTC+utilities)",
+        "tier": "constant", "status": "active",
+        "value": 19.5, "units": "$M/km", "band": None, "basis": "measured",
+        "history": [("2026-07-16", 19.5, "measured",
+                     "spec07 N2 -- spec 04 §2 rate card as code")],
+        "provenance": "per route-km civil base = track 4 + traction 8.5 + CBTC "
+                      "wayside 4 + utilities 3 (spec 04 §2). The elevated viaduct "
+                      "is the SEPARATE cap_viaduct_km add-on. Utilities 3/km is "
+                      "the sheet's clean-ROW floor; §3.3b dense-segment uplift is "
+                      "a corridor-quantity refinement, not this base rate",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering cost reference / procurement",
+    },
+    "cap_viaduct_km": {
+        "title": "elevated viaduct add-on per km",
+        "tier": "constant", "status": "active",
+        "value": 23.0, "units": "$M/km", "band": None, "basis": "measured",
+        "history": [("2026-07-16", 23.0, "measured",
+                     "spec07 N2 -- spec 04 §2 rate card as code")],
+        "provenance": "elevated viaduct per-km add-on (spec 04 §2), calibrated on "
+                      "REPETITIVE guideway (~30-40 m spans); barrier crossings are "
+                      "priced separately via cap_crossing_* (spec 04 §3.3). Gets "
+                      "the US-TYPICAL cap_delivery_ut factor (§3.2)",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering cost reference / procurement",
+    },
+    "cap_station": {
+        "title": "elevated station (LEAN + PSD + telecom + AFC)",
+        "tier": "constant", "status": "active",
+        "value": 28.3, "units": "$M/station", "band": None, "basis": "measured",
+        "history": [("2026-07-16", 28.3, "measured",
+                     "spec07 N2 -- spec 04 §2 rate card as code")],
+        "provenance": "per elevated station = LEAN 22 + platform-screen-doors 2.3 "
+                      "+ telecom 2.3 + AFC 1.7 (spec 04 §2); 76 m platforms (4-car "
+                      "option envelope). Gets the US-TYPICAL cap_delivery_ut factor",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering cost reference / procurement",
+    },
+    "cap_car": {
+        "title": "rolling stock per car (vehicle + stabling + spares)",
+        "tier": "constant", "status": "active",
+        "value": 6.2, "units": "$M/car", "band": None, "basis": "measured",
+        "history": [("2026-07-16", 6.2, "measured",
+                     "spec07 N2 -- spec 04 §2 rate card as code")],
+        "provenance": "per car = vehicle 3.4 + stabling 2.3 + spares 0.5 (spec 04 "
+                      "§2); the 2->4-car expansion prices additional cars at this "
+                      "same rate (spec 04 §3.1). Car COUNT is derived (capcost.fleet)",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering cost reference / procurement",
+    },
+    "cap_markup_low": {
+        "title": "LOW-scenario markup (design + contingency, additive)",
+        "tier": "constant", "status": "active",
+        "value": 1.20, "units": "factor", "band": None, "basis": "definitional",
+        "history": [("2026-07-16", 1.20, "definitional",
+                     "spec07 N2 -- spec 04 §2 rate card as code")],
+        "provenance": "sheet's efficient-agency markup = 1 + 10% design + 10% "
+                      "contingency, ADDITIVE (spec 04 §2). This factor is "
+                      "E55-LOCKED: pre-markup subtotal 1654.2 x 1.20 = 1985.04 "
+                      "(the sheet's shipped-config total) reproduces to the cent; "
+                      "1.21 multiplicative would not. The tbc profile used 1.21 -- "
+                      "the documented LOW-band delta vs this function",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": None,
+    },
+    "cap_markup_ut": {
+        "title": "US-TYPICAL-scenario markup (soft cost x contingency)",
+        "tier": "constant", "status": "active",
+        "value": 1.3923, "units": "factor", "band": None, "basis": "literature",
+        "history": [("2026-07-16", 1.3923, "literature",
+                     "spec07 N2 -- spec 04 §3.2 US-typical band")],
+        "provenance": "US-typical markup = soft costs 1.17 x contingency 1.19 = "
+                      "1.3923 (spec 04 §3.2, FTA early-stage practice; the tbc "
+                      "profile's US-TYPICAL markup). Multiplicative here (vs the "
+                      "additive LOW markup) per §3.2 and the tbc derivation",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "corridor-specific FTA risk assessment",
+    },
+    "cap_delivery_ut": {
+        "title": "US-TYPICAL delivery-environment factor (viaduct + stations)",
+        "tier": "constant", "status": "active",
+        "value": 1.75, "units": "factor", "band": (1.5, 2.0), "basis": "literature",
+        "history": [("2026-07-16", 1.75, "literature",
+                     "spec07 N2 -- spec 04 §3.2 US-typical band")],
+        "provenance": "delivery-environment multiplier on viaduct + stations for "
+                      "the US-TYPICAL scenario (spec 04 §3.2: 1.5-2.0x, Transit "
+                      "Costs Project US-elevated comps); the tbc profile's 1.75x. "
+                      "Applied to cap_viaduct_km and cap_station only (civil "
+                      "items), not to track/systems/rolling stock",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "named US-elevated comparator set (§3.2 x-check)",
+    },
+    "cap_crossing_low": {
+        "title": "special-structures crossing rate (LOW / simple span)",
+        "tier": "constant", "status": "active",
+        "value": 30.0, "units": "$M/crossing", "band": (30.0, 80.0),
+        "basis": "judgment",
+        "history": [("2026-07-16", 30.0, "judgment",
+                     "spec07 N2 -- spec 04 §3.3 special-structures placeholder")],
+        "provenance": "per major crossing (freeway / river / railroad), LOW end = "
+                      "simple channel span (spec 04 §3.3 band 30-80 $M, FLAGGED "
+                      "placeholder for an engineering reference). capcost.capital "
+                      "crossings arg x this default; overridable (parameterized)",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering reference per crossing (spec 04 §3.3)",
+    },
+    "cap_crossing_ut": {
+        "title": "special-structures crossing rate (US-TYPICAL / wide interchange)",
+        "tier": "constant", "status": "active",
+        "value": 65.0, "units": "$M/crossing", "band": (30.0, 80.0),
+        "basis": "judgment",
+        "history": [("2026-07-16", 65.0, "judgment",
+                     "spec07 N2 -- spec 04 §3.3 special-structures placeholder")],
+        "provenance": "per major crossing, US-TYPICAL point within the spec 04 "
+                      "§3.3 30-80 $M band (high = wide freeway interchange under "
+                      "traffic); the tbc profile's US-TYPICAL crossing rate. "
+                      "FLAGGED placeholder pending an engineering reference",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
+        "logged": None, "upgrade": "engineering reference per crossing (spec 04 §3.3)",
+    },
+
     # ===== structural tier (governance toggles; NOT owned) ==================
     # Each names a run() over-key toggle and the sensitivity row-id it produces
     # in BOTH corridor results (spec 08 §2/§3). No value/band -- structural
