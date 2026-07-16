@@ -80,6 +80,18 @@ final ridership; stage 3 is the number of record.
     (repo rule: regenerable by script), built once gate 1 produces a
     finalist set. Corridor spans five cities' zoning codes — that is
     the layer's main cost, and why it runs at finalist scale only.
+  - *Welfare BCA (secondary criterion, adopted 2026-07-15 per spec 06 §1):*
+    the per-corridor NPV / PV-BCR distribution from the welfare BCA
+    (`transit-benefit-cost` pipeline mode, spec 06) is read as a gate-2
+    secondary criterion alongside the ABC-calibrated ridership decision
+    metric — never fused into a single score, fold and retain always
+    reported separately (different cost structures). RULE-5 note (binding):
+    the agglomeration / user-benefit share of the BCA NPV and the
+    economic-potential uplift column are **two lenses on partially the same
+    channel** (both largely capitalize the time savings the ridership model
+    values) and are **never read additively** in a gate memo. Until W1,
+    BCA output was informational only; the amendment makes it a companion,
+    not a decision metric (final gate authority stays with the owner).
   - *Second finalist:* advances to stage 3 only when gate-2 bands
     overlap (conditional, not a fixed count).
 - **Gate 3 -> publish**: stage-3 vs stage-2 reconciliation memo required

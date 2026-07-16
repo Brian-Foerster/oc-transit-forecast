@@ -504,6 +504,9 @@ writes the §3 schema (+ `--seed-check` companion at seed+1 for G4). Gates:
   P(NPV>0)), the full cross, and the tornado. Tornado rows (complete list,
   closing the G5 audit): VOT lo/hi, non-work 0.7×VOT, vot_behav lo/hi,
   γ 0.15/0.25 (time-base), γ-on-ASC-inclusive, λ=1.3, SCC 0/190,
+  car-fleet gCO₂/mi lo/hi (`gco2_lo`/`gco2_hi` — the E2 emissions-rate row,
+  wrapper-artifact rows; this line closes the latent G5 gap where §7 listed
+  SCC/carbon but not the gCO₂/mi rate the carbon term multiplies),
   carbon_growth 2%, traction-carbon 0/grid, rebound 0.5/0.8,
   externality-rate lo/hi (each), pcar set lo/hi, transfer-full-OD, κ→1,
   no-ASC CS, ROH-instead-of-logsum, reliability-restored bound,
@@ -514,6 +517,11 @@ writes the §3 schema (+ `--seed-check` companion at seed+1 for G4). Gates:
   exported), crowding-haircut variant, eq_days 300/330.
   Where a corridor lacks `abc_weights` (streetcar pre-launch), the ABC
   columns are omitted with the reason printed.
+  **LANDED 2026-07-15 (tbc `aa16e0d`, `outputs/bca_harbor.json`):** headline
+  **NPV −$4.17B / PV-BCR 0.075** (fold, ABC-weighted, US-TYPICAL band, P50);
+  every scenario × treatment × band is deeply negative (P(NPV>0)=0). The
+  ROH and fare-sweep tornado rows are un-blocked by the W1 rider batch's
+  `um_roh_*` / `fare_receipts_*` export streams (this repo, same landing).
 - **W2 — charts.** Extend `make_charts.py`: BCR/NPV interval chart (rows =
   scenario × treatment × band) with the spec 05 Flyvbjerg annotation in the
   subtitle, and the BCA tornado, same style as the ridership charts.

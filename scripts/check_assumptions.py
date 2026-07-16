@@ -63,13 +63,43 @@ NO_ROW_PREFIX = ("covered-elsewhere:", "width-block:", "spec-pending:",
 OWNED_TIERS = ("prior", "constant")
 BASES = {"measured", "locally-calibrated", "literature", "judgment",
          "definitional"}
-# NOTE: no "wrapper"/"network" artifact is scanned yet (spec 08 §5 check 2,
-# corrected A3: the wrapper-artifact scan ships with W1's landing commit, not
-# before -- the eq_days/bca_config spec-pending:06§E4 dispositions surface
-# today only as check-1 warnings).
 
 MATERIAL_PCT = 2.0            # §5 materiality threshold
 ANCHOR_TOL = 25.0            # §6 round-to-nearest-50 tolerance (half of 50)
+
+# ---------------------------------------------------------------------------
+# wrapper artifact (the cross-repo welfare-BCA result, spec 06 W1 / spec 08 §5
+# check 2). Existence-gated on a configurable sibling path (default: the
+# transit-benefit-cost sibling checkout); override with BCA_WRAPPER_ARTIFACT
+# so a negative test can point the scan at a scratch copy. When the file is
+# absent the wrapper claims degrade to check-2 'pending' warnings, exactly like
+# any other absent artifact.
+WRAPPER_ARTIFACT = os.environ.get(
+    "BCA_WRAPPER_ARTIFACT",
+    os.path.join(ROOT, "..", "transit-benefit-cost", "outputs", "bca_harbor.json"))
+
+# check-3 (no-orphans) SCOPING for the wrapper artifact (spec 08 §5/§9 Q7, the
+# W1 amendment): the wrapper is scanned for oc-CLAIMED ids only; the engine-
+# owned tornado ids -- the ~40 rows that live in the transit-benefit-cost
+# RANGES, not this registry (VOT, gamma, lambda, discount, externality/O&M/SCC/
+# carbon/rebound/ramp/build/growth/mohring/labor/crowding/avg-fare/traction/
+# nonwork/no-ASC/transfer-fullOD/peak-share) -- are EXEMPT from the orphan
+# check and covered by G-E7 on the TBCR side. Listed here by reference to the
+# tbc `tornado_row_ids` (bca-pipeline.mjs, spec 2026-07-14 §10) as of aa16e0d.
+# A wrapper id that is NEITHER engine-owned NOR registry-claimed is a real
+# orphan (a new oc-owned row nobody harvested -- fail loudly); a renamed
+# oc-claimed id fails check-2 (coverage) as well.
+ENGINE_OWNED_WRAPPER = frozenset({
+    "vot_lo", "vot_hi", "nonwork_07", "gamma_015", "gamma_025", "gamma_asc",
+    "lambda_13", "scc_0", "scc_190", "carbon_growth_2", "gco2_lo", "gco2_hi",
+    "no_asc_cs", "labor_05", "disc_2", "disc_3", "disc_7", "disc_declining",
+    "ramp_start_1", "ramp_start_lo", "ramp_years_lo", "ramp_years_hi",
+    "build_years_4", "build_years_7", "om_lo", "om_hi", "traction_0",
+    "rebound_05", "rebound_08", "ext_cong_lo", "ext_cong_hi", "ext_acc_lo",
+    "ext_acc_hi", "ext_local_lo", "ext_local_hi", "transfer_fullod",
+    "mohring_009", "growth_1", "avg_fare_lo", "avg_fare_hi", "crowding_haircut",
+    "peak_hour_share_lo", "peak_hour_share_hi",
+})
 
 
 def _load(path):
@@ -110,12 +140,21 @@ def load_artifacts():
         present["backtest"] = {r["id"] for r in BT["sensitivity"]}
         for r in BT["sensitivity"]:
             pct[("backtest", r["id"])] = r["pct"]
-    if RH is not None or RS is not None:
-        w = set()
-        for R in (RH, RS):
-            if R is not None:
-                w |= {r["id"] for r in R.get("width_sensitivities", [])}
-        present["width"] = w
+    # spec 08 §4 width blocks -- keyed PER-CORRIDOR (spec 06 W1 fix): the earlier
+    # single "width" artifact UNIONED harbor+streetcar, so a width row present in
+    # one corridor but missing in the other was masked. Separate width_harbor /
+    # width_streetcar artifacts scan each corridor's block independently.
+    for corr, R in (("harbor", RH), ("streetcar", RS)):
+        if R is not None:
+            present[f"width_{corr}"] = {r["id"]
+                                        for r in R.get("width_sensitivities", [])}
+    # spec 06 W1 / spec 08 §5 check 2: the wrapper artifact (welfare-BCA result).
+    # Its full flat `tornado_row_ids` list is the present set for coverage;
+    # check-3 orphan-scopes it to oc-claimed ids (ENGINE_OWNED_WRAPPER exempt).
+    if os.path.exists(WRAPPER_ARTIFACT):
+        WR = _load(WRAPPER_ARTIFACT)
+        arts["wrapper"] = WR
+        present["wrapper"] = set(WR.get("tornado_row_ids", []))
     return present, pct, arts
 
 
@@ -174,16 +213,21 @@ def entry_effect(aid, e, pct, arts):
     rows (ABC-kernel rows carry no corridor %). Width owners: max |band_delta|
     as a share of the headline band."""
     claims = claimed_rows(aid, e)
-    width_ids = [rid for art, rid in claims if art == "width"]
-    if width_ids:
+    # width owners now claim per-corridor (width_harbor / width_streetcar,
+    # spec 06 W1): the band-delta effect is that corridor's width row over that
+    # corridor's headline band.
+    width_claims = {corr: [rid for art, rid in claims if art == f"width_{corr}"]
+                    for corr in ("harbor", "streetcar")}
+    if any(width_claims.values()):
         best = None
         for corr in ("harbor", "streetcar"):
+            ids = width_claims[corr]
             R = arts.get(corr)
-            if R is None:
+            if R is None or not ids:
                 continue
             hb = headline_band(R)
             for w in R.get("width_sensitivities", []):
-                if w["id"] in width_ids:
+                if w["id"] in ids:
                     v = abs(w["band_delta"]) / hb * 100.0
                     best = v if best is None else max(best, v)
         return best
@@ -286,10 +330,23 @@ def check_orphans(present):
     n = 0
     for art, ids in present.items():
         for rid in ids:
+            # spec 08 §9 Q7 (W1): the wrapper artifact is scanned for oc-claimed
+            # ids ONLY -- engine-owned tornado rows live in the TBCR RANGES, not
+            # this registry, so they are exempt from the orphan check (covered by
+            # G-E7 there). A wrapper id that is neither engine-owned nor claimed
+            # is still a real orphan (an oc row nobody harvested).
+            if art == "wrapper" and rid in ENGINE_OWNED_WRAPPER:
+                continue
             n += 1
             if (art, rid) not in owner:
-                fails.append(f"orphan row {art}:{rid} -- present but claimed "
-                             "by no entry (rule-2 evasion by omission)")
+                if art == "wrapper":
+                    fails.append(f"orphan row wrapper:{rid} -- unclassified "
+                                 "wrapper tornado row (neither ENGINE_OWNED_WRAPPER "
+                                 "nor claimed by a registry entry); classify it "
+                                 "engine-owned or add an oc claim (spec 08 §9 Q7)")
+                else:
+                    fails.append(f"orphan row {art}:{rid} -- present but claimed "
+                                 "by no entry (rule-2 evasion by omission)")
     return fails, warns, n
 
 
@@ -595,7 +652,26 @@ def print_report(results):
 # ===========================================================================
 # APPENDIX (spec 08 §6)
 # ===========================================================================
-SCHEMA_VERSION = "08-A3.2"
+SCHEMA_VERSION = "08-A3.3"   # W1 rider 2: + machine `values` section
+
+
+def values_section():
+    """Machine-readable value block (schema 08-A3.3, spec 06 W1 rider 2): the
+    scalars the transit-benefit-cost wrapper resolves from this artifact instead
+    of hardcoding (G-E5) -- eq_days, default_fare, the ABC kernel labels with an
+    explicit `central` flag (from reweight_abc, the single source), and
+    (lo, hi, shape) for the five wrapper-re-priced priors (behavioral VOT + the
+    pcar diversion set, spec 06 D3/D7). Imported lazily so plain `check` runs
+    (and scratch-copy negative tests) never pull in numpy/model."""
+    from reweight_abc import get_kernels, central_label
+    repriced = ("vot_behav", "pcar0", "pcar1", "pcar2", "pcarv")
+    return {
+        "eq_days": A.val("eq_days"),
+        "default_fare": A.val("default_fare"),
+        "kernels": {"labels": [lbl for lbl, _, _ in get_kernels()],
+                    "central": central_label()},
+        "wrapper_repriced_priors": {k: list(A.val(k)) for k in repriced},
+    }
 
 
 def _esc(s):
@@ -745,7 +821,9 @@ def write_appendix():
     for eff, aid in d["exposures"]:
         e = entries[aid]
         rowdesc = ", ".join(f"{a}:{r}" for a, r in claimed_rows(aid, e)) or "--"
-        note = rowdesc if eff is not None else f"ABC-kernel row ({rowdesc})"
+        # eff is None when the entry owns only rows with no corridor pct (ABC
+        # kernel rows, or wrapper tornado rows priced in the tbc artifact)
+        note = rowdesc if eff is not None else f"off-corridor row ({rowdesc})"
         L.append(f"| {_fmt_pct(eff)} | {_esc(aid)} | {e['tier']} | "
                  f"{e['basis']} | {_esc(note)} |")
     L.append("")
@@ -836,6 +914,7 @@ def write_appendix():
         "n_entries": len(entries),
         "tier_census": d["tier_census"],
         "basis_census": d["basis_census"],
+        "values": values_section(),
         "exposures": [
             {"id": aid, "tier": entries[aid]["tier"],
              "basis": entries[aid]["basis"], "effect_pct": eff_num(eff),

@@ -522,6 +522,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             dv_ff = ls1_ff - ls0_ff
             e_ff = np.exp(np.clip(dv_ff, -DV_CLIP, DV_CLIP))[:, :, None]
             um_infra, um_margin = um_split(dv_ff, e_ff, S0, P)
+            # spec 06 W1: rule-of-half welfare alternative (the D10 ROH tornado
+            # row, un-blocking the tbc `roh` row). ROH total = Σ½P(S0+S1)dv =
+            # um_infra + ½ΣP(S1-S0)dv, so um_roh_infra IS um_infra (the S0·dv
+            # term is common to the exact-logsum and trapezoid measures --
+            # aliased in run(), not re-accumulated) and um_roh_margin is the
+            # trapezoid margin. Same FARE-FREE variant as um_* (dv_ff/e_ff), own
+            # fare-free pivot S1_ff; consumes NO rng. At flat fares S1_ff==S1.
+            S1_ff = S0 * e_ff / (S0 * e_ff + (1 - S0))
+            um_roh_margin = (0.5 * P * (S1_ff - S0)
+                             * dv_ff[:, :, None]).sum(axis=(1, 2))
             # no-ASC AND fare-free counterfactual (spec 06 D1/D3): re-combine
             # with the new line's ASC and the fare term BOTH zeroed, against
             # the fare-free base -- for monetization only.
@@ -566,12 +576,21 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             fare_new = svcs[0][0].get("fare", fare_base)
             fare_local = svcs[-1][0].get("fare", fare_base)   # retain fallback
             fare_chosen = pn * fare_new + (1 - pn) * fare_local
-            fb = (P * (S0 + 0.5 * dS)
-                  * (fare_chosen - fare_base)).sum(axis=(1, 2))
+            dfare = fare_chosen - fare_base
+            fb = (P * (S0 + 0.5 * dS) * dfare).sum(axis=(1, 2))
+            # spec 06 W1: fiscal fare_receipts streams (dollars), the D3 receipts
+            # counterpart to fare_burden that un-blocks the tbc fare_sweep row --
+            # Σ P·S0·Δfare (existing riders, infra) and Σ P·(S1-S0)·Δfare
+            # (marginal riders, margin), on the FULL-utility pivot (S0, dS) the
+            # rider actually chose. fare_burden == fr_infra + ½·fr_margin (the
+            # rule-of-half average) by construction. IDENTICALLY 0 at flat fares
+            # (dfare==0), same as fare_burden; no rng.
+            fr_infra = (P * S0 * dfare).sum(axis=(1, 2))
+            fr_margin = (P * dS * dfare).sum(axis=(1, 2))
             out[scen] = ((P * S1).sum(axis=(1, 2)),
                          (P * S1 * pn).sum(axis=(1, 2)),
                          um_infra, um_margin, um0_infra, um0_margin,
-                         dcm, dcm_od, fb)
+                         dcm, dcm_od, fb, um_roh_margin, fr_infra, fr_margin)
             den = (P * S0).sum(axis=(1, 2))
         return out, den
 
@@ -605,6 +624,12 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         # same wgt/fx/fv blend across all three markets (visitor pays fares
         # too). Zero at flat fares.
         fb = {scen: 0.0 for scen in systems}
+        # spec 06 W1: ROH-margin welfare numerator (utils, (n,), like the um
+        # block) and the fare_receipts [infra, margin] numerators ($, (n,), like
+        # fb). Same wgt/fx/fv blend. um_roh_infra is NOT accumulated here -- it
+        # equals um_infra by definition and is aliased in run().
+        um_roh_m = {scen: 0.0 for scen in systems}
+        frc = {scen: [0.0, 0.0] for scen in systems}
         den = fx = fv = None
         for period, wgt in periods:
             mk_w, den_w = market_terms("walk", cor.wd, wwA, period)
@@ -633,9 +658,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                     mk_w[scen][7] + fx_c * mk_x[scen][7])
                 fb[scen] = fb[scen] + wgt * (
                     mk_w[scen][8] + fx * mk_x[scen][8] + fv * mk_v[scen][8])
-        return num, num_new, den, um, cm, fb
+                # spec 06 W1: ROH-margin (idx 9) + fare_receipts (idx 10/11)
+                um_roh_m[scen] = um_roh_m[scen] + wgt * (
+                    mk_w[scen][9] + fx * mk_x[scen][9] + fv * mk_v[scen][9])
+                for j in (0, 1):
+                    frc[scen][j] = frc[scen][j] + wgt * (
+                        mk_w[scen][10 + j] + fx * mk_x[scen][10 + j]
+                        + fv * mk_v[scen][10 + j])
+        return num, num_new, den, um, cm, fb, um_roh_m, frc
 
-    num, num_new, den, um, cm, fb = system_response(ww, xw, vw)
+    num, num_new, den, um, cm, fb, um_roh_m, frc = system_response(ww, xw, vw)
     rshort = None
     if over.get("nonwork_short"):
         # sensitivity probe: LODES is commute-only, so the non-work market
@@ -645,9 +677,10 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         def tilt(w, d):
             t = w * np.exp(-d / L)[None, :]
             return t / t.sum(axis=1, keepdims=True)
-        # welfare/car-mile/fare-burden exports are main-path only (B1/B2/D3);
-        # the tilted umS/cmS/fbS are a future export design point (D8), dropped.
-        numS, _, denS, _, _, _ = system_response(
+        # welfare/car-mile/fare-burden/receipts exports are main-path only
+        # (B1/B2/D3/W1); the tilted umS/cmS/fbS/rohS/frcS are a future export
+        # design point (D8), dropped.
+        numS, _, denS, _, _, _, _, _ = system_response(
             tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
         rshort = {scen: numS[scen] / denS for scen in systems}
 
@@ -693,6 +726,17 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             # engine nets it against fare revenue at exactly $1. Work-shaped,
             # PRE-BLEND (like um/cm). Zero at flat fares.
             d[scen]["fare_burden"] = anchor * (fb[scen] / den)
+            # spec 06 W1: ROH welfare alternative (D10 row) + fiscal
+            # fare_receipts (D3 row). um_roh_infra IS um_infra by definition
+            # (the S0·dv term is shared by the exact and trapezoid measures) --
+            # aliased, not re-accumulated; um_roh_margin is the trapezoid margin
+            # (utils->min like um_*). fare_receipts_infra/margin are dollars
+            # (like fare_burden, NO /|bivt|), IDENTICALLY 0 at flat fares.
+            d[scen]["um_roh_infra"] = d[scen]["um_infra"]
+            d[scen]["um_roh_margin"] = (anchor * (um_roh_m[scen] / den)
+                                        / np.abs(p["bivt"]))
+            d[scen]["fare_receipts_infra"] = anchor * (frc[scen][0] / den)
+            d[scen]["fare_receipts_margin"] = anchor * (frc[scen][1] / den)
         blend_ev = 0.5 * (d["fold"]["newline"] + d["retain"]["newline"])
         blend = np.where(rng.random(n) < 0.5,
                          d["fold"]["newline"], d["retain"]["newline"])

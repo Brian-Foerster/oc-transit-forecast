@@ -212,20 +212,34 @@ Exit nonzero on violation; checks:
 2. **Coverage**: every claimed row-id exists in its artifact — results
    files (both corridors), `abc_harbor.json` (kernel keys, sensitivity =
    tag != "central"), `backtest_543.json` (which A2 extends to carry its
-   sensitivity rows — today they are stdout-only, unverifiable),
-   width blocks. `wrapper`/`network` are NOT YET scanned artifacts — as
-   ratified at review, the draft overclaimed this as already mechanical.
-   `check_assumptions.py` today has no `wrapper`/`network` entry in its
-   artifact list (`load_artifacts()`/`present`), so the `eq_days` /
-   `bca_config` `spec-pending:06§E4` dispositions surface only as check-1
-   WARNINGS, not a check-2 fail-flip. The wrapper-artifact scan — closing
-   that gap so `wrapper-pending` actually FAILS once `outputs/bca_*.json`
-   exists — SHIPS WITH W1's landing commit, not before: a stated future
-   commitment, not present-tense behavior.
+   sensitivity rows — today they are stdout-only, unverifiable), the
+   **per-corridor** width blocks (`width_harbor` / `width_streetcar` —
+   scanned separately since W1; the earlier single `width` artifact unioned
+   the two corridors and masked a row present in one but missing in the
+   other), and — **LANDED W1 (2026-07-15)** — the **wrapper** artifact
+   (`outputs/bca_<corridor>.json`, existence-gated on the configurable
+   `transit-benefit-cost` sibling path, `BCA_WRAPPER_ARTIFACT`). The
+   wrapper scan closes the gap the A3 draft flagged as future work: the
+   `eq_days` / `bca_config` `spec-pending:06§E4` dispositions FLIP from
+   check-1 warnings to real check-2 coverage claims (`eq_days_330`,
+   `avoidable_marginal`) — a renamed oc-claimed id now FAILS check-2. When
+   the sibling file is absent the wrapper claims degrade to check-2
+   `pending` warnings, exactly like any other absent artifact. `network`
+   remains NOT YET scanned (spec 07 has no committed portfolio artifact for
+   the check to read).
 3. **No orphans**, keyed (artifact, row-id): every row-id in every scanned
    artifact is claimed by exactly one entry. This forces harvest
    completeness (63 harbor rows, 58 streetcar (as landed) — counted, not
-   "~50") and makes rule-2 evasion by omission fail loudly.
+   "~50") and makes rule-2 evasion by omission fail loudly. **Wrapper
+   scoping (W1, spec 08 §9 Q7):** the `wrapper` artifact is orphan-checked
+   for **oc-claimed ids only**; the ~40 **engine-owned** tornado rows (the
+   `ENGINE_OWNED_WRAPPER` set — VOT, γ, λ, discount, externality/O&M/SCC/
+   carbon/rebound/ramp/build/growth/mohring/labor/crowding/avg-fare/
+   traction/nonwork/no-ASC/transfer-fullOD/peak-share) live in the TBCR
+   RANGES, not this registry, and are **exempt** (covered by G-E7 on the
+   TBCR side). A wrapper id that is neither engine-owned nor registry-
+   claimed is still a real orphan — a new oc-relevant row nobody harvested,
+   or a drifted engine id — and fails loudly, forcing a classification.
 4. **Prior integrity**: `build_priors()` provenance sentinel on
    `model.PRIORS`; count matches the contract test; ordered-tuple hash
    matches the committed fingerprint (the reorder guard).
@@ -369,3 +383,28 @@ row those constant entries already point at.
   the dependency; the note is recorded in the README known-issues log and
   HANDOFF rather than engineered around with a graceful skip (which would
   silently drop a coverage row and trip check 2).
+- **Q7 — wrapper-artifact scan wired + check-3 scoping (W1, 2026-07-15):**
+  the future commitment the A3 draft made in §5 check 2 (scan
+  `outputs/bca_*.json` once it exists) landed with the W1 rider batch.
+  `check_assumptions.py` now loads the welfare-BCA wrapper artifact
+  (existence-gated, configurable sibling path via `BCA_WRAPPER_ARTIFACT`,
+  default the `transit-benefit-cost` checkout) and enumerates its flat
+  `tornado_row_ids`. Two scoping decisions, ratified here:
+  (a) **check-2 flip** — `eq_days` and `bca_config` convert from
+  `spec-pending:06§E4` warnings to real check-2 coverage claims
+  (`eq_days_330`, `avoidable_marginal` respectively); the pcar set,
+  `vot_behav`, `kappa`, and `abc_sigma` gain `wrapper` row claims too
+  (via `extras` for the priors). (b) **check-3 scope** — the wrapper is
+  orphan-checked for **oc-claimed ids only**; the ~40 engine-owned tornado
+  rows live in the TBCR RANGES (option (b) of the spec 06 W1 rider, NOT ~40
+  orphan registry entries) and are exempt via the committed
+  `ENGINE_OWNED_WRAPPER` set — a deliberate snapshot of the tbc
+  `tornado_row_ids` engine partition that must be updated in lockstep if the
+  engine row set changes (an unclassified wrapper id fails loudly, which is
+  the intended cross-repo drift alarm). `bca_config`'s `avoidable_marginal`
+  claim is DUAL-NATURE: the avoidable-cost RATE is a TBCR RANGES knob, but
+  the swept QUANTITY (routes_removed × rev_hours) is oc's, so the oc
+  registry owns the row (the E5 new-line GoA4 O&M rows `om_lo/om_hi` stay
+  engine-owned). Negative test (scratch, uncommitted): renaming an
+  oc-claimed id in a copy of the tbc artifact fails BOTH check-2 (coverage)
+  and check-3 (orphan).

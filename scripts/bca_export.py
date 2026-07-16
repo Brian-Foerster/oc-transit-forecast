@@ -64,7 +64,16 @@ def scenario_block(d):
         "um_margin": f32(d["um_margin"]),
         "um0_infra": f32(d["um0_infra"]),            # no-ASC counterfactual (D1)
         "um0_margin": f32(d["um0_margin"]),
+        # spec 06 W1: rule-of-half welfare alternative (D10 roh row). um_roh_infra
+        # == um_infra by definition (shared S0·dv term); um_roh_margin is the
+        # trapezoid margin, in equivalent-IVT min/wd.
+        "um_roh_infra": f32(d["um_roh_infra"]),
+        "um_roh_margin": f32(d["um_roh_margin"]),
         "fare_burden": f32(d["fare_burden"]),        # $/wd, 0 at flat fares (D3)
+        # spec 06 W1: fiscal fare_receipts (fare_sweep row); $/wd, 0 at flat
+        # fares. fare_burden == fare_receipts_infra + 0.5*fare_receipts_margin.
+        "fare_receipts_infra": f32(d["fare_receipts_infra"]),
+        "fare_receipts_margin": f32(d["fare_receipts_margin"]),
         "cm_seg": seg("cm_seg"),                     # diverted trip-mi, pre-pcar
         "cm_visitor": f32(d["cm_visitor"]),
         "cm_seg_fullod": seg("cm_seg_fullod"),       # transfer legs at full O-D

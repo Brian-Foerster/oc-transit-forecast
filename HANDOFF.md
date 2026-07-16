@@ -118,6 +118,7 @@ the ASC at 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 (matured-target row:
     scripts/reweight_abc.py                   # -> outputs/abc_harbor.json (ABC treatment)
     scripts/make_charts.py harbor             # -> outputs/*.png
     scripts/bca_export.py harbor [--seed-check]  # OPTIONAL: -> outputs/bca_export_harbor.json.gz (spec 06 B4 BCA handoff; post-ABC, gitignored)
+    scripts/make_charts.py bca harbor         # OPTIONAL (spec 06 W2): -> outputs/bca_harbor.png + bca_tornado_harbor.png; reads the tbc welfare-BCA artifact (existence-gated), skips if absent
     scripts/check_assumptions.py [--appendix] # STANDING GATE (spec 08): 7 registry checks, exit nonzero on drift; --appendix regenerates outputs/assumptions.{md,json}
 
 `data/derived` is committed, so **model.py `run()` and a fresh clone's
@@ -126,8 +127,13 @@ sensitivity table now rebuilds a scratch corridor for the `intra_tract_alt`
 row (`build_corridor.py`, which reads `data/raw`), so regenerating the full
 table from scratch needs the raw data (accepted, spec 08 §9 Q6; README issue
 26). `check_assumptions.py` joins `test_bca_export.py` as a standing gate —
-run it (green: 0 failures, spec-pending warnings counted) before any commit
-that touches values, rows, specs, or the README. Everything is plain
+run it (green: 0 failures, spec-pending warnings counted; 4 as of W1) before
+any commit that touches values, rows, specs, or the README. Since W1 it also
+scans the cross-repo welfare-BCA artifact (`transit-benefit-cost/outputs/
+bca_harbor.json`, existence-gated, override path via `BCA_WRAPPER_ARTIFACT`)
+for oc-claimed tornado ids — a check-2 coverage claim, engine-owned ids exempt
+from check-3 (spec 08 §9 Q7); absent sibling ⇒ pending warnings, never a fail.
+Everything is plain
 numpy/pandas/matplotlib (requirements.txt); model runs take seconds
 (N=40,000 draws, vectorized, seed=42).
 
@@ -138,7 +144,7 @@ numpy/pandas/matplotlib (requirements.txt); model runs take seconds
 | `config/harbor.json` | The corridor definition: anchor range + derivation note, base services (Route 43 local, Route 543 rapid) with speed/headway/stop-spacing, the proposed line, visitor-market parameters. Change the design here. Spec 06 added a `bca` block (`routes_removed` per scenario + `rev_hours_weekday` per route for the BCA's avoided base O&M, plus prose notes that are NOT shipped in the export) and an optional `fare_base` (defaults to `DEFAULT_FARE`, the OCTA flat cash fare in `model.py`). Spec 08 A2b promoted `anchor_derivation` (trend / corr_share / uniformity) to structured keys the registry owns. |
 | `config/backtest_543.json` | The 2013 Bravo! 543 backtest world, promoted out of `backtest_543.py` (spec 08 A2b): the 2013 local/rapid services + the Route-43 route-total anchor leaf. `backtest_543.py` reads it and computes the anchor band in code from the SHARED `corr_share` (read from `config/harbor.json`, never duplicated). |
 | `scripts/assumptions.py` | The assumptions registry (spec 08): single source of every asserted value (`val(id)` / `band(id)` / `build_priors()`) and every structural choice, keyed by stable id with tier / basis / dated history / per-artifact sensitivity rows / disposition bookkeeping. Dependency-free; code imports from here. |
-| `scripts/check_assumptions.py` | Enforces the registry (spec 08 §5): seven checks — schema, coverage, no-orphans, prior-order fingerprint, materiality, pointers, citation sync — exit nonzero on any failure (spec-pending dispositions are counted warnings). `--appendix` regenerates `outputs/assumptions.{md,json}`. A standing gate. |
+| `scripts/check_assumptions.py` | Enforces the registry (spec 08 §5): seven checks — schema, coverage, no-orphans, prior-order fingerprint, materiality, pointers, citation sync — exit nonzero on any failure (spec-pending dispositions are counted warnings). Since W1 (spec 08 §9 Q7): scans the existence-gated welfare-BCA wrapper artifact (`BCA_WRAPPER_ARTIFACT`, default the `transit-benefit-cost` sibling) for oc-claimed tornado ids, engine-owned ids exempt from check-3; per-corridor width blocks. `--appendix` regenerates `outputs/assumptions.{md,json}` (schema `08-A3.3`: + a machine `values` section — eq_days, default_fare, kernel labels + central flag, and the five wrapper-re-priced priors — that the tbc wrapper resolves instead of hardcoding). A standing gate. |
 | `scripts/download_data.py` | Fetches the raw sources incl. the OCTA performance-report PDFs (URLs inside; note the %20 filename quirk). |
 | `scripts/anchor_from_apc.py` | Anchor derivation from MEASURED route-level boardings (data table + source URLs + the trend assumptions). |
 | `scripts/build_derived.py` | Raw → `oc_tracts.csv` (614 OC tract centroids), `oc_b08141.csv` (ACS workers/transit × vehicle availability, estimates AND margins of error), `oc_tract_od.csv.gz` (LODES commute flows aggregated to 178,900 OC tract pairs). |
@@ -147,12 +153,13 @@ numpy/pandas/matplotlib (requirements.txt); model runs take seconds
 | `scripts/model.py` | The model. See "Model internals". |
 | `scripts/backtest_543.py` | Reruns the model as of June 2013 (local-only base, 543 at its actual 10/15 launch service) vs observed 543 ridership; exports `backtest_corridor()` for the ABC script. |
 | `scripts/reweight_abc.py` | Backtest-calibrated treatment: same draws through 2013 + forward configs, Gaussian kernel on the 543 prediction. Five kernels (single source of truth `KERNELS` / `get_kernels()`): launch-equivalent central mu=5,938 (=FY2017 4,615 × NTD FY2013/FY2017 back-trend 1.2868, spec 02 §4.6) at sigma 500, width sensitivities 350/800, an FY2014-vintage row (mu=5,647), and the retired matured mu=4,200 row. Weighted percentiles + ASC posterior + ESS + central residual + seed check. JSON keyed by kernel label (`kernels` block), not bare sigma. |
-| `scripts/make_charts.py` | Interval chart (anchor, uncapped, ABC-calibrated) and sensitivity tornado. |
-| `scripts/bca_export.py` | Freezes the stage-2 per-draw BCA quantity streams (spec 06 §3) to `outputs/bca_export_<corridor>.json.gz` — the file interface the downstream `transit-benefit-cost` wrapper prices. Runs `run()` once per design point, packages the welfare / car-mile / fare-burden arrays + ABC weights (harbor) at float32; `--seed-check` adds a seed+1 companion (gate G4). Computes NO prices or valuation. Optional; not on the critical path; output gitignored. |
+| `scripts/make_charts.py` | Interval chart (anchor, uncapped, ABC-calibrated) and sensitivity tornado. The `bca` mode (`make_charts.py bca harbor`, spec 06 W2) instead reads the cross-repo welfare-BCA artifact and draws the NPV interval chart (scenario × treatment × band, PV-BCR + Flyvbjerg annotation) and the BCA ΔNPV tornado; existence-gated, skips if the sibling artifact is absent. |
+| `scripts/bca_export.py` | Freezes the stage-2 per-draw BCA quantity streams (spec 06 §3) to `outputs/bca_export_<corridor>.json.gz` — the file interface the downstream `transit-benefit-cost` wrapper prices. Runs `run()` once per design point, packages the welfare / car-mile / fare-burden arrays + ABC weights (harbor) at float32; `--seed-check` adds a seed+1 companion (gate G4). W1 added four streams: `um_roh_{infra,margin}` (rule-of-half welfare alternative, un-blocks the tbc `roh` row) and `fare_receipts_{infra,margin}` (fiscal counterpart to `fare_burden`, un-blocks `fare_sweep`); all 0 at today's flat fare. Computes NO prices or valuation. Optional; not on the critical path; output gitignored. |
 | `scripts/test_bca_export.py` | Executable statement of the §3 interface contract: schema shape, array lengths (N), `abc_weights` present iff a calibration target exists, and the round-trip P50 vs the committed reference to 4 significant figures. Run the exports first. |
 | `outputs/results_harbor.json` | Summary percentiles, full sensitivity table (each row carries a stable `id` + display `label`), design sweep, width sensitivities. |
 | `outputs/assumptions.md` / `.json` | Generated by `check_assumptions.py --appendix` (committed, byte-deterministic): the auditable inventory — unpropagated exposures sorted by effect, priors (already-propagated), width sensitivities, rowless dispositions with accepted stamps, basis census + what-changed. The `.json` is the schema-versioned cross-repo artifact. |
 | `outputs/records_request_draft.md` | Ready-to-send CPRA request for route/stop-level APC + on-board transfer rate (anchor research came up dry online). |
+| `outputs/bca_harbor.png` / `bca_tornado_harbor.png` | Welfare-BCA charts (spec 06 W2, committed): the NPV interval chart (scenario × treatment × band, PV-BCR + Flyvbjerg annotation) and the ΔNPV tornado. Regenerate with `make_charts.py bca harbor` from the cross-repo `transit-benefit-cost/outputs/bca_harbor.json`. |
 
 ## Model internals (scripts/model.py)
 

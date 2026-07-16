@@ -179,8 +179,13 @@ ASSUMPTIONS = {
         "basis": "judgment",
         "history": [("2026-07-11", (0.60, 1.00, "uni"), "judgment",
                      "spec08 A1 harvest -- introduced spec02")],
-        "provenance": "non-work responsiveness relative to work (spec 02)",
-        "rows": "auto", "no_row_reason": None, "accepted": None,
+        "provenance": "non-work responsiveness relative to work (spec 02). The "
+                      "wrapper's kappa_1 (kappa->1) row re-blends the exported "
+                      "pre-blend quantity streams -- a QUANTITY blend, not a "
+                      "revaluation (spec 06 D8/W1)",
+        "rows": "auto",
+        "extras": {"wrapper": ["kappa_1"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "NHTS elasticities",
     },
     "pkshare": {
@@ -202,8 +207,14 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", (10.0, 22.0, "tri"), "literature",
                      "spec08 A1 harvest -- introduced spec06 D3")],
         "provenance": "behavioral VOT band for the fare-response utility term "
-                      "(spec 06 D3); money is never monetized through it",
-        "rows": "auto", "no_row_reason": None, "accepted": None,
+                      "(spec 06 D3); money is never monetized through it. Baked "
+                      "into the exported utility, so its wrapper rows "
+                      "(vot_behav_lo/vot_behav_hi) read 0.0% at flat fare and need "
+                      "a stage-2 re-export to sweep -- exposed regardless (spec 06 "
+                      "W1 / rule 2)",
+        "rows": "auto",
+        "extras": {"wrapper": ["vot_behav_lo", "vot_behav_hi"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "local fare-elasticity study",
     },
     "pcar0": {
@@ -214,8 +225,14 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", (0.05, 0.25, "uni"), "judgment",
                      "spec08 A1 harvest -- introduced spec06 D7")],
         "provenance": "car-diversion probability priced by the BCA wrapper "
-                      "(spec 06 D7); model code does not consume pcar*",
-        "rows": "auto", "no_row_reason": None, "accepted": None,
+                      "(spec 06 D7); model code does not consume pcar*. Owns the "
+                      "wrapper's JOINT pcar-set rows (pcar_lo/pcar_hi) on behalf "
+                      "of the pcar0/1/2/v family -- the wrapper sweeps all four "
+                      "diversion priors to their band edges together, so the D7 "
+                      "diverted-car-mile set is one wrapper row pair (spec 06 W1)",
+        "rows": "auto",
+        "extras": {"wrapper": ["pcar_lo", "pcar_hi"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "diverted-mode survey / STOPS",
     },
     "pcar1": {
@@ -651,8 +668,12 @@ ASSUMPTIONS = {
                       "(post-COVID 2022 LODES shape, 2023 ACS proxying 2013, "
                       "unknown 2013 peak headway) plus back-trend vintage "
                       "spread; 350/800 are the width sensitivities, owned here as "
-                      "the 543_launch_s350 / 543_launch_s800 ABC kernel rows",
-        "rows": {"abc": ["543_launch_s350", "543_launch_s800"]},
+                      "the 543_launch_s350 / 543_launch_s800 ABC kernel rows (and "
+                      "the abc_s350 / abc_s800 rows in the welfare-BCA wrapper "
+                      "tornado, which re-weights the same draws by these kernels -- "
+                      "spec 06 W1)",
+        "rows": {"abc": ["543_launch_s350", "543_launch_s800"],
+                 "wrapper": ["abc_s350", "abc_s800"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "STOPS calibration / observed launch",
     },
@@ -711,11 +732,14 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec06")],
         "provenance": "weekday->annual conversion band (anchor_from_apc "
                       "convention); low 300, high 330 equivalent service days. "
-                      "Exported to bca_export (eq_days); its band sweep is a "
-                      "BCA-wrapper row, spec-pending until the welfare BCA results "
-                      "file exists (spec 08 §5 check 2 wrapper-pending)",
-        "rows": {}, "no_row_reason": "spec-pending:06§E4",
-        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+                      "Exported to bca_export (eq_days); its band far edge is the "
+                      "eq_days_330 tornado row in the welfare-BCA wrapper artifact "
+                      "(bca_harbor.json). LANDED 2026-07-15 (spec 06 W1): the "
+                      "wrapper-artifact scan (spec 08 §5 check 2 / §9 Q7) flipped "
+                      "this from a spec-pending:06§E4 warning to a real check-2 "
+                      "coverage claim",
+        "rows": {"wrapper": ["eq_days_330"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "OCTA service-calendar day counts",
     },
 
@@ -1224,11 +1248,18 @@ ASSUMPTIONS = {
         "provenance": "the fold/retain routes_removed sets and the weekday revenue "
                       "vehicle-hours (rev_hours_weekday, measured from OCTA GTFS) "
                       "that feed the avoided base O&M in the welfare BCA wrapper "
-                      "(spec 06 §E4). Rows land in the BCA-wrapper artifact, which "
-                      "is spec-pending until the welfare BCA results file exists "
-                      "(spec 08 §5 check 2 wrapper-pending)",
-        "rows": {}, "no_row_reason": "spec-pending:06§E4",
-        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
+                      "(spec 06 §E4). The avoided-base-O&M channel's headline "
+                      "sensitivity is the avoidable_marginal wrapper row -- the "
+                      "avoidable-cost RATE (marginal vs fully-allocated $/rev-hr) "
+                      "swept on exactly THESE oc-provided quantities. DUAL-NATURE "
+                      "(spec 08 §9 Q7): the RATE lives in the TBCR RANGES, but the "
+                      "swept QUANTITY (routes_removed x rev_hours) is oc's, so the "
+                      "oc registry claims the row (om_lo/om_hi -- the NEW-line GoA4 "
+                      "O&M, E5 -- stay engine-owned/exempt). LANDED 2026-07-15 "
+                      "(spec 06 W1): flipped from spec-pending:06§E4 to a real "
+                      "check-2 wrapper claim",
+        "rows": {"wrapper": ["avoidable_marginal"]},
+        "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "OCTA service-calendar / cost model",
     },
 
@@ -1257,8 +1288,11 @@ ASSUMPTIONS = {
                       "The band (0.5, 2.0) is the JOINT x-scale range the width "
                       "block sweeps (NOT concentration bounds); its edges ARE the "
                       "dirichlet_half (x0.5) / dirichlet_double (x2) width rows "
-                      "(spec 08 §4/§5 check 5 'band edges present as rows')",
-        "rows": {"width": ["dirichlet_half", "dirichlet_double"]},
+                      "(spec 08 §4/§5 check 5 'band edges present as rows'). Claimed "
+                      "PER-CORRIDOR (spec 06 W1): each corridor's width block is "
+                      "scanned separately, closing the earlier union-collapse",
+        "rows": {"width_harbor": ["dirichlet_half", "dirichlet_double"],
+                 "width_streetcar": ["dirichlet_half", "dirichlet_double"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "on-board / APC bin-share observations",
     },
@@ -1271,8 +1305,11 @@ ASSUMPTIONS = {
                      "spec08 A2b addendum 0d -- basis measured (ACS delta-method SEs)")],
         "provenance": "the S0 base-share jitter is lognormal(0, cor.s0_se) with "
                       "cor.s0_se the ACS delta-method relative SEs (measured); the "
-                      "width block scales that sigma x0.5/x2 (spec 08 §4)",
-        "rows": {"width": ["s0se_half", "s0se_double"]},
+                      "width block scales that sigma x0.5/x2 (spec 08 §4). Claimed "
+                      "PER-CORRIDOR (spec 06 W1): harbor / streetcar width blocks "
+                      "scanned separately, closing the union-collapse",
+        "rows": {"width_harbor": ["s0se_half", "s0se_double"],
+                 "width_streetcar": ["s0se_half", "s0se_double"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "ACS refresh / observed base shares",
     },

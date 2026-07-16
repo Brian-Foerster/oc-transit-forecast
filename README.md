@@ -329,8 +329,9 @@ Recorded as they were made; each is exposed in the sensitivity output.
 
 Items 17-24 were opened by **spec 06 (BCA integration, `specs/06-bca-integration.md`
 §10)**. Entries 17-18 are stage-2 exposures visible in this repo's exports;
-19-24 bind the BCA wrapper/engine side (`transit-benefit-cost`, not yet built)
-and become live sensitivity rows when W1 lands.
+19-24 bind the BCA wrapper/engine side (`transit-benefit-cost`). **W1 landed
+2026-07-15** (item 27): these are now live sensitivity rows in the welfare-BCA
+tornado (`bca_harbor.json`).
 
 17. **Behavioral VOT ≠ social VOT** — deliberate, both exposed as priors:
     `vot_behav` ($10-22/hr) governs fare response in stage 2, social `VOT`
@@ -403,3 +404,24 @@ and become live sensitivity rows when W1 lands.
     `build_corridor.py`, which reads `data/raw` — so the zero-download property
     holds for `run()` and a fresh clone's committed outputs, but NOT for
     regenerating the full table from scratch (spec 08 §9 Q6).
+27. **Welfare BCA landed, and it is deeply negative** (spec 06 W1, 2026-07-15;
+    cross-repo `transit-benefit-cost` pipeline mode, tbc `aa16e0d`). The engine
+    prices this repo's per-draw quantity streams: headline **NPV −$4.17B /
+    PV-BCR 0.075** (fold, ABC-weighted, US-TYPICAL capital band, P50); every
+    scenario × treatment × band is negative with P(NPV>0)=0. Read with the
+    caveats that BOUND what this is and is not: (a) **existing-market only** —
+    the ridership model prices diversion within today's OC travel market; it
+    does not model the land-use / induced ridership a grade-separated line
+    accrues over decades (the economic-potential layer, spec 00 §3, is a
+    SEPARATE lens, never summed — governance rule 5). (b) **corridor-only, no
+    network** — a single line priced in isolation; spec 07's network sequencing
+    is where corridors earn feeder/interchange value. (c) the swing is
+    dominated by **λ (MCPF) and the capital band**, not any ridership knob — the
+    ridership-side rows (VOT, pcar, κ, no-ASC) move NPV by <$160M against a
+    −$4.2B central. It is a gate-2 **companion**, not a decision metric (spec 00
+    §3 amendment); the negative reflects rail-class capital against a mid-size
+    corridor — the honest read the pipeline exists to produce, not a number to
+    force. The W1 rider batch also added the `um_roh_*` and `fare_receipts_*`
+    export streams (un-blocking the tbc `roh` / `fare_sweep` tornado rows, both
+    0 at today's flat fare). Charts: `outputs/bca_harbor.png` +
+    `bca_tornado_harbor.png` (`python scripts/make_charts.py bca harbor`).

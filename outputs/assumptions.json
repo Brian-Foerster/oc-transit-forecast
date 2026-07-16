@@ -52,16 +52,6 @@
         "owner-directive 2026-07-11",
         "2026-07-11"
       ],
-      "basis": "measured",
-      "id": "bca_config",
-      "no_row_reason": "spec-pending:06§E4",
-      "tier": "config"
-    },
-    {
-      "accepted": [
-        "owner-directive 2026-07-11",
-        "2026-07-11"
-      ],
       "basis": "judgment",
       "id": "bin_edges",
       "no_row_reason": "quality-knob",
@@ -125,16 +115,6 @@
       "basis": "definitional",
       "id": "dv_clip",
       "no_row_reason": "definitional",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "owner-directive 2026-07-11",
-        "2026-07-11"
-      ],
-      "basis": "judgment",
-      "id": "eq_days",
-      "no_row_reason": "spec-pending:06§E4",
       "tier": "constant"
     },
     {
@@ -749,11 +729,19 @@
       "id": "s0_se_width",
       "rows": [
         [
-          "width",
+          "width_harbor",
           "s0se_half"
         ],
         [
-          "width",
+          "width_harbor",
+          "s0se_double"
+        ],
+        [
+          "width_streetcar",
+          "s0se_half"
+        ],
+        [
+          "width_streetcar",
           "s0se_double"
         ]
       ],
@@ -777,11 +765,19 @@
       "id": "dirichlet_strength",
       "rows": [
         [
-          "width",
+          "width_harbor",
           "dirichlet_half"
         ],
         [
-          "width",
+          "width_harbor",
+          "dirichlet_double"
+        ],
+        [
+          "width_streetcar",
+          "dirichlet_half"
+        ],
+        [
+          "width_streetcar",
           "dirichlet_double"
         ]
       ],
@@ -867,6 +863,38 @@
         [
           "abc",
           "543_launch_s800"
+        ],
+        [
+          "wrapper",
+          "abc_s350"
+        ],
+        [
+          "wrapper",
+          "abc_s800"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "bca_config",
+      "rows": [
+        [
+          "wrapper",
+          "avoidable_marginal"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "eq_days",
+      "rows": [
+        [
+          "wrapper",
+          "eq_days_330"
         ]
       ],
       "tier": "constant"
@@ -1013,16 +1041,8 @@
       "tornado_pct": 0.0
     }
   ],
-  "schema_version": "08-A3.2",
+  "schema_version": "08-A3.3",
   "spec_pending_warnings": [
-    {
-      "id": "bca_config",
-      "no_row_reason": "spec-pending:06§E4"
-    },
-    {
-      "id": "eq_days",
-      "no_row_reason": "spec-pending:06§E4"
-    },
     {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
@@ -1046,6 +1066,50 @@
     "data": 4,
     "prior": 19,
     "structural": 10
+  },
+  "values": {
+    "default_fare": 2.0,
+    "eq_days": [
+      300,
+      330
+    ],
+    "kernels": {
+      "central": "543_launch_s500",
+      "labels": [
+        "543_launch_s500",
+        "543_launch_s350",
+        "543_launch_s800",
+        "543_launch14_s500",
+        "543_matured_s500"
+      ]
+    },
+    "wrapper_repriced_priors": {
+      "pcar0": [
+        0.05,
+        0.25,
+        "uni"
+      ],
+      "pcar1": [
+        0.35,
+        0.65,
+        "uni"
+      ],
+      "pcar2": [
+        0.55,
+        0.85,
+        "uni"
+      ],
+      "pcarv": [
+        0.0,
+        0.3,
+        "uni"
+      ],
+      "vot_behav": [
+        10.0,
+        22.0,
+        "tri"
+      ]
+    }
   },
   "what_changed": [
     {

@@ -28,7 +28,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 SCALAR_KEYS = ("newline", "total", "um_infra", "um_margin", "um0_infra",
-               "um0_margin", "fare_burden", "cm_visitor")
+               "um0_margin", "um_roh_infra", "um_roh_margin", "fare_burden",
+               "fare_receipts_infra", "fare_receipts_margin", "cm_visitor")
 SEG_KEYS = ("cm_seg", "cm_seg_fullod")
 N_PRIORS = 19   # update when appending priors (append-last discipline, see model.py PRIORS)
 
