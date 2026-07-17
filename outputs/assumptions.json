@@ -1,7 +1,7 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 40,
+    "judgment": 43,
     "literature": 10,
     "locally-calibrated": 1,
     "measured": 28
@@ -209,12 +209,32 @@
     },
     {
       "accepted": [
+        "spec07-N1b sequencing-harness landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "cycle_gap",
+      "no_row_reason": "spec-pending:07§9-N4",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-11"
       ],
       "basis": "definitional",
       "id": "default_fare",
       "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N1b sequencing-harness landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "depth_cap",
+      "no_row_reason": "spec-pending:07§9-N4",
       "tier": "constant"
     },
     {
@@ -355,6 +375,16 @@
       "basis": "definitional",
       "id": "n",
       "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec07-N1b sequencing-harness landing",
+        "2026-07-16"
+      ],
+      "basis": "judgment",
+      "id": "network_budget",
+      "no_row_reason": "spec-pending:07§9-N4",
       "tier": "constant"
     },
     {
@@ -1064,7 +1094,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 104,
+  "n_entries": 107,
   "priors": [
     {
       "basis": "judgment",
@@ -1228,12 +1258,24 @@
       "no_row_reason": "spec-pending:07§9-N4"
     },
     {
+      "id": "cycle_gap",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
+      "id": "depth_cap",
+      "no_row_reason": "spec-pending:07§9-N4"
+    },
+    {
       "id": "feeder_headway_map",
       "no_row_reason": "spec-pending:07§9-N4"
     },
     {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
+    },
+    {
+      "id": "network_budget",
+      "no_row_reason": "spec-pending:07§9-N4"
     },
     {
       "id": "omega_allocation",
@@ -1258,7 +1300,7 @@
   ],
   "tier_census": {
     "config": 12,
-    "constant": 59,
+    "constant": 62,
     "data": 4,
     "prior": 19,
     "structural": 10

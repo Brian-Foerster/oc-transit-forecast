@@ -1015,6 +1015,78 @@ ASSUMPTIONS = {
         "logged": None, "upgrade": "committed-line published service plan",
     },
 
+    # ---- sequence_network.py knobs (spec 07 N1b sequencing harness) -------
+    # The three harness-level knobs the greedy loop introduces. CONSTANT tier
+    # (NOT priors -- none is consumed by draw_params, so the prior-order
+    # fingerprint is untouched, exactly as N1a promised). Each carries a band so
+    # its lo/hi (or cap 1/3) sensitivity rows can source their edges. All rowless
+    # for the registry's ROW-tracking: the rows they anticipate live in the
+    # network-sequence PRIMARY ARTIFACT (outputs/network_sequence.json.sensitivity),
+    # a separate output schema check_assumptions does not scan (it tracks the
+    # per-corridor results_*.json tornado). The rows ARE present in that artifact
+    # this same commit (gate G7); formal registry row-tracking of the network
+    # artifact is a later integration -- hence spec-pending:07§9-N4, mirroring the
+    # sibling omega_* / cap_* entries. cycle_gap is §11 Q1's exposed knob (prior
+    # U(4,8) yr as a CONCEPT -- but a harness constant, not a draw_params prior).
+    "cycle_gap": {
+        "title": "years between real programmatic build cycles",
+        "tier": "constant", "status": "active",
+        "value": 6.0, "units": "yr", "band": (4.0, 8.0), "basis": "judgment",
+        "history": [("2026-07-16", 6.0, "judgment",
+                     "spec07 N1b -- cycle_gap knob (§11 Q1 U(4,8) yr, lo/hi rows)")],
+        "provenance": "the gap between real funded build cycles (spec 07 §3/§11 "
+                      "Q1): a candidate committed at cycle k opens (k-1)*cycle_gap "
+                      "+ build_years later, so its capital is discounted to the "
+                      "common base year. An EXPOSED knob, NOT an optimization "
+                      "variable (timing optimization adds a dimension the "
+                      "provenance cap cannot discipline). Central 6 = midpoint of "
+                      "the §11 Q1 U(4,8) prior; the lo/hi (4/8 yr) rows land in the "
+                      "network-sequence artifact's Delta-K_PV display (interim: "
+                      "welfare-minutes are a level and never discounted)",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N1b sequencing-harness landing", "2026-07-16"),
+        "logged": None, "upgrade": "adopted capital program cadence",
+    },
+    "network_budget": {
+        "title": "cumulative program capital budget (US-TYPICAL band)",
+        "tier": "constant", "status": "active",
+        "value": 3000.0, "units": "$M", "band": (2000.0, 5000.0),
+        "basis": "judgment",
+        "history": [("2026-07-16", 3000.0, "judgment",
+                     "spec07 N1b -- cumulative program budget knob (§7/Q2 lo/hi)")],
+        "provenance": "the cumulative program capital budget the knapsack "
+                      "feasibility constraint enters through (spec 07 §7/§11 Q2: a "
+                      "cumulative program budget, NOT per-cycle caps -- those bias "
+                      "toward small lines). Under a SLACK budget the §3 rule orders "
+                      "by welfare LEVEL and the budget is inert; a BINDING budget "
+                      "makes capital-efficiency decision-relevant. Central 3000 is "
+                      "a reference; the lo/hi (2000/5000 $M) rows are the G7 budget "
+                      "sensitivity in the network-sequence artifact. The harness "
+                      "CLI --budget overrides it; default is a slack (None) budget",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N1b sequencing-harness landing", "2026-07-16"),
+        "logged": None, "upgrade": "adopted capital program envelope",
+    },
+    "depth_cap": {
+        "title": "provenance-DAG depth cap (decision-grade vs exploratory)",
+        "tier": "constant", "status": "active",
+        "value": 2, "units": "levels", "band": (1, 3), "basis": "judgment",
+        "history": [("2026-07-16", 2, "judgment",
+                     "spec07 N1b -- provenance depth cap (§6.2 cap 1/3 rows)")],
+        "provenance": "the recursive provenance-DAG depth beyond which network "
+                      "output is labeled EXPLORATORY and excluded from gate memos "
+                      "(spec 07 §6.2). depth(measured)=0; depth(eval)=1+max{depth(H) "
+                      ": candidate depends on H}. A spatially spread program stays "
+                      "decision-grade for many cycles; a tightly chained one goes "
+                      "exploratory by cycle 4. Central cap 2; the cap 1/3 "
+                      "labeling-sensitivity rows land in the network-sequence "
+                      "artifact (they relabel the exploratory tail, not the "
+                      "objective)",
+        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "accepted": ("spec07-N1b sequencing-harness landing", "2026-07-16"),
+        "logged": None, "upgrade": "adopted provenance-governance threshold",
+    },
+
     # ---- capcost.py (spec 04 capital rate card as code, spec 07 N2) -------
     # PRE-markup line-item leaves (2026 US$M) from costs/metro_cost_model.xlsx
     # §2 / spec 04 §2. capcost.capital() DERIVES the markup-inclusive

@@ -1,0 +1,12 @@
+{
+  "lines": [],
+  "note": "spec 07 §4.1 -- the ONLY persistent network state: the list of lines that PHYSICALLY EXIST (id, config path, scenario as operated, in-service date, anchor source, calibration-kernel label if it has produced one). INITIALLY EMPTY beyond the implicit OCTA base -- the OC Streetcar has not opened as of this run's price base (2026). This file changes ONLY when reality changes; the hypothetical build ORDER is never persisted here (it lives, self-describing, in outputs/network_sequence.json, regenerable from committed configs + seed -- gate G6). Empty `lines` is the load-bearing gate-G1 state: cycle-1 candidate evaluations run against an empty network, so build_corridor's empty-network verbatim rule holds and the standalone committed results reproduce byte-identically.",
+  "schema": {
+    "id": "line id",
+    "config": "path to the corridor config",
+    "scenario": "fold | retain -- the operator scenario as operated (spec 06 un-blending)",
+    "in_service": "YYYY-MM -- in-service date",
+    "anchor_source": "measured APC / quarterly-report citation",
+    "kernel_label": "calibration-kernel label if the line has produced one (spec 07 §6.1), else null"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "hand_supplied": true,
+  "substitution_note": "spec 07 §4.3: the candidate pool is meant to come from the stage-1 DRM screen re-run against the updated network (gate 1). Until spec 01 lands, the candidate universe is HAND-SUPPLIED -- the 13-arterial HANDOFF shortlist is the natural seed. This N1b run supplies the TWO corridors that already have committed configs + derived files [harbor, streetcar], which is exactly the point: 2 candidates -> 2 singles + 2 directional pairs + trivial swaps at full N=40,000 CRN, small enough to prove the sequencing machinery end to end. More candidates arrive with stage 1. This substitution is surfaced in the primary artifact (network_sequence.json.candidate_universe.hand_supplied).",
+  "candidates": [
+    {
+      "id": "harbor",
+      "config": "config/harbor.json",
+      "note": "Harbor Blvd (Fullerton -> Santa Ana), corridor route 543; the measured-anchor ALM headline corridor."
+    },
+    {
+      "id": "streetcar",
+      "config": "config/streetcar.json",
+      "note": "OC Streetcar (SARTC -> Harbor/Westminster); explicit PE-ROW waypoint alignment whose WESTERN TERMINUS sits on Harbor Blvd -- the real-geometry crossing the G3 complementarity gate exercises against a Harbor commitment."
+    }
+  ]
+}
