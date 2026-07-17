@@ -1,7 +1,10 @@
 """
 Gates for the capital-cost function (spec 07 N2 / spec 04). These are spec 04's
 OWN validation gates (§5) plus the spec 07 N2 acceptance checks, run as a
-hand-check TDD ladder (E55 red -> green first). No files read; pure arithmetic.
+hand-check TDD ladder (E55 red -> green first). Pure arithmetic, EXCEPT
+test_harbor_bands_vs_tbc, which reads the live tbc cost profile (existence-
+gated -- skips with a notice if the transit-benefit-cost sibling checkout is
+absent, same convention as check_assumptions.py / make_charts.py).
 
     python test_capcost.py
 
@@ -14,9 +17,16 @@ hand-check TDD ladder (E55 red -> green first). No files read; pure arithmetic.
     (Fixed 183.6; 23.4/route-km; 27.6/km elevated; 33.96/station; 7.44/car).
   - test_fixed_cost_share: the §8j knob scales ONLY the fixed term.
   - test_harbor_bands_vs_tbc: cross-check harbor LOW | US-TYPICAL against the
-    committed tbc profile (2050 | 3622) and assert the deltas equal the
-    documented reconciliation (tbc's §3.3b street/utility lines + its 1.21 vs
-    the sheet's 1.20 LOW markup) to the dollar.
+    LIVE tbc profile file (transit-benefit-cost/costs/profiles/harbor.json,
+    existence-gated -- SKIPS with a notice if the sibling repo is absent, never
+    silently no-ops). Fleet is DERIVED (cc.fleet(12.1, 5.0)), not hardcoded, and
+    checked against the profile's own fleet_cars so a future fleet move can't
+    silently decouple the two repos again. capcost's own capital() is
+    reconciled to the profile's committed K (LOW/US-TYPICAL total_musd) to the
+    dollar via the documented residual (tbc's §3.3b street/utility lines,
+    marked up the SAME way capcost's own bands are -- both additive-1.20 LOW
+    now, N2 review 2026-07-15 corrected tbc's prior 1.21 multiplicative
+    misread).
   - test_rem_sanity: spec 04 §5 gate 2 -- LOW rate card on REM's headline
     quantities lands NEAR the sheet's 100-125 $/km band; assert the documented
     point value, not band membership (the bare-headline result is just below).
@@ -24,7 +34,9 @@ hand-check TDD ladder (E55 red -> green first). No files read; pure arithmetic.
     at the 60-mph design central (owner 2026-07-17; was 27 at the old 80 km/h
     central), within ~15% of REM's 212-car order at REM's line length.
 """
+import json
 import math
+import os
 import sys
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -33,6 +45,20 @@ if hasattr(sys.stdout, "reconfigure"):
 import capcost as cc
 
 KM_PER_MI = 1.609344
+
+# the live tbc cost profile (transit-benefit-cost sibling checkout). Existence-
+# gated on a configurable sibling path -- same convention as check_assumptions.
+# py's WRAPPER_ARTIFACT / make_charts.py's _wrapper_path -- so a fresh clone
+# without the sibling repo still runs (skip-with-notice), and CI/dev boxes that
+# DO have it get the live cross-repo cross-check, not a hand-copied snapshot
+# that silently drifts out from under the gate (this is the exact failure mode
+# test_harbor_bands_vs_tbc previously had: a stale 27-car/2050/3622/x1.21
+# snapshot that kept passing after both sides moved).
+HERE = os.path.dirname(os.path.abspath(__file__))
+TBC_HARBOR_PROFILE = os.environ.get(
+    "TBC_HARBOR_PROFILE",
+    os.path.join(HERE, "..", "..", "transit-benefit-cost", "costs", "profiles",
+                 "harbor.json"))
 
 
 def _close(a, b, tol=0.01):
@@ -75,25 +101,46 @@ def test_fixed_cost_share():
 
 
 def test_harbor_bands_vs_tbc():
-    """Cross-check vs the committed tbc profile (LOW 2050 | US-TYPICAL 3622) and
-    assert the deltas ARE the documented reconciliation, to the dollar."""
+    """Cross-check LOW | US-TYPICAL against the LIVE tbc harbor cost profile
+    (existence-gated: SKIPS with a notice, never silently passes, if the
+    transit-benefit-cost sibling checkout is absent). Fleet is DERIVED from
+    cc.fleet(12.1, 5.0) -- not hardcoded -- and checked against the profile's
+    own fleet_cars. capcost's own capital() is reconciled to the profile's
+    committed K (total_musd) to the dollar via the documented residual: tbc's
+    §3.3b street/utility lines, now marked up the SAME additive-1.20 LOW way
+    capcost's own LOW band is (N2 review 2026-07-15 corrected tbc's prior 1.21
+    multiplicative misread -- this gate reads the LIVE file precisely so it
+    cannot drift back out of sync with a stale hardcoded snapshot again)."""
+    if not os.path.exists(TBC_HARBOR_PROFILE):
+        print(f"  test_harbor_bands_vs_tbc SKIPPED  (sibling repo not found: "
+              f"{TBC_HARBOR_PROFILE})")
+        return
+    with open(TBC_HARBOR_PROFILE, "r", encoding="utf-8") as f:
+        profile = json.load(f)
+
     km = 12.1 * KM_PER_MI                                        # 19.473 km
-    low = cc.capital(12.1, 13, 27, band="LOW", crossings=4)
-    ut = cc.capital(12.1, 13, 27, band="US_TYPICAL", crossings=4)
-    # pinned regression values
-    assert _close(low, 1963.06, 0.5), low
-    assert _close(ut, 3324.47, 0.5), ut
-    # --- reconciliation of the tbc deltas ---
-    # tbc LOW = (my LOW subtotal + street 3/km) x 1.21 (tbc used multiplicative
-    #           1.21; the sheet/E55 use additive 1.20).
-    sub_low = low / cc.CAP_MK_LOW
-    tbc_low = (sub_low + 3.0 * km) * 1.21
-    assert _close(tbc_low, 2050.0, 1.0), tbc_low
+    cars = cc.fleet(12.1, 5.0)
+    assert cars == profile["design"]["fleet_cars"], (
+        cars, profile["design"]["fleet_cars"])
+
+    low = cc.capital(12.1, 13, cars, band="LOW", crossings=4)
+    ut = cc.capital(12.1, 13, cars, band="US_TYPICAL", crossings=4)
+
+    tbc_low_musd = float(profile["capital"]["low"]["total_musd"])
+    tbc_ut_musd = float(profile["capital"]["us_typical"]["total_musd"])
+
+    # --- reconciliation of the tbc deltas (documented residual lines) ---
+    # tbc LOW = my LOW + street-restoration 3/km, marked up at the SAME
+    #           additive 1.20 LOW markup capcost uses (both sides corrected off
+    #           the old 1.21 multiplicative misread, N2 review 2026-07-15).
+    tbc_low = low + 3.0 * km * cc.CAP_MK_LOW
+    assert _close(tbc_low, tbc_low_musd, 1.0), (tbc_low, tbc_low_musd)
     # tbc US-TYPICAL = my US-TYPICAL + (street 6/km + utilities uplift 5/km) x mk_ut
     tbc_ut = ut + (6.0 + 5.0) * km * cc.CAP_MK_UT
-    assert _close(tbc_ut, 3622.0, 1.0), tbc_ut
-    print(f"  test_harbor_bands_vs_tbc OK  (LOW ${low:.0f}M vs tbc 2050; "
-          f"US-TYP ${ut:.0f}M vs tbc 3622; deltas = §3.3b + markup, reconciled)")
+    assert _close(tbc_ut, tbc_ut_musd, 1.0), (tbc_ut, tbc_ut_musd)
+    print(f"  test_harbor_bands_vs_tbc OK  (fleet {cars} cars == profile; "
+          f"LOW ${low:.0f}M -> tbc {tbc_low_musd:.0f}; US-TYP ${ut:.0f}M -> "
+          f"tbc {tbc_ut_musd:.0f}; deltas = live §3.3b + markup, reconciled)")
 
 
 def test_rem_sanity():

@@ -28,8 +28,13 @@ design cruise, spec 02 §4.9/§4.9b): uncapped ~12,074 weekday boardings (P10–
 speed set to 60 mph outright (v_cruise 80→96.6 km/h; ~31.8 mph derived avg) and
 a sub-5-min headway sweep ({2.5, 3.5, 5, 10, 15} peak, fleet annotated per
 column); the faster line lifts the headline ~1% and the welfare BCA ~4%, and
-trims the fleet 27→25 cars (capcost.fleet). The 2013 backtest and the ABC
-weights/ESS/posterior stay byte-identical — only the forward forecast moved._
+trims the fleet 27→25 cars (capcost.fleet). The full frequency trade: the
+2.5-min plan buys +10.6% riders for +23 cars (≈ +$171M LOW capital at
+$7.44M/car) plus roughly doubled variable O&M — welfare-negative at a
+~0.12-BCR corridor (LOW, ABC, P50); the sweep prices ridership, the BCA prices
+the trade, and the 5/10 plan remains the design point. The 2013 backtest and
+the ABC weights/ESS/posterior stay byte-identical — only the forward forecast
+moved._
 The derived-speed landing (R6)
 restated the headline deliberately: the central barely moved (speed's central
 still ~30 mph), the bands widened slightly (speed is now uncertain), and the

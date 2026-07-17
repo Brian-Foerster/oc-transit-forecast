@@ -109,6 +109,11 @@ was ~29.8), and the design sweep now tests **sub-5-minute** peak headways
 ({2.5, 3.5, 5, 10, 15}) with the derived fleet (`capcost.fleet`) annotated per
 column — a 2.5-min headway ≈ doubles the fleet (25→48 cars). The faster line
 raises the headline ~1% and the welfare BCA ~4%; the fleet drops 27→25 cars.
+The full frequency trade: the 2.5-min plan buys +10.6% riders for +23 cars
+(≈ +$171M LOW capital at $7.44M/car) plus roughly doubled variable O&M —
+welfare-negative at a ~0.12-BCR corridor (LOW, ABC, P50); the sweep prices
+ridership, the BCA prices the trade, and the 5/10 plan remains the design
+point.
 
 **Headline (2026-07-17, measured anchor; launch-equivalent ABC target; average
 speed DERIVED with jerk-limited kinematics at the 60-mph design cruise, spec 02
