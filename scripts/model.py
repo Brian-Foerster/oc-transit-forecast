@@ -962,6 +962,18 @@ def main(path):
     sens("new line 10/20-min headway", "headway_10_20",
          cfg_patch={"service_new": dict(sn, headway={"peak": 10.0,
                                                      "offpeak": 20.0})})
+    # sub-5-min frequency test (owner 2026-07-17): GoA4 automation makes headways
+    # below 5 min operationally cheap to consider, so probe them one-at-a-time
+    # (off-peak = 2x peak, the sweep convention). Gated on derived_speed so this
+    # is a grade-separated-ALM design row only -- the at-grade streetcar table is
+    # unchanged (its design set has no sub-5-min row).
+    if "derived_speed" in sn:
+        sens("new line 3.5/7-min headway", "headway_35_7",
+             cfg_patch={"service_new": dict(sn, headway={"peak": 3.5,
+                                                         "offpeak": 7.0})})
+        sens("new line 2.5/5-min headway", "headway_25_5",
+             cfg_patch={"service_new": dict(sn, headway={"peak": 2.5,
+                                                         "offpeak": 5.0})})
     sens("flat 5-min all day (old spec)", "headway_flat5",
          cfg_patch={"service_new": dict(sn, headway=5.0)})
     sens("new stop spacing 0.5 mi", "spacing_05",
@@ -996,27 +1008,46 @@ def main(path):
             print(f"  asc x {m:.2f} = {a0*m:.3f}: {v:8,.0f}")
 
     # ---- design sweep (off-peak = 2x peak) ---------------------------------
-    heads = [5, 10, 15]
     sweep = {}
+    sweep_fleet = None                    # per-headway car count (grade-sep only)
     if "derived_speed" in sn:
         # spec 02 §4.9: the speed axis IS the grade-separated cruise axis now;
         # derived average speed responds to spacing everywhere (mph in parens
         # at central dwell/spacing so the km/h cells stay readable).
+        # Sub-5-min frequency test (owner 2026-07-17): GoA4 automation makes
+        # peak headways below 5 min cheap to consider, so the headway axis
+        # extends below 5. Each column is annotated with the capcost.fleet car
+        # count at the 60-mph design central speed -- the service-cost side of
+        # the ridership gain (a 2.5-min headway roughly doubles the fleet).
+        heads = [2.5, 3.5, 5, 10, 15]
+        import capcost                    # deferred: capcost imports from model
+        route_mi = cfg.get("route_mi")
+        if route_mi:
+            sweep_fleet = {f"{hh:g}": capcost.fleet(route_mi, float(hh))
+                           for hh in heads}
         print("\n--- design sweep: central expected-blend P50 (uncapped; "
               "grade-sep cruise x peak headway, off-peak = 2x) ---")
         axis, keys = "grade_separated_cruise_kmh", [60, 70, 80, 90]
-        print("               " + "".join(f"  h={hh:>2}min" for hh in heads))
+        _hdr_lbl = "cruise \\ pk headway"
+        print(f"  {_hdr_lbl:<18}"
+              + "".join(f"  h={hh:>4g}m" for hh in heads))
+        if sweep_fleet is not None:
+            print(f"  {'fleet@60mph design':<18}"
+                  + "".join(f"  {str(sweep_fleet[f'{hh:g}']) + 'c':>7}"
+                            for hh in heads))
         for vc in keys:
             mph = 60.0 / float(grade_sep_min_per_mile(float(vc), dw_c,
                                                        sn["spacing"]))
             sweep[vc] = [point(v_cruise=float(vc), cfg_patch={"service_new": dict(
                             sn, headway={"peak": float(hh), "offpeak": 2.0 * hh})})
                          for hh in heads]
-            print(f"  {vc} km/h (~{mph:4.1f}mph)"
+            print(f"  {vc} km/h ~{mph:4.1f}mph".ljust(20)
                   + "".join(f"  {x:7,.0f}" for x in sweep[vc]))
     else:
         # exogenous-speed corridors (e.g. the at-grade OC Streetcar, decision 5)
-        # keep the measured-speed axis.
+        # keep the measured-speed axis and the {5,10,15} headway axis (sub-5-min
+        # frequency testing is a grade-separated-ALM question, spec 02 §4.9).
+        heads = [5, 10, 15]
         print("\n--- design sweep: central expected-blend P50 (uncapped; "
               "h = peak, off-peak = 2x) ---")
         axis, keys = "exogenous_speed_mph", [20, 25, 30, 35]
@@ -1066,15 +1097,22 @@ def main(path):
 
     dest = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "..", "outputs", f"results_{cor.name}.json")
+    out = {"config": cfg, "summary": summary,
+           "reference": REFERENCE,
+           "sensitivity": [{"id": i, "label": l, "value": v, "pct": d}
+                           for l, v, d, i in rows],
+           "sweep": {str(k): sweep[k] for k in keys},
+           "sweep_axis": axis,
+           "central_blend": base,
+           "width_sensitivities": width_sens}
+    # grade-separated corridors carry the (owner 2026-07-17) extended headway
+    # axis and its per-headway derived fleet; appended only here so exogenous-
+    # speed corridors (streetcar) keep their pre-change results byte-for-byte.
+    if sweep_fleet is not None:
+        out["sweep_headways"] = heads
+        out["sweep_fleet"] = sweep_fleet
     with open(dest, "w", encoding="utf-8") as f:
-        json.dump({"config": cfg, "summary": summary,
-                   "reference": REFERENCE,
-                   "sensitivity": [{"id": i, "label": l, "value": v, "pct": d}
-                                   for l, v, d, i in rows],
-                   "sweep": {str(k): sweep[k] for k in keys},
-                   "sweep_axis": axis,
-                   "central_blend": base,
-                   "width_sensitivities": width_sens}, f, indent=2)
+        json.dump(out, f, indent=2)
     print(f"\n-> {dest}")
 
 

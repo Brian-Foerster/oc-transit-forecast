@@ -274,12 +274,17 @@ ASSUMPTIONS = {
     "v_cruise": {
         "title": "grade-separated cruise speed (ALM)",
         "tier": "prior", "status": "active",
-        "value": (70.0, 90.0, "uni"), "order": 17, "units": "km/h",
-        "basis": "literature",
+        "value": (90.0, 103.2, "uni"), "order": 17, "units": "km/h",
+        "basis": "judgment",
         "history": [("2026-07-11", (70.0, 90.0, "uni"), "literature",
-                     "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca")],
-        "provenance": "REM-class automated-light-metro cruise speed; derived "
-                      "average speed (spec 02 s4.9 R6)",
+                     "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca"),
+                    ("2026-07-17", (90.0, 103.2, "uni"), "judgment",
+                     "owner decision: design top speed 60 mph; band = "
+                     "delivery/degraded-ops uncertainty around the design value")],
+        "provenance": "REM-class automated-light-metro cruise speed; owner design "
+                      "decision 2026-07-17 sets the top speed to 60 mph outright "
+                      "(central 96.6 km/h), the band spanning delivery / degraded-"
+                      "ops uncertainty; derived average speed (spec 02 s4.9 R6)",
         "rows": "auto", "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "vehicle procurement spec / observed REM telemetry",
     },
@@ -1412,9 +1417,12 @@ ASSUMPTIONS = {
                      "spec08 A2 harvest -- config service_new design axis")],
         "provenance": "owns the harbor design-exploration rows: stop-offset, "
                       "rapid-base GTFS variant, 10/20 & flat-5 headway plans, "
-                      "0.5/1.5-mi spacing (spec 08 §3 -- one owner per artifact)",
+                      "sub-5-min 3.5/7 & 2.5/5 headway plans (owner 2026-07-17, "
+                      "GoA4 sub-5-min frequency test), 0.5/1.5-mi spacing "
+                      "(spec 08 §3 -- one owner per artifact)",
         "rows": {"harbor": ["grid_phase_half", "rapid_gtfs", "headway_10_20",
-                            "headway_flat5", "spacing_05", "spacing_15"]},
+                            "headway_flat5", "headway_35_7", "headway_25_5",
+                            "spacing_05", "spacing_15"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "OCTA project design docs",
     },

@@ -8,6 +8,8 @@
       "43"
     ],
     "window_mi": null,
+    "route_mi": 12.1,
+    "route_mi_note": "corridor length, miles (scripts/route43_share.py, scripts/anchor_from_apc.py: Route 43 runs ~18 mi but the priced corridor is 12.1). Consumed by model.py's design-sweep fleet annotation (capcost.fleet) and matches the tbc harbor profile / capcost gate route length.",
     "anchor_low": 7650,
     "anchor_high": 9650,
     "anchor_note": "MEASURED (2026-07): OCTA quarterly performance reports give FY2019 route totals 43 = 2,095,510 and 543 = 953,471 (scripts/anchor_from_apc.py, source URLs inside). Weekday: 543 (wkdy-only) 3,739; 43 (7-day) 6,350-6,985; x FY2019->FY2024 system trend 0.90-0.99 (central 0.94); corridor = 543 + 43 x corridor share 0.75 (LODES) - 0.86 (ACS), scripts/route43_share.py. 43+543 = 8.3-8.7% of system FY2017-20, matching the TSP study's '8%' quote (which this data supersedes). Cross-check: 12,800 on-Harbor boardings in 2015 (Central Harbor study) x trend x street-vs-corridor share ~ 8,400.",
@@ -50,7 +52,7 @@
       "derived_speed": {
         "variant": "grade_separated"
       },
-      "note": "5-min peak / 10-min off-peak operating plan (user decision 2026-07); flat 5-min all-day kept as sensitivity row. Base routes stay scalar: GTFS measures 43 and 543 at flat 20-min peak AND midday. speed 30.0 is the EXOGENOUS FALLBACK (governance toggle exogenous_speed=1); the headline now DERIVES average speed from the v_cruise/dwell priors and this spacing (spec 02 \u00a74.9, grade-separated variant): central 80 km/h / 25 s -> ~30 mph, independently validating the old 30-mph value"
+      "note": "5-min peak / 10-min off-peak operating plan (user decision 2026-07); flat 5-min all-day kept as sensitivity row, and sub-5-min (3.5/7, 2.5/5) headways swept per the owner 2026-07-17 frequency test (GoA4 makes them cheap to run). Base routes stay scalar: GTFS measures 43 and 543 at flat 20-min peak AND midday. speed 30.0 is the EXOGENOUS FALLBACK, retained as the historical governance toggle (exogenous_speed=1, reproduces the pre-derived-speed headline); the headline now DERIVES average speed from the v_cruise/dwell priors and this spacing (spec 02 \u00a74.9, grade-separated variant): owner design cruise 60 mph (v_cruise central 96.6 km/h) / 25 s dwell / 1.0-mi -> ~31.8 mph derived (was ~30 mph at the old 80 km/h literature central)"
     },
     "visitor": {
       "share": [
@@ -90,35 +92,35 @@
   },
   "summary": {
     "ratio_fold": [
-      28.54449157584542,
-      42.971571991470945,
-      59.66490575326209
+      29.690901613698628,
+      44.37490896756757,
+      61.35758443883243
     ],
     "ratio_retain": [
-      30.82564500554943,
-      44.311575666964664,
-      60.398648811517575
+      31.897354863913783,
+      45.70741120167878,
+      62.072220460908255
     ],
     "uncapped": {
       "fold": [
-        10741.306242158695,
-        12347.40407578415,
-        14214.096909713939
+        10841.996759285918,
+        12468.108276689169,
+        14367.583783727698
       ],
       "retain": [
-        9359.73488115735,
-        11437.984445254478,
-        13619.281609223566
+        9491.045997224015,
+        11578.6987847768,
+        13779.61821750863
       ],
       "blend": [
-        9937.480475618402,
-        11948.927298972176,
-        13970.788135439081
+        10065.58519463072,
+        12074.128743604328,
+        14126.681526311102
       ],
       "total_fold": [
-        10741.306242158695,
-        12347.40407578415,
-        14214.096909713939
+        10841.996759285918,
+        12468.108276689169,
+        14367.583783727698
       ]
     }
   },
@@ -174,450 +176,484 @@
     {
       "id": "anchor_lo",
       "label": "anchor -> low",
-      "value": 10630.415797794314,
-      "pct": -11.67683993679364
+      "value": 10735.642616843237,
+      "pct": -11.67683993679365
     },
     {
       "id": "anchor_hi",
       "label": "anchor -> high",
-      "value": 13409.609470420277,
-      "pct": 11.414182301953106
+      "value": 13542.346568959118,
+      "pct": 11.41418230195312
     },
     {
       "id": "bivt_lo",
       "label": "bivt -> -0.035",
-      "value": 12902.691155531245,
-      "pct": 7.202434773300035
+      "value": 13094.916055986723,
+      "pct": 7.73312861706029
     },
     {
       "id": "bivt_hi",
       "label": "bivt -> -0.018",
-      "value": 11297.361015882812,
-      "pct": -6.135503607988613
+      "value": 11386.158820820132,
+      "pct": -6.324980820561702
     },
     {
       "id": "ovt_lo",
       "label": "ovt -> 1.6",
-      "value": 12124.950531059843,
-      "pct": 0.7405511584466448
+      "value": 12251.331355752687,
+      "pct": 0.792876490117614
     },
     {
       "id": "ovt_hi",
       "label": "ovt -> 2.5",
-      "value": 11912.014875517558,
-      "pct": -1.028631754561078
+      "value": 12041.311504718517,
+      "pct": -0.9349769399359501
     },
     {
       "id": "asc_lo",
       "label": "asc -> 0.0",
-      "value": 9461.981924030439,
-      "pct": -21.38481129169885
+      "value": 9561.296860181114,
+      "pct": -21.33829495509742
     },
     {
       "id": "asc_hi",
       "label": "asc -> 0.4",
-      "value": 14616.517300243091,
-      "pct": 21.441815788979575
+      "value": 14756.75782197717,
+      "pct": 21.405259996230154
     },
     {
       "id": "w0_lo",
       "label": "w0 -> 4.0",
-      "value": 11401.7007222606,
-      "pct": -5.268593718230068
+      "value": 11516.67229891735,
+      "pct": -5.251233935740758
     },
     {
       "id": "w0_hi",
       "label": "w0 -> 7.0",
-      "value": 12512.796726727887,
-      "pct": 3.9629840596133117
+      "value": 12635.234885792528,
+      "pct": 3.951287601841932
     },
     {
       "id": "lam_lo",
       "label": "lam -> 0.1",
-      "value": 11392.7746182613,
-      "pct": -5.3427565475367755
+      "value": 11507.626404912444,
+      "pct": -5.325655372130291
     },
     {
       "id": "lam_hi",
       "label": "lam -> 0.25",
-      "value": 12517.996148661803,
-      "pct": 4.006183628138249
+      "value": 12640.524723817005,
+      "pct": 3.9948076059273228
     },
     {
       "id": "xcap_lo",
       "label": "xcap -> 10.0",
-      "value": 11908.046100861424,
-      "pct": -1.061606449613105
+      "value": 12025.0083158724,
+      "pct": -1.0691048360841653
     },
     {
       "id": "xcap_hi",
       "label": "xcap -> 15.0",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "tau_lo",
       "label": "tau -> 0.25",
-      "value": 11704.452071044358,
-      "pct": -2.7531741573576145
+      "value": 11816.277278002797,
+      "pct": -2.786355076790948
     },
     {
       "id": "tau_hi",
       "label": "tau -> 0.4",
-      "value": 12372.154760828187,
-      "pct": 2.794455649996386
+      "value": 12498.718520413715,
+      "pct": 2.828154388401791
     },
     {
       "id": "phi_lo",
       "label": "phi -> 0.05",
-      "value": 12090.785928919313,
-      "pct": 0.456693435404435
+      "value": 12212.16426785599,
+      "pct": 0.47064510658754904
     },
     {
       "id": "phi_hi",
       "label": "phi -> 0.15",
-      "value": 11978.973203813577,
-      "pct": -0.47230627678615283
+      "value": 12095.795108260081,
+      "pct": -0.4867351151874205
     },
     {
       "id": "s0v_lo",
       "label": "s0v -> 0.1",
-      "value": 12070.241572822342,
-      "pct": 0.2859999755752583
+      "value": 12190.520785016615,
+      "pct": 0.2925821002661454
     },
     {
       "id": "s0v_hi",
       "label": "s0v -> 0.3",
-      "value": 12005.777923779042,
-      "pct": -0.24959837739708185
+      "value": 12124.009922904357,
+      "pct": -0.2546091327082411
     },
     {
       "id": "ws_lo",
       "label": "ws -> 0.4",
-      "value": 11953.113737398638,
-      "pct": -0.6871605058925662
+      "value": 12069.681187714392,
+      "pct": -0.7015768406949501
     },
     {
       "id": "ws_hi",
       "label": "ws -> 0.6",
-      "value": 12118.524528684482,
-      "pct": 0.6871605058925511
+      "value": 12240.233922117577,
+      "pct": 0.7015768406949651
     },
     {
       "id": "kappa_lo",
       "label": "kappa -> 0.6",
-      "value": 11622.292154826951,
-      "pct": -3.435802529462801
+      "value": 11728.575718908025,
+      "pct": -3.5078842034747506
     },
     {
       "id": "kappa_hi",
       "label": "kappa -> 1.0",
-      "value": 12449.346111256169,
-      "pct": 3.435802529462786
+      "value": 12581.339390923944,
+      "pct": 3.5078842034747653
     },
     {
       "id": "pkshare_lo",
       "label": "pkshare -> 0.45",
-      "value": 11906.681306005928,
-      "pct": -1.0729458926573148
+      "value": 12024.793221417822,
+      "pct": -1.070874438763612
     },
     {
       "id": "pkshare_hi",
       "label": "pkshare -> 0.6",
-      "value": 12164.920213262423,
-      "pct": 1.0726405805355188
+      "value": 12285.085437352489,
+      "pct": 1.0705745523881005
     },
     {
       "id": "vot_behav_lo",
       "label": "vot_behav -> 10.0",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "vot_behav_hi",
       "label": "vot_behav -> 22.0",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcar0_lo",
       "label": "pcar0 -> 0.05",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcar0_hi",
       "label": "pcar0 -> 0.25",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcar1_lo",
       "label": "pcar1 -> 0.35",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcar1_hi",
       "label": "pcar1 -> 0.65",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcar2_lo",
       "label": "pcar2 -> 0.55",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcar2_hi",
       "label": "pcar2 -> 0.85",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcarv_lo",
       "label": "pcarv -> 0.0",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "pcarv_hi",
       "label": "pcarv -> 0.3",
-      "value": 12035.819133041561,
+      "value": 12154.957554915984,
       "pct": 0.0
     },
     {
       "id": "v_cruise_lo",
-      "label": "v_cruise -> 70.0",
-      "value": 11922.51020953177,
-      "pct": -0.9414309259494188
+      "label": "v_cruise -> 90.0",
+      "value": 12115.741332654894,
+      "pct": -0.32263561665197965
     },
     {
       "id": "v_cruise_hi",
-      "label": "v_cruise -> 90.0",
-      "value": 12115.741332654894,
-      "pct": 0.6640362299390568
+      "label": "v_cruise -> 103.2",
+      "value": 12185.71480029045,
+      "pct": 0.25304280360919407
     },
     {
       "id": "dwell_lo",
       "label": "dwell -> 20.0",
-      "value": 12111.641109814693,
-      "pct": 0.6299693933168196
+      "value": 12231.996540315256,
+      "pct": 0.633807111634997
     },
     {
       "id": "dwell_hi",
       "label": "dwell -> 30.0",
-      "value": 11960.763552495737,
-      "pct": -0.6236017649997463
+      "value": 12078.697632846059,
+      "pct": -0.6273976830061583
     },
     {
       "id": "walk_mph_lo",
       "label": "walk_mph -> 2.5",
-      "value": 11266.043182345398,
-      "pct": -6.395708860254645
+      "value": 11379.557086210214,
+      "pct": -6.379293923508309
     },
     {
       "id": "walk_mph_hi",
       "label": "walk_mph -> 3.5",
-      "value": 12642.011965538586,
-      "pct": 5.036573130555465
+      "value": 12765.499865028643,
+      "pct": 5.022990062731486
     },
     {
       "id": "asc_untrimmed",
       "label": "asc -> 0.55 (untrimmed)",
-      "value": 16625.760823801502,
-      "pct": 38.13568183456094
+      "value": 16782.99753415608,
+      "pct": 38.07532818054406
     },
     {
       "id": "variety_logsum",
       "label": "logsum variety bonus (rejected)",
-      "value": 7523.529237153514,
-      "pct": -37.49050933725481
+      "value": 7597.887074640348,
+      "pct": -37.49145531514063
     },
     {
       "id": "linear_wait",
       "label": "linear h/2 wait (old spec)",
-      "value": 12526.346641567721,
-      "pct": 4.0755639737018825
+      "value": 12649.014833948077,
+      "pct": 4.064656555154116
     },
     {
       "id": "no_transfer",
       "label": "no transfer market",
-      "value": 10634.213016749483,
-      "pct": -11.645290617938018
+      "value": 10722.43324577414,
+      "pct": -11.785514697766011
     },
     {
       "id": "no_visitor",
       "label": "no visitor market",
-      "value": 12143.965267935839,
-      "pct": 0.8985357265579651
+      "value": 12267.510662579696,
+      "pct": 0.9259851970292673
     },
     {
       "id": "no_bin0",
       "label": "no sub-half-mile bin (old defn)",
-      "value": 12657.552867591829,
-      "pct": 5.165695227534959
+      "value": 12803.429987250482,
+      "pct": 5.335044811178531
     },
     {
       "id": "nonwork_short",
       "label": "non-work trips shorter (4-mi tilt)",
-      "value": 11627.145932626403,
-      "pct": -3.3954747566224244
+      "value": 11722.81367627311,
+      "pct": -3.555289080117734
     },
     {
       "id": "smooth_k",
       "label": "knife-edge choice (old spec)",
-      "value": 12444.283148302318,
-      "pct": 3.393736734871776
+      "value": 12565.505227283667,
+      "pct": 3.3776150226180004
     },
     {
       "id": "walk_spread",
       "label": "walk-taste spread +/-15%",
-      "value": 12034.250621094787,
-      "pct": -0.013032033212167435
+      "value": 12155.445126196726,
+      "pct": 0.004011295625999874
     },
     {
       "id": "grid_phase_half",
       "label": "new-line stops offset 0.5 mi",
-      "value": 12076.496272332051,
-      "pct": 0.3379673526234749
+      "value": 12196.317237381023,
+      "pct": 0.34027006904941287
     },
     {
       "id": "rapid_gtfs",
       "label": "rapid base -> GTFS current",
-      "value": 12064.025331913283,
-      "pct": 0.23435213307823663
+      "value": 12184.217852978305,
+      "pct": 0.24072727469531427
     },
     {
       "id": "exogenous_speed",
       "label": "exogenous speed (old spec)",
       "value": 12050.55966931031,
-      "pct": 0.12247223147681596
+      "pct": -0.8588914040547175
     },
     {
       "id": "jk_lo",
       "label": "jerk 0.5 (comfort floor)",
-      "value": 12025.767617201313,
-      "pct": -0.08351335068383088
+      "value": 12144.744730044486,
+      "pct": -0.08402188839703116
     },
     {
       "id": "jk_hi",
       "label": "jerk 1.0 (comfort ceiling)",
-      "value": 12040.849999049837,
-      "pct": 0.04179911606069646
+      "value": 12160.069159876904,
+      "pct": 0.04205366360044206
     },
     {
       "id": "a_comfort_hi",
       "label": "accel 1.3 (performance)",
-      "value": 12107.499672669328,
-      "pct": 0.5955601262815963
+      "value": 12244.276300832065,
+      "pct": 0.7348338775560548
     },
     {
       "id": "jk_trapezoid",
       "label": "trapezoid kinematics (R6)",
-      "value": 12055.963058027231,
-      "pct": 0.16736646474164618
+      "value": 12175.42477373888,
+      "pct": 0.16838576959586513
     },
     {
       "id": "headway_10_20",
       "label": "new line 10/20-min headway",
-      "value": 9727.644547475727,
-      "pct": -19.177544627845677
+      "value": 9828.596292590655,
+      "pct": -19.139196922859256
+    },
+    {
+      "id": "headway_35_7",
+      "label": "new line 3.5/7-min headway",
+      "value": 12923.89015069047,
+      "pct": 6.326082113413031
+    },
+    {
+      "id": "headway_25_5",
+      "label": "new line 2.5/5-min headway",
+      "value": 13440.66305370885,
+      "pct": 10.577622282793342
     },
     {
       "id": "headway_flat5",
       "label": "flat 5-min all day (old spec)",
-      "value": 12852.8744639203,
-      "pct": 6.788531148957713
+      "value": 12978.520729921189,
+      "pct": 6.775533121233494
     },
     {
       "id": "spacing_05",
       "label": "new stop spacing 0.5 mi",
-      "value": 14048.370493044014,
-      "pct": 16.721349313711922
+      "value": 14100.730479386284,
+      "pct": 16.00806021476683
     },
     {
       "id": "spacing_15",
       "label": "new stop spacing 1.5 mi",
-      "value": 9611.140672695354,
-      "pct": -20.145520911740963
+      "value": 9858.391102480797,
+      "pct": -18.89407216816119
     },
     {
       "id": "intra_tract_alt",
       "label": "intra-tract dist rule alt (rebuilt inputs)",
-      "value": 12043.543197192314,
-      "pct": 0.06417564160255408
+      "value": 12162.998118034799,
+      "pct": 0.06615048289957291
     }
   ],
   "sweep": {
     "60": [
+      13012.134737773365,
+      12509.014120044294,
       11760.649748183036,
       9476.874291185162,
       7877.698280350274
     ],
     "70": [
+      13188.089399317047,
+      12679.34712209157,
       11922.51020953177,
       9631.681809547192,
       8004.70785488026
     ],
     "80": [
+      13311.225898027566,
+      12798.562728419764,
       12035.819133041561,
       9727.644547475727,
       8088.416626610616
     ],
     "90": [
+      13398.06073865441,
+      12882.639158692438,
       12115.741332654894,
       9795.360630893569,
       8217.438483131104
     ]
   },
   "sweep_axis": "grade_separated_cruise_kmh",
-  "central_blend": 12035.819133041561,
+  "central_blend": 12154.957554915984,
   "width_sensitivities": [
     {
       "id": "dirichlet_half",
       "label": "Dirichlet concentration x0.5 (all 4 sites: looser bin shapes)",
       "blend": [
-        9942.27542154223,
-        11952.974402247066,
-        13977.310604157075
+        10068.076773157314,
+        12080.746085523846,
+        14130.76244324257
       ],
-      "band": 4035.0351826148453,
-      "band_delta": 1.7275227941663616
+      "band": 4062.685670085255,
+      "band_delta": 1.589338404872251
     },
     {
       "id": "dirichlet_double",
       "label": "Dirichlet concentration x2 (all 4 sites: tighter bin shapes)",
       "blend": [
-        9942.900681918522,
-        11949.248809352495,
-        13960.260629890707
+        10070.993331274245,
+        12078.38945705555,
+        14114.818895390927
       ],
-      "band": 4017.359947972185,
-      "band_delta": -15.947711848493782
+      "band": 4043.8255641166816,
+      "band_delta": -17.270767563701156
     },
     {
       "id": "s0se_half",
       "label": "S0 lognormal jitter x0.5 (tighter base-share draws)",
       "blend": [
-        9961.070514481624,
-        11974.533458079324,
-        13991.072410438768
+        10093.91154720345,
+        12099.752261381183,
+        14149.207227397883
       ],
-      "band": 4030.0018959571444,
-      "band_delta": -3.305763863534594
+      "band": 4055.295680194433,
+      "band_delta": -5.800651485949857
     },
     {
       "id": "s0se_double",
       "label": "S0 lognormal jitter x2 (wider base-share draws)",
       "blend": [
-        9820.847758723594,
-        11852.075223986143,
-        13885.104444855677
+        9944.352082754396,
+        11975.786990784807,
+        14034.685625807846
       ],
-      "band": 4064.256686132083,
-      "band_delta": 30.94902631140394
+      "band": 4090.33354305345,
+      "band_delta": 29.23721137306711
     }
-  ]
+  ],
+  "sweep_headways": [
+    2.5,
+    3.5,
+    5,
+    10,
+    15
+  ],
+  "sweep_fleet": {
+    "2.5": 48,
+    "3.5": 34,
+    "5": 25,
+    "10": 14,
+    "15": 9
+  }
 }

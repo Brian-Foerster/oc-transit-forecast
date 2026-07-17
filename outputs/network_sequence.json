@@ -20,9 +20,9 @@
         {
           "cv": {
             "best_continuation": "streetcar",
-            "continuation_p50": 54247.341586,
-            "cv_p50": 212361.001811,
-            "own_dNPV_p50": 158205.326146,
+            "continuation_p50": 54492.825423,
+            "cv_p50": 218113.600034,
+            "own_dNPV_p50": 163549.161904,
             "timing_split_note": "interim: delta = 1 (welfare-minutes are a level, never discounted); the one-cycle_gap deferral shows only in the Delta-K_PV display"
           },
           "dependencies": [],
@@ -31,56 +31,56 @@
           "excluded_fold_routes": [],
           "fold": {
             "newline_abc": [
-              11015.559438,
-              12293.075581,
-              13688.0813
+              11113.257934,
+              12418.557868,
+              13847.687701
             ],
             "newline_uncapped": [
-              10741.306242,
-              12347.404076,
-              14214.09691
+              10841.996759,
+              12468.108277,
+              14367.583784
             ],
             "wm_abc": [
-              125588.459152,
-              152697.712667,
-              183234.327121
+              130499.700026,
+              158032.274327,
+              189052.224585
             ],
             "wm_uncapped": [
-              107103.484064,
-              158205.326146,
-              218870.575795
+              111766.10632,
+              163549.161904,
+              224941.835842
             ]
           },
           "id": "harbor",
           "injected_committed_lines": [],
           "retain": {
             "newline_abc": [
-              9983.013116,
-              11310.152199,
-              12769.083058
+              10108.357892,
+              11458.130065,
+              12949.619015
             ],
             "newline_uncapped": [
-              9359.734881,
-              11437.984445,
-              13619.281609
+              9491.045997,
+              11578.698785,
+              13779.618218
             ],
             "wm_abc": [
-              131368.78859,
-              157781.777825,
-              187391.671301
+              136221.65206,
+              162909.430232,
+              193244.13054
             ],
             "wm_uncapped": [
-              116379.753065,
-              162656.240447,
-              220769.71876
+              120836.81435,
+              167892.766942,
+              226797.494364
             ]
           }
         },
         {
           "cv": {
             "best_continuation": "harbor",
-            "continuation_p50": 164313.870314,
-            "cv_p50": 211401.717888,
+            "continuation_p50": 169952.463936,
+            "cv_p50": 217097.53055,
             "own_dNPV_p50": 46948.3541,
             "timing_split_note": "interim: delta = 1 (welfare-minutes are a level, never discounted); the one-cycle_gap deferral shows only in the Delta-K_PV display"
           },
@@ -138,12 +138,12 @@
       ],
       "commitment": {
         "capital_delta_K": {
-          "LOW": 1822.030719,
-          "US_TYPICAL": 2967.256122
+          "LOW": 1807.150719,
+          "US_TYPICAL": 2949.991602
         },
         "capital_delta_K_pv": {
-          "LOW": 1822.030719,
-          "US_TYPICAL": 2967.256122,
+          "LOW": 1807.150719,
+          "US_TYPICAL": 2949.991602,
           "cycle_gap": 6.0,
           "discount_note": "Delta-K_PV display only (spec 07 \u00a73); interim welfare is never discounted. rate 7% real, BCA-wrapper property, cited not owned",
           "pv_factor": 1.0
@@ -155,11 +155,11 @@
         "line": "harbor",
         "pair_justification": null,
         "pair_justified": false,
-        "rationale": "harbor = argmax CV (own Delta-wm P50 158,205 + continuation 54,247 = CV 212,361).",
+        "rationale": "harbor = argmax CV (own Delta-wm P50 163,549 + continuation 54,493 = CV 218,114).",
         "scenario": "fold",
         "welfare_per_dollar_ratio_DISPLAY_ONLY": {
-          "LOW": 86.829121,
-          "US_TYPICAL": 53.317044,
+          "LOW": 90.501119,
+          "US_TYPICAL": 55.440552,
           "label": "INTERIM / DISPLAY ONLY -- never quoted as BCA output",
           "units": "welfare-min per $M Delta-K_PV"
         }
@@ -171,12 +171,12 @@
       },
       "interaction_matrix": [
         {
-          "I_p10": 2479.304782,
-          "I_p50": 6640.929284,
-          "I_p90": 13741.477661,
-          "approximation_component_p50": 6640.929284,
-          "leg_a_given_b_p50": 6117.897818,
-          "leg_b_given_a_p50": 7134.789,
+          "I_p10": 2582.321217,
+          "I_p50": 6862.428824,
+          "I_p90": 14110.59009,
+          "approximation_component_p50": 6862.428824,
+          "leg_a_given_b_p50": 6330.819173,
+          "leg_b_given_a_p50": 7374.373982,
           "pair": [
             "harbor",
             "streetcar"
@@ -187,15 +187,15 @@
       ],
       "network_before": [],
       "pairwise_p_beats": {
-        "harbor>streetcar": 0.97175
+        "harbor>streetcar": 0.972275
       },
       "remaining_budget_ut": null,
       "swap_results": {
         "hypothetical_positions_tested": [],
         "note": "runner-up-only bounded swap (spec 07 \u00a75.2); no committed HYPOTHETICAL line was displaced -- with 2 candidates the swap suffix is trivial (the runner-up is the sole alternative). Built (asbuilt) lines are never swapped.",
         "runner_up": "streetcar",
-        "runner_up_cv_p50": 211401.717888,
-        "winner_cv_p50": 212361.001811
+        "runner_up_cv_p50": 217097.53055,
+        "winner_cv_p50": 218113.600034
       }
     },
     {
@@ -209,8 +209,8 @@
           "cv": {
             "best_continuation": null,
             "continuation_p50": 0.0,
-            "cv_p50": 54247.341586,
-            "own_dNPV_p50": 54247.341586,
+            "cv_p50": 54492.825423,
+            "own_dNPV_p50": 54492.825423,
             "timing_split_note": "interim: delta = 1 (welfare-minutes are a level, never discounted); the one-cycle_gap deferral shows only in the Delta-K_PV display"
           },
           "dependencies": [
@@ -232,24 +232,24 @@
           ],
           "fold": {
             "newline_abc": [
-              5490.118538,
-              6495.381685,
-              7568.00044
+              5516.889396,
+              6526.671903,
+              7601.035431
             ],
             "newline_uncapped": [
-              5299.369727,
-              6552.637445,
-              8040.743649
+              5322.549294,
+              6580.957748,
+              8075.43306
             ],
             "wm_abc": [
-              38519.470528,
-              51124.530021,
-              66750.199315
+              38698.241525,
+              51352.547456,
+              67049.562202
             ],
             "wm_uncapped": [
-              28075.777201,
-              54247.341586,
-              89225.225305
+              28193.87455,
+              54492.825423,
+              89630.219204
             ]
           },
           "id": "streetcar",
@@ -258,24 +258,24 @@
           ],
           "retain": {
             "newline_abc": [
-              5325.039675,
-              6291.951761,
-              7368.812624
+              5349.716343,
+              6319.906215,
+              7403.250803
             ],
             "newline_uncapped": [
-              4847.348847,
-              6344.053642,
-              7966.821829
+              4867.040422,
+              6371.048823,
+              8001.252781
             ],
             "wm_abc": [
-              39045.145105,
-              51526.040138,
-              67029.073127
+              39196.672831,
+              51734.323217,
+              67342.698883
             ],
             "wm_uncapped": [
-              29597.850468,
-              54554.473133,
-              89262.999129
+              29724.150882,
+              54793.477259,
+              89653.476665
             ]
           }
         }
@@ -299,11 +299,11 @@
         "line": "streetcar",
         "pair_justification": null,
         "pair_justified": false,
-        "rationale": "streetcar = argmax CV (own Delta-wm P50 54,247 + continuation 0 = CV 54,247).",
+        "rationale": "streetcar = argmax CV (own Delta-wm P50 54,493 + continuation 0 = CV 54,493).",
         "scenario": "fold",
         "welfare_per_dollar_ratio_DISPLAY_ONLY": {
-          "LOW": 88.145849,
-          "US_TYPICAL": 52.465266,
+          "LOW": 88.544733,
+          "US_TYPICAL": 52.702685,
           "label": "INTERIM / DISPLAY ONLY -- never quoted as BCA output",
           "units": "welfare-min per $M Delta-K_PV"
         }
@@ -330,7 +330,7 @@
         "note": "runner-up-only bounded swap (spec 07 \u00a75.2); no committed HYPOTHETICAL line was displaced -- with 2 candidates the swap suffix is trivial (the runner-up is the sole alternative). Built (asbuilt) lines are never swapped.",
         "runner_up": null,
         "runner_up_cv_p50": null,
-        "winner_cv_p50": 54247.341586
+        "winner_cv_p50": 54492.825423
       }
     }
   ],
@@ -339,19 +339,19 @@
     "flyvbjerg_annotation": "portfolio optimism is worse than single-project optimism -- forecast errors are correlated across the model's lines (spec 05 \u00a74.3; within-draw aggregation makes this arithmetic, not rhetoric).",
     "points": [
       {
-        "capital_LOW": 1822.030719,
-        "capital_US_TYPICAL": 2967.256122,
-        "cum_capital_pv_LOW": 1822.030719,
-        "cum_capital_pv_US_TYPICAL": 2967.256122,
+        "capital_LOW": 1807.150719,
+        "capital_US_TYPICAL": 2949.991602,
+        "cum_capital_pv_LOW": 1807.150719,
+        "cum_capital_pv_US_TYPICAL": 2949.991602,
         "cum_wm_abc": [
-          125588.459152,
-          152697.712667,
-          183234.327121
+          130499.700026,
+          158032.274327,
+          189052.224585
         ],
         "cum_wm_uncapped": [
-          107103.484064,
-          158205.326146,
-          218870.575795
+          111766.10632,
+          163549.161904,
+          224941.835842
         ],
         "depth": 1,
         "depth_label": "decision-grade",
@@ -363,17 +363,17 @@
       {
         "capital_LOW": 923.590085,
         "capital_US_TYPICAL": 1551.705316,
-        "cum_capital_pv_LOW": 2437.45779,
-        "cum_capital_pv_US_TYPICAL": 4001.222893,
+        "cum_capital_pv_LOW": 2422.57779,
+        "cum_capital_pv_US_TYPICAL": 3983.958373,
         "cum_wm_abc": [
-          164968.841904,
-          204023.307465,
-          249015.105081
+          170081.395975,
+          209449.608232,
+          255177.841856
         ],
         "cum_wm_uncapped": [
-          135627.678104,
-          212361.001811,
-          307325.227789
+          140561.214847,
+          218113.600034,
+          313929.906288
         ],
         "depth": 2,
         "depth_label": "decision-grade",
@@ -433,7 +433,7 @@
     },
     "best_single_feasible": {
       "line": "harbor",
-      "wm_p50": 158205.326146
+      "wm_p50": 163549.161904
     },
     "greedy_portfolio": [
       "harbor",
@@ -446,31 +446,31 @@
   "seed": 42,
   "sensitivity": {
     "base_objective_note": "committed-order cumulative welfare-minutes P50 (final portfolio, within-draw)",
-    "base_objective_p50": 212361.001811,
+    "base_objective_p50": 218113.600034,
     "computed_n1b": [
       {
         "display": {
-          "cum_capital_pv_LOW": 2526.633172,
-          "cum_capital_pv_US_TYPICAL": 4151.044678,
+          "cum_capital_pv_LOW": 2511.753172,
+          "cum_capital_pv_US_TYPICAL": 4133.780158,
           "cycle_gap_yr": 4.0
         },
         "id": "cycle_gap_lo",
         "knob": "cycle_gap",
         "note": "cycle_gap is Delta-K_PV display only; welfare objective invariant (interim: level, not discounted)",
-        "objective_p50": 212361.001811,
+        "objective_p50": 218113.600034,
         "pct": 0.0,
         "value": 4.0
       },
       {
         "display": {
-          "cum_capital_pv_LOW": 2359.568557,
-          "cum_capital_pv_US_TYPICAL": 3870.362743,
+          "cum_capital_pv_LOW": 2344.688557,
+          "cum_capital_pv_US_TYPICAL": 3853.098223,
           "cycle_gap_yr": 8.0
         },
         "id": "cycle_gap_hi",
         "knob": "cycle_gap",
         "note": "cycle_gap is Delta-K_PV display only; welfare objective invariant (interim: level, not discounted)",
-        "objective_p50": 212361.001811,
+        "objective_p50": 218113.600034,
         "pct": 0.0,
         "value": 8.0
       },
@@ -485,7 +485,7 @@
         "knob": "network_budget",
         "note": "portfolio re-selected under budget 2000.0 $M",
         "objective_p50": 46948.3541,
-        "pct": -77.892196,
+        "pct": -78.475274,
         "value": 2000.0
       },
       {
@@ -499,7 +499,7 @@
         "id": "budget_hi",
         "knob": "network_budget",
         "note": "portfolio re-selected under budget 5000.0 $M",
-        "objective_p50": 212361.001811,
+        "objective_p50": 218113.600034,
         "pct": 0.0,
         "value": 5000.0
       },
@@ -507,24 +507,24 @@
         "id": "omega_0.5",
         "knob": "omega_scale",
         "note": "omega x 0.5 (anchor-margin apportionment, \u00a78i)",
-        "objective_p50": 208829.014956,
-        "pct": -1.663199,
+        "objective_p50": 214461.340923,
+        "pct": -1.674476,
         "value": 0.5
       },
       {
         "id": "omega_1.5",
         "knob": "omega_scale",
         "note": "omega x 1.5 (anchor-margin apportionment, \u00a78i)",
-        "objective_p50": 216003.01281,
-        "pct": 1.715009,
+        "objective_p50": 221819.563591,
+        "pct": 1.699098,
         "value": 1.5
       },
       {
         "id": "omega_uniform",
         "knob": "omega_allocation",
         "note": "omega uniform-along-line allocation (\u00a78i variant)",
-        "objective_p50": 211559.630478,
-        "pct": -0.377363,
+        "objective_p50": 217259.62635,
+        "pct": -0.391527,
         "value": "uniform"
       },
       {
@@ -538,7 +538,7 @@
         "id": "depth_cap_1",
         "knob": "depth_cap",
         "note": "depth_cap 1 relabels the exploratory tail; objective invariant",
-        "objective_p50": 212361.001811,
+        "objective_p50": 218113.600034,
         "pct": 0.0,
         "value": 1
       },
@@ -551,7 +551,7 @@
         "id": "depth_cap_3",
         "knob": "depth_cap",
         "note": "depth_cap 3 relabels the exploratory tail; objective invariant",
-        "objective_p50": 212361.001811,
+        "objective_p50": 218113.600034,
         "pct": 0.0,
         "value": 3
       }
@@ -603,7 +603,7 @@
         "LOW": 923.590085,
         "US_TYPICAL": 1551.705316
       },
-      "cv_p50": 54247.341586,
+      "cv_p50": 54492.825423,
       "line": "streetcar"
     },
     "mode": "interim (welfare-minutes level ranking)",

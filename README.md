@@ -45,10 +45,11 @@ features (see `scripts/model.py`):
   1.0 m/s²) with **jerk-limited (S-curve) kinematics** (§4.9b): acceleration
   ramps at a finite jerk 0.75 m/s³ (comfort band ~0.5–1.0), and if the stop
   spacing is too short to reach cruise the reached speed is **capped** to the
-  attainable peak (at 0.25-mi the train physically tops out near 70 km/h, not
-  80). At the prior-central 80 km/h cruise / 25 s dwell / 1-mi spacing this
-  gives ~29.8 mph (the ~1% jerk correction off R6's 30.09), still validating
-  the old 30-mph value (kept as the exogenous fallback; the `exogenous speed
+  attainable peak (at 0.25-mi the train physically tops out near 70 km/h, well
+  under the cruise setting). At the **owner 2026-07-17 60-mph design central
+  (v_cruise 96.6 km/h)** / 25 s dwell / 1-mi spacing this gives **~31.8 mph**
+  (was ~29.8 mph at the old 80 km/h literature central); the ~30-mph value is
+  kept as the exogenous fallback (the `exogenous speed
   (old spec)` sensitivity row and the `exogenous_speed=1` governance toggle
   restore the scalar path; `j→∞` with the cap retained is the `trapezoid
   kinematics (R6)` regression row). The street variant is calibrated **in
@@ -102,15 +103,22 @@ features (see `scripts/model.py`):
   HealthLine +78%) are still printed next to the model's implied uplift, and
   all structural knobs appear in the one-at-a-time sensitivity table.
 
-**Headline (2026-07, measured anchor; launch-equivalent ABC target; average
-speed now DERIVED with jerk-limited kinematics, spec 02 §4.9/§4.9b): uncapped
-blend P50 = 11,949 (P10-P90 9,938-13,971), implied corridor uplift
-+31/+44/+60%; backtest-calibrated P50 = 11,811 (10,356-13,370). The
+**Owner design change 2026-07-17:** the line's top speed is set to **60 mph
+outright** (v_cruise prior recentred 80→96.6 km/h; ~31.8 mph derived average,
+was ~29.8), and the design sweep now tests **sub-5-minute** peak headways
+({2.5, 3.5, 5, 10, 15}) with the derived fleet (`capcost.fleet`) annotated per
+column — a 2.5-min headway ≈ doubles the fleet (25→48 cars). The faster line
+raises the headline ~1% and the welfare BCA ~4%; the fleet drops 27→25 cars.
+
+**Headline (2026-07-17, measured anchor; launch-equivalent ABC target; average
+speed DERIVED with jerk-limited kinematics at the 60-mph design cruise, spec 02
+§4.9/§4.9b): uncapped blend P50 = 12,074 (P10-P90 10,066-14,127), implied
+corridor uplift +30/+44/+61%; backtest-calibrated P50 = 11,947 (10,478-13,520). The
 calibration's main effect is on the new-line ASC: posterior 0.14/0.19/0.24 vs
 prior 0.09/0.20/0.31 -- now near the prior midpoint, since the
 launch-equivalent target (mu=5,938) sits close to the model's backtest mass
-(P50 6,169). The matured-target row (mu=4,200) still gives 10,733
-(9,063-12,306), posterior 0.06/0.11/0.16 -- the old central, kept as a
+(P50 6,169). The matured-target row (mu=4,200) still gives 10,868
+(9,213-12,448), posterior 0.06/0.11/0.16 -- the old central, kept as a
 sensitivity.**
 
 ## Backtest (scripts/backtest_543.py)
@@ -136,10 +144,10 @@ the existing Route 43 local, both retained):
 - the residual is what the ABC treatment consumes: reweighting draws by the
   launch-equivalent target (kernel mu = 5,938) leaves the new-line ASC near
   0.19 (prior midpoint 0.20) and pulls the forward headline only slightly,
-  11,949 -> 11,811 (ESS 15,090, up from the matured target's 8,624 because
+  12,074 -> 11,947 (ESS 15,090, up from the matured target's 8,624 because
   the target now sits inside the prediction mass). The retired matured target
   (mu = 4,200) concentrated the ASC near 0.11 and pulled the headline to
-  10,733 (ESS 8,624) -- kept as a sensitivity row (README known issue 15,
+  10,868 (ESS 8,624) -- kept as a sensitivity row (README known issue 15,
   closed).
 
 Caveats: 2022 LODES / 2023 ACS proxy for 2013 markets; the 2013 Route 43's
@@ -149,15 +157,20 @@ covers).
 
 ## Reading the outputs (two easy stumbles)
 
-- The sensitivity tornado's central (12,036) is the *expected* fold/retain
-  blend at fixed bins, n=4,000; the headline P50 (11,949) is the full-MC
+- The sensitivity tornado's central (12,155) is the *expected* fold/retain
+  blend at fixed bins, n=4,000; the headline P50 (12,074) is the full-MC
   coin-flip blend at n=40,000. They differ by <1% by construction; the
   tornado measures deltas, not the headline.
 - The design sweep's "h=5" cell is 5-min peak / 10-min off-peak (sweep
   convention: off-peak = 2x peak), while the sensitivity row "flat 5-min
   all day" is a different service definition — the two 5-minute numbers
-  are not comparable.
-- The design sweep's rows are now the grade-separated **cruise** speed
+  are not comparable. The sweep's headway axis was extended below 5 min
+  (owner 2026-07-17 sub-5-min frequency test): peak {2.5, 3.5, 5, 10, 15},
+  each column annotated with the derived `capcost.fleet` car count at the
+  60-mph design central (`results_harbor.json` records `sweep_headways` +
+  `sweep_fleet`; the `headway_35_7` / `headway_25_5` one-at-a-time rows carry
+  the same 3.5/7 & 2.5/5 plans into the tornado).
+- The design sweep's rows are the grade-separated **cruise** speed
   (60–90 km/h), not the average speed — the derived average mph is printed in
   parentheses per row (`results_harbor.json` records `sweep_axis`). Adjacent
   cruise cells at fixed headway move ≤1.7% (spec 02 §5 continuity gate ≤8%);

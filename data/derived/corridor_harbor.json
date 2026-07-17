@@ -8,6 +8,8 @@
       "43"
     ],
     "window_mi": null,
+    "route_mi": 12.1,
+    "route_mi_note": "corridor length, miles (scripts/route43_share.py, scripts/anchor_from_apc.py: Route 43 runs ~18 mi but the priced corridor is 12.1). Consumed by model.py's design-sweep fleet annotation (capcost.fleet) and matches the tbc harbor profile / capcost gate route length.",
     "anchor_low": 7650,
     "anchor_high": 9650,
     "anchor_note": "MEASURED (2026-07): OCTA quarterly performance reports give FY2019 route totals 43 = 2,095,510 and 543 = 953,471 (scripts/anchor_from_apc.py, source URLs inside). Weekday: 543 (wkdy-only) 3,739; 43 (7-day) 6,350-6,985; x FY2019->FY2024 system trend 0.90-0.99 (central 0.94); corridor = 543 + 43 x corridor share 0.75 (LODES) - 0.86 (ACS), scripts/route43_share.py. 43+543 = 8.3-8.7% of system FY2017-20, matching the TSP study's '8%' quote (which this data supersedes). Cross-check: 12,800 on-Harbor boardings in 2015 (Central Harbor study) x trend x street-vs-corridor share ~ 8,400.",
@@ -50,7 +52,7 @@
       "derived_speed": {
         "variant": "grade_separated"
       },
-      "note": "5-min peak / 10-min off-peak operating plan (user decision 2026-07); flat 5-min all-day kept as sensitivity row. Base routes stay scalar: GTFS measures 43 and 543 at flat 20-min peak AND midday. speed 30.0 is the EXOGENOUS FALLBACK (governance toggle exogenous_speed=1); the headline now DERIVES average speed from the v_cruise/dwell priors and this spacing (spec 02 \u00a74.9, grade-separated variant): central 80 km/h / 25 s -> ~30 mph, independently validating the old 30-mph value"
+      "note": "5-min peak / 10-min off-peak operating plan (user decision 2026-07); flat 5-min all-day kept as sensitivity row, and sub-5-min (3.5/7, 2.5/5) headways swept per the owner 2026-07-17 frequency test (GoA4 makes them cheap to run). Base routes stay scalar: GTFS measures 43 and 543 at flat 20-min peak AND midday. speed 30.0 is the EXOGENOUS FALLBACK, retained as the historical governance toggle (exogenous_speed=1, reproduces the pre-derived-speed headline); the headline now DERIVES average speed from the v_cruise/dwell priors and this spacing (spec 02 \u00a74.9, grade-separated variant): owner design cruise 60 mph (v_cruise central 96.6 km/h) / 25 s dwell / 1.0-mi -> ~31.8 mph derived (was ~30 mph at the old 80 km/h literature central)"
     },
     "visitor": {
       "share": [

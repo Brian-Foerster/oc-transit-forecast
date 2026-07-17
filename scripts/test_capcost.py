@@ -20,8 +20,9 @@ hand-check TDD ladder (E55 red -> green first). No files read; pure arithmetic.
   - test_rem_sanity: spec 04 §5 gate 2 -- LOW rate card on REM's headline
     quantities lands NEAR the sheet's 100-125 $/km band; assert the documented
     point value, not band membership (the bare-headline result is just below).
-  - test_fleet_harbor / test_fleet_rem: spec 04 §5 gate 4 -- ~27 cars for
-    Harbor, within ~15% of REM's 212-car order at REM's line length.
+  - test_fleet_harbor / test_fleet_rem: spec 04 §5 gate 4 -- 25 cars for Harbor
+    at the 60-mph design central (owner 2026-07-17; was 27 at the old 80 km/h
+    central), within ~15% of REM's 212-car order at REM's line length.
 """
 import math
 import sys
@@ -122,19 +123,29 @@ def test_rem_sanity():
 
 
 def test_fleet_harbor():
-    """spec 04 §5 gate 4 / §3.1: Harbor fleet ~= 27 cars."""
+    """spec 04 §5 gate 4 / §3.1: Harbor fleet. Derives from the v_cruise prior
+    central via cc.fleet's default derived speed: at the owner 2026-07-17 60-mph
+    design central (v_cruise 96.6 km/h -> ~31.8 mph avg) the faster line cuts the
+    cycle time, so the fleet is 25 cars (was 27 at the old 80 km/h literature
+    central / ~29.8 mph). This gate MOVES with the prior by design."""
     cars = cc.fleet(12.1, 5.0, cars_per_train=2)
-    assert cars == 27, cars
+    assert cars == 25, cars
     print(f"  test_fleet_harbor OK  (12.1 mi, 5-min peak, 2-car -> {cars} cars)")
 
 
 def test_fleet_rem():
     """spec 04 §5 gate 4: within ~15% of REM's 212-car order at REM's length
     (67 km, ~4-min peak, 4-car -- the trunk consist of the 2/4-car mix), using
-    the model's grade-separated derived speed at REM's ~1.6-mi station spacing
-    (single-source speed)."""
+    the model's grade-separated speed machinery at REM's ~1.6-mi station spacing.
+
+    Keys on REM's OWN cruise speed (the ~80 km/h REM-class literature value that
+    WAS the v_cruise central before the owner 2026-07-17 60-mph HARBOR design
+    decision), NOT the live v_cruise prior: derived_v_avg_mph now carries
+    harbor's design top speed, and importing another corridor's design cruise
+    into a REM plausibility check is a category error (this coupling is what
+    drifted the check when the harbor prior moved)."""
     rem_mi = 67.0 / KM_PER_MI
-    v_rem = cc.derived_v_avg_mph(spacing_mi=rem_mi / 26.0)
+    v_rem = 60.0 / float(cc.grade_sep_min_per_mile(80.0, 25.0, rem_mi / 26.0))
     cars = cc.fleet(rem_mi, 4.0, cars_per_train=4, v_avg_mph=v_rem)
     assert abs(cars / 212.0 - 1.0) < 0.15, (cars, cars / 212.0)
     print(f"  test_fleet_rem OK  ({cars} cars vs 212 order = "

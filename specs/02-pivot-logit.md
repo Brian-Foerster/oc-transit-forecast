@@ -28,11 +28,20 @@ must not be silently imputed to it.
   sigma=500, NTD back-trend 1.28678 — §4.6, landed 2026-07-11; matured
   mu=4,200 kept as a row); headline = uncapped | backtest-calibrated
   side by side.
-- Current Harbor answer: uncapped 11,969 (9,956-13,998); calibrated
-  11,833 (10,377-13,395); ASC posterior 0.14/0.19/0.24 (matured row:
-  0.06/0.11/0.16). Average speed is now DERIVED (§4.9, landed 2026-07-11):
-  the central move is within noise, the bands widened slightly, and the
-  stop-spacing sensitivity rows shrank toward physical honesty.
+- Current Harbor answer (2026-07-17, owner 60-mph design): uncapped 12,074
+  (10,066-14,127); calibrated 11,947 (10,478-13,520); ASC posterior
+  0.14/0.19/0.24 (matured row: 0.06/0.11/0.16). Average speed is DERIVED
+  (§4.9, landed 2026-07-11): the central move is within noise, the bands
+  widened slightly, and the stop-spacing sensitivity rows shrank toward
+  physical honesty.
+- **Owner design change 2026-07-17:** top speed set to 60 mph outright —
+  v_cruise prior recentred 70-90 → **90-103.2 km/h** (central 96.6 = 60 mph;
+  basis literature → judgment), lifting the derived average ~29.8 → ~31.8 mph
+  and trimming the fleet 27 → 25 cars (`capcost.fleet`). The design sweep's
+  peak-headway axis extends below 5 min ({2.5, 3.5, 5, 10, 15}, fleet annotated
+  per column; new `headway_35_7` / `headway_25_5` one-at-a-time rows) per the
+  owner sub-5-min frequency test. Headline +~1%, welfare BCA +~4%; the 2013
+  backtest and ABC weights/ESS/posterior stay byte-identical.
 
 ## 3. Inputs / outputs
 

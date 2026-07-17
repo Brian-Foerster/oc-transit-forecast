@@ -142,9 +142,10 @@ def derived_v_avg_mph(spacing_mi=1.0):
     the given station spacing, via model.grade_sep_min_per_mile (spec 02 §4.9b,
     the ridership model's own speed machinery). Default spacing 1.0 mi is the
     mode's canonical station spacing (spec 04, '1-mi stations'); pass the actual
-    spacing for other designs (e.g. REM's ~1.6 mi). At central 80 km/h cruise /
-    25 s dwell / 1.0-mi spacing this returns ~29.76 mph (~47.9 km/h), matching
-    the tbc profile's ~47 km/h cycle-time input."""
+    spacing for other designs (e.g. REM's ~1.6 mi). At the owner 2026-07-17
+    60-mph design central (v_cruise 96.6 km/h) / 25 s dwell / 1.0-mi spacing this
+    returns ~31.82 mph (~51.2 km/h) -- the tbc profile's cycle-time input (was
+    ~29.76 mph / ~47.9 km/h at the old 80 km/h literature central)."""
     mpm = float(grade_sep_min_per_mile(_central("v_cruise"), _central("dwell"),
                                        spacing_mi))
     return 60.0 / mpm
@@ -161,7 +162,8 @@ def fleet(route_mi, headway_peak_min, cars_per_train=2, v_avg_mph=None,
     Keys on the PEAK consist only (spec 04 §3.1 consist policy). v_avg defaults
     to the grade-separated derived speed at the mode's 1.0-mi canonical spacing
     (derived_v_avg_mph). Spare cars rounded UP (whole-car procurement). Harbor
-    (12.1 mi, 5-min peak, 2-car) -> 27 cars (gate)."""
+    (12.1 mi, 5-min peak, 2-car) -> 25 cars at the 60-mph design central (gate;
+    was 27 at the old 80 km/h literature central)."""
     if v_avg_mph is None:
         v_avg_mph = derived_v_avg_mph(1.0)
     cycle_min = 2.0 * route_mi / v_avg_mph * (1.0 + layover_frac) * 60.0

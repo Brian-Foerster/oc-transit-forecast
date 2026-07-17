@@ -8,20 +8,29 @@ does, decisions that are NOT derivable from the code, and where to go next.
 
 A ridership forecast for a proposed rapid transit line on **Harbor Blvd,
 Fullerton Transportation Center → Harbor/MacArthur, Santa Ana (12.1 mi)**,
-with a user-specified design of **~30 mph average speed / 5-minute headway**
-(stop spacing ~1 mi). As of spec 02 §4.9 (2026-07-11) the average speed is
+with an owner design of a **60 mph top speed / 5-minute headway** (stop
+spacing ~1 mi). As of spec 02 §4.9 (2026-07-11) the average speed is
 **derived** from grade-separated cruise/dwell priors and the spacing, not a
-free config scalar; the central design reproduces ~30 mph. It is an
+free config scalar; after the **owner 2026-07-17 60-mph top-speed decision**
+(v_cruise prior recentred 80→96.6 km/h) the central design reproduces **~31.8
+mph** average (~30 mph was the pre-2026-07-17 literature central, kept as the
+exogenous fallback). It is an
 incremental (pivot-point)
 logit — the same philosophy as FTA STOPS's incremental mode — Monte-Carlo'd
 for honest uncertainty, anchored to observed boardings, built to be run in
 seconds instead of the person-months a STOPS run costs.
 
-**Current headline (2026-07-11, measured anchor; launch-equivalent ABC
-target; average speed DERIVED with jerk-limited kinematics, spec 02
-§4.9/§4.9b): uncapped ~11,950 weekday boardings (P10–P90 9,938–13,971),
-implied uplift +31/+44/+60%; backtest-calibrated (ABC) ~11,811
-(10,356–13,370), shown SIDE BY SIDE.** The derived-speed landing (R6)
+**Current headline (2026-07-17, measured anchor; launch-equivalent ABC
+target; average speed DERIVED with jerk-limited kinematics at the owner 60-mph
+design cruise, spec 02 §4.9/§4.9b): uncapped ~12,074 weekday boardings (P10–P90
+10,066–14,127), implied uplift +30/+44/+61%; backtest-calibrated (ABC) ~11,947
+(10,478–13,520), shown SIDE BY SIDE.** _Owner design change 2026-07-17: top
+speed set to 60 mph outright (v_cruise 80→96.6 km/h; ~31.8 mph derived avg) and
+a sub-5-min headway sweep ({2.5, 3.5, 5, 10, 15} peak, fleet annotated per
+column); the faster line lifts the headline ~1% and the welfare BCA ~4%, and
+trims the fleet 27→25 cars (capcost.fleet). The 2013 backtest and the ABC
+weights/ESS/posterior stay byte-identical — only the forward forecast moved._
+The derived-speed landing (R6)
 restated the headline deliberately: the central barely moved (speed's central
 still ~30 mph), the bands widened slightly (speed is now uncertain), and the
 stop-spacing sensitivity rows shrank toward physical honesty (0.5-mi
@@ -94,8 +103,9 @@ the ASC at 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 (matured-target row:
    a rail-class product), derived-speed model split grade-separated
    (forward) vs street (bus backtests), economic-layer premium band to
    rail-class 5-25%, stage-3 build GTFS as rail mode. Grade-separated
-   physics at 80 km/h cruise / 25-s dwell / 1-mi stops gives ~29.5 mph —
-   independently validates the 30-mph config value.
+   physics at the owner 60-mph design cruise (96.6 km/h) / 25-s dwell / 1-mi
+   stops gives ~31.8 mph — the ~30-mph config value is retained as the
+   exogenous fallback (80 km/h literature cruise gave ~29.5 mph).
 9. **Spec 05 implemented (2026-07-09):** (a) REFERENCE relabeled into a
    basis-tagged, display-only object (regime x horizon; Cleveland split
    launch +40 / matured +78; ALM analogs Canada Line / REM South Shore in
@@ -184,15 +194,22 @@ numpy/pandas/matplotlib (requirements.txt); model runs take seconds
   `v/a + a/j`, and speed is capped to the reachable peak `v_p` when the spacing
   is too short — `s_curve_phase_time` / `stop_run_time`; optional `accel`/`jerk`
   override keys on the block are the row mechanism). The two new priors
-  `v_cruise` (70–90 km/h) / `dwell` (20–30 s) are appended LAST in `PRIORS`.
+  `v_cruise` (**90–103.2 km/h**, central 96.6 = 60 mph; owner 2026-07-17
+  design decision, was 70–90 km/h literature) / `dwell` (20–30 s) are appended
+  LAST in `PRIORS`.
   The street variant (`calibrate_street`) is solved in code from the 43/543
   measured points, prices hypothetical bus designs only, and is exempt from the
   S-curve (its measured end-to-end speeds already embed jerk). Governance:
   `over` key `exogenous_speed=1` (sensitivity row "exogenous speed (old spec)")
   restores the config scalar; `j→∞` with the cap retained is the "trapezoid
-  kinematics (R6)" regression row. The design sweep's speed axis is now the
-  grade-separated cruise axis (`sweep_axis` in the results JSON). Streetcar
-  stays exogenous.
+  kinematics (R6)" regression row. The design sweep's speed axis is the
+  grade-separated cruise axis (`sweep_axis` in the results JSON); its peak-
+  headway axis was extended below 5 min (owner 2026-07-17 sub-5-min frequency
+  test: `{2.5, 3.5, 5, 10, 15}`), each column annotated with the derived
+  `capcost.fleet` car count at the 60-mph central (`sweep_headways` /
+  `sweep_fleet` in the results JSON; `headway_35_7` / `headway_25_5` are the
+  matching one-at-a-time rows). Streetcar stays exogenous and keeps the
+  `{5, 10, 15}` axis (sub-5-min is a grade-separated-ALM question).
 - **Each sub-rider takes their best service — deliberately NOT a logsum.**
   Within a cell, rider street-position is a K=8 quadrature over one stop-grid
   period; every service's walk time comes from the SAME position

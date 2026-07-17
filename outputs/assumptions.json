@@ -1,8 +1,8 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 43,
-    "literature": 10,
+    "judgment": 44,
+    "literature": 9,
     "locally-calibrated": 1,
     "measured": 28
   },
@@ -727,7 +727,7 @@
     },
     {
       "basis": "judgment",
-      "effect_pct": 20.1,
+      "effect_pct": 19.1,
       "id": "harbor_service_new",
       "rows": [
         [
@@ -748,6 +748,14 @@
         ],
         [
           "harbor",
+          "headway_35_7"
+        ],
+        [
+          "harbor",
+          "headway_25_5"
+        ],
+        [
+          "harbor",
           "spacing_05"
         ],
         [
@@ -756,6 +764,22 @@
         ]
       ],
       "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 11.8,
+      "id": "no_transfer",
+      "rows": [
+        [
+          "harbor",
+          "no_transfer"
+        ],
+        [
+          "streetcar",
+          "no_transfer"
+        ]
+      ],
+      "tier": "structural"
     },
     {
       "basis": "measured",
@@ -772,22 +796,6 @@
         ]
       ],
       "tier": "config"
-    },
-    {
-      "basis": "judgment",
-      "effect_pct": 11.6,
-      "id": "no_transfer",
-      "rows": [
-        [
-          "harbor",
-          "no_transfer"
-        ],
-        [
-          "streetcar",
-          "no_transfer"
-        ]
-      ],
-      "tier": "structural"
     },
     {
       "basis": "literature",
@@ -815,7 +823,7 @@
     },
     {
       "basis": "judgment",
-      "effect_pct": 5.2,
+      "effect_pct": 5.3,
       "id": "no_bin0",
       "rows": [
         [
@@ -847,7 +855,7 @@
     },
     {
       "basis": "judgment",
-      "effect_pct": 3.4,
+      "effect_pct": 3.6,
       "id": "nonwork_short",
       "rows": [
         [
@@ -894,6 +902,22 @@
       "tier": "structural"
     },
     {
+      "basis": "judgment",
+      "effect_pct": 0.9,
+      "id": "exogenous_speed",
+      "rows": [
+        [
+          "harbor",
+          "exogenous_speed"
+        ],
+        [
+          "streetcar",
+          "exogenous_speed"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
       "basis": "measured",
       "effect_pct": 0.8,
       "id": "s0_se_width",
@@ -919,7 +943,7 @@
     },
     {
       "basis": "literature",
-      "effect_pct": 0.6,
+      "effect_pct": 0.7,
       "id": "a_comfort",
       "rows": [
         [
@@ -972,22 +996,6 @@
         ]
       ],
       "tier": "constant"
-    },
-    {
-      "basis": "judgment",
-      "effect_pct": 0.1,
-      "id": "exogenous_speed",
-      "rows": [
-        [
-          "harbor",
-          "exogenous_speed"
-        ],
-        [
-          "streetcar",
-          "exogenous_speed"
-        ]
-      ],
-      "tier": "structural"
     },
     {
       "basis": "judgment",
@@ -1106,7 +1114,7 @@
       "basis": "judgment",
       "extras_pct": null,
       "id": "bivt",
-      "tornado_pct": 7.2
+      "tornado_pct": 7.7
     },
     {
       "basis": "judgment",
@@ -1124,7 +1132,7 @@
       "basis": "judgment",
       "extras_pct": null,
       "id": "kappa",
-      "tornado_pct": 3.4
+      "tornado_pct": 3.5
     },
     {
       "basis": "judgment",
@@ -1151,12 +1159,6 @@
       "tornado_pct": 1.0
     },
     {
-      "basis": "literature",
-      "extras_pct": null,
-      "id": "v_cruise",
-      "tornado_pct": 0.9
-    },
-    {
       "basis": "judgment",
       "extras_pct": null,
       "id": "ws",
@@ -1173,6 +1175,12 @@
       "extras_pct": null,
       "id": "phi",
       "tornado_pct": 0.5
+    },
+    {
+      "basis": "judgment",
+      "extras_pct": null,
+      "id": "v_cruise",
+      "tornado_pct": 0.3
     },
     {
       "basis": "judgment",
@@ -1388,40 +1396,65 @@
         ]
       ],
       "id": "s0_se_width"
+    },
+    {
+      "history": [
+        [
+          "2026-07-11",
+          [
+            70.0,
+            90.0,
+            "uni"
+          ],
+          "literature",
+          "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca"
+        ],
+        [
+          "2026-07-17",
+          [
+            90.0,
+            103.2,
+            "uni"
+          ],
+          "judgment",
+          "owner decision: design top speed 60 mph; band = delivery/degraded-ops uncertainty around the design value"
+        ]
+      ],
+      "id": "v_cruise"
     }
   ],
   "width_sensitivities": [
     {
-      "band": 4035.0351826148453,
-      "band_delta": 1.7275227941663616,
+      "band": 4062.685670085255,
+      "band_delta": 1.589338404872251,
       "corridor": "harbor",
       "id": "dirichlet_half",
       "label": "Dirichlet concentration x0.5 (all 4 sites: looser bin shapes)",
       "pct_of_headline_band": 0.04
     },
     {
-      "band": 4017.359947972185,
-      "band_delta": -15.947711848493782,
+      "band": 4043.8255641166816,
+      "band_delta": -17.270767563701156,
       "corridor": "harbor",
       "id": "dirichlet_double",
       "label": "Dirichlet concentration x2 (all 4 sites: tighter bin shapes)",
-      "pct_of_headline_band": -0.4
+      "pct_of_headline_band": -0.43
     },
     {
-      "band": 4030.0018959571444,
-      "band_delta": -3.305763863534594,
+      "band": 4055.295680194433,
+      "band_delta": -5.800651485949857,
       "corridor": "harbor",
       "id": "s0se_half",
       "label": "S0 lognormal jitter x0.5 (tighter base-share draws)",
-      "pct_of_headline_band": -0.08
+      "pct_of_headline_band": -0.14
     },
     {
-      "band": 4064.256686132083,
-      "band_delta": 30.94902631140394,
+      "band": 4090.33354305345,
+      "band_delta": 29.23721137306711,
       "corridor": "harbor",
       "id": "s0se_double",
       "label": "S0 lognormal jitter x2 (wider base-share draws)",
-      "pct_of_headline_band": 0.77
+      "pct_of_headline_band": 0.72
     },
     {
       "band": 2288.192193850932,

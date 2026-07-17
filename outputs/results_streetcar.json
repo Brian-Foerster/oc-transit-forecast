@@ -540,13 +540,13 @@
     },
     {
       "id": "v_cruise_lo",
-      "label": "v_cruise -> 70.0",
+      "label": "v_cruise -> 90.0",
       "value": 5716.664643508402,
       "pct": 0.0
     },
     {
       "id": "v_cruise_hi",
-      "label": "v_cruise -> 90.0",
+      "label": "v_cruise -> 103.2",
       "value": 5716.664643508402,
       "pct": 0.0
     },
