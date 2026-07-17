@@ -103,6 +103,56 @@ DISPLAY_DISCOUNT = 0.07
 # keeps the committed JSON readable. Applied to every float before the dump.
 CANON_DECIMALS = 6
 
+# spec 07 §9 N4 registry conversion (§10 G7): the constant-tier registry leaves
+# capcost + the harness CONSUME. Declared in the artifact's assumptions_manifest
+# so each claims a network-artifact row (check_assumptions' network scan), and
+# their values-hash (with the active prior bands) enters the run_id preimage so
+# a rate-card or prior-band edit CHANGES the id (D60 review rec 3a -- the old id
+# was input-keyed only and did not move when the forecast restated).
+# spec 07 §3 / §8g sigma_struct: the per-line INDEPENDENT structural-error floor
+# the ABC kernel's sigma asserts but the within-draw sum omits (it carries only
+# the CORRELATED parameter component, so the portfolio bands are otherwise too
+# narrow). Implemented HARNESS-SIDE (NOT a model prior -- no new PRIORS key, the
+# rng stream is untouched): per-line N(0, sigma_struct) noise on the boardings
+# scale, converted to welfare-minutes by each line's welfare-per-boarding ratio,
+# seeded DETERMINISTICALLY from the run fingerprint (gate G6). 400 wd boardings
+# is the structural floor near the 350-500 ABC-kernel sigma band (spec 07 §8g);
+# the sigma_struct on/off G7 row is base vs inflated portfolio bands.
+SIGMA_STRUCT_BOARDINGS = 400.0
+# noise replicates per base draw: the sigma_struct band is the quantile of the
+# CONVOLUTION of the correlated within-draw sum with the independent per-line
+# error. A single noise draw per base draw estimates that quantile with sampling
+# noise comparable to the (small) true widening; M replicates per base draw is a
+# faithful variance reduction -- still per-line N(0, sigma_struct) noise, just a
+# tighter estimate of the SAME inflated distribution (deterministic given the
+# seed).
+SIGMA_STRUCT_REPLICATES = 20
+
+_CAPITAL_CONSTS = ("cap_occ", "cap_depot", "cap_route_km", "cap_viaduct_km",
+                   "cap_station", "cap_car", "cap_markup_low", "cap_markup_ut",
+                   "cap_delivery_ut", "cap_crossing_low", "cap_crossing_ut")
+_HARNESS_KNOBS = ("cycle_gap", "network_budget", "depth_cap",
+                  "omega_allocation", "omega_stop_materialization",
+                  "feeder_headway_map")
+
+
+def _assumptions_manifest():
+    """The registry leaves the harness + capcost consume, plus the active prior
+    bands, as a canonical preimage for (a) the run_id values-hash and (b) the
+    artifact's assumptions_manifest rows the registry claims. Returns
+    (consumed_list, values_hash, prior_bands)."""
+    from model import PRIORS
+    consumed = [{"id": cid, "value": val(cid), "role": "capital-coefficient"}
+                for cid in _CAPITAL_CONSTS]
+    consumed += [{"id": cid, "value": val(cid), "role": "harness-knob"}
+                 for cid in _HARNESS_KNOBS]
+    consumed.sort(key=lambda d: d["id"])
+    prior_bands = {k: list(PRIORS[k]) for k in PRIORS}     # name -> (lo, hi, shape)
+    preimage = {"consumed": {c["id"]: c["value"] for c in consumed},
+                "prior_bands": prior_bands}
+    values_hash = nm.network_fingerprint(preimage)
+    return consumed, values_hash, prior_bands
+
 
 # ---------------------------------------------------------------------------
 # GTFS cache (loaded at most once -- the only slow, shared read)
@@ -176,6 +226,13 @@ def load_candidates(path, gtfs, tracts):
     cands = []
     for c in doc["candidates"]:
         cfg = json.load(open(os.path.join(ROOT, c["config"]), encoding="utf-8"))
+        # H's measured walk-access mass profile (its committed derived file's
+        # walk_bins) -- the reference distribution the spec 07 N4 'walk_bin_mass'
+        # omega-allocation variant weights by (margin-distribution sensitivity).
+        dj = json.load(open(os.path.join(DER, f"corridor_{c['id']}.json"),
+                            encoding="utf-8"))
+        walk_centers = list(dj["walk_bins"]["centers"])
+        walk_weights = list(dj["walk_bins"]["weights"])
         x, y = _alignment_xy(cfg, gtfs)
         full_len = nm.polyline_length(x, y)
         win = cfg.get("window_mi") or [0.0, full_len]
@@ -190,6 +247,18 @@ def load_candidates(path, gtfs, tracts):
         hw = sn["headway"]
         hpk = float(hw["peak"] if isinstance(hw, dict) else hw)
         stations = int(round(route_mi / spacing)) + 1
+        # derived_v_avg_mph audit (D60 review rec 3c): fleet() defaults v_avg to
+        # capcost.derived_v_avg_mph(1.0) = the GLOBAL v_cruise design central
+        # (96.6 km/h since the owner 2026-07-17 60-mph decision). That is CORRECT
+        # for every candidate here BY CONSTRUCTION: spec 07 §1 prices every
+        # candidate as an elevated automated light metro (uniform mode), so the
+        # ALM design cruise is the right fleet speed even for the streetcar
+        # candidate (whose OWN ridership run uses an exogenous at-grade speed --
+        # a different question, model.py's else branch, untouched here). The one
+        # place the default is a category error -- REM's non-ALM plausibility
+        # check -- passes its own literature cruise explicitly (test_fleet_rem,
+        # D60 fix); it is not a default consumer. No latent Harbor-prior coupling
+        # survives in the harness path.
         cars = capcost.fleet(route_mi, hpk)
         wp, wm = _corridor_workers(wx, wy, [w0, w1], tracts)
         removed = cfg.get("bca", {}).get("routes_removed", {"fold": [], "retain": []})
@@ -202,6 +271,7 @@ def load_candidates(path, gtfs, tracts):
             "spacing": spacing, "headway": hw, "headway_peak": hpk,
             "route_mi": route_mi, "stations": stations, "cars": cars,
             "worker_pts": wp, "worker_mass": wm,
+            "walk_centers": walk_centers, "walk_weights": walk_weights,
             "folds": {s: list(removed.get(s, [])) for s in ("fold", "retain")},
         })
     return cands, bool(doc.get("hand_supplied")), doc.get("substitution_note", "")
@@ -271,16 +341,21 @@ def _fold_route_geometry(routes, gtfs):
     return out
 
 
-def dependency(H, B, gtfs, allocation=None):
+def dependency(H, B, gtfs, allocation=None, exclusive_tract=False):
     """The spec 07 §6.2 predicate pieces for candidate B against committed line
     H: omega(H,B), the fold_sub ghost term, and the co-location flag. B DEPENDS
     on H when omega > DEP_OMEGA OR co-located OR (a feeder edge appears once H is
     injected). Returns a dict of the pieces; the caller decides injection and
     depth. omega uses H's WINDOWED shape + worker-mass allocation (wiring notes
-    1 & 2)."""
+    1 & 2). allocation='walk_bin_mass' and exclusive_tract are the spec 07 N4
+    margin-distribution / exclusive-tract sensitivity variants (§4.2 / spec 02
+    §4.3)."""
     om = nm.omega(H["x"], H["y"], B["x"], B["y"], H["spacing"],
                   worker_pts=H["worker_pts"], worker_mass=H["worker_mass"],
-                  buffer_mi=BUFFER_MI, B_window=B["window"], allocation=allocation)
+                  buffer_mi=BUFFER_MI, B_window=B["window"], allocation=allocation,
+                  walk_centers=H.get("walk_centers"),
+                  walk_weights=H.get("walk_weights"),
+                  exclusive_tract=exclusive_tract)
     # fold_sub (the §4.2 'ghosts' term) removes folded routes' MEASURED boardings
     # that were inside B's anchor -- the double-count guard rests on "H's diverted
     # riders are already inside anchor_B_MEASURED wherever the routes they came
@@ -304,7 +379,7 @@ def dependency(H, B, gtfs, allocation=None):
 
 
 def build_anchor_add(B, network_before, gtfs, params, seed, n, allocation=None,
-                     omega_scale=1.0):
+                     omega_scale=1.0, exclusive_tract=False):
     """Per-draw anchor adjustment for candidate B against every committed line H
     in the network-before (spec 07 §4.2):
 
@@ -320,7 +395,8 @@ def build_anchor_add(B, network_before, gtfs, params, seed, n, allocation=None,
     injected, excluded, deps = [], [], []
     any_dep = False
     for H in network_before:
-        dep = dependency(H, B, gtfs, allocation=allocation)
+        dep = dependency(H, B, gtfs, allocation=allocation,
+                         exclusive_tract=exclusive_tract)
         om = dep["omega"] * omega_scale
         margin = H["margin"]                     # (n,) total_H - anchor_H
         add = add + om * margin - dep["fold_sub"]
@@ -345,26 +421,41 @@ def build_anchor_add(B, network_before, gtfs, params, seed, n, allocation=None,
 # evaluation: one corridor rebuild (if networked) + one run() under CRN
 # ---------------------------------------------------------------------------
 def evaluate(B, network_before, params, seed, weights, gtfs, tracts, n,
-             run_dir, allocation=None, omega_scale=1.0):
+             run_dir, allocation=None, omega_scale=1.0, exclusive_tract=False,
+             channel_split=False, feeder_headway_map=None):
     """Evaluate candidate B against the network-before under common random
     numbers. Returns a record with per-scenario welfare-minute arrays (fold and
     retain), total/newline/ratio per draw, the ABC-weighted bands, provenance
     depth inputs, and the run's raw res (so a committed line can cache its own
     margin). Empty network-before -> the committed derived FILE verbatim +
-    anchor_add=None (gate G1 byte-identity by construction)."""
+    anchor_add=None (gate G1 byte-identity by construction).
+
+    channel_split (spec 07 N4 / N1b review): when B is NETWORKED, additionally
+    decompose the lift over standalone into the ANCHOR-ADD channel (margin-only
+    substitution/complementarity) and the REBUILD channel (synthetic-feeder
+    market-enlargement) by the reviewer's toggle method -- two extra evaluations
+    (anchor-add-only on the committed file, rebuild-only with anchor_add=None) so
+    market-enlargement can never be read as crossing complementarity."""
     add, injected, excluded, deps = build_anchor_add(
         B, network_before, gtfs, params, seed, n,
-        allocation=allocation, omega_scale=omega_scale)
+        allocation=allocation, omega_scale=omega_scale,
+        exclusive_tract=exclusive_tract)
 
-    if injected or excluded:
+    networked = bool(injected or excluded)
+    if networked:
         # networked rebuild -> gitignored run dir (never the committed file)
         desc = {"candidate": B["id"],
                 "injected": nm.sorted_set_list(i["route"] for i in injected),
                 "excluded": nm.sorted_set_list(excluded)}
+        # include the feeder-headway mapping in the rebuild fingerprint so the
+        # peak-mapped variant (spec 07 §4.2.1 / G7 row) writes a distinct file.
+        if feeder_headway_map:
+            desc["feeder_headway_map"] = feeder_headway_map
         fp = nm.network_fingerprint(desc)[:16]
         dest = bc.networked_path(B["id"], fp)
         bc.main(B["config_path"], dest=dest, injected_lines=injected,
-                excluded_fold_routes=excluded)
+                excluded_fold_routes=excluded,
+                feeder_headway_map=feeder_headway_map)
         cor = Corridor(dest)
     else:
         cor = Corridor(B["derived_path"])
@@ -385,7 +476,63 @@ def evaluate(B, network_before, params, seed, weights, gtfs, tracts, n,
             "wm_abc": _bands(wm, weights),
             "newline_uncapped": _bands(d["newline"]),
             "newline_abc": _bands(d["newline"], weights)}
+    if channel_split and networked:
+        rec["channel_split"] = _channel_split(
+            B, cor, add, params, seed, n, weights, res)
     return rec
+
+
+def _channel_split(B, cor_net, add, params, seed, n, weights, res_full):
+    """Decompose a networked candidate's lift over standalone into the ANCHOR-ADD
+    and REBUILD channels (spec 07 N4 / N1b review, the reviewer's toggle method).
+    Four points under COMMON RANDOM NUMBERS (same params/seed):
+
+        base    = standalone (committed derived file, anchor_add=None)
+        anchor  = anchor-add only (committed derived file, anchor_add=add)
+        rebuild = rebuild only    (networked corridor, anchor_add=None)
+        full    = both            (networked corridor, anchor_add=add) [= rec.res]
+
+    lift = full - base; anchor_channel = anchor - base; rebuild_channel =
+    rebuild - base; cross_residual = full - anchor - rebuild + base (the
+    non-additive interaction of the two channels). Reported per scenario as P50
+    welfare-minutes so the artifact/printout separates margin-only substitution
+    (anchor channel) from synthetic-feeder MARKET ENLARGEMENT (rebuild channel):
+    the rebuild channel is NOT crossing complementarity and must never be read as
+    such. The reviewer's method is TWO cheap toggle evaluations (anchor-only +
+    rebuild-only); here they plus a base run are THREE rebuild-free run()s (cor_net
+    is already built; base/anchor just load the committed file), and full reuses
+    the eval res. base == the candidate's cycle-0 standalone under the same CRN, so
+    the extra base run is a self-containment convenience, not new information.
+    cor_net is the already-built networked Corridor."""
+    cor_base = Corridor(B["derived_path"])
+    res_base = run(cor_base, n=n, params=params, seed=seed, anchor_add=None)
+    res_anchor = run(cor_base, n=n, params=params, seed=seed, anchor_add=add)
+    res_rebuild = run(cor_net, n=n, params=params, seed=seed, anchor_add=None)
+    out = {"method": ("reviewer toggle (spec 07 N4): anchor-add-only vs "
+                      "rebuild-only vs both, common random numbers; the rebuild "
+                      "channel is synthetic-feeder MARKET ENLARGEMENT, not "
+                      "crossing complementarity"),
+           "units": "welfare-minutes P50 (D8-blended, within-draw)",
+           "scenarios": {}}
+    for scen in ("fold", "retain"):
+        b = welfare_minutes(res_base, scen)
+        a = welfare_minutes(res_anchor, scen)
+        r = welfare_minutes(res_rebuild, scen)
+        full = welfare_minutes(res_full, scen)
+        lift = full - b
+        anchor_ch = a - b
+        rebuild_ch = r - b
+        cross = full - a - r + b
+        out["scenarios"][scen] = {
+            "standalone_p50": pct(b, 50),
+            "full_p50": pct(full, 50),
+            "lift_p50": pct(lift, 50),
+            "anchor_channel_p50": pct(anchor_ch, 50),
+            "rebuild_channel_p50": pct(rebuild_ch, 50),
+            "cross_residual_p50": pct(cross, 50),
+            "anchor_channel_abc_p50": wpct(anchor_ch, weights, 50),
+            "rebuild_channel_abc_p50": wpct(rebuild_ch, weights, 50)}
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -541,7 +688,8 @@ def _cycle_weights(n, seed, clbl):
 
 
 def sequence(cands, hand_supplied, subst_note, seed=SEED, n=N, max_cycles=None,
-             budget=None, scenario="fold", quiet=False, gtfs=None, tracts=None):
+             budget=None, scenario="fold", quiet=False, gtfs=None, tracts=None,
+             split_channels=True):
     """Run the greedy sequencing loop and return the primary-artifact dict.
     budget is a cumulative program budget ($M, US-TYPICAL band, spec 07 §7/Q2);
     None -> slack (level ranking, spec 07 §3). scenario is the operator fold/
@@ -576,8 +724,11 @@ def sequence(cands, hand_supplied, subst_note, seed=SEED, n=N, max_cycles=None,
         singles = {}
         for cid, C in remaining.items():
             C = dict(C, scenario=scenario)
+            # channel split (spec 07 N4) on the candidate-GIVEN-NETWORK singles
+            # only (the headline per-cycle evals); the lookahead continuations
+            # below and the sensitivity sub-runs skip it to bound compute.
             rec = evaluate(C, network_before, params, seed, weights, gtfs,
-                           tracts, n, run_dir)
+                           tracts, n, run_dir, channel_split=split_channels)
             rec["depth"] = eval_depth(rec["deps"], network_before)
             singles[cid] = {"rec": rec,
                             "fold": rec["scenarios"]["fold"],
@@ -711,11 +862,17 @@ def _as_committed(C, rec, params, scenario, network_before):
             "x": C["x"], "y": C["y"], "window": C["window"],
             "spacing": C["spacing"], "headway": C["headway"],
             "worker_pts": C["worker_pts"], "worker_mass": C["worker_mass"],
+            "walk_centers": C.get("walk_centers"),
+            "walk_weights": C.get("walk_weights"),
             "folds": C["folds"], "scenario": scenario,
             "margin": margin,
             # the committed line's OWN per-draw welfare minutes as evaluated
             # against the network it FACED (for the within-draw frontier sum)
             "margin_wm": rec["scenarios"][scenario]["wm"],
+            # newline P50 boardings -- the boardings scale the sigma_struct
+            # per-line structural-error row converts into welfare-minute units
+            # (spec 07 §8g / N4).
+            "newline_p50": pct(d["newline"], 50),
             "capital_ut": caps["US_TYPICAL"], "capital_low": caps["LOW"],
             "route_mi": C["route_mi"], "stations": C["stations"],
             "cars": C["cars"],
@@ -781,6 +938,8 @@ def _cand_result_block(cid, singles, continuations, cvs, scenario):
                                              "are a level, never discounted); the "
                                              "one-cycle_gap deferral shows only in "
                                              "the Delta-K_PV display")}
+    if rec.get("channel_split") is not None:
+        block["channel_split"] = rec["channel_split"]
     return block
 
 
@@ -932,23 +1091,59 @@ def _safeguard(committed, cycle_records, scenario):
                      "best feasible archetype}; the archetype leg lands with N3.")}
 
 
+def _sigma_struct_rng(committed, seed, n):
+    """A deterministic rng for the sigma_struct per-line noise, seeded from the
+    run fingerprint (gate G6: no wall clock; reproduces byte-identically). The
+    fingerprint folds the committed line ids + seed + n + the sigma_struct floor,
+    so the noise is fixed once those are, and INDEPENDENT of run()'s streams (it
+    is a harness-side post-processing draw, not a model prior)."""
+    fp = nm.network_fingerprint({"sigma_struct": SIGMA_STRUCT_BOARDINGS,
+                                 "lines": [H["id"] for H in committed],
+                                 "seed": int(seed), "n": int(n)})
+    return np.random.default_rng(int(fp[:16], 16))
+
+
 def _frontier(committed, seed, n, scenario, weights):
     """Cumulative-capital-PV vs cumulative-objective frontier, aggregated
     WITHIN-DRAW (spec 07 §3/§7): sum the committed lines' per-draw welfare
     minutes INSIDE each draw, THEN take percentiles -- never sums of per-line
     percentiles (shared parameter draws correlate every line's forecast).
-    Depth-shaded, both cost bands. The sigma_struct per-line independent-error
-    row is a NAMED spec-pending N4 row (the within-draw sum carries the
-    correlated parameter component but not the per-line idiosyncratic structural
-    error)."""
+    Depth-shaded, both cost bands.
+
+    sigma_struct (spec 07 §3/§8g, landed N4): the within-draw sum carries the
+    CORRELATED parameter component but NOT the per-line idiosyncratic structural
+    error the ABC kernel's sigma asserts, so the base bands are too narrow. Each
+    committed line gets INDEPENDENT N(0, sigma_struct) noise on the boardings
+    scale (SIGMA_STRUCT_BOARDINGS), converted to welfare-minutes by that line's
+    welfare-per-boarding ratio, seeded deterministically from the run fingerprint
+    -- NO new PRIORS key, the model rng stream is untouched. cum_wm_sigma_struct_*
+    are the inflated portfolio bands beside the base cum_wm_* (the G7 on/off
+    row)."""
+    rng = _sigma_struct_rng(committed, seed, n)
+    M = SIGMA_STRUCT_REPLICATES
+    w_tiled = np.tile(weights, M) if weights is not None else None
     pts = []
     cum_low = cum_ut = 0.0
     cum_wm = None
+    cum_noise = None                                       # (M, n)
     for k, H in enumerate(committed):
         # H's own per-draw welfare minutes (committed scenario), against the
         # network it was committed AGAINST -- carried on the committed dict.
         wm = H["margin_wm"]
         cum_wm = wm if cum_wm is None else cum_wm + wm     # WITHIN-DRAW sum
+        # per-line independent structural error: sigma_struct boardings scaled to
+        # welfare-minutes by the line's welfare-per-boarding ratio (wm_P50 /
+        # newline_P50). M replicate noise samples per base draw (committed order,
+        # deterministic) so the inflated band is the convolution's quantile with
+        # a tight estimate.
+        wm_p50 = pct(wm, 50)
+        nl_p50 = H.get("newline_p50")
+        wm_per_board = (wm_p50 / nl_p50) if nl_p50 else 0.0
+        sd_wm = SIGMA_STRUCT_BOARDINGS * abs(wm_per_board)
+        noise = (rng.normal(0.0, sd_wm, (M, len(wm))) if sd_wm > 0
+                 else np.zeros((M, len(wm))))
+        cum_noise = noise if cum_noise is None else cum_noise + noise
+        inflated = (cum_wm[None, :] + cum_noise).ravel()   # (M*n,)
         cum_low += H["capital_low"] * pv_factor(k)
         cum_ut += H["capital_ut"] * pv_factor(k)
         pts.append({
@@ -958,22 +1153,49 @@ def _frontier(committed, seed, n, scenario, weights):
             "pv_factor": pv_factor(k),
             "cum_capital_pv_LOW": cum_low, "cum_capital_pv_US_TYPICAL": cum_ut,
             "cum_wm_uncapped": [pct(cum_wm, q) for q in (10, 50, 90)],
-            "cum_wm_abc": [wpct(cum_wm, weights, q) for q in (10, 50, 90)]})
+            "cum_wm_abc": [wpct(cum_wm, weights, q) for q in (10, 50, 90)],
+            "cum_wm_sigma_struct_uncapped": [pct(inflated, q) for q in (10, 50, 90)],
+            "cum_wm_sigma_struct_abc": ([wpct(inflated, w_tiled, q)
+                                         for q in (10, 50, 90)]
+                                        if w_tiled is not None else None)})
+    # final-portfolio base-vs-inflated summary (the G7 sigma_struct on/off row)
+    last = pts[-1] if pts else None
+    ss_row = {"status": "computed", "work_item": "N4",
+              "sigma_struct_boardings": SIGMA_STRUCT_BOARDINGS,
+              "mechanism": ("harness-side per-line INDEPENDENT N(0, sigma_struct) "
+                            "noise on the boardings scale, converted to welfare-"
+                            "minutes by each line's welfare-per-boarding ratio and "
+                            "summed within-draw; seeded deterministically from the "
+                            "run fingerprint. NO new PRIORS key (the model rng "
+                            "stream is untouched) -- an append-last prior is not "
+                            "required because the error is post-processing, not a "
+                            "swept model input (spec 07 §3/§8g)."),
+              "note": ("the within-draw sum carries only the correlated parameter "
+                       "component; sigma_struct adds the per-line idiosyncratic "
+                       "structural error the portfolio bands otherwise omit -- they "
+                       "widen (P10 down, P90 up), the P50 is ~unchanged (mean-zero "
+                       "noise). This is the arithmetic behind the Flyvbjerg "
+                       "annotation.")}
+    if last is not None:
+        ss_row["final_portfolio"] = {
+            "base_uncapped": last["cum_wm_uncapped"],
+            "sigma_struct_uncapped": last["cum_wm_sigma_struct_uncapped"],
+            "base_abc": last["cum_wm_abc"],
+            "sigma_struct_abc": last["cum_wm_sigma_struct_abc"],
+            "band_widening_uncapped": round(
+                (last["cum_wm_sigma_struct_uncapped"][2]
+                 - last["cum_wm_sigma_struct_uncapped"][0])
+                - (last["cum_wm_uncapped"][2] - last["cum_wm_uncapped"][0]), 1)}
     return {"points": pts,
             "aggregation": "within-draw (spec 07 §3): sum lines per draw, then "
                            "percentiles",
-            "sigma_struct_row": {"status": "spec-pending", "work_item": "N4",
-                                 "note": ("per-line idiosyncratic structural "
-                                          "error (sigma_struct, spec 07 §8g); the "
-                                          "within-draw sum carries only the "
-                                          "correlated parameter component, so the "
-                                          "portfolio bands are otherwise too "
-                                          "narrow. Named here, landed at N4.")},
+            "sigma_struct_row": ss_row,
             "flyvbjerg_annotation": ("portfolio optimism is worse than "
                                      "single-project optimism -- forecast errors "
                                      "are correlated across the model's lines "
-                                     "(spec 05 §4.3; within-draw aggregation makes "
-                                     "this arithmetic, not rhetoric).")}
+                                     "(spec 05 §4.3; within-draw aggregation plus "
+                                     "the sigma_struct row make this arithmetic, "
+                                     "not rhetoric).")}
 
 
 def _sensitivity_block():
@@ -993,18 +1215,20 @@ def _sensitivity_block():
             {"id": "omega_0.5", "knob": "omega_scale", "value": 0.5},
             {"id": "omega_1.5", "knob": "omega_scale", "value": 1.5},
             {"id": "omega_uniform", "knob": "omega_allocation", "value": "uniform"},
+            {"id": "omega_walk_bin_mass", "knob": "omega_allocation",
+             "value": "walk_bin_mass"},
+            {"id": "exclusive_tract", "knob": "exclusive_tract", "value": True},
             {"id": "depth_cap_1", "knob": "depth_cap", "value": band("depth_cap")[0]},
             {"id": "depth_cap_3", "knob": "depth_cap", "value": band("depth_cap")[1]},
+            {"id": "offpeak_to_midday", "knob": "feeder_headway_map",
+             "value": "peak_to_midday"},
+            {"id": "sigma_struct", "knob": "sigma_struct", "value": True},
+            {"id": "fixed_cost_share_0.5", "knob": "fixed_cost_share", "value": 0.5},
+            {"id": "fixed_cost_share_0.0", "knob": "fixed_cost_share", "value": 0.0},
         ],
         "named_spec_pending": [
             {"id": "k3_order_diff", "knob": "k=3 deep pass", "work_item": "N1/optional",
              "note": "order-difference diagnostic over the top-3 candidates (spec 07 §5.1)"},
-            {"id": "offpeak_to_midday", "knob": "feeder_headway_map",
-             "work_item": "N4", "note": "peak-mapped feeder-headway variant (spec 07 §4.2.1)"},
-            {"id": "sigma_struct", "knob": "sigma_struct", "work_item": "N4",
-             "note": "per-line independent structural error on portfolio bands (§8g)"},
-            {"id": "fixed_cost_share", "knob": "fixed_cost_share", "work_item": "N4",
-             "note": "shared OCC+depot for lines 2..k, rows {1, 0.5, 0} (§8j)"},
             {"id": "ratio_greedy_order", "knob": "ratio-vs-level ordering",
              "work_item": "N5", "note": "capital-efficiency-ratio ordering comparison (§3/§7)"},
             {"id": "premium_bracket", "knob": "ASC premium {1,1.5,2}", "work_item": "N5",
@@ -1072,7 +1296,7 @@ def _sens_value(row, cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
     if knob == "network_budget":
         art = sequence(cands, hand_supplied, subst_note, seed=seed, n=n,
                        budget=row["value"], scenario=scenario, quiet=True,
-                       gtfs=gtfs, tracts=tracts)
+                       gtfs=gtfs, tracts=tracts, split_channels=False)
         committed = [p["line"] for p in art["frontier"]["points"]]
         return _committed_order_objective(art), \
             f"portfolio re-selected under budget {row['value']} $M", \
@@ -1084,9 +1308,64 @@ def _sens_value(row, cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
             f"omega x {row['value']} (anchor-margin apportionment, §8i)", None
     if knob == "omega_allocation":
         art = sequence_swept(cands, hand_supplied, subst_note, seed, n, scenario,
-                             gtfs, tracts, allocation="uniform")
+                             gtfs, tracts, allocation=row["value"])
+        note = ("omega uniform-along-line allocation (§8i variant)"
+                if row["value"] == "uniform" else
+                "omega walk-bin-mass allocation (spec 07 N4 margin-distribution "
+                "variant: H's margin allocated by its measured walk-access mass "
+                "profile at each tract's nearest-stop distance, §4.2)")
+        return _committed_order_objective(art), note, None
+    if knob == "exclusive_tract":
+        art = sequence_swept(cands, hand_supplied, subst_note, seed, n, scenario,
+                             gtfs, tracts, exclusive_tract=True)
+        ov = _catchment_overlap(cands)
         return _committed_order_objective(art), \
-            "omega uniform-along-line allocation (§8i variant)", None
+            ("spec 02 §4.3 exclusive-tract assignment (each shared catchment "
+             "tract to its NEARER corridor); the harbor/streetcar pair shares "
+             f"{ov['overlap_pct']:.1f}% of the smaller catchment (near-threshold, "
+             "computed anyway per the N1b review)"), \
+            {"overlap_pct_of_smaller": ov["overlap_pct"],
+             "shared_tracts": ov["shared"], "threshold_pct": 30.0,
+             "over_threshold": bool(ov["overlap_pct"] > 30.0)}
+    if knob == "feeder_headway_map":
+        art = sequence_swept(cands, hand_supplied, subst_note, seed, n, scenario,
+                             gtfs, tracts, feeder_headway_map=row["value"])
+        return _committed_order_objective(art), \
+            ("peak-mapped synthetic-feeder headway variant (spec 07 §4.2.1 G7 "
+             "row: the injected committed line's {peak, offpeak} plan mapped to "
+             "the feeder midday scalar via PEAK instead of the declared "
+             "offpeak->midday convention)"), None
+    if knob == "sigma_struct":
+        # already computed in the frontier (no re-run): surface base-vs-inflated
+        ss = base_artifact["frontier"]["sigma_struct_row"].get("final_portfolio")
+        if ss is None:
+            return base_obj, "sigma_struct row (no committed lines)", None
+        return ss["sigma_struct_uncapped"][1], (
+            "per-line INDEPENDENT structural error N(0, sigma_struct=400 "
+            "boardings) inflates the portfolio bands; P50 ~unchanged (mean-zero), "
+            "the band widens (spec 07 §3/§8g)"), \
+            {"base_band_uncapped": ss["base_uncapped"],
+             "sigma_struct_band_uncapped": ss["sigma_struct_uncapped"],
+             "band_widening_uncapped": ss["band_widening_uncapped"]}
+    if knob == "fixed_cost_share":
+        # display-only (like cycle_gap): scales the FIXED term (OCC+depot) for
+        # lines AFTER the first (spec 07/08 §8j), so it moves cumulative Delta-K_PV
+        # and (under a binding budget) feasibility, never the welfare objective.
+        share = row["value"]
+        byid = {c["id"]: c for c in cands}
+        cum_low = cum_ut = 0.0
+        for p in pts:
+            C = byid[p["line"]]
+            fcs = 1.0 if p["step"] == 0 else share       # first line keeps full fixed
+            caps = capcost.capital_bands(C["route_mi"], C["stations"], C["cars"],
+                                         fixed_cost_share=fcs)
+            cum_low += caps["LOW"] * pv_factor(p["step"])
+            cum_ut += caps["US_TYPICAL"] * pv_factor(p["step"])
+        return base_obj, (f"fixed_cost_share {share} on lines 2..k (shared "
+                          "OCC+depot, §8j); Delta-K_PV display only, welfare "
+                          "objective invariant"), \
+            {"fixed_cost_share": share, "cum_capital_pv_LOW": cum_low,
+             "cum_capital_pv_US_TYPICAL": cum_ut}
     if knob == "depth_cap":
         # depth cap changes only the exploratory LABEL, not the objective; record
         # WHICH lines flip to exploratory at the swept cap.
@@ -1099,13 +1378,32 @@ def _sens_value(row, cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
     return None, "n/a", None
 
 
+def _catchment_overlap(cands):
+    """Catchment-tract overlap between the first two candidates (spec 02 §4.3 /
+    spec 07 N4 exclusive-tract row): shared tracts (within BUFFER_MI of BOTH
+    windowed alignments) as a share of the SMALLER catchment. Pure geometry."""
+    tr = _tract_table()
+    cx = tr["cx"].to_numpy(); cy = tr["cy"].to_numpy()
+    ins = []
+    for C in cands[:2]:
+        off, pos = nm.project_points(C["x"], C["y"], cx, cy)
+        ins.append((off <= BUFFER_MI) & (pos >= C["window"][0])
+                   & (pos <= C["window"][1]))
+    both = ins[0] & ins[1]
+    smaller = min(int(ins[0].sum()), int(ins[1].sum())) or 1
+    return {"shared": int(both.sum()),
+            "overlap_pct": 100.0 * int(both.sum()) / smaller,
+            "catchments": [int(ins[0].sum()), int(ins[1].sum())]}
+
+
 def sequence_swept(cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
-                   tracts, omega_scale=1.0, allocation=None):
+                   tracts, omega_scale=1.0, allocation=None,
+                   exclusive_tract=False, feeder_headway_map=None):
     """A minimal re-run of the greedy loop under a swept ANCHOR knob (omega scale
-    / allocation, spec 07 §8i / §10 G7), returning just enough artifact
-    (frontier-only) to read the committed-order objective. sequence() cannot
-    thread these knobs without bloating its signature, so this re-runs the
-    minimal singles + continuations + commit greedy under the knob."""
+    / allocation / exclusive-tract, spec 07 §8i / §4.3 / §10 G7), returning just
+    enough artifact (frontier-only) to read the committed-order objective.
+    sequence() cannot thread these knobs without bloating its signature, so this
+    re-runs the minimal singles + continuations + commit greedy under the knob."""
     committed = []
     clbl = central_label()
     params, weights, _ess = _cycle_weights(n, seed, clbl)
@@ -1119,7 +1417,9 @@ def sequence_swept(cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
             C = dict(C, scenario=scenario)
             rec = evaluate(C, network_before, params, seed, weights, gtfs, tracts,
                            n, bc.RUN_DIR, allocation=allocation,
-                           omega_scale=omega_scale)
+                           omega_scale=omega_scale,
+                           exclusive_tract=exclusive_tract,
+                           feeder_headway_map=feeder_headway_map)
             rec["depth"] = eval_depth(rec["deps"], network_before)
             singles[cid] = {"rec": rec, "fold": rec["scenarios"]["fold"],
                             "retain": rec["scenarios"]["retain"]}
@@ -1135,7 +1435,9 @@ def sequence_swept(cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
                     continue
                 rb = evaluate(dict(B, scenario=scenario), net_plus_a, params,
                               seed, weights, gtfs, tracts, n, bc.RUN_DIR,
-                              allocation=allocation, omega_scale=omega_scale)
+                              allocation=allocation, omega_scale=omega_scale,
+                              exclusive_tract=exclusive_tract,
+                              feeder_headway_map=feeder_headway_map)
                 continuations[aid][bid] = {"fold": rb["scenarios"]["fold"],
                                            "retain": rb["scenarios"]["retain"],
                                            "rec": rb}
@@ -1165,15 +1467,34 @@ def _assemble_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
     # within-draw frontier sum.
     _params, weights, _ess = _cycle_weights(n, seed, clbl)
 
-    run_id = nm.network_fingerprint({
+    consumed, values_hash, _prior_bands = _assumptions_manifest()
+    run_id_preimage = {
         "candidates": nm.sorted_set_list(c["id"] for c in cands),
         "asbuilt": json.load(open(os.path.join(CFG, "network_asbuilt.json"),
                                   encoding="utf-8")).get("lines", []),
-        "seed": seed, "n": n, "scenario": scenario, "budget": budget})
+        "seed": seed, "n": n, "scenario": scenario, "budget": budget,
+        # D60 review rec 3a: the values-hash of the capital constants + active
+        # prior bands the harness consumes now enters the preimage, so a rate-card
+        # or prior-band edit MOVES the run_id (the old input-only key did not --
+        # e.g. the 60-mph v_cruise recenter restated the forecast but left the id
+        # d8b4a016 unchanged, D60 report note 5).
+        "assumptions_values_hash": values_hash}
+    run_id = nm.network_fingerprint(run_id_preimage)
 
     artifact = {
         "schema": "spec 07 §7 network-sequence primary artifact (interim objective)",
         "run_id": run_id,
+        "assumptions_manifest": {
+            "values_hash": values_hash,
+            "consumed": consumed,
+            "note": ("spec 07 §9 N4 registry conversion: the constant-tier "
+                     "registry leaves capcost + this harness consume, declared "
+                     "here so the assumptions registry claims each as a "
+                     "network-artifact row (check_assumptions' network scan; the "
+                     "sensitivity-block ids are harness-INTERNAL and exempt from "
+                     "the orphan check, mirroring the spec 08 §9 Q7 wrapper "
+                     "engine-owned precedent). The values_hash of these + the "
+                     "active prior bands enters the run_id preimage (D60 rec 3a).")},
         "objective": {"mode": "interim",
                       "metric": "Delta(welfare-minutes) LEVEL, within-draw",
                       "note": ("INTERIM (spec 07 §3): the full-NPV objective is "
@@ -1218,6 +1539,16 @@ def _provenance_report(committed, cycle_records):
                            "on H}; committed line inherits eval depth; cap "
                            f"{DEPTH_CAP} -> EXPLORATORY, excluded from gate memos "
                            "(spec 07 §6.2)."),
+            "run_id_preimage": (
+                "run_id = sha256 of canonical{candidates, asbuilt lines, seed, n, "
+                "scenario, budget, assumptions_values_hash}. D60 review rec 3a "
+                "added assumptions_values_hash = sha256{consumed capital constants "
+                "+ harness knobs + active prior bands}; it MOVES the id whenever "
+                "the rate card or a prior band changes. Consequence recorded for "
+                "provenance: the id here DIFFERS from the committed N1b/D60 artifact "
+                "(d8b4a016...), which was keyed on inputs only and did not track "
+                "the forecast-moving 60-mph v_cruise recenter. No timestamps enter "
+                "the preimage (gate G6)."),
             "dependency_predicate": (f"depends = omega>{DEP_OMEGA} OR co-located "
                                      "persistent injection OR feeder/transfer edge "
                                      "in the rebuilt inputs."),
@@ -1247,6 +1578,14 @@ def _print_cycle(cyc, singles, cvs, winner):
               f"{wm[1]:>10,.0f} {wm[2]:>10,.0f}  depth {b['depth']} "
               f"({b['depth_label']})"
               + (f"  CV_p50 {cv['cv_p50']:>10,.0f}" if cv else ""))
+        cs = b.get("channel_split")
+        if cs is not None:
+            s = cs["scenarios"]["fold"]
+            print(f"     channel split (fold): lift {s['lift_p50']:+,.0f} = "
+                  f"anchor {s['anchor_channel_p50']:+,.0f} + rebuild "
+                  f"{s['rebuild_channel_p50']:+,.0f} + cross "
+                  f"{s['cross_residual_p50']:+,.0f} welfare-min "
+                  f"(rebuild = market enlargement, not crossing complementarity)")
     c = cyc["commitment"]
     print(f"  -> COMMIT {c['line']} [{c['scenario']}]  "
           f"Delta-K {c['capital_delta_K']['LOW']:.0f}|"

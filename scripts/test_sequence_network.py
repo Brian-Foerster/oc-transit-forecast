@@ -189,13 +189,20 @@ def test_g7_sensitivity_knob_rows():
     sens = sn.run_sensitivity(a, _CANDS, _HS, _SUBST, SEED, 1500, "fold",
                               _GTFS, _TRACTS)
     ids = {r["id"] for r in sens["computed_n1b"]}
+    # N4 computed the previously-named sigma_struct / fixed_cost_share /
+    # offpeak_to_midday rows AND added the margin-distribution + exclusive-tract
+    # variants (spec 07 §9 N4).
     need = {"cycle_gap_lo", "cycle_gap_hi", "budget_lo", "budget_hi",
-            "omega_0.5", "omega_1.5", "omega_uniform", "depth_cap_1", "depth_cap_3"}
-    assert need <= ids, ("missing N1b knob rows", need - ids)
+            "omega_0.5", "omega_1.5", "omega_uniform", "omega_walk_bin_mass",
+            "exclusive_tract", "depth_cap_1", "depth_cap_3", "offpeak_to_midday",
+            "sigma_struct", "fixed_cost_share_0.5", "fixed_cost_share_0.0"}
+    assert need <= ids, ("missing N4 knob rows", need - ids)
     pending = {r["id"] for r in sens["named_spec_pending"]}
-    need_p = {"sigma_struct", "fixed_cost_share", "k3_order_diff",
-              "offpeak_to_midday", "ratio_greedy_order"}
+    need_p = {"k3_order_diff", "ratio_greedy_order", "premium_bracket"}
     assert need_p <= pending, ("missing named spec-pending rows", need_p - pending)
+    # the sigma_struct / fixed_cost_share rows are no longer named-pending
+    assert "sigma_struct" not in pending and "fixed_cost_share" not in pending, \
+        "sigma_struct/fixed_cost_share should be computed at N4, not named-pending"
     # the budget_lo row actually re-selects the portfolio (a real delta)
     blo = next(r for r in sens["computed_n1b"] if r["id"] == "budget_lo")
     assert blo["pct"] is not None and blo["pct"] < 0, "budget_lo must bind"
@@ -203,9 +210,119 @@ def test_g7_sensitivity_knob_rows():
     om = {r["id"]: r["pct"] for r in sens["computed_n1b"]
           if r["id"].startswith("omega_")}
     assert om["omega_1.5"] != om["omega_0.5"], "omega sweep inert"
-    print(f"  G7 OK  {len(need)} N1b knob rows computed, "
+    print(f"  G7 OK  {len(need)} N4 knob rows computed, "
           f"{len(pending)} spec-pending named; budget_lo {blo['pct']:+.1f}%, "
           f"omega x0.5/x1.5 {om['omega_0.5']:+.2f}/{om['omega_1.5']:+.2f}%")
+
+
+def test_n4_channel_split():
+    """spec 07 N4 / N1b review: a candidate-given-network single carries the
+    anchor-vs-rebuild channel split, and lift = anchor + rebuild + cross (the
+    toggle identity). The rebuild channel is market-enlargement, reported apart
+    from crossing complementarity."""
+    a = _seq(n=1500)
+    # cycle 1 (network {harbor}) -> streetcar is networked -> has a channel split
+    c1 = a["cycles"][1]
+    cs = None
+    for b in c1["candidate_results"]:
+        if b.get("channel_split") is not None:
+            cs = b["channel_split"]; cid = b["id"]
+    assert cs is not None, "no channel_split on the networked candidate"
+    s = cs["scenarios"]["fold"]
+    # the split is per-draw; P50 of a per-draw difference != difference of P50s
+    # (percentile nonlinearity), so assert DIRECTION not exact additivity:
+    assert s["full_p50"] > s["standalone_p50"], "networked full below standalone"
+    assert s["lift_p50"] > 0, "networked lift over standalone not positive"
+    # the anchor (margin-substitution) channel dominates; the rebuild channel is
+    # market-enlargement, an order of magnitude smaller -- the whole point of the
+    # split (it must not be mistaken for crossing complementarity)
+    assert s["anchor_channel_p50"] > abs(s["rebuild_channel_p50"]), \
+        "rebuild channel not clearly separated below the anchor channel"
+    for k in ("anchor_channel_p50", "rebuild_channel_p50", "cross_residual_p50",
+              "anchor_channel_abc_p50"):
+        assert k in s, ("missing channel-split field", k)
+    # cycle 0 (empty network) candidates are standalone -> no channel split
+    c0 = a["cycles"][0]
+    assert all(b.get("channel_split") is None for b in c0["candidate_results"]), \
+        "cycle-0 standalone candidates must not carry a channel split"
+    print(f"  N4-CHANNEL OK  {cid}|{{harbor}} lift {s['lift_p50']:+,.0f} = anchor "
+          f"{s['anchor_channel_p50']:+,.0f} + rebuild {s['rebuild_channel_p50']:+,.0f} "
+          f"+ cross {s['cross_residual_p50']:+,.0f} (rebuild = market enlargement)")
+
+
+def test_n4_sigma_struct_and_variants():
+    """spec 07 N4: the frontier carries base vs sigma_struct-inflated portfolio
+    bands (sigma_struct is COMPUTED, not spec-pending), and the omega
+    walk_bin_mass + exclusive_tract sensitivity variants produce real deltas."""
+    a = _seq(n=4000)
+    ss = a["frontier"]["sigma_struct_row"]
+    assert ss["status"] == "computed", "sigma_struct must be computed at N4"
+    assert ss["sigma_struct_boardings"] == sn.SIGMA_STRUCT_BOARDINGS
+    fp = ss["final_portfolio"]
+    # mean-zero noise: the P50 is ~unchanged and the band is perturbed (differs
+    # from base). The WIDENING is guaranteed on VARIANCE -- independent noise
+    # strictly raises it -- but band_widening_uncapped is a P90-P10 TAIL statistic
+    # whose SIGN only resolves at the production draw count: at the reduced test n
+    # the tail sampling error (few draws beyond P90) exceeds the small true
+    # widening and can flip its sign (here -363.6 at n=4000), while the standard
+    # deviation -- an all-draws average -- still widens (+300 at n=4000). Assert
+    # the tail-band SIGN on the committed PRODUCTION artifact (N=40,000, where the
+    # estimate resolves to +776.5), and keep this fast in-test run for the
+    # structural checks. (The G1 pattern of reading a committed output.)
+    assert fp["base_uncapped"] != fp["sigma_struct_uncapped"], "sigma_struct inert"
+    base_p50, ss_p50 = fp["base_uncapped"][1], fp["sigma_struct_uncapped"][1]
+    assert abs(ss_p50 - base_p50) / base_p50 < 0.02, "sigma_struct moved the P50"
+    prod = json.load(open(os.path.join(OUT, "network_sequence.json"),
+                          encoding="utf-8"))
+    prod_widen = (prod["frontier"]["sigma_struct_row"]["final_portfolio"]
+                  ["band_widening_uncapped"])
+    assert prod_widen > 0, \
+        ("production-N sigma_struct band must widen (P90-P10)", prod_widen)
+    # every frontier point carries the inflated band beside the base band
+    for p in a["frontier"]["points"]:
+        assert "cum_wm_sigma_struct_uncapped" in p
+    # walk_bin_mass omega differs from worker_mass AND uniform
+    H = _BYID["harbor"]; B = _BYID["streetcar"]
+    o_wm = nm.omega(H["x"], H["y"], B["x"], B["y"], H["spacing"],
+                    worker_pts=H["worker_pts"], worker_mass=H["worker_mass"],
+                    B_window=B["window"], allocation="worker_mass")
+    o_wb = nm.omega(H["x"], H["y"], B["x"], B["y"], H["spacing"],
+                    worker_pts=H["worker_pts"], worker_mass=H["worker_mass"],
+                    B_window=B["window"], allocation="walk_bin_mass",
+                    walk_centers=H["walk_centers"], walk_weights=H["walk_weights"])
+    o_ex = nm.omega(H["x"], H["y"], B["x"], B["y"], H["spacing"],
+                    worker_pts=H["worker_pts"], worker_mass=H["worker_mass"],
+                    B_window=B["window"], allocation="worker_mass",
+                    exclusive_tract=True)
+    assert o_wb != o_wm, "walk_bin_mass omega equals worker_mass"
+    assert o_ex < o_wm, "exclusive-tract should drop shared-near-B tracts from H"
+    # exclusive-tract overlap metric matches the spec-02 §4.3 27.3% figure
+    ov = sn._catchment_overlap(_CANDS)
+    assert abs(ov["overlap_pct"] - 27.3) < 0.1, ov
+    print(f"  N4-SIGMA/VARIANTS OK  band base {fp['base_uncapped']} -> "
+          f"+sigma_struct {fp['sigma_struct_uncapped']}; omega worker {o_wm:.3f} / "
+          f"walk_bin {o_wb:.3f} / exclusive {o_ex:.3f}; overlap "
+          f"{ov['overlap_pct']:.1f}% ({ov['shared']} shared)")
+
+
+def test_n4_run_id_values_hash():
+    """D60 review rec 3a: the run_id preimage carries the assumptions values-hash
+    (capital constants + active prior bands), so the id MOVES when the rate card
+    or a prior band changes -- and the artifact records the consumed manifest the
+    registry claims (spec 07 §9 N4)."""
+    a = _seq(n=800)
+    man = a["assumptions_manifest"]
+    assert man["values_hash"] and len(man["values_hash"]) == 64
+    ids = {c["id"] for c in man["consumed"]}
+    # all 11 capital constants + 6 harness knobs are declared
+    assert {"cap_occ", "cap_car", "cap_markup_ut", "cycle_gap", "omega_allocation",
+            "feeder_headway_map"} <= ids, ids - set()
+    assert len(man["consumed"]) == 17, len(man["consumed"])
+    # the id differs from the committed input-only N1b/D60 artifact d8b4a016...
+    assert not a["run_id"].startswith("d8b4a016"), \
+        "run_id did not move despite the values-hash addition"
+    print(f"  N4-RUNID OK  run_id {a['run_id'][:16]} (values_hash "
+          f"{man['values_hash'][:12]}, {len(man['consumed'])} consumed leaves)")
 
 
 def test_w1_omega_uses_real_worker_mass():
@@ -325,4 +442,7 @@ if __name__ == "__main__":
     test_w3_feeder_injection_screened_by_predicate()
     test_interaction_and_provenance()
     test_budget_binding_stop()
+    test_n4_channel_split()
+    test_n4_sigma_struct_and_variants()
+    test_n4_run_id_values_hash()
     print("ALL SEQUENCE-HARNESS GATES PASS")

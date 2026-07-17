@@ -141,7 +141,7 @@ def bin_flows(dists, weights, extra=None):
 
 
 def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None,
-         injected_lines=None, excluded_fold_routes=None):
+         injected_lines=None, excluded_fold_routes=None, feeder_headway_map=None):
     """Build a corridor derived file. intra_divisor / dest default to the
     committed pipeline (byte-identical); the spec 08 §4 rebuilt-variant passes
     intra_divisor_alt + a scratch dest to isolate the intra-tract rule effect.
@@ -295,7 +295,8 @@ def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None,
         j = int(np.argmin(np.abs(offs)))              # nearest-approach node
         feeders.append({"route": str(inj["route"]),
                         "node_pos": round(float(poss[j]), 2),
-                        "headway": nm.feeder_headway(inj.get("headway")),
+                        "headway": nm.feeder_headway(inj.get("headway"),
+                                                     mapping=feeder_headway_map),
                         "x": tx, "y": ty})
     if injected_lines:
         print(f"  + {len(injected_lines)} injected committed line(s): "

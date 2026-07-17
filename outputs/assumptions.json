@@ -69,116 +69,6 @@
     },
     {
       "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "measured",
-      "id": "cap_car",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "cap_crossing_low",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "cap_crossing_ut",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "literature",
-      "id": "cap_delivery_ut",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "measured",
-      "id": "cap_depot",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "definitional",
-      "id": "cap_markup_low",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "literature",
-      "id": "cap_markup_ut",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "measured",
-      "id": "cap_occ",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "measured",
-      "id": "cap_route_km",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "measured",
-      "id": "cap_station",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N2 rate-card landing",
-        "2026-07-16"
-      ],
-      "basis": "measured",
-      "id": "cap_viaduct_km",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-11"
       ],
@@ -209,32 +99,12 @@
     },
     {
       "accepted": [
-        "spec07-N1b sequencing-harness landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "cycle_gap",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-11"
       ],
       "basis": "definitional",
       "id": "default_fare",
       "no_row_reason": "definitional",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N1b sequencing-harness landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "depth_cap",
-      "no_row_reason": "spec-pending:07§9-N4",
       "tier": "constant"
     },
     {
@@ -265,16 +135,6 @@
       "basis": "definitional",
       "id": "feeder_downsample",
       "no_row_reason": "quality-knob",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N1a network-mechanics landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "feeder_headway_map",
-      "no_row_reason": "spec-pending:07§9-N4",
       "tier": "constant"
     },
     {
@@ -379,16 +239,6 @@
     },
     {
       "accepted": [
-        "spec07-N1b sequencing-harness landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "network_budget",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-11"
       ],
@@ -435,26 +285,6 @@
       "basis": "definitional",
       "id": "oc_ref_lat",
       "no_row_reason": "definitional",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N1a network-mechanics landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "omega_allocation",
-      "no_row_reason": "spec-pending:07§9-N4",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "spec07-N1a network-mechanics landing",
-        "2026-07-16"
-      ],
-      "basis": "judgment",
-      "id": "omega_stop_materialization",
-      "no_row_reason": "spec-pending:07§9-N4",
       "tier": "constant"
     },
     {
@@ -1066,6 +896,162 @@
       "tier": "config"
     },
     {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "cap_car",
+      "rows": [
+        [
+          "network",
+          "cap_car"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "cap_crossing_low",
+      "rows": [
+        [
+          "network",
+          "cap_crossing_low"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "cap_crossing_ut",
+      "rows": [
+        [
+          "network",
+          "cap_crossing_ut"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "literature",
+      "effect_pct": null,
+      "id": "cap_delivery_ut",
+      "rows": [
+        [
+          "network",
+          "cap_delivery_ut"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "cap_depot",
+      "rows": [
+        [
+          "network",
+          "cap_depot"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "definitional",
+      "effect_pct": null,
+      "id": "cap_markup_low",
+      "rows": [
+        [
+          "network",
+          "cap_markup_low"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "literature",
+      "effect_pct": null,
+      "id": "cap_markup_ut",
+      "rows": [
+        [
+          "network",
+          "cap_markup_ut"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "cap_occ",
+      "rows": [
+        [
+          "network",
+          "cap_occ"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "cap_route_km",
+      "rows": [
+        [
+          "network",
+          "cap_route_km"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "cap_station",
+      "rows": [
+        [
+          "network",
+          "cap_station"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
+      "id": "cap_viaduct_km",
+      "rows": [
+        [
+          "network",
+          "cap_viaduct_km"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "cycle_gap",
+      "rows": [
+        [
+          "network",
+          "cycle_gap"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "depth_cap",
+      "rows": [
+        [
+          "network",
+          "depth_cap"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
       "basis": "judgment",
       "effect_pct": null,
       "id": "eq_days",
@@ -1078,6 +1064,18 @@
       "tier": "constant"
     },
     {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "feeder_headway_map",
+      "rows": [
+        [
+          "network",
+          "feeder_headway_map"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
       "basis": "measured",
       "effect_pct": null,
       "id": "mu_matured",
@@ -1085,6 +1083,42 @@
         [
           "abc",
           "543_matured_s500"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "network_budget",
+      "rows": [
+        [
+          "network",
+          "network_budget"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "omega_allocation",
+      "rows": [
+        [
+          "network",
+          "omega_allocation"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "omega_stop_materialization",
+      "rows": [
+        [
+          "network",
+          "omega_stop_materialization"
         ]
       ],
       "tier": "constant"
@@ -1222,76 +1256,8 @@
   "schema_version": "08-A3.3",
   "spec_pending_warnings": [
     {
-      "id": "cap_car",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_crossing_low",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_crossing_ut",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_delivery_ut",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_depot",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_markup_low",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_markup_ut",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_occ",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_route_km",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_station",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cap_viaduct_km",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "cycle_gap",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "depth_cap",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "feeder_headway_map",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
-    },
-    {
-      "id": "network_budget",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "omega_allocation",
-      "no_row_reason": "spec-pending:07§9-N4"
-    },
-    {
-      "id": "omega_stop_materialization",
-      "no_row_reason": "spec-pending:07§9-N4"
     },
     {
       "id": "street_cal_local",

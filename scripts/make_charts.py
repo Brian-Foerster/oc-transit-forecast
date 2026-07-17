@@ -263,11 +263,273 @@ def bca_charts(name):
           f"{os.path.basename(p2)}")
 
 
+# ===========================================================================
+# spec 07 N4 network-sequence charts (make_charts.py network mode)
+# ===========================================================================
+# read outputs/network_sequence.json (the greedy portfolio harness primary
+# artifact). Three panels: (1) depth-shaded frontier (cumulative Delta-K_PV vs
+# cumulative objective, within-draw bands, base + sigma_struct); (2) build-
+# sequence chart; (3) interaction / anchor-vs-rebuild channel-split panel. The
+# archetype-gap section renders the N3-pending placeholder. Flyvbjerg annotation
+# per spec 05 §4.3 convention.
+GOLD = "#c8922b"; VIOLET = "#7b58c4"
+DEPTH_COLORS = {1: TEAL, 2: BLUE}     # decision-grade tiers; exploratory -> RED
+
+
+def _depth_color(depth, label):
+    if label == "exploratory":
+        return RED
+    return DEPTH_COLORS.get(depth, MUTED)
+
+
+def network_frontier(seq, name="network"):
+    """Depth-shaded frontier: cumulative Delta-K_PV (US-TYPICAL) x cumulative
+    welfare-minutes P50 with within-draw P10-P90 bars; the sigma_struct-inflated
+    band drawn behind the base band; LOW-capital x-position marked; points
+    shaded by provenance depth. Flyvbjerg annotation in the subtitle."""
+    pts = seq["frontier"]["points"]
+    xs_ut = [p["cum_capital_pv_US_TYPICAL"] for p in pts]
+    xs_low = [p["cum_capital_pv_LOW"] for p in pts]
+    y50 = [p["cum_wm_uncapped"][1] for p in pts]
+
+    fig, ax = plt.subplots(figsize=(10.6, 5.6), dpi=200)
+    fig.patch.set_facecolor(SURFACE); ax.set_facecolor(SURFACE)
+    fig.subplots_adjust(left=0.11, right=0.965, top=0.80, bottom=0.13)
+
+    # connecting greedy build path (UT capital)
+    ax.plot(xs_ut, y50, "-", color=BASE, lw=1.6, zorder=2, alpha=0.9)
+    for p in pts:
+        x = p["cum_capital_pv_US_TYPICAL"]
+        c = _depth_color(p["depth"], p["depth_label"])
+        b = p["cum_wm_uncapped"]; ss = p.get("cum_wm_sigma_struct_uncapped", b)
+        # sigma_struct band behind (wider, light), base band in front
+        ax.plot([x, x], [ss[0], ss[2]], color=c, lw=11, solid_capstyle="round",
+                alpha=0.18, zorder=2)
+        ax.plot([x, x], [b[0], b[2]], color=c, lw=7, solid_capstyle="round",
+                alpha=0.7, zorder=3)
+        ax.plot([x], [b[1]], "o", ms=11, mfc=c, mec=SURFACE, mew=2, zorder=5)
+        # LOW-capital x-position (lighter marker + connector)
+        xl = p["cum_capital_pv_LOW"]
+        ax.plot([xl], [b[1]], "o", ms=6, mfc=SURFACE, mec=c, mew=1.6, zorder=4)
+        ax.plot([xl, x], [b[1], b[1]], color=c, lw=0.8, ls=":", alpha=0.6, zorder=2)
+        ax.annotate(f"+{p['line']}\n{p['depth_label']}", (x, b[2]),
+                    xytext=(6, 12), textcoords="offset points", ha="left",
+                    va="bottom", fontsize=8.6, fontweight="bold", color=INK)
+        ax.annotate(f"{b[1]/1000:.0f}k", (x, b[1]), xytext=(9, -2),
+                    textcoords="offset points", ha="left", va="center",
+                    fontsize=8.2, color=INK2)
+
+    ax.set_xlim(0, max(xs_ut) * 1.18)
+    ax.set_ylim(0, max(p["cum_wm_uncapped"][2] for p in pts) * 1.12)
+    ax.grid(color=GRID, lw=0.8, zorder=0)
+    ax.tick_params(length=0, labelsize=9, labelcolor=MUTED)
+    ax.xaxis.set_major_formatter(lambda v, _: f"${v/1000:.1f}B")
+    ax.yaxis.set_major_formatter(lambda v, _: f"{v/1000:.0f}k")
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
+    for sp in ("bottom", "left"):
+        ax.spines[sp].set_color(BASE)
+    ax.set_xlabel("cumulative Delta-K_PV (US-TYPICAL; hollow = LOW band)",
+                  fontsize=9, color=INK2)
+    ax.set_ylabel("cumulative welfare-minutes (within-draw)",
+                  fontsize=9, color=INK2)
+    fig.text(0.02, 0.94, "Network portfolio frontier - greedy build order",
+             fontsize=13.5, fontweight="bold", color=INK)
+    fig.text(0.02, 0.885, "cumulative Delta-K_PV x cumulative welfare-minutes P50 "
+             "(P10-P90 bars) - depth-shaded (teal=1, blue=2, red=exploratory); "
+             "faint band = +sigma_struct (per-line independent structural error)",
+             fontsize=8.5, color=INK2)
+    fig.text(0.02, 0.845, seq["frontier"]["flyvbjerg_annotation"],
+             fontsize=7.6, color=MUTED, wrap=True)
+    p = os.path.join(OUT, f"{name}_frontier.png")
+    fig.savefig(p, facecolor=SURFACE); plt.close(fig)
+    return p
+
+
+def network_build_sequence(seq, name="network"):
+    """Build-sequence chart: one row per committed line in build order, showing
+    the line's OWN Delta-K band (LOW|US-TYPICAL, PV-discounted) and its marginal
+    welfare-minute contribution, with the depth label."""
+    pts = seq["frontier"]["points"]
+    rows = list(enumerate(pts))
+    fig, (axk, axw) = plt.subplots(1, 2, figsize=(11.0, 0.72 * len(pts) + 2.1),
+                                   dpi=200, gridspec_kw={"width_ratios": [1, 1]})
+    fig.patch.set_facecolor(SURFACE)
+    fig.subplots_adjust(left=0.13, right=0.965, top=0.80, bottom=0.13, wspace=0.28)
+    prev = 0.0
+    for ax in (axk, axw):
+        ax.set_facecolor(SURFACE)
+    ys = list(range(len(pts)))[::-1]
+    for (k, p), y in zip(rows, ys):
+        c = _depth_color(p["depth"], p["depth_label"])
+        kl = p["capital_LOW"] * p["pv_factor"]
+        ku = p["capital_US_TYPICAL"] * p["pv_factor"]
+        axk.plot([kl, ku], [y, y], color=c, lw=9, solid_capstyle="round", zorder=3)
+        axk.annotate(f"{kl:.0f}|{ku:.0f}", (ku, y), xytext=(8, 0),
+                     textcoords="offset points", ha="left", va="center",
+                     fontsize=8.3, color=INK)
+        # marginal welfare = this step's cum P50 minus the previous step's
+        cumw = p["cum_wm_uncapped"][1]
+        marg = cumw - prev
+        prev = cumw
+        axw.plot([0, marg], [y, y], color=c, lw=9, solid_capstyle="round", zorder=3)
+        axw.annotate(f"+{marg/1000:.0f}k", (marg, y), xytext=(8, 0),
+                     textcoords="offset points", ha="left", va="center",
+                     fontsize=8.3, color=INK)
+        axk.text(-0.02, y, f"{k}. {p['line']}\n{p['depth_label']}",
+                 transform=axk.get_yaxis_transform(), ha="right", va="center",
+                 fontsize=8.6, color=INK2)
+    for ax, lbl, fmt in ((axk, "Delta-K_PV ($M): LOW | US-TYPICAL", "${x:.0f}M"),
+                         (axw, "marginal welfare-minutes", "{x}")):
+        ax.set_ylim(-0.7, len(pts) - 0.3)
+        ax.set_yticks([])
+        ax.grid(axis="x", color=GRID, lw=0.8, zorder=0)
+        ax.tick_params(length=0, labelsize=8.5, labelcolor=MUTED)
+        for sp in ("top", "right", "left"):
+            ax.spines[sp].set_visible(False)
+        ax.spines["bottom"].set_color(BASE)
+        ax.set_xlabel(lbl, fontsize=8.8, color=INK2)
+    axk.xaxis.set_major_formatter(lambda v, _: f"${v:.0f}M")
+    axw.xaxis.set_major_formatter(lambda v, _: f"{v/1000:.0f}k")
+    fig.text(0.02, 0.945, "Network build sequence (greedy order)",
+             fontsize=13.0, fontweight="bold", color=INK)
+    fig.text(0.02, 0.895, "per-line PV-discounted capital band and marginal "
+             "welfare-minutes; depth-shaded (teal=1, blue=2, red=exploratory)",
+             fontsize=8.4, color=INK2)
+    p = os.path.join(OUT, f"{name}_build_sequence.png")
+    fig.savefig(p, facecolor=SURFACE); plt.close(fig)
+    return p
+
+
+def network_channel_panel(seq, name="network"):
+    """Interaction / channel-split panel: (left) the symmetrized interaction
+    matrix I(A,B) per cycle with the approximation/sequencing decomposition;
+    (right) the anchor-vs-rebuild channel split for each networked candidate-
+    given-network eval, so market-enlargement (rebuild) is visibly separated
+    from crossing complementarity. Archetype gap = the N3-pending placeholder."""
+    # collect interactions + channel splits across cycles
+    inter = []
+    splits = []
+    for cyc in seq["cycles"]:
+        for I in cyc.get("interaction_matrix", []):
+            inter.append((cyc["cycle"], I))
+        for b in cyc.get("candidate_results", []):
+            cs = b.get("channel_split")
+            if cs is not None:
+                splits.append((cyc["cycle"], b["id"], cs["scenarios"]["fold"]))
+
+    fig, (axi, axc) = plt.subplots(1, 2, figsize=(11.2, 5.2), dpi=200)
+    fig.patch.set_facecolor(SURFACE)
+    fig.subplots_adjust(left=0.13, right=0.965, top=0.79, bottom=0.12, wspace=0.34)
+    for ax in (axi, axc):
+        ax.set_facecolor(SURFACE)
+
+    # left: interaction magnitudes
+    ys = list(range(len(inter)))[::-1]
+    for (cyc, I), y in zip(inter, ys):
+        v = I["I_p50"]
+        c = TEAL if v >= 0 else RED
+        axi.plot([0, v], [y, y], color=c, lw=9, solid_capstyle="round", zorder=3)
+        axi.plot([I["I_p10"], I["I_p90"]], [y, y], color=c, lw=2, alpha=0.5, zorder=2)
+        axi.annotate(f"{v:+,.0f}", (v, y), xytext=(8 if v >= 0 else -8, 0),
+                     textcoords="offset points",
+                     ha="left" if v >= 0 else "right", va="center",
+                     fontsize=8.4, color=INK)
+        axi.text(-0.02, y, f"c{cyc} I{I['pair']}",
+                 transform=axi.get_yaxis_transform(), ha="right", va="center",
+                 fontsize=8.4, color=INK2)
+    if inter:
+        axi.axvline(0, color=BASE, lw=1, zorder=2)
+        axi.set_ylim(-0.7, len(inter) - 0.3)
+        _lo = min(0.0, min(I["I_p10"] for _, I in inter))
+        _hi = max(I["I_p90"] for _, I in inter)
+        axi.set_xlim(_lo - 0.05 * (_hi - _lo), _hi + 0.20 * (_hi - _lo))
+    axi.set_yticks([])
+    axi.grid(axis="x", color=GRID, lw=0.8, zorder=0)
+    axi.tick_params(length=0, labelsize=8.5, labelcolor=MUTED)
+    for sp in ("top", "right", "left"):
+        axi.spines[sp].set_visible(False)
+    axi.spines["bottom"].set_color(BASE)
+    axi.set_xlabel("I(A,B) welfare-min (P10-P90 whisker); tau-muted (spec 07 §8a)",
+                   fontsize=8.3, color=INK2)
+
+    # right: stacked anchor + rebuild + cross for each split
+    ys = list(range(len(splits)))[::-1]
+    for (cyc, cid, s), y in zip(splits, ys):
+        segs = [("anchor", s["anchor_channel_p50"], TEAL),
+                ("rebuild", s["rebuild_channel_p50"], GOLD),
+                ("cross", s["cross_residual_p50"], VIOLET)]
+        left_pos = left_neg = 0.0
+        for lbl, val, c in segs:
+            base_x = left_pos if val >= 0 else left_neg
+            axc.barh(y, val, left=base_x, color=c, height=0.5, zorder=3,
+                     edgecolor=SURFACE, lw=0.5)
+            if val >= 0:
+                left_pos += val
+            else:
+                left_neg += val
+        axc.annotate(f"lift {s['lift_p50']:+,.0f}", (left_pos, y),
+                     xytext=(8, 0), textcoords="offset points", ha="left",
+                     va="center", fontsize=8.2, color=INK)
+        axc.text(-0.02, y, f"c{cyc} {cid}", transform=axc.get_yaxis_transform(),
+                 ha="right", va="center", fontsize=8.4, color=INK2)
+    if splits:
+        axc.axvline(0, color=BASE, lw=1, zorder=2)
+        axc.set_ylim(-0.7, len(splits) - 0.3)
+        _hi = max(s["lift_p50"] for _, _, s in splits)
+        _lo = min(0.0, min(min(s["anchor_channel_p50"], s["rebuild_channel_p50"],
+                               s["cross_residual_p50"]) for _, _, s in splits))
+        axc.set_xlim(_lo - 0.03 * (_hi - _lo), _hi + 0.28 * (_hi - _lo))
+    else:
+        axc.text(0.5, 0.5, "no networked candidate\n(cycle 0 is standalone)",
+                 transform=axc.transAxes, ha="center", va="center",
+                 fontsize=9, color=MUTED)
+    axc.set_yticks([])
+    axc.grid(axis="x", color=GRID, lw=0.8, zorder=0)
+    axc.tick_params(length=0, labelsize=8.5, labelcolor=MUTED)
+    for sp in ("top", "right", "left"):
+        axc.spines[sp].set_visible(False)
+    axc.spines["bottom"].set_color(BASE)
+    axc.set_xlabel("channel split: anchor (teal) + rebuild=market-enlargement "
+                   "(gold) + cross (violet)", fontsize=8.0, color=INK2)
+
+    fig.text(0.02, 0.94, "Complementarity audit - interactions & channel split",
+             fontsize=13.0, fontweight="bold", color=INK)
+    ag = seq["cycles"][0].get("archetype_gap", {}) if seq.get("cycles") else {}
+    fig.text(0.02, 0.885, "left: symmetrized I(A,B) at common timing (approximation "
+             "isolated from sequencing); right: the anchor-vs-rebuild toggle - "
+             "rebuild is synthetic-feeder MARKET ENLARGEMENT, never crossing "
+             "complementarity", fontsize=8.0, color=INK2)
+    fig.text(0.02, 0.845, f"archetype gap: {ag.get('status', 'n/a').upper()} "
+             f"({ag.get('work_item', 'N3')}-pending - owner-designed networks, "
+             "spec 07 §5.3); safeguard line carries greedy vs best-single only",
+             fontsize=7.6, color=MUTED)
+    p = os.path.join(OUT, f"{name}_channels.png")
+    fig.savefig(p, facecolor=SURFACE); plt.close(fig)
+    return p
+
+
+def network_charts(name="network"):
+    path = os.path.join(OUT, "network_sequence.json")
+    if not os.path.exists(path):
+        print(f"network charts SKIPPED: no artifact at {path} "
+              "(run scripts/sequence_network.py first)")
+        return
+    seq = json.load(open(path, encoding="utf-8"))
+    p1 = network_frontier(seq, name)
+    p2 = network_build_sequence(seq, name)
+    p3 = network_channel_panel(seq, name)
+    print(f"network charts written: {os.path.basename(p1)}, "
+          f"{os.path.basename(p2)}, {os.path.basename(p3)}")
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args and args[0] == "bca":       # spec 06 W2 welfare-BCA charts
         for name in (args[1:] or ["harbor"]):
             bca_charts(name)
+    elif args and args[0] == "network":  # spec 07 N4 network-sequence charts
+        network_charts(args[1] if len(args) > 1 else "network")
     else:
         for name in args:
             intervals(name)

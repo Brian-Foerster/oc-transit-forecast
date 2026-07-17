@@ -35,8 +35,25 @@ Sorted by measured one-at-a-time effect (|effect| desc, id asc). These are NOT i
 | 0.1% | intra_divisor | constant | definitional | harbor:intra_tract_alt, streetcar:intra_tract_alt |
 | -- | abc_sigma | constant | judgment | off-corridor row (abc:543_launch_s350, abc:543_launch_s800, wrapper:abc_s350, wrapper:abc_s800) |
 | -- | bca_config | config | measured | off-corridor row (wrapper:avoidable_marginal) |
+| -- | cap_car | constant | measured | off-corridor row (network:cap_car) |
+| -- | cap_crossing_low | constant | judgment | off-corridor row (network:cap_crossing_low) |
+| -- | cap_crossing_ut | constant | judgment | off-corridor row (network:cap_crossing_ut) |
+| -- | cap_delivery_ut | constant | literature | off-corridor row (network:cap_delivery_ut) |
+| -- | cap_depot | constant | measured | off-corridor row (network:cap_depot) |
+| -- | cap_markup_low | constant | definitional | off-corridor row (network:cap_markup_low) |
+| -- | cap_markup_ut | constant | literature | off-corridor row (network:cap_markup_ut) |
+| -- | cap_occ | constant | measured | off-corridor row (network:cap_occ) |
+| -- | cap_route_km | constant | measured | off-corridor row (network:cap_route_km) |
+| -- | cap_station | constant | measured | off-corridor row (network:cap_station) |
+| -- | cap_viaduct_km | constant | measured | off-corridor row (network:cap_viaduct_km) |
+| -- | cycle_gap | constant | judgment | off-corridor row (network:cycle_gap) |
+| -- | depth_cap | constant | judgment | off-corridor row (network:depth_cap) |
 | -- | eq_days | constant | judgment | off-corridor row (wrapper:eq_days_330) |
+| -- | feeder_headway_map | constant | judgment | off-corridor row (network:feeder_headway_map) |
 | -- | mu_matured | constant | measured | off-corridor row (abc:543_matured_s500) |
+| -- | network_budget | constant | judgment | off-corridor row (network:network_budget) |
+| -- | omega_allocation | constant | judgment | off-corridor row (network:omega_allocation) |
+| -- | omega_stop_materialization | constant | judgment | off-corridor row (network:omega_stop_materialization) |
 | -- | upt_fy2014_mb | constant | measured | off-corridor row (abc:543_launch14_s500) |
 
 ## 2. Priors (already propagated into the headline band)
@@ -90,27 +107,13 @@ Every escape hatch in one place, for the owner to veto at review (spec 08 §9 Q1
 | backtest_world | config | measured | covered-elsewhere:bt_flat15 | owner-directive 2026-07-11 / 2026-07-11 |
 | bin_edges | constant | judgment | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
 | buffer_mi | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
-| cap_car | constant | measured | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_crossing_low | constant | judgment | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_crossing_ut | constant | judgment | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_delivery_ut | constant | literature | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_depot | constant | measured | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_markup_low | constant | definitional | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_markup_ut | constant | literature | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_occ | constant | measured | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_route_km | constant | measured | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_station | constant | measured | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
-| cap_viaduct_km | constant | measured | spec-pending:07§9-N4 | spec07-N2 rate-card landing / 2026-07-16 |
 | corr_share | config | measured | covered-elsewhere:anchor_lo | owner-directive 2026-07-11 / 2026-07-11 |
 | cross_far | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
 | cross_near | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
-| cycle_gap | constant | judgment | spec-pending:07§9-N4 | spec07-N1b sequencing-harness landing / 2026-07-16 |
 | default_fare | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
-| depth_cap | constant | judgment | spec-pending:07§9-N4 | spec07-N1b sequencing-harness landing / 2026-07-16 |
 | dv_clip | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | ess_min | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
 | feeder_downsample | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
-| feeder_headway_map | constant | judgment | spec-pending:07§9-N4 | spec07-N1a network-mechanics landing / 2026-07-16 |
 | gtfs_2026_07 | data | measured | covered-elsewhere:rapid_gtfs | owner-directive 2026-07-11 / 2026-07-14 |
 | intra_clip | constant | definitional | covered-elsewhere:intra_tract_alt | owner-directive 2026-07-11 / 2026-07-11 |
 | intra_divisor_alt | constant | judgment | covered-elsewhere:intra_tract_alt | owner-directive 2026-07-11 / 2026-07-11 |
@@ -121,14 +124,11 @@ Every escape hatch in one place, for the owner to veto at review (spec 08 §9 Q1
 | min_feeder_mi | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
 | moe_z | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | n | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
-| network_budget | constant | judgment | spec-pending:07§9-N4 | spec07-N1b sequencing-harness landing / 2026-07-16 |
 | nonwork_tilt_l | constant | judgment | covered-elsewhere:nonwork_short | owner-directive 2026-07-11 / 2026-07-11 |
 | ntd_snapshot_2026_07 | data | measured | covered-elsewhere:543_launch14_s500 | owner-directive 2026-07-11 / 2026-07-14 |
 | obs_543 | constant | measured | covered-elsewhere:543_matured_s500 | owner-directive 2026-07-11 / 2026-07-11 |
 | obs_543_fy2017 | constant | measured | covered-elsewhere:543_launch14_s500 | owner-directive 2026-07-11 / 2026-07-11 |
 | oc_ref_lat | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
-| omega_allocation | constant | judgment | spec-pending:07§9-N4 | spec07-N1a network-mechanics landing / 2026-07-16 |
-| omega_stop_materialization | constant | judgment | spec-pending:07§9-N4 | spec07-N1a network-mechanics landing / 2026-07-16 |
 | s0_pivot_clip | constant | judgment | non-binding:db4af97 | owner-directive 2026-07-11 / 2026-07-11 |
 | se_cap | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | seed | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
@@ -169,24 +169,7 @@ What changed (entries whose append-only history records a transition):
 
 Spec-pending warnings (counted, not failures):
 
-- cap_car: spec-pending:07§9-N4
-- cap_crossing_low: spec-pending:07§9-N4
-- cap_crossing_ut: spec-pending:07§9-N4
-- cap_delivery_ut: spec-pending:07§9-N4
-- cap_depot: spec-pending:07§9-N4
-- cap_markup_low: spec-pending:07§9-N4
-- cap_markup_ut: spec-pending:07§9-N4
-- cap_occ: spec-pending:07§9-N4
-- cap_route_km: spec-pending:07§9-N4
-- cap_station: spec-pending:07§9-N4
-- cap_viaduct_km: spec-pending:07§9-N4
-- cycle_gap: spec-pending:07§9-N4
-- depth_cap: spec-pending:07§9-N4
-- feeder_headway_map: spec-pending:07§9-N4
 - lodes_2022: spec-pending:02§4.8
-- network_budget: spec-pending:07§9-N4
-- omega_allocation: spec-pending:07§9-N4
-- omega_stop_materialization: spec-pending:07§9-N4
 - street_cal_local: spec-pending:02§4.9
 - street_cal_rapid: spec-pending:02§4.9
 - tsp_speedup: spec-pending:02§4.9

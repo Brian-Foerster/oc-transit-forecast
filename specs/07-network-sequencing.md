@@ -497,6 +497,39 @@ only committed lines + finalists by default, knob to export all.
 - **N3 — archetype harness** + matched-capital gap series; owner supplies
   2–4 archetypes with declared build orders.
 - **N4 — provenance/labels, σ_struct row, charts, primary-artifact writer.**
+  **LANDED 2026-07-17** (branch spec07-n4). The primary-artifact writer and
+  provenance/labels shipped at N1b; N4 completed the remaining §3/§6.2/§7 items
+  and the two reviewed carry-ins:
+  (a) **Anchor-vs-rebuild channel split** (N1b-review binding): each
+  candidate-given-network single decomposes its lift into the anchor_add channel
+  (margin substitution/complementarity) and the rebuild channel (synthetic-feeder
+  MARKET ENLARGEMENT) by the reviewer's toggle method — two extra evaluations
+  (anchor-only, rebuild-only) under CRN, in the artifact + printout, so market-
+  enlargement can never be read as crossing complementarity. Cycle-2
+  streetcar|{harbor}: the lift is ~entirely the anchor channel, rebuild ≈ 0.
+  (b) **Margin-boarding-distribution sensitivity** (§8i): ω recomputed with H's
+  margin allocated by the walk-bin-mass-weighted variant (beside the existing
+  uniform-along-line), as an artifact row.
+  (c) **Exclusive-tract row** (spec 02 §4.3): the harbor/streetcar pair (27.3%
+  catchment overlap — near the 30% threshold, computed anyway per the review),
+  shared tracts assigned to the nearer corridor, as an artifact row.
+  (d) **σ_struct row** (§3/§8g): per-line INDEPENDENT structural error, N(0,
+  σ_struct = 400 boardings) scaled to welfare-minutes and summed within-draw,
+  seeded deterministically from the run fingerprint — implemented HARNESS-SIDE,
+  NO new PRIORS key (the append-last discipline is not triggered because the
+  error is post-processing, not a swept model input); base vs σ_struct-inflated
+  portfolio bands carried on the frontier.
+  (e) **run_id values-hash** (D60 review rec 3a): the preimage gains the sha256
+  of the consumed capital constants + active prior bands, so a rate-card or
+  prior-band edit MOVES the id (the old input-only key did not); regenerated,
+  the id changed, recorded in the artifact's provenance block.
+  (f) **Registry conversion** (§9/§10 G7): the 17 capital + network-mechanics
+  spec-pending:07§9-N4 leaves now claim rows in the artifact's
+  `assumptions_manifest`; check_assumptions scans `network_sequence.json`
+  (claimed ids; harness-internal sensitivity ids engine-owned/exempt, the
+  spec 08 §9 Q7 precedent) — warnings 21 → 4. Charts: depth-shaded frontier,
+  build-sequence, interaction/channel-split panel (make_charts.py `network`);
+  the archetype-gap section renders the N3-pending placeholder.
 - **N5 — full NPV objective** (after R1 → R6 → W1): consumes the spec 06
   §3 export schema with these EXPORTER changes (not "unchanged" — corrected
   at review): `network_fingerprint` field AND fingerprint-bearing

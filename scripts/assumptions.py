@@ -961,12 +961,14 @@ ASSUMPTIONS = {
     # allocates a line's boardings along its length or maps a committed plan to
     # the feeder scalar. Each is imported (single-sourced into network_mechanics
     # -- omega_allocation / omega_stop_materialization into omega(), the headway
-    # map into feeder_headway), so they are RULE-BEARING, not documentation. All
-    # rowless: the sensitivity rows they anticipate (uniform-along-line omega,
-    # the peak-mapped feeder headway -- spec 07 §8i / §10 G7) live in the
-    # network-sequence primary artifact, which does not exist until N4 -- hence
-    # spec-pending:07§9-N4, mirroring the N2 capital leaves. NO new priors
-    # (constant tier only; the prior-order fingerprint is untouched).
+    # map into feeder_headway), so they are RULE-BEARING, not documentation.
+    # spec 07 §9 N4 CONVERTED these from spec-pending to network-artifact CLAIMS:
+    # each declares a row in outputs/network_sequence.json's assumptions_manifest
+    # (check_assumptions' network scan). Their §8i/§10 G7 sensitivity rows
+    # (uniform-along-line + walk-bin-mass omega, exclusive-tract, peak-mapped
+    # feeder headway) live in that artifact's sensitivity block, harness-internal
+    # (engine-owned, exempt). NO new priors (constant tier only; the prior-order
+    # fingerprint is untouched).
     "omega_allocation": {
         "title": "omega boardings-allocation rule along a committed line",
         "tier": "constant", "status": "active",
@@ -981,7 +983,7 @@ ASSUMPTIONS = {
                       "variant is the §8i / §10 G7 sensitivity row (rows omega x "
                       "{0.5, 1.5} + uniform). A DECLARED judgment -- no pipeline "
                       "output allocates a line's boardings along its length",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["omega_allocation"]},
         "accepted": ("spec07-N1a network-mechanics landing", "2026-07-16"),
         "logged": None, "upgrade": "on-board / APC boarding-by-stop profile",
     },
@@ -998,7 +1000,7 @@ ASSUMPTIONS = {
                       "polyline'). 'line_spacing' = every H-spacing mi from the "
                       "window start; a finer/coarser materialization is the "
                       "anticipated §10 G7 row (network-sequence artifact, N4)",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["omega_stop_materialization"]},
         "accepted": ("spec07-N1a network-mechanics landing", "2026-07-16"),
         "logged": None, "upgrade": "engineered stop plan per committed line",
     },
@@ -1015,7 +1017,7 @@ ASSUMPTIONS = {
                       "feeder (spec 07 §4.2.1). 'offpeak_to_midday' is the declared "
                       "convention; the peak-mapped variant is its §10 G7 "
                       "sensitivity row (network-sequence artifact, N4)",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["feeder_headway_map"]},
         "accepted": ("spec07-N1a network-mechanics landing", "2026-07-16"),
         "logged": None, "upgrade": "committed-line published service plan",
     },
@@ -1024,15 +1026,13 @@ ASSUMPTIONS = {
     # The three harness-level knobs the greedy loop introduces. CONSTANT tier
     # (NOT priors -- none is consumed by draw_params, so the prior-order
     # fingerprint is untouched, exactly as N1a promised). Each carries a band so
-    # its lo/hi (or cap 1/3) sensitivity rows can source their edges. All rowless
-    # for the registry's ROW-tracking: the rows they anticipate live in the
-    # network-sequence PRIMARY ARTIFACT (outputs/network_sequence.json.sensitivity),
-    # a separate output schema check_assumptions does not scan (it tracks the
-    # per-corridor results_*.json tornado). The rows ARE present in that artifact
-    # this same commit (gate G7); formal registry row-tracking of the network
-    # artifact is a later integration -- hence spec-pending:07§9-N4, mirroring the
-    # sibling omega_* / cap_* entries. cycle_gap is §11 Q1's exposed knob (prior
-    # U(4,8) yr as a CONCEPT -- but a harness constant, not a draw_params prior).
+    # its lo/hi (or cap 1/3) sensitivity rows can source their edges. spec 07 §9
+    # N4 CONVERTED these from spec-pending to network-artifact CLAIMS: check_-
+    # assumptions now scans outputs/network_sequence.json, and each knob claims
+    # its assumptions_manifest row there (its G7 lo/hi sensitivity rows are
+    # harness-internal / engine-owned in the scan). cycle_gap is §11 Q1's exposed
+    # knob (prior U(4,8) yr as a CONCEPT -- but a harness constant, not a
+    # draw_params prior).
     "cycle_gap": {
         "title": "years between real programmatic build cycles",
         "tier": "constant", "status": "active",
@@ -1048,7 +1048,7 @@ ASSUMPTIONS = {
                       "the §11 Q1 U(4,8) prior; the lo/hi (4/8 yr) rows land in the "
                       "network-sequence artifact's Delta-K_PV display (interim: "
                       "welfare-minutes are a level and never discounted)",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cycle_gap"]},
         "accepted": ("spec07-N1b sequencing-harness landing", "2026-07-16"),
         "logged": None, "upgrade": "adopted capital program cadence",
     },
@@ -1068,7 +1068,7 @@ ASSUMPTIONS = {
                       "a reference; the lo/hi (2000/5000 $M) rows are the G7 budget "
                       "sensitivity in the network-sequence artifact. The harness "
                       "CLI --budget overrides it; default is a slack (None) budget",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["network_budget"]},
         "accepted": ("spec07-N1b sequencing-harness landing", "2026-07-16"),
         "logged": None, "upgrade": "adopted capital program envelope",
     },
@@ -1087,7 +1087,7 @@ ASSUMPTIONS = {
                       "labeling-sensitivity rows land in the network-sequence "
                       "artifact (they relabel the exploratory tail, not the "
                       "objective)",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["depth_cap"]},
         "accepted": ("spec07-N1b sequencing-harness landing", "2026-07-16"),
         "logged": None, "upgrade": "adopted provenance-governance threshold",
     },
@@ -1096,13 +1096,14 @@ ASSUMPTIONS = {
     # PRE-markup line-item leaves (2026 US$M) from costs/metro_cost_model.xlsx
     # §2 / spec 04 §2. capcost.capital() DERIVES the markup-inclusive
     # coefficients (Fixed 183.6 / 23.4 route-km / 27.6 elevated / 33.96 station
-    # / 7.44 car) from these leaves x cap_markup_low (E55-locked). All rowless:
-    # the capital sensitivity rows (fixed_cost_share {1,0.5,0}, LOW|US-TYPICAL
-    # band, crossing sweep) are spec 07 §10 G7 rows in the network-sequence
-    # primary artifact, which does not exist until N4 -- hence spec-pending:
-    # 07§9-N4. NO tbc-wrapper capital rows exist to claim (the wrapper carries
-    # capital as a fixed K input, not a swept tornado row), so a covered-
-    # elsewhere claim would be spurious. NO new priors (constant tier only).
+    # / 7.44 car) from these leaves x cap_markup_low (E55-locked). spec 07 §9 N4
+    # CONVERTED these from spec-pending to network-artifact CLAIMS: each rate-card
+    # leaf is declared in outputs/network_sequence.json's assumptions_manifest
+    # (the harness/capcost CONSUME it -> the capital bands + the run_id values-
+    # hash), and the registry claims that declaration (check_assumptions' network
+    # scan). The capital G7 rows (fixed_cost_share {1,0.5,0}) live in that
+    # artifact's sensitivity block, harness-internal. NO tbc-wrapper capital rows
+    # exist to claim. NO new priors (constant tier only).
     "cap_occ": {
         "title": "operations control centre (fixed capital)",
         "tier": "constant", "status": "active",
@@ -1112,7 +1113,7 @@ ASSUMPTIONS = {
         "provenance": "OCC fixed capital, REM-calibrated rate card "
                       "(costs/metro_cost_model.xlsx §2, spec 04 §2). Part of the "
                       "fixed term (OCC + depot) the §8j fixed_cost_share knob scales",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_occ"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering cost reference / procurement",
     },
@@ -1126,7 +1127,7 @@ ASSUMPTIONS = {
                       "§2); dimensioned for the 4-car option-preserving envelope "
                       "(spec 04 §3.1). The '1 depot' quantity of the E55 gate; "
                       "scaled with OCC by the §8j fixed_cost_share knob",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_depot"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering cost reference / procurement",
     },
@@ -1141,7 +1142,7 @@ ASSUMPTIONS = {
                       "is the SEPARATE cap_viaduct_km add-on. Utilities 3/km is "
                       "the sheet's clean-ROW floor; §3.3b dense-segment uplift is "
                       "a corridor-quantity refinement, not this base rate",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_route_km"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering cost reference / procurement",
     },
@@ -1155,7 +1156,7 @@ ASSUMPTIONS = {
                       "REPETITIVE guideway (~30-40 m spans); barrier crossings are "
                       "priced separately via cap_crossing_* (spec 04 §3.3). Gets "
                       "the US-TYPICAL cap_delivery_ut factor (§3.2)",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_viaduct_km"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering cost reference / procurement",
     },
@@ -1168,7 +1169,7 @@ ASSUMPTIONS = {
         "provenance": "per elevated station = LEAN 22 + platform-screen-doors 2.3 "
                       "+ telecom 2.3 + AFC 1.7 (spec 04 §2); 76 m platforms (4-car "
                       "option envelope). Gets the US-TYPICAL cap_delivery_ut factor",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_station"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering cost reference / procurement",
     },
@@ -1181,7 +1182,7 @@ ASSUMPTIONS = {
         "provenance": "per car = vehicle 3.4 + stabling 2.3 + spares 0.5 (spec 04 "
                       "§2); the 2->4-car expansion prices additional cars at this "
                       "same rate (spec 04 §3.1). Car COUNT is derived (capcost.fleet)",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_car"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering cost reference / procurement",
     },
@@ -1197,7 +1198,7 @@ ASSUMPTIONS = {
                       "(the sheet's shipped-config total) reproduces to the cent; "
                       "1.21 multiplicative would not. The tbc profile used 1.21 -- "
                       "the documented LOW-band delta vs this function",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_markup_low"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": None,
     },
@@ -1211,7 +1212,7 @@ ASSUMPTIONS = {
                       "1.3923 (spec 04 §3.2, FTA early-stage practice; the tbc "
                       "profile's US-TYPICAL markup). Multiplicative here (vs the "
                       "additive LOW markup) per §3.2 and the tbc derivation",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_markup_ut"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "corridor-specific FTA risk assessment",
     },
@@ -1226,7 +1227,7 @@ ASSUMPTIONS = {
                       "Costs Project US-elevated comps); the tbc profile's 1.75x. "
                       "Applied to cap_viaduct_km and cap_station only (civil "
                       "items), not to track/systems/rolling stock",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_delivery_ut"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "named US-elevated comparator set (§3.2 x-check)",
     },
@@ -1241,7 +1242,7 @@ ASSUMPTIONS = {
                       "simple channel span (spec 04 §3.3 band 30-80 $M, FLAGGED "
                       "placeholder for an engineering reference). capcost.capital "
                       "crossings arg x this default; overridable (parameterized)",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_crossing_low"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering reference per crossing (spec 04 §3.3)",
     },
@@ -1256,7 +1257,7 @@ ASSUMPTIONS = {
                       "§3.3 30-80 $M band (high = wide freeway interchange under "
                       "traffic); the tbc profile's US-TYPICAL crossing rate. "
                       "FLAGGED placeholder pending an engineering reference",
-        "rows": {}, "no_row_reason": "spec-pending:07§9-N4",
+        "rows": {"network": ["cap_crossing_ut"]},
         "accepted": ("spec07-N2 rate-card landing", "2026-07-16"),
         "logged": None, "upgrade": "engineering reference per crossing (spec 04 §3.3)",
     },

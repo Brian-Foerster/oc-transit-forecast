@@ -1027,7 +1027,13 @@ def main(path):
                            for hh in heads}
         print("\n--- design sweep: central expected-blend P50 (uncapped; "
               "grade-sep cruise x peak headway, off-peak = 2x) ---")
-        axis, keys = "grade_separated_cruise_kmh", [60, 70, 80, 90]
+        # cruise axis (owner 2026-07-17 design decision): the 60-mph design
+        # central is v_cruise 96.6 km/h (band midpoint of the 90-103.2 prior), so
+        # it is an ACTUAL sweep row here -- not interpolated between the 90 and a
+        # would-be 100 column. The pre-existing 60/70/80/90 cells are unchanged
+        # (each point() is computed independently per cruise value); 96.6 appends
+        # the design central as its own row (spec 07 N4 / D60 review rec 3b).
+        axis, keys = "grade_separated_cruise_kmh", [60, 70, 80, 90, 96.6]
         _hdr_lbl = "cruise \\ pk headway"
         print(f"  {_hdr_lbl:<18}"
               + "".join(f"  h={hh:>4g}m" for hh in heads))

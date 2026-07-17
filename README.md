@@ -444,3 +444,25 @@ tornado (`bca_harbor.json`).
     `fare_receipts_*` export streams (un-blocking the tbc `roh` / `fare_sweep`
     tornado rows, the latter 0 at today's flat fare). Charts: `outputs/bca_harbor.png` +
     `bca_tornado_harbor.png` (`python scripts/make_charts.py bca harbor`).
+
+28. **Network-sequencing harness landed (spec 07 N1–N4, interim objective).** A
+    greedy portfolio harness ABOVE the pipeline (`scripts/sequence_network.py`)
+    evaluates each candidate ALM line against the network built so far and commits
+    one per cycle, producing a build ORDER + a within-draw portfolio frontier as
+    the planning layer's primary output (`outputs/network_sequence.json`, G6-
+    deterministic). Interim objective = Δ(welfare-minutes) LEVEL; the full-NPV
+    objective is N5 (gated R1→R6→W1). The N4 batch added: the per-cycle
+    **anchor-vs-rebuild channel split** (the reviewer's toggle method — separates
+    synthetic-feeder MARKET ENLARGEMENT from crossing complementarity; the cycle-2
+    streetcar|{harbor} lift is ~all the anchor-margin channel, rebuild ≈0); the
+    **σ_struct** per-line independent structural-error row on the portfolio bands
+    (harness-side, N(0, 400 boardings) seeded from the run fingerprint — NO new
+    prior); the ω **walk-bin-mass** margin-distribution and spec-02-§4.3
+    **exclusive-tract** (harbor/streetcar 27.3% catchment overlap) sensitivity
+    rows; and the **run_id assumptions-values-hash** (the id now moves when the
+    rate card or a prior band changes). The 17 capital + network-mechanics registry
+    leaves now claim network-artifact rows — `check_assumptions.py` scans
+    `network_sequence.json` (claimed ids; harness-internal sensitivity ids
+    engine-owned/exempt, the spec 08 §9 Q7 precedent). Charts:
+    `outputs/network_frontier.png` / `network_build_sequence.png` /
+    `network_channels.png` (`python scripts/make_charts.py network`).

@@ -157,7 +157,8 @@ def _inside_buffer(off, pos, buffer_mi, window):
 # omega(H, B) -- share of H's forecast allocated to stops inside B's buffer
 # ---------------------------------------------------------------------------
 def omega(H_x, H_y, B_x, B_y, spacing, worker_pts=None, worker_mass=None,
-          stop_mass=None, buffer_mi=BUFFER_MI, B_window=None, allocation=None):
+          stop_mass=None, buffer_mi=BUFFER_MI, B_window=None, allocation=None,
+          walk_centers=None, walk_weights=None, exclusive_tract=False):
     """omega(H, B): the share of committed line H's forecast attributable to H's
     stops that fall inside candidate B's `buffer_mi` buffer (spec 07 §4.2).
 
@@ -167,26 +168,53 @@ def omega(H_x, H_y, B_x, B_y, spacing, worker_pts=None, worker_mass=None,
         to their nearest H-stop; pass worker_pts (k, 2) tract centroids in the
         SAME mi-scaled frame and worker_mass (k,);
       * 'uniform' -- the §4.2 / §8i sensitivity-row variant: every stop weight 1
-        (also used automatically when no worker mass is supplied).
+        (also used automatically when no worker mass is supplied);
+      * 'walk_bin_mass' -- the spec 07 N4 margin-distribution sensitivity:
+        worker mass DOWN-WEIGHTED by H's own measured walk-access mass profile
+        (its `walk_bins`) at each tract's distance to its nearest H-stop, so the
+        allocation follows the corridor's measured access decay instead of a flat
+        worker count. Pass walk_centers / walk_weights (H's walk_bins).
     Pre-computed per-stop weights may be passed via stop_mass to skip the tract
     step. A stop is 'inside B' when its perpendicular offset from B is
     <= buffer_mi (and, if B_window is given, its along-B position is within it).
+
+    exclusive_tract (spec 02 §4.3 mechanism, the spec 07 N4 near-threshold row):
+    a corridor tract shared by H's and B's catchments -- within `buffer_mi` of
+    BOTH alignments -- is assigned to its NEARER corridor; shared tracts nearer
+    to B than to H are B's OWN market, not riders diverted FROM H, so they leave
+    H's allocation (their margin must not flow into B's anchor via omega). Only
+    meaningful for the mass allocations (worker_mass / walk_bin_mass).
 
     Returns a scalar in [0, 1]. Across candidates whose buffers do not overlap,
     sum(omega(H, B_i)) <= 1 by construction (each stop's mass is counted once
     per buffer; disjoint buffers partition it)."""
     allocation = allocation or val("omega_allocation")
     stops = materialize_stops(H_x, H_y, spacing)
+    mass_alloc = ("worker_mass", "walk_bin_mass")
     if stop_mass is not None:
         w = np.asarray(stop_mass, float)
     elif allocation == "uniform" or worker_pts is None or worker_mass is None:
         w = np.ones(len(stops))
-    elif allocation == "worker_mass":
+    elif allocation in mass_alloc:
         wp = np.asarray(worker_pts, float)
-        wm = np.asarray(worker_mass, float)
+        wm = np.asarray(worker_mass, float).copy()
         d = np.hypot(wp[:, None, 0] - stops[None, :, 0],
                      wp[:, None, 1] - stops[None, :, 1])
         nearest = np.argmin(d, axis=1)
+        if allocation == "walk_bin_mass":
+            if walk_centers is None or walk_weights is None:
+                raise ValueError("walk_bin_mass allocation needs walk_centers / "
+                                 "walk_weights (H's walk_bins)")
+            near_dist = d[np.arange(len(wp)), nearest]   # tract -> nearest-stop mi
+            access = np.interp(near_dist, np.asarray(walk_centers, float),
+                               np.asarray(walk_weights, float))   # ends clamp
+            wm = wm * access
+        if exclusive_tract:
+            offH = project_points(H_x, H_y, wp[:, 0], wp[:, 1])[0]
+            offB, posB = project_points(B_x, B_y, wp[:, 0], wp[:, 1])
+            shared = (offH <= buffer_mi) & _inside_buffer(offB, posB, buffer_mi,
+                                                          B_window)
+            wm = np.where(shared & (offB < offH), 0.0, wm)
         w = np.zeros(len(stops))
         np.add.at(w, nearest, wm)
     else:

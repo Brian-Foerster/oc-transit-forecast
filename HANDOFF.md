@@ -134,6 +134,8 @@ the ASC at 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 (matured-target row:
     scripts/make_charts.py harbor             # -> outputs/*.png
     scripts/bca_export.py harbor [--seed-check]  # OPTIONAL: -> outputs/bca_export_harbor.json.gz (spec 06 B4 BCA handoff; post-ABC, gitignored)
     scripts/make_charts.py bca harbor         # OPTIONAL (spec 06 W2): -> outputs/bca_harbor.png + bca_tornado_harbor.png; reads the tbc welfare-BCA artifact (existence-gated), skips if absent
+    scripts/sequence_network.py               # spec 07 N1-N4 greedy portfolio harness -> outputs/network_sequence.json (interim Δwelfare-min objective; ~8-15 min full run w/ sensitivity + channel split at N=40,000)
+    scripts/make_charts.py network            # spec 07 N4: -> outputs/network_frontier.png + network_build_sequence.png + network_channels.png
     scripts/check_assumptions.py [--appendix] # STANDING GATE (spec 08): 7 registry checks, exit nonzero on drift; --appendix regenerates outputs/assumptions.{md,json}
 
 `data/derived` is committed, so **model.py `run()` and a fresh clone's
@@ -142,12 +144,19 @@ sensitivity table now rebuilds a scratch corridor for the `intra_tract_alt`
 row (`build_corridor.py`, which reads `data/raw`), so regenerating the full
 table from scratch needs the raw data (accepted, spec 08 §9 Q6; README issue
 26). `check_assumptions.py` joins `test_bca_export.py` as a standing gate —
-run it (green: 0 failures, spec-pending warnings counted; 4 as of W1) before
-any commit that touches values, rows, specs, or the README. Since W1 it also
+run it (green: 0 failures, spec-pending warnings counted; 4 after the spec 07
+N4 registry conversion) before any commit that touches values, rows, specs, or
+the README. Since W1 it also
 scans the cross-repo welfare-BCA artifact (`transit-benefit-cost/outputs/
 bca_harbor.json`, existence-gated, override path via `BCA_WRAPPER_ARTIFACT`)
 for oc-claimed tornado ids — a check-2 coverage claim, engine-owned ids exempt
 from check-3 (spec 08 §9 Q7); absent sibling ⇒ pending warnings, never a fail.
+Since spec 07 N4 it ALSO scans `outputs/network_sequence.json` (override
+`NETWORK_SEQUENCE_ARTIFACT`) the same way: the 17 capital + network-mechanics
+registry leaves claim its `assumptions_manifest` rows, and the harness-internal
+sensitivity ids are engine-owned/exempt (`ENGINE_OWNED_NETWORK`). That
+conversion dropped the spec-pending warnings 21 → 4 (the remaining 4 are the
+spec-02 §4.8/§4.9 street-cal + LODES rows).
 Everything is plain
 numpy/pandas/matplotlib (requirements.txt); model runs take seconds
 (N=40,000 draws, vectorized, seed=42).

@@ -104,6 +104,29 @@ ENGINE_OWNED_WRAPPER = frozenset({
     "roh", "fare_sweep",
 })
 
+# spec 07 §9 N4: the network-sequence primary artifact (the greedy portfolio
+# harness output). Existence-gated on the committed outputs path; absent ->
+# check-2 'pending' warnings, exactly like the wrapper. Its assumptions_manifest
+# declares the registry leaves capcost + the harness CONSUME (claimed by the
+# 07§9-N4 registry entries); its sensitivity-block ids are HARNESS-INTERNAL G7
+# rows -- engine-owned in the spec 08 §9 Q7 sense, so they are EXEMPT from the
+# orphan check (a network id that is neither harness-internal nor registry-claimed
+# is still a real orphan). This mirrors the wrapper scan precedent + the Q7
+# tie-break exactly (claimed ids only; engine-owned exemption list).
+NETWORK_ARTIFACT = os.environ.get(
+    "NETWORK_SEQUENCE_ARTIFACT",
+    os.path.join(OUT, "network_sequence.json"))
+
+ENGINE_OWNED_NETWORK = frozenset({
+    # computed_n1b G7 knob-sensitivity rows (the harness's own §10 G7 block)
+    "cycle_gap_lo", "cycle_gap_hi", "budget_lo", "budget_hi",
+    "omega_0.5", "omega_1.5", "omega_uniform", "omega_walk_bin_mass",
+    "exclusive_tract", "depth_cap_1", "depth_cap_3", "offpeak_to_midday",
+    "sigma_struct", "fixed_cost_share_0.5", "fixed_cost_share_0.0",
+    # named spec-pending (N5 / optional) rows
+    "k3_order_diff", "ratio_greedy_order", "premium_bracket",
+})
+
 
 def _load(path):
     with open(path, encoding="utf-8") as f:
@@ -158,6 +181,17 @@ def load_artifacts():
         WR = _load(WRAPPER_ARTIFACT)
         arts["wrapper"] = WR
         present["wrapper"] = set(WR.get("tornado_row_ids", []))
+    # spec 07 §9 N4 network-sequence artifact: present rows = the manifest ids
+    # the registry claims UNION the sensitivity-block ids (orphan-scoped to
+    # ENGINE_OWNED_NETWORK below). Absent -> its claims become check-2 pending.
+    if os.path.exists(NETWORK_ARTIFACT):
+        NW = _load(NETWORK_ARTIFACT)
+        arts["network"] = NW
+        ids = {c["id"] for c in NW.get("assumptions_manifest", {}).get("consumed", [])}
+        sens = NW.get("sensitivity") or {}
+        for grp in ("computed_n1b", "named_spec_pending"):
+            ids |= {r["id"] for r in sens.get(grp, [])}
+        present["network"] = ids
     return present, pct, arts
 
 
@@ -287,8 +321,16 @@ def check_schema():
         # measured} (a chosen point with no propagated band) OR rowless-
         # dispositioned. Priors always carry a derived band.
         if tier in OWNED_TIERS and tier != "prior":
+            # spec 07 §9 N4: a network-artifact MANIFEST claim is a consumed-value
+            # DECLARATION (the harness records that it consumed this leaf), not a
+            # swept lo/hi band-edge tornado row -- so it does not require a band to
+            # source edges (a categorical knob like omega_allocation, or a fixed
+            # markup like cap_markup_ut, has no numeric band). Entries whose owned
+            # rows are all in the network artifact are exempt on that basis.
+            claims = claimed_rows(aid, e)
+            network_only = bool(claims) and all(a == "network" for a, _ in claims)
             exempt = (e.get("basis") in ("definitional", "measured")
-                      or not owns_rows(e))
+                      or not owns_rows(e) or network_only)
             if not exempt and A.band(aid) is None:
                 fails.append(f"{aid}: {e['basis']}-basis constant owns rows "
                              "but has band=None (needs a band to source edges)")
@@ -340,6 +382,11 @@ def check_orphans(present):
             # is still a real orphan (an oc row nobody harvested).
             if art == "wrapper" and rid in ENGINE_OWNED_WRAPPER:
                 continue
+            # spec 07 §9 N4: network sensitivity-block ids are harness-internal
+            # (engine-owned in the Q7 sense) -> exempt; the manifest ids the
+            # registry claims are NOT exempt (they must be owned).
+            if art == "network" and rid in ENGINE_OWNED_NETWORK:
+                continue
             n += 1
             if (art, rid) not in owner:
                 if art == "wrapper":
@@ -347,6 +394,12 @@ def check_orphans(present):
                                  "wrapper tornado row (neither ENGINE_OWNED_WRAPPER "
                                  "nor claimed by a registry entry); classify it "
                                  "engine-owned or add an oc claim (spec 08 §9 Q7)")
+                elif art == "network":
+                    fails.append(f"orphan row network:{rid} -- unclassified "
+                                 "network-artifact row (neither ENGINE_OWNED_NETWORK "
+                                 "nor claimed by a registry entry); classify it "
+                                 "harness-internal or add a registry claim "
+                                 "(spec 07 §9 N4 / spec 08 §9 Q7)")
                 else:
                     fails.append(f"orphan row {art}:{rid} -- present but claimed "
                                  "by no entry (rule-2 evasion by omission)")
