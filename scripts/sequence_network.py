@@ -318,6 +318,15 @@ def load_candidates(path, gtfs, tracts):
             "worker_pts": wp, "worker_mass": wm,
             "walk_centers": walk_centers, "walk_weights": walk_weights,
             "folds": {s: list(removed.get(s, [])) for s in ("fold", "retain")},
+            # spec 04 §3.3 special-structures count (N5 review fix): a
+            # CANDIDATE-universe field (config/candidates.json), honestly
+            # determined per corridor -- NOT a registry constant (only the
+            # per-crossing RATES, cap_crossing_low/ut, are registry leaves).
+            # Defaults to 0 with an explicit basis note if a candidate omits it.
+            "crossings": int(c.get("crossings", 0)),
+            "crossings_note": c.get("crossings_note",
+                                    "no crossings declared for this candidate "
+                                    "(defaulted to 0; spec 04 §3.3)"),
         })
     return cands, bool(doc.get("hand_supplied")), doc.get("substitution_note", "")
 
@@ -327,9 +336,12 @@ def load_candidates(path, gtfs, tracts):
 # ---------------------------------------------------------------------------
 def capital_bands(cand, fixed_cost_share=1.0):
     """LOW | US-TYPICAL Delta-K ($M) for a candidate (never the low number
-    alone, spec 04 §3.2)."""
+    alone, spec 04 §3.2). crossings (spec 04 §3.3 special structures) is a
+    per-candidate field from config/candidates.json (N5 review fix -- was
+    silently defaulted to 0 for every candidate)."""
     return capcost.capital_bands(cand["route_mi"], cand["stations"],
-                                 cand["cars"], fixed_cost_share=fixed_cost_share)
+                                 cand["cars"], crossings=cand.get("crossings", 0),
+                                 fixed_cost_share=fixed_cost_share)
 
 
 def pv_factor(cycle_index, cycle_gap=CYCLE_GAP, rate=DISPLAY_DISCOUNT):
@@ -537,6 +549,10 @@ def evaluate(B, network_before, params, seed, weights, gtfs, tracts, n,
             "n": int(n), "seed": int(seed)}
         capital = capital_bands(B)
         rec["capital"] = capital                        # capcost LOW|US_TYPICAL $M
+        # N5 review fix: carry the crossings count + basis alongside capital so
+        # every consumer of rec["capital"] can disclose what was priced INTO it.
+        rec["crossings"] = int(B.get("crossings", 0))
+        rec["crossings_note"] = B.get("crossings_note", "")
         rec["npv"] = npv_engine.price(B["id"], res, B, capital, network_desc,
                                       seed)
     return rec
@@ -765,6 +781,14 @@ def _cost_design(cand, res, capital):
     return {
         "capital": {"LOW": float(capital["LOW"]),
                     "US_TYPICAL": float(capital["US_TYPICAL"])},
+        # N5 review fix: discloses the special-structures count + basis priced
+        # INTO "capital" above (spec 04 §3.3) so the export is legible on its
+        # own -- the count is a candidate field (config/candidates.json), the
+        # per-crossing RATES (cap_crossing_low/ut) are the registry leaves.
+        "crossings": {"count": int(cand.get("crossings", 0)),
+                      "rate_LOW": capcost.CAP_XING_LOW,
+                      "rate_US_TYPICAL": capcost.CAP_XING_UT,
+                      "basis": cand.get("crossings_note", "")},
         "service_plan": {
             "route_km": cand["route_mi"] * KM_PER_MI,
             "cars_per_train": cpt,
@@ -913,7 +937,12 @@ def sequence(cands, hand_supplied, subst_note, seed=SEED, n=N, max_cycles=None,
     ncyc = max_cycles if max_cycles is not None else len(cands)
     for k in range(ncyc):
         if not remaining:
-            stop = {"reason": "candidate_exhaustion", "cycle": k}
+            # cycle numbers in the STOPPING RECORD are 1-based (cycle 1 = the
+            # first evaluation, against the empty network-before) -- matching
+            # spec 07 §7/§9's own prose ("fires at CYCLE 1"), which a raw 0-based
+            # loop index previously contradicted (N5 review fix). cycle_records'
+            # own per-cycle "cycle" key stays the internal 0-based loop index.
+            stop = {"reason": "candidate_exhaustion", "cycle": k + 1}
             break
 
         network_before = [dict(H) for H in committed]
@@ -967,7 +996,7 @@ def sequence(cands, hand_supplied, subst_note, seed=SEED, n=N, max_cycles=None,
 
         if not feasible_ids:
             marg = _economic_margin(remaining, singles, scenario)
-            stop = {"reason": "budget_exhaustion", "cycle": k,
+            stop = {"reason": "budget_exhaustion", "cycle": k + 1,  # 1-based, see above
                     "remaining_budget_ut": remaining_budget,
                     "economic_margin_note": marg}
             break
@@ -1028,7 +1057,7 @@ def sequence(cands, hand_supplied, subst_note, seed=SEED, n=N, max_cycles=None,
         del remaining[winner]
 
     if stop is None:
-        stop = {"reason": "candidate_exhaustion", "cycle": len(committed)}
+        stop = {"reason": "candidate_exhaustion", "cycle": len(committed) + 1}
     stop = _finalize_stop(stop, committed, cycle_records, budget, scenario)
 
     return _assemble_artifact(cands, hand_supplied, subst_note, seed, n,
@@ -1075,6 +1104,8 @@ def _as_committed(C, rec, params, scenario, network_before):
             "capital_ut": caps["US_TYPICAL"], "capital_low": caps["LOW"],
             "route_mi": C["route_mi"], "stations": C["stations"],
             "cars": C["cars"],
+            "crossings": C.get("crossings", 0),
+            "crossings_note": C.get("crossings_note", ""),
             "depth": rec.get("depth", 1)}
 
 
@@ -1176,6 +1207,10 @@ def _cycle_record(k, network_before, committed, remaining, singles,
                          "delta*Delta-wm(B*|N+A) is committed.")}
                 if pair_justified else None),
             "capital_delta_K": {"LOW": capW["LOW"], "US_TYPICAL": capW["US_TYPICAL"]},
+            # N5 review fix: discloses the special-structures count + basis
+            # priced INTO capital_delta_K above (spec 04 §3.3).
+            "crossings": {"count": W_committed.get("crossings", 0),
+                          "basis": W_committed.get("crossings_note", "")},
             "capital_delta_K_pv": {
                 "LOW": capW["LOW"] * pv_factor(k),
                 "US_TYPICAL": capW["US_TYPICAL"] * pv_factor(k),
@@ -1247,6 +1282,11 @@ def _finalize_stop(stop, committed, cycle_records, budget, scenario):
                              "interim layer stops on budget exhaustion or "
                              "candidate exhaustion and reports the economic "
                              "margin at which it emptied (spec 07 §7).")
+    stop["cycle_numbering"] = ("1-based: cycle 1 is the first evaluation, "
+                               "against the empty network-before (N5 review "
+                               "fix -- this field previously read 0-based, "
+                               "contradicting spec 07's own §7/§9 prose, which "
+                               "always calls the first evaluation 'cycle 1').")
     if committed:
         last = cycle_records[-1]["commitment"]
         stop["last_commitment"] = {
@@ -1424,6 +1464,10 @@ def _sensitivity_block():
             {"id": "sigma_struct", "knob": "sigma_struct", "value": True},
             {"id": "fixed_cost_share_0.5", "knob": "fixed_cost_share", "value": 0.5},
             {"id": "fixed_cost_share_0.0", "knob": "fixed_cost_share", "value": 0.0},
+            {"id": "crossing_count_lo", "knob": "crossing_count", "value": 2,
+             "display": "Delta-K_PV (interim: welfare not discounted)"},
+            {"id": "crossing_count_hi", "knob": "crossing_count", "value": 6,
+             "display": "Delta-K_PV (interim: welfare not discounted)"},
         ],
         "named_spec_pending": [
             {"id": "k3_order_diff", "knob": "k=3 deep pass", "work_item": "N1/optional",
@@ -1557,6 +1601,7 @@ def _sens_value(row, cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
             C = byid[p["line"]]
             fcs = 1.0 if p["step"] == 0 else share       # first line keeps full fixed
             caps = capcost.capital_bands(C["route_mi"], C["stations"], C["cars"],
+                                         crossings=C.get("crossings", 0),
                                          fixed_cost_share=fcs)
             cum_low += caps["LOW"] * pv_factor(p["step"])
             cum_ut += caps["US_TYPICAL"] * pv_factor(p["step"])
@@ -1564,6 +1609,30 @@ def _sens_value(row, cands, hand_supplied, subst_note, seed, n, scenario, gtfs,
                           "OCC+depot, §8j); Delta-K_PV display only, welfare "
                           "objective invariant"), \
             {"fixed_cost_share": share, "cum_capital_pv_LOW": cum_low,
+             "cum_capital_pv_US_TYPICAL": cum_ut}
+    if knob == "crossing_count":
+        # spec 04 §3.3 count uncertainty (N5 review G7 row): probe harbor's
+        # named crossing set count around the base 4 (I-5, SR-22, Santa Ana
+        # River channel, BNSF Fullerton) -- the cleaner of the two knob choices
+        # the review offered (a rate sweep is already the LOW/US_TYPICAL band
+        # pair; a COUNT sweep is the genuinely new uncertainty axis). Harbor
+        # only -- streetcar's own declared count (1) is untouched. Display-only
+        # (like fixed_cost_share): capital never enters the interim objective.
+        swept = row["value"]
+        byid = {c["id"]: c for c in cands}
+        cum_low = cum_ut = 0.0
+        for p in pts:
+            C = byid[p["line"]]
+            xc = swept if p["line"] == "harbor" else C.get("crossings", 0)
+            caps = capcost.capital_bands(C["route_mi"], C["stations"], C["cars"],
+                                         crossings=xc)
+            cum_low += caps["LOW"] * pv_factor(p["step"])
+            cum_ut += caps["US_TYPICAL"] * pv_factor(p["step"])
+        return base_obj, (f"harbor crossing count {swept} (base 4, spec 04 "
+                          "§3.3 count uncertainty -- I-5/SR-22/Santa Ana "
+                          "River/BNSF Fullerton); Delta-K_PV display only, "
+                          "welfare objective invariant"), \
+            {"crossing_count_harbor": swept, "cum_capital_pv_LOW": cum_low,
              "cum_capital_pv_US_TYPICAL": cum_ut}
     if knob == "depth_cap":
         # depth cap changes only the exploratory LABEL, not the objective; record
@@ -1667,8 +1736,15 @@ def _assemble_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
     _params, weights, _ess = _cycle_weights(n, seed, clbl)
 
     consumed, values_hash, _prior_bands = _assumptions_manifest()
+    # N5 review fix: crossings (spec 04 §3.3) is a CANDIDATE field (config/
+    # candidates.json), not a registry constant, so it does not live in
+    # values_hash's _CAPITAL_CONSTS list -- it must enter the preimage here
+    # instead, or editing a candidate's crossing count would silently leave
+    # the run_id unmoved (the exact D60-rec-3a failure mode, one level down).
+    cand_crossings = {c["id"]: int(c.get("crossings", 0)) for c in cands}
     run_id_preimage = {
         "candidates": nm.sorted_set_list(c["id"] for c in cands),
+        "candidate_crossings": dict(sorted(cand_crossings.items())),
         "asbuilt": json.load(open(os.path.join(CFG, "network_asbuilt.json"),
                                   encoding="utf-8")).get("lines", []),
         "seed": seed, "n": n, "scenario": scenario, "budget": budget,
@@ -1693,7 +1769,13 @@ def _assemble_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
                      "sensitivity-block ids are harness-INTERNAL and exempt from "
                      "the orphan check, mirroring the spec 08 §9 Q7 wrapper "
                      "engine-owned precedent). The values_hash of these + the "
-                     "active prior bands enters the run_id preimage (D60 rec 3a).")},
+                     "active prior bands enters the run_id preimage (D60 rec 3a). "
+                     "N5 review fix: per-candidate crossing COUNTS (spec 04 §3.3) "
+                     "are a candidate_universe field, not a registry constant -- "
+                     "only the per-crossing RATES (cap_crossing_low/ut) are "
+                     "registry leaves here; both feed capital_bands(), and the "
+                     "counts enter the run_id preimage separately as "
+                     "candidate_crossings (below), not the values_hash.")},
         "objective": {"mode": "interim",
                       "metric": "Delta(welfare-minutes) LEVEL, within-draw",
                       "note": ("INTERIM (spec 07 §3): the full-NPV objective is "
@@ -1719,6 +1801,17 @@ def _assemble_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
         "safeguard_comparison": _safeguard(committed, cycle_records, scenario),
         "provenance_report": _provenance_report(committed, cycle_records),
         "sensitivity": None,     # filled by run_sensitivity in main()
+        "channel_split_note": (
+            "channel_split (spec 07 N4) only ever appears on a candidate "
+            "evaluated against a NONEMPTY network -- cycle 2 onward, 1-based "
+            "(cycles[k].cycle == k, 0-based internally; see "
+            "stopping_record.cycle_numbering); it has no meaning at cycle 1's "
+            "empty network and is null there by construction. In THIS interim "
+            "run every candidate is eventually committed (candidate_exhaustion, "
+            "no budget bound), so a real, non-null channel_split DOES appear "
+            "from cycle 2 onward (cycles[1].candidate_results) -- unlike the "
+            "sibling NPV artifact, where the §7 marginal stop fires at cycle 1 "
+            "before any commitment and every channel_split field is null."),
         "amendments_note": ("spec 07 §1/§6.1: this run applies the degrade-to-"
                             "uncapped amendment (ABC weights are properties of "
                             "the shared posterior, applicable to any corridor "
@@ -1864,6 +1957,10 @@ def _npv_cand_block(cid, singles, cvs_band, scenario, seed, n, weights):
              "excluded_fold_routes": sorted(rec["excluded"]),
              "dependencies": [dict(d) for d in rec["deps"]],
              "capital_delta_K": {"LOW": cap["LOW"], "US_TYPICAL": cap["US_TYPICAL"]},
+             # N5 review fix: discloses the special-structures count + basis
+             # priced INTO capital_delta_K above (spec 04 §3.3).
+             "crossings": {"count": rec.get("crossings", 0),
+                          "basis": rec.get("crossings_note", "")},
              "npv_selfcheck": rec["npv"]["selfcheck"],
              "network_fingerprint": rec["npv"]["fp"]}
     for scen in ("fold", "retain"):
@@ -1938,7 +2035,9 @@ def sequence_npv(cands, hand_supplied, subst_note, seed=SEED, n=N,
 
     for k in range(len(cands)):
         if not remaining:
-            stop = {"reason": "candidate_exhaustion", "cycle": k}
+            # 1-based cycle numbering in the STOPPING RECORD (see the interim
+            # sequence()'s equivalent comment) -- N5 review fix.
+            stop = {"reason": "candidate_exhaustion", "cycle": k + 1}
             break
         network_before = [dict(H) for H in committed]
 
@@ -1981,7 +2080,7 @@ def sequence_npv(cands, hand_supplied, subst_note, seed=SEED, n=N,
             feasible[cid] = remaining_budget is None or cap <= remaining_budget + 1e-6
         feasible_ids = [cid for cid, f in feasible.items() if f]
         if not feasible_ids:
-            stop = {"reason": "budget_exhaustion", "cycle": k,
+            stop = {"reason": "budget_exhaustion", "cycle": k + 1,  # 1-based
                     "remaining_budget_ut": remaining_budget}
             break
 
@@ -2042,7 +2141,8 @@ def sequence_npv(cands, hand_supplied, subst_note, seed=SEED, n=N,
             _print_npv_cycle(cyc, singles, cvs_band, scenario)
 
         if stop_fires:
-            stop = {"reason": "marginal_bcr_below_1", "cycle": k, "winner": winner}
+            stop = {"reason": "marginal_bcr_below_1", "cycle": k + 1,  # 1-based
+                    "winner": winner}
             break
         # CV > 0: commit the winner (would only happen if some OC corridor cleared
         # BCR=1 -- it does not today) and continue the greedy order.
@@ -2056,7 +2156,7 @@ def sequence_npv(cands, hand_supplied, subst_note, seed=SEED, n=N,
         del remaining[winner]
 
     if stop is None:
-        stop = {"reason": "candidate_exhaustion", "cycle": len(committed)}
+        stop = {"reason": "candidate_exhaustion", "cycle": len(committed) + 1}
 
     return _assemble_npv_artifact(
         cands, hand_supplied, subst_note, seed, n, scenario, budget, clbl, ess,
@@ -2085,6 +2185,7 @@ def _npv_frontier(cycle0, committed, seed, n, scenario, weights, rate):
             "depth": b["depth"], "depth_label": b["depth_label"],
             "kind": "candidate_standalone",
             "capital_delta_K_LOW": cap["LOW"], "capital_delta_K_US_TYPICAL": cap["US_TYPICAL"],
+            "crossings": b.get("crossings", {"count": 0, "basis": ""}),
             "dK_pv_LOW": cap["LOW"] * f, "dK_pv_US_TYPICAL": cap["US_TYPICAL"] * f,
             "npv_uncapped_LOW": lo["npv_uncapped"],
             "npv_uncapped_US_TYPICAL": ut["npv_uncapped"],
@@ -2099,8 +2200,14 @@ def _assemble_npv_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
                            budget, clbl, ess, ess_min, committed, cycle_records,
                            stop, weights, rate, delta):
     consumed, values_hash, _pb = _assumptions_manifest()
+    # N5 review fix: crossings (spec 04 §3.3) is a CANDIDATE field, not a
+    # registry constant, so it must enter the preimage explicitly here --
+    # otherwise editing a candidate's crossing count would silently leave the
+    # run_id unmoved (see the interim assembler's identical fix + note).
+    cand_crossings = {c["id"]: int(c.get("crossings", 0)) for c in cands}
     run_id_preimage = {
         "candidates": nm.sorted_set_list(c["id"] for c in cands),
+        "candidate_crossings": dict(sorted(cand_crossings.items())),
         "asbuilt": json.load(open(os.path.join(CFG, "network_asbuilt.json"),
                                   encoding="utf-8")).get("lines", []),
         "seed": seed, "n": n, "scenario": scenario, "budget": budget,
@@ -2117,6 +2224,9 @@ def _assemble_npv_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
     stop["mode"] = "npv (welfare-BCA central profile, spec 06)"
     stop["profile_discount_rate"] = rate
     stop["cycle_gap_delta"] = round(delta, 6)
+    stop["cycle_numbering"] = ("1-based: cycle 1 is the first evaluation, "
+                               "against the empty network-before (N5 review "
+                               "fix -- matches spec 07's own §7/§9 prose).")
     recommended = [H["id"] for H in committed]
     stop["recommended_portfolio"] = recommended
     if stop["reason"] == "marginal_bcr_below_1" and cycle0 is not None:
@@ -2182,7 +2292,13 @@ def _assemble_npv_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
                      "constant-tier registry leaves capcost + this harness "
                      "consume, each claiming a network-artifact row. The "
                      "values_hash of these + the active prior bands enters the "
-                     "run_id preimage (D60 rec 3a).")},
+                     "run_id preimage (D60 rec 3a). N5 review fix: per-candidate "
+                     "crossing COUNTS (spec 04 §3.3) are a candidate_universe "
+                     "field, not a registry constant -- only the per-crossing "
+                     "RATES (cap_crossing_low/ut) are registry leaves here; both "
+                     "feed capital_bands(), and the counts enter the run_id "
+                     "preimage separately as candidate_crossings, not the "
+                     "values_hash.")},
         "objective": {
             "mode": "npv",
             "metric": "ΔNPV (welfare-BCA), within-draw CV in common-base-year PV $M",
@@ -2226,6 +2342,15 @@ def _assemble_npv_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
         "safeguard_comparison": safeguard,
         "provenance_report": _provenance_report(committed, cycle_records),
         "sensitivity": None,
+        "channel_split_note": (
+            "channel_split (spec 07 N4) only ever appears on a candidate "
+            "evaluated against a NONEMPTY network -- cycle 2 onward, 1-based "
+            "(see stopping_record.cycle_numbering); it decomposes a networked "
+            "lift into the anchor-add vs synthetic-feeder-rebuild channels and "
+            "has no meaning at cycle 1's empty network. MOOT IN THIS RUN: the "
+            "§7 marginal stop fires at cycle 1, before any line is committed, "
+            "so no candidate here ever reaches a nonempty network and every "
+            "channel_split field in this artifact is null."),
         "amendments_note": ("spec 07 §1/§6.1: applies the degrade-to-uncapped "
                             "amendment (ABC weights are properties of the shared "
                             "posterior). The amendment rides N6; this artifact is "
@@ -2434,6 +2559,15 @@ def _npv_sensitivity(artifact):
              "status": "computed",
              "note": ("N5 follow-up: std-based widening is the PRIMARY σ_struct "
                       "measure on every candidate block (P90-P10 secondary).")},
+            {"id": "crossing_count", "knob": "harbor crossing count {2,4,6}",
+             "work_item": "N5-follow",
+             "note": ("N5 review fix: crossings is now a per-candidate capital "
+                      "input (spec 04 §3.3; harbor=4, streetcar=1). The count-"
+                      "uncertainty sweep is COMPUTED on the interim harness "
+                      "(crossing_count_lo/hi, capital-only display row, since "
+                      "capital never enters the interim objective); an NPV-mode "
+                      "re-price under the swept count needs a wrapper round-trip "
+                      "per row and is a follow-up here.")},
         ],
         "base_note": ("the NPV stopping verdict (marginal BCR far below 1, "
                       "recommended portfolio empty) is invariant to the heavy "

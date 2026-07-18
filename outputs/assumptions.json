@@ -1,7 +1,7 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 44,
+    "judgment": 45,
     "literature": 9,
     "locally-calibrated": 1,
     "measured": 28
@@ -896,6 +896,18 @@
       "tier": "config"
     },
     {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "candidate_crossings",
+      "rows": [
+        [
+          "network",
+          "crossing_count"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
       "basis": "measured",
       "effect_pct": null,
       "id": "cap_car",
@@ -1136,7 +1148,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 107,
+  "n_entries": 108,
   "priors": [
     {
       "basis": "judgment",
@@ -1273,7 +1285,7 @@
     }
   ],
   "tier_census": {
-    "config": 12,
+    "config": 13,
     "constant": 62,
     "data": 4,
     "prior": 19,

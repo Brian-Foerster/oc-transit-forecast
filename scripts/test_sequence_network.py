@@ -184,7 +184,8 @@ def test_g6_artifact_reproducible():
 def test_g7_sensitivity_knob_rows():
     """G7: the sensitivity block carries every N1b-scope knob row IN THIS COMMIT
     (cycle_gap lo/hi, budget lo/hi, omega x {0.5,1.5}, uniform, depth-cap 1/3)
-    and NAMES the spec-pending N4/N5 rows (spec 07 §10 G7)."""
+    and NAMES the spec-pending N4/N5 rows (spec 07 §10 G7). N5 review fix adds
+    the crossing_count lo/hi row (spec 04 §3.3 count uncertainty, harbor only)."""
     a = _seq(n=1500)
     sens = sn.run_sensitivity(a, _CANDS, _HS, _SUBST, SEED, 1500, "fold",
                               _GTFS, _TRACTS)
@@ -195,8 +196,9 @@ def test_g7_sensitivity_knob_rows():
     need = {"cycle_gap_lo", "cycle_gap_hi", "budget_lo", "budget_hi",
             "omega_0.5", "omega_1.5", "omega_uniform", "omega_walk_bin_mass",
             "exclusive_tract", "depth_cap_1", "depth_cap_3", "offpeak_to_midday",
-            "sigma_struct", "fixed_cost_share_0.5", "fixed_cost_share_0.0"}
-    assert need <= ids, ("missing N4 knob rows", need - ids)
+            "sigma_struct", "fixed_cost_share_0.5", "fixed_cost_share_0.0",
+            "crossing_count_lo", "crossing_count_hi"}
+    assert need <= ids, ("missing N4/N5 knob rows", need - ids)
     pending = {r["id"] for r in sens["named_spec_pending"]}
     need_p = {"k3_order_diff", "ratio_greedy_order", "premium_bracket"}
     assert need_p <= pending, ("missing named spec-pending rows", need_p - pending)
@@ -210,9 +212,22 @@ def test_g7_sensitivity_knob_rows():
     om = {r["id"]: r["pct"] for r in sens["computed_n1b"]
           if r["id"].startswith("omega_")}
     assert om["omega_1.5"] != om["omega_0.5"], "omega sweep inert"
-    print(f"  G7 OK  {len(need)} N4 knob rows computed, "
+    # crossing_count rows are DISPLAY-only (capital never enters the interim
+    # objective, like fixed_cost_share) but must move cumulative capital PV,
+    # and lo < hi in both bands (harbor's crossing count only goes up)
+    xlo = next(r for r in sens["computed_n1b"] if r["id"] == "crossing_count_lo")
+    xhi = next(r for r in sens["computed_n1b"] if r["id"] == "crossing_count_hi")
+    assert xlo["pct"] == 0.0 and xhi["pct"] == 0.0, \
+        "crossing_count must not move the interim welfare objective"
+    for bnd in ("cum_capital_pv_LOW", "cum_capital_pv_US_TYPICAL"):
+        assert xlo["display"][bnd] < xhi["display"][bnd], \
+            (f"crossing_count_lo/hi did not move {bnd}", xlo["display"], xhi["display"])
+    print(f"  G7 OK  {len(need)} N4/N5 knob rows computed, "
           f"{len(pending)} spec-pending named; budget_lo {blo['pct']:+.1f}%, "
-          f"omega x0.5/x1.5 {om['omega_0.5']:+.2f}/{om['omega_1.5']:+.2f}%")
+          f"omega x0.5/x1.5 {om['omega_0.5']:+.2f}/{om['omega_1.5']:+.2f}%, "
+          f"crossing_count lo/hi ΔK_PV_UT "
+          f"{xlo['display']['cum_capital_pv_US_TYPICAL']:,.0f}/"
+          f"{xhi['display']['cum_capital_pv_US_TYPICAL']:,.0f}")
 
 
 def test_n4_channel_split():
@@ -275,7 +290,11 @@ def test_n4_sigma_struct_and_variants():
     # spec 07 N5: network_sequence.json is now the NPV artifact; the committed
     # INTERIM production artifact (the N4 regression anchor) lives at
     # network_sequence_interim.json, which carries the interim frontier's
-    # sigma_struct_row.final_portfolio band.
+    # sigma_struct_row.final_portfolio band. N5-review note: the interim
+    # artifact EMBEDS capital (capital_delta_K / Delta-K_PV displays), so the
+    # per-candidate crossings fix regenerated it (harbor 1807->1951 LOW etc.);
+    # the WELFARE quantities asserted here are capital-free and unchanged --
+    # the anchor is the welfare surface, not the capital columns.
     prod = json.load(open(os.path.join(OUT, "network_sequence_interim.json"),
                           encoding="utf-8"))
     prod_widen = (prod["frontier"]["sigma_struct_row"]["final_portfolio"]
@@ -327,6 +346,42 @@ def test_n4_run_id_values_hash():
         "run_id did not move despite the values-hash addition"
     print(f"  N4-RUNID OK  run_id {a['run_id'][:16]} (values_hash "
           f"{man['values_hash'][:12]}, {len(man['consumed'])} consumed leaves)")
+
+
+def test_n5_crossings_wired():
+    """N5 review fix: spec 04 §3.3 special-structures crossings is a per-
+    CANDIDATE field (config/candidates.json), honestly determined per corridor
+    (harbor=4: I-5/SR-22/Santa Ana River/BNSF Fullerton; streetcar=1: Santa Ana
+    River channel only), threaded into capital_bands() (was silently 0 for
+    every candidate), disclosed in the artifact's cost blocks, and folded into
+    the run_id so editing a candidate's crossing count moves the id."""
+    H, S = _BYID["harbor"], _BYID["streetcar"]
+    assert H["crossings"] == 4, H["crossings"]
+    assert S["crossings"] == 1, S["crossings"]
+    assert H["crossings_note"] and S["crossings_note"], "missing basis notes"
+    # capital_bands(cand) must price the declared crossings in, both bands
+    caps0 = sn.capcost.capital_bands(H["route_mi"], H["stations"], H["cars"],
+                                     crossings=0)
+    capsH = sn.capital_bands(H)
+    for bnd in ("LOW", "US_TYPICAL"):
+        assert capsH[bnd] > caps0[bnd], (bnd, "harbor crossings=4 not priced in")
+    # the run_id moves when a candidate's crossings field changes (the exact
+    # D60-rec-3a failure mode, one level down: crossings is a candidate field,
+    # not a registry constant, so only an explicit preimage key catches it)
+    a1 = _seq(n=300)
+    cands2 = [dict(c, crossings=0) if c["id"] == "harbor" else dict(c)
+             for c in _CANDS]
+    a2 = sn.sequence(cands2, _HS, _SUBST, seed=SEED, n=300, quiet=True,
+                     gtfs=_GTFS, tracts=_TRACTS)
+    assert a1["run_id"] != a2["run_id"], \
+        "run_id did not move when harbor's crossings field changed"
+    # artifact cost blocks disclose the count + basis (commitment block)
+    commit = a1["cycles"][0]["commitment"]
+    assert commit["crossings"]["count"] in (4, 1), commit["crossings"]
+    assert commit["crossings"]["basis"], "commitment crossings block missing basis"
+    print(f"  N5-CROSSINGS OK  harbor=4 ({capsH['LOW']:.0f}|{capsH['US_TYPICAL']:.0f} "
+          f"vs crossings=0 {caps0['LOW']:.0f}|{caps0['US_TYPICAL']:.0f}), streetcar=1; "
+          f"run_id moves {a1['run_id'][:12]} != {a2['run_id'][:12]}")
 
 
 def test_w1_omega_uses_real_worker_mass():

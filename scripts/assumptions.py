@@ -1427,6 +1427,23 @@ ASSUMPTIONS = {
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "OCTA project design docs",
     },
+    "candidate_crossings": {
+        "title": "major-crossing counts per candidate (special-structures capital)",
+        "tier": "config", "status": "active", "basis": "judgment",
+        "config_key": "config/candidates.json: <candidate>.crossings",
+        "history": [("2026-07-18", "harbor=4, streetcar=0", "judgment",
+                     "N5 review fix -- harness capital was priced at crossings=0; "
+                     "harbor's 4 per spec 04 s3.3's named set (I-5, SR-22, Santa "
+                     "Ana River channel, BNSF Fullerton)")],
+        "provenance": "the count of grade-separation special structures priced "
+                      "at the spec 04 s3.3 30-80 $M/crossing band; harbor = 4 "
+                      "named structures (physical facts; the JUDGMENT is what "
+                      "counts as major); streetcar = 0 (at-grade PE-ROW, no "
+                      "priced grade separations -- basis note in candidates.json)",
+        "rows": {"network": ["crossing_count"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "preliminary-engineering structure list",
+    },
     "streetcar_service_new": {
         "title": "OC Streetcar new-line service design (at-grade)",
         "tier": "config", "status": "active", "basis": "judgment",

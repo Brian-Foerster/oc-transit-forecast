@@ -26,9 +26,9 @@ TBCR v2). It produces, per corridor × design × scenario:
   parameter posterior — the spec 02 §4.4 joint kernel — and are applicable to
   ANY corridor evaluated under the same draws (the parameters are county-common;
   every corridor runs the same PRIORS, so conditioning them on OC's own
-  experiments is the model's own logic, local-data calibration not a literature
-  filter). Degrade-to-uncapped therefore applies ONLY when NO county kernel
-  exists AT ALL — not per-corridor. Where it bites is the STOPPING RULE (spec 07
+  experiments is the model's own logic — local-data calibration, not a
+  literature filter). Degrade-to-uncapped therefore applies ONLY when NO
+  county kernel exists AT ALL — not per-corridor. Where it bites is the STOPPING RULE (spec 07
   §7), which carries the R2 premium-bracket {1.0, 1.5, 2.0} rows because the
   bus→rail transportability of the premium is common-mode for ranking but
   decision-relevant at the stop. This is a deliberate, logged change to §7 W1's

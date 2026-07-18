@@ -5,12 +5,16 @@
     {
       "id": "harbor",
       "config": "config/harbor.json",
-      "note": "Harbor Blvd (Fullerton -> Santa Ana), corridor route 543; the measured-anchor ALM headline corridor."
+      "note": "Harbor Blvd (Fullerton -> Santa Ana), corridor route 543; the measured-anchor ALM headline corridor.",
+      "crossings": 4,
+      "crossings_note": "spec 04 §3.3's named set for this corridor: Caltrans I-5, Caltrans SR-22, the Santa Ana River flood-control channel, and the BNSF Fullerton terminal approach -- 4 major freeway/river/railroad special structures (N5 review fix: previously priced at crossings=0, silently omitting this line)."
     },
     {
       "id": "streetcar",
       "config": "config/streetcar.json",
-      "note": "OC Streetcar (SARTC -> Harbor/Westminster); explicit PE-ROW waypoint alignment whose WESTERN TERMINUS sits on Harbor Blvd -- the real-geometry crossing the G3 complementarity gate exercises against a Harbor commitment."
+      "note": "OC Streetcar (SARTC -> Harbor/Westminster); explicit PE-ROW waypoint alignment whose WESTERN TERMINUS sits on Harbor Blvd -- the real-geometry crossing the G3 complementarity gate exercises against a Harbor commitment.",
+      "crossings": 1,
+      "crossings_note": "Determined honestly from the real alignment, not assumed equal to harbor's count (N5 review fix). ONE major crossing counts under spec 04 §3.3's freeway/river/railroad categories: the Santa Ana River channel (~mi 2.8, near Raitt St) -- OCTA's own project description has the line 'cross over the Santa Ana River ... on bridges' (a new double-track structure paralleling the inadequate single-track PE-era bridge), the same flood-control-authority category as harbor's river crossing. NOT counted: I-5 (geometry check against OSM I-5 way geometry -- the corridor_waypoints polyline's longitude band, -117.857 to -117.920, stays entirely west of I-5's alignment near this latitude, -117.845 to -117.863; SARTC sits ~0.4-0.6 mi west of I-5 and the route heads further west from there, so it never crosses); SR-22 (runs at lat 33.766-33.779 per OSM, north of the corridor's max latitude 33.7609); and no BNSF/active-railroad special structure (the corridor's own OSM geometry shows exactly two dedicated bridges -- the river crossing above and a Westminster Ave. grade separation near the terminus -- and Westminster Ave is an ordinary arterial street, not one of §3.3's three named categories, so it is excluded from the count under the same category discipline as harbor's, even though the real project grade-separates it operationally)."
     }
   ]
 }

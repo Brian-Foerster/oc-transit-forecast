@@ -88,7 +88,7 @@
         "value": "line_spacing"
       }
     ],
-    "note": "spec 07 \u00a79 N4 registry conversion (carried into N5): the constant-tier registry leaves capcost + this harness consume, each claiming a network-artifact row. The values_hash of these + the active prior bands enters the run_id preimage (D60 rec 3a).",
+    "note": "spec 07 \u00a79 N4 registry conversion (carried into N5): the constant-tier registry leaves capcost + this harness consume, each claiming a network-artifact row. The values_hash of these + the active prior bands enters the run_id preimage (D60 rec 3a). N5 review fix: per-candidate crossing COUNTS (spec 04 \u00a73.3) are a candidate_universe field, not a registry constant -- only the per-crossing RATES (cap_crossing_low/ut) are registry leaves here; both feed capital_bands(), and the counts enter the run_id preimage separately as candidate_crossings, not the values_hash.",
     "values_hash": "ffbb80af7ba178a11f1429bda821b39e264485b385d17a86bdc4df2152ac274c"
   },
   "budget_ut": null,
@@ -100,6 +100,7 @@
     ],
     "substitution_note": "spec 07 \u00a74.3: the candidate pool is meant to come from the stage-1 DRM screen re-run against the updated network (gate 1). Until spec 01 lands, the candidate universe is HAND-SUPPLIED -- the 13-arterial HANDOFF shortlist is the natural seed. This N1b run supplies the TWO corridors that already have committed configs + derived files [harbor, streetcar], which is exactly the point: 2 candidates -> 2 singles + 2 directional pairs + trivial swaps at full N=40,000 CRN, small enough to prove the sequencing machinery end to end. More candidates arrive with stage 1. This substitution is surfaced in the primary artifact (network_sequence.json.candidate_universe.hand_supplied)."
   },
+  "channel_split_note": "channel_split (spec 07 N4) only ever appears on a candidate evaluated against a NONEMPTY network -- cycle 2 onward, 1-based (see stopping_record.cycle_numbering); it decomposes a networked lift into the anchor-add vs synthetic-feeder-rebuild channels and has no meaning at cycle 1's empty network. MOOT IN THIS RUN: the \u00a77 marginal stop fires at cycle 1, before any line is committed, so no candidate here ever reaches a nonempty network and every channel_split field in this artifact is null.",
   "cycles": [
     {
       "archetype_gap": {
@@ -110,23 +111,27 @@
       "candidate_results": [
         {
           "capital_delta_K": {
-            "LOW": 1807.150719,
-            "US_TYPICAL": 2949.991602
+            "LOW": 1951.150719,
+            "US_TYPICAL": 3311.989602
+          },
+          "crossings": {
+            "basis": "spec 04 \u00a73.3's named set for this corridor: Caltrans I-5, Caltrans SR-22, the Santa Ana River flood-control channel, and the BNSF Fullerton terminal approach -- 4 major freeway/river/railroad special structures (N5 review fix: previously priced at crossings=0, silently omitting this line).",
+            "count": 4
           },
           "cv": {
             "LOW": {
               "best_continuation": "streetcar",
               "continuation_p50": 0.0,
-              "cv_p50": -2221.892268,
+              "cv_p50": -2374.627124,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -2221.892268
+              "own_dNPV_p50": -2374.627124
             },
             "US_TYPICAL": {
               "best_continuation": "streetcar",
               "continuation_p50": 0.0,
-              "cv_p50": -3434.056418,
+              "cv_p50": -3818.012754,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -3434.056418
+              "own_dNPV_p50": -3818.012754
             }
           },
           "dependencies": [],
@@ -136,49 +141,49 @@
           "fold": {
             "LOW": {
               "bcr_abc": [
-                0.111316,
-                0.135138,
-                0.162156
+                0.105114,
+                0.127593,
+                0.153086
               ],
               "bcr_uncapped": [
-                0.095606,
-                0.139826,
-                0.192399
+                0.090286,
+                0.132024,
+                0.181631
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2302.16,
-                -2234.73,
-                -2158.36
+                -2454.9,
+                -2387.46,
+                -2311.09
               ],
               "npv_uncapped": [
-                -2344.75,
-                -2221.89,
-                -2078.02
+                -2497.49,
+                -2374.63,
+                -2230.76
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.075802,
-                0.091988,
-                0.110293
+                0.068846,
+                0.083535,
+                0.100155
               ],
               "bcr_uncapped": [
-                0.065149,
-                0.095167,
-                0.13081
+                0.059176,
+                0.086429,
+                0.118763
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -3514.33,
-                -3446.89,
-                -3370.52
+                -3898.28,
+                -3830.85,
+                -3754.48
               ],
               "npv_uncapped": [
-                -3556.91,
-                -3434.06,
-                -3290.19
+                -3940.87,
+                -3818.01,
+                -3674.14
               ],
               "p_npv_pos": 0
             }
@@ -193,21 +198,21 @@
           },
           "premium_bracket_rows": {
             "band": "US_TYPICAL",
-            "marginal_bcr_central": 0.091988,
+            "marginal_bcr_central": 0.083535,
             "rows": [
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.091988,
+                "marginal_bcr_first_order": 0.083535,
                 "premium": 1.0
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.137981,
+                "marginal_bcr_first_order": 0.125303,
                 "premium": 1.5
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.183975,
+                "marginal_bcr_first_order": 0.167071,
                 "premium": 2.0
               }
             ],
@@ -216,49 +221,49 @@
           "retain": {
             "LOW": {
               "bcr_abc": [
-                0.110699,
-                0.132824,
-                0.158126
+                0.104802,
+                0.125732,
+                0.149642
               ],
               "bcr_uncapped": [
-                0.098369,
-                0.13692,
-                0.185021
+                0.093131,
+                0.129613,
+                0.175096
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2414.54,
-                -2348.71,
-                -2273.78
+                -2567.28,
+                -2501.45,
+                -2426.51
               ],
               "npv_uncapped": [
-                -2449.44,
-                -2337.24,
-                -2198.91
+                -2602.18,
+                -2489.98,
+                -2351.64
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.076538,
-                0.091757,
-                0.109146
+                0.069723,
+                0.083573,
+                0.09939
               ],
               "bcr_uncapped": [
-                0.068021,
-                0.094575,
-                0.127672
+                0.061963,
+                0.086138,
+                0.116255
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -3626.71,
-                -3560.88,
-                -3485.94
+                -4010.66,
+                -3944.83,
+                -3869.9
               ],
               "npv_uncapped": [
-                -3661.61,
-                -3549.4,
-                -3411.07
+                -4045.56,
+                -3933.36,
+                -3795.03
               ],
               "p_npv_pos": 0
             }
@@ -276,23 +281,27 @@
         },
         {
           "capital_delta_K": {
-            "LOW": 923.590085,
-            "US_TYPICAL": 1551.705316
+            "LOW": 959.590085,
+            "US_TYPICAL": 1642.204816
+          },
+          "crossings": {
+            "basis": "Determined honestly from the real alignment, not assumed equal to harbor's count (N5 review fix). ONE major crossing counts under spec 04 \u00a73.3's freeway/river/railroad categories: the Santa Ana River channel (~mi 2.8, near Raitt St) -- OCTA's own project description has the line 'cross over the Santa Ana River ... on bridges' (a new double-track structure paralleling the inadequate single-track PE-era bridge), the same flood-control-authority category as harbor's river crossing. NOT counted: I-5 (geometry check against OSM I-5 way geometry -- the corridor_waypoints polyline's longitude band, -117.857 to -117.920, stays entirely west of I-5's alignment near this latitude, -117.845 to -117.863; SARTC sits ~0.4-0.6 mi west of I-5 and the route heads further west from there, so it never crosses); SR-22 (runs at lat 33.766-33.779 per OSM, north of the corridor's max latitude 33.7609); and no BNSF/active-railroad special structure (the corridor's own OSM geometry shows exactly two dedicated bridges -- the river crossing above and a Westminster Ave. grade separation near the terminus -- and Westminster Ave is an ordinary arterial street, not one of \u00a73.3's three named categories, so it is excluded from the count under the same category discipline as harbor's, even though the real project grade-separates it operationally).",
+            "count": 1
           },
           "cv": {
             "LOW": {
               "best_continuation": "harbor",
               "continuation_p50": 0.0,
-              "cv_p50": -1499.214809,
+              "cv_p50": -1537.398523,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -1499.214809
+              "own_dNPV_p50": -1537.398523
             },
             "US_TYPICAL": {
               "best_continuation": "harbor",
               "continuation_p50": 0.0,
-              "cv_p50": -2165.430707,
+              "cv_p50": -2261.419791,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -2165.430707
+              "own_dNPV_p50": -2261.419791
             }
           },
           "dependencies": [],
@@ -302,49 +311,49 @@
           "fold": {
             "LOW": {
               "bcr_abc": [
-                0.045639,
-                0.059699,
-                0.077296
+                0.044576,
+                0.058305,
+                0.075491
               ],
               "bcr_uncapped": [
-                0.033872,
-                0.063179,
-                0.101024
+                0.033083,
+                0.061707,
+                0.09866
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -1531.12,
-                -1504.83,
-                -1472.54
+                -1569.3,
+                -1543.02,
+                -1510.72
               ],
               "npv_uncapped": [
-                -1550.27,
-                -1499.21,
-                -1433.22
+                -1588.46,
+                -1537.4,
+                -1471.41
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.032246,
-                0.042147,
-                0.054532
+                0.030939,
+                0.040438,
+                0.052317
               ],
               "bcr_uncapped": [
-                0.02394,
-                0.044608,
-                0.071281
+                0.022969,
+                0.042797,
+                0.06838
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2197.33,
-                -2171.05,
-                -2138.75
+                -2293.32,
+                -2267.04,
+                -2234.74
               ],
               "npv_uncapped": [
-                -2216.49,
-                -2165.43,
-                -2099.44
+                -2312.48,
+                -2261.42,
+                -2195.43
               ],
               "p_npv_pos": 0
             }
@@ -359,21 +368,21 @@
           },
           "premium_bracket_rows": {
             "band": "US_TYPICAL",
-            "marginal_bcr_central": 0.042147,
+            "marginal_bcr_central": 0.040438,
             "rows": [
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.042147,
+                "marginal_bcr_first_order": 0.040438,
                 "premium": 1.0
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.06322,
+                "marginal_bcr_first_order": 0.060657,
                 "premium": 1.5
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.084293,
+                "marginal_bcr_first_order": 0.080877,
                 "premium": 2.0
               }
             ],
@@ -382,49 +391,49 @@
           "retain": {
             "LOW": {
               "bcr_abc": [
-                0.046232,
-                0.060155,
-                0.077691
+                0.045157,
+                0.05875,
+                0.07588
               ],
               "bcr_uncapped": [
-                0.035752,
-                0.063523,
-                0.10106
+                0.034919,
+                0.062043,
+                0.098698
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -1530.06,
-                -1504.05,
-                -1471.85
+                -1568.25,
+                -1542.23,
+                -1510.03
               ],
               "npv_uncapped": [
-                -1547.18,
-                -1498.5,
-                -1433.14
+                -1585.37,
+                -1536.69,
+                -1471.32
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.03266,
-                0.042463,
-                0.054802
+                0.031335,
+                0.040738,
+                0.052572
               ],
               "bcr_uncapped": [
-                0.02525,
-                0.044857,
-                0.071299
+                0.024225,
+                0.043033,
+                0.068396
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2196.28,
-                -2170.26,
-                -2138.07
+                -2292.27,
+                -2266.25,
+                -2234.06
               ],
               "npv_uncapped": [
-                -2213.4,
-                -2164.72,
-                -2099.35
+                -2309.39,
+                -2260.71,
+                -2195.34
               ],
               "p_npv_pos": 0
             }
@@ -475,8 +484,8 @@
           "harbor"
         ],
         "winner": "streetcar",
-        "winner_cv_p50": -2165.430707,
-        "winner_own_dNPV_p50": -2165.430707
+        "winner_cv_p50": -2261.419791,
+        "winner_own_dNPV_p50": -2261.419791
       },
       "remaining_budget_ut": null
     }
@@ -489,34 +498,38 @@
     "points": [
       {
         "below_bcr1": true,
-        "capital_delta_K_LOW": 1807.150719,
-        "capital_delta_K_US_TYPICAL": 2949.991602,
-        "dK_pv_LOW": 1807.150719,
-        "dK_pv_US_TYPICAL": 2949.991602,
+        "capital_delta_K_LOW": 1951.150719,
+        "capital_delta_K_US_TYPICAL": 3311.989602,
+        "crossings": {
+          "basis": "spec 04 \u00a73.3's named set for this corridor: Caltrans I-5, Caltrans SR-22, the Santa Ana River flood-control channel, and the BNSF Fullerton terminal approach -- 4 major freeway/river/railroad special structures (N5 review fix: previously priced at crossings=0, silently omitting this line).",
+          "count": 4
+        },
+        "dK_pv_LOW": 1951.150719,
+        "dK_pv_US_TYPICAL": 3311.989602,
         "depth": 1,
         "depth_label": "decision-grade",
         "kind": "candidate_standalone",
         "line": "harbor",
-        "marginal_bcr_US_TYPICAL": 0.091988,
+        "marginal_bcr_US_TYPICAL": 0.083535,
         "npv_abc_LOW": [
-          -2302.16,
-          -2234.73,
-          -2158.36
+          -2454.9,
+          -2387.46,
+          -2311.09
         ],
         "npv_abc_US_TYPICAL": [
-          -3514.33,
-          -3446.89,
-          -3370.52
+          -3898.28,
+          -3830.85,
+          -3754.48
         ],
         "npv_uncapped_LOW": [
-          -2344.75,
-          -2221.89,
-          -2078.02
+          -2497.49,
+          -2374.63,
+          -2230.76
         ],
         "npv_uncapped_US_TYPICAL": [
-          -3556.91,
-          -3434.06,
-          -3290.19
+          -3940.87,
+          -3818.01,
+          -3674.14
         ],
         "scenario": "fold",
         "sigma_struct": {
@@ -533,34 +546,38 @@
       },
       {
         "below_bcr1": true,
-        "capital_delta_K_LOW": 923.590085,
-        "capital_delta_K_US_TYPICAL": 1551.705316,
-        "dK_pv_LOW": 923.590085,
-        "dK_pv_US_TYPICAL": 1551.705316,
+        "capital_delta_K_LOW": 959.590085,
+        "capital_delta_K_US_TYPICAL": 1642.204816,
+        "crossings": {
+          "basis": "Determined honestly from the real alignment, not assumed equal to harbor's count (N5 review fix). ONE major crossing counts under spec 04 \u00a73.3's freeway/river/railroad categories: the Santa Ana River channel (~mi 2.8, near Raitt St) -- OCTA's own project description has the line 'cross over the Santa Ana River ... on bridges' (a new double-track structure paralleling the inadequate single-track PE-era bridge), the same flood-control-authority category as harbor's river crossing. NOT counted: I-5 (geometry check against OSM I-5 way geometry -- the corridor_waypoints polyline's longitude band, -117.857 to -117.920, stays entirely west of I-5's alignment near this latitude, -117.845 to -117.863; SARTC sits ~0.4-0.6 mi west of I-5 and the route heads further west from there, so it never crosses); SR-22 (runs at lat 33.766-33.779 per OSM, north of the corridor's max latitude 33.7609); and no BNSF/active-railroad special structure (the corridor's own OSM geometry shows exactly two dedicated bridges -- the river crossing above and a Westminster Ave. grade separation near the terminus -- and Westminster Ave is an ordinary arterial street, not one of \u00a73.3's three named categories, so it is excluded from the count under the same category discipline as harbor's, even though the real project grade-separates it operationally).",
+          "count": 1
+        },
+        "dK_pv_LOW": 959.590085,
+        "dK_pv_US_TYPICAL": 1642.204816,
         "depth": 1,
         "depth_label": "decision-grade",
         "kind": "candidate_standalone",
         "line": "streetcar",
-        "marginal_bcr_US_TYPICAL": 0.042147,
+        "marginal_bcr_US_TYPICAL": 0.040438,
         "npv_abc_LOW": [
-          -1531.12,
-          -1504.83,
-          -1472.54
+          -1569.3,
+          -1543.02,
+          -1510.72
         ],
         "npv_abc_US_TYPICAL": [
-          -2197.33,
-          -2171.05,
-          -2138.75
+          -2293.32,
+          -2267.04,
+          -2234.74
         ],
         "npv_uncapped_LOW": [
-          -1550.27,
-          -1499.21,
-          -1433.22
+          -1588.46,
+          -1537.4,
+          -1471.41
         ],
         "npv_uncapped_US_TYPICAL": [
-          -2216.49,
-          -2165.43,
-          -2099.44
+          -2312.48,
+          -2261.42,
+          -2195.43
         ],
         "scenario": "fold",
         "sigma_struct": {
@@ -602,7 +619,7 @@
     "operating_mode": "a planning tool re-run between real build cycles as lines open and forecasts become measurements; provenance depth resets from the updated network_asbuilt each re-run (spec 07 \u00a76.2).",
     "run_id_preimage": "run_id = sha256 of canonical{candidates, asbuilt lines, seed, n, scenario, budget, assumptions_values_hash}. D60 review rec 3a added assumptions_values_hash = sha256{consumed capital constants + harness knobs + active prior bands}; it MOVES the id whenever the rate card or a prior band changes. Consequence recorded for provenance: the id here DIFFERS from the committed N1b/D60 artifact (d8b4a016...), which was keyed on inputs only and did not track the forecast-moving 60-mph v_cruise recenter. No timestamps enter the preimage (gate G6)."
   },
-  "run_id": "991a80bfaee8198aed7af550fdc71b18b80a645a83f70e0520af0d4f00523704",
+  "run_id": "a6ffe0980f9dd5dd9f8146aa3280bcaea53a23956abc2ecbd2c87a40b0edfdc9",
   "safeguard_comparison": {
     "best_feasible_archetype": {
       "status": "skipped",
@@ -611,18 +628,18 @@
     "best_single_feasible": {
       "line": "streetcar",
       "note": "least-negative standalone \u0394NPV; still below BCR=1",
-      "npv_abc_p50_US_TYPICAL": -2171.05
+      "npv_abc_p50_US_TYPICAL": -2267.04
     },
     "candidate_standalone_npv": [
       {
-        "bcr_abc_p50_US_TYPICAL": 0.091988,
+        "bcr_abc_p50_US_TYPICAL": 0.083535,
         "line": "harbor",
-        "npv_abc_p50_US_TYPICAL": -3446.89
+        "npv_abc_p50_US_TYPICAL": -3830.85
       },
       {
-        "bcr_abc_p50_US_TYPICAL": 0.042147,
+        "bcr_abc_p50_US_TYPICAL": 0.040438,
         "line": "streetcar",
-        "npv_abc_p50_US_TYPICAL": -2171.05
+        "npv_abc_p50_US_TYPICAL": -2267.04
       }
     ],
     "greedy_portfolio": [],
@@ -642,17 +659,17 @@
         "rows": [
           {
             "clears_bcr1": false,
-            "marginal_bcr_first_order": 0.042147,
+            "marginal_bcr_first_order": 0.040438,
             "premium": 1.0
           },
           {
             "clears_bcr1": false,
-            "marginal_bcr_first_order": 0.06322,
+            "marginal_bcr_first_order": 0.060657,
             "premium": 1.5
           },
           {
             "clears_bcr1": false,
-            "marginal_bcr_first_order": 0.084293,
+            "marginal_bcr_first_order": 0.080877,
             "premium": 2.0
           }
         ],
@@ -690,29 +707,36 @@
         "knob": "sigma_struct (std-based)",
         "note": "N5 follow-up: std-based widening is the PRIMARY \u03c3_struct measure on every candidate block (P90-P10 secondary).",
         "status": "computed"
+      },
+      {
+        "id": "crossing_count",
+        "knob": "harbor crossing count {2,4,6}",
+        "note": "N5 review fix: crossings is now a per-candidate capital input (spec 04 \u00a73.3; harbor=4, streetcar=1). The count-uncertainty sweep is COMPUTED on the interim harness (crossing_count_lo/hi, capital-only display row, since capital never enters the interim objective); an NPV-mode re-price under the swept count needs a wrapper round-trip per row and is a follow-up here.",
+        "work_item": "N5-follow"
       }
     ]
   },
   "stopping_record": {
     "best_bcr_candidate": {
-      "bcr_LOW_p50": 0.135138,
-      "bcr_US_TYPICAL_p50": 0.091988,
+      "bcr_LOW_p50": 0.127593,
+      "bcr_US_TYPICAL_p50": 0.083535,
       "line": "harbor",
       "note": "the highest marginal BCR any candidate reaches -- the closest OC comes to clearing BCR=1; still FAR below it."
     },
-    "cycle": 0,
+    "cycle": 1,
     "cycle_gap_delta": 0.790315,
-    "economic_margin_note": "the \u00a77 marginal stop fires at cycle 0: the best candidate by NPV level ('streetcar') has CV <= 0 (marginal welfare BCR 0.042 US_TYPICAL / 0.060 LOW, ABC). The best BCR ANY OC ALM corridor reaches is 'harbor' at 0.092 (US_TYPICAL) / 0.135 (LOW) -- still FAR below the BCR=1 hurdle. No continuation is positive, so the decision-grade recommended portfolio is EMPTY: at the welfare-BCA central profile NO Orange County ALM corridor clears BCR=1. This is the ECONOMIC MARGIN at which the sequence stopped -- not 'candidates ran out' (spec 07 \u00a77). The premium-bracket rows show the stop is robust to a 2x ASC premium.",
+    "cycle_numbering": "1-based: cycle 1 is the first evaluation, against the empty network-before (N5 review fix -- matches spec 07's own \u00a77/\u00a79 prose).",
+    "economic_margin_note": "the \u00a77 marginal stop fires at cycle 1: the best candidate by NPV level ('streetcar') has CV <= 0 (marginal welfare BCR 0.040 US_TYPICAL / 0.058 LOW, ABC). The best BCR ANY OC ALM corridor reaches is 'harbor' at 0.084 (US_TYPICAL) / 0.128 (LOW) -- still FAR below the BCR=1 hurdle. No continuation is positive, so the decision-grade recommended portfolio is EMPTY: at the welfare-BCA central profile NO Orange County ALM corridor clears BCR=1. This is the ECONOMIC MARGIN at which the sequence stopped -- not 'candidates ran out' (spec 07 \u00a77). The premium-bracket rows show the stop is robust to a 2x ASC premium.",
     "marginal_bcr_both_bands": {
       "LOW": {
-        "bcr_abc_p50": 0.059699,
-        "bcr_uncapped_p50": 0.063179,
-        "npv_abc_p50": -1504.83
+        "bcr_abc_p50": 0.058305,
+        "bcr_uncapped_p50": 0.061707,
+        "npv_abc_p50": -1543.02
       },
       "US_TYPICAL": {
-        "bcr_abc_p50": 0.042147,
-        "bcr_uncapped_p50": 0.044608,
-        "npv_abc_p50": -2171.05
+        "bcr_abc_p50": 0.040438,
+        "bcr_uncapped_p50": 0.042797,
+        "npv_abc_p50": -2267.04
       }
     },
     "marginal_candidate": "streetcar",
@@ -720,21 +744,21 @@
     "mode": "npv (welfare-BCA central profile, spec 06)",
     "premium_bracket_rows": {
       "band": "US_TYPICAL",
-      "marginal_bcr_central": 0.042147,
+      "marginal_bcr_central": 0.040438,
       "rows": [
         {
           "clears_bcr1": false,
-          "marginal_bcr_first_order": 0.042147,
+          "marginal_bcr_first_order": 0.040438,
           "premium": 1.0
         },
         {
           "clears_bcr1": false,
-          "marginal_bcr_first_order": 0.06322,
+          "marginal_bcr_first_order": 0.060657,
           "premium": 1.5
         },
         {
           "clears_bcr1": false,
-          "marginal_bcr_first_order": 0.084293,
+          "marginal_bcr_first_order": 0.080877,
           "premium": 2.0
         }
       ],

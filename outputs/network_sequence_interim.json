@@ -88,7 +88,7 @@
         "value": "line_spacing"
       }
     ],
-    "note": "spec 07 \u00a79 N4 registry conversion: the constant-tier registry leaves capcost + this harness consume, declared here so the assumptions registry claims each as a network-artifact row (check_assumptions' network scan; the sensitivity-block ids are harness-INTERNAL and exempt from the orphan check, mirroring the spec 08 \u00a79 Q7 wrapper engine-owned precedent). The values_hash of these + the active prior bands enters the run_id preimage (D60 rec 3a).",
+    "note": "spec 07 \u00a79 N4 registry conversion: the constant-tier registry leaves capcost + this harness consume, declared here so the assumptions registry claims each as a network-artifact row (check_assumptions' network scan; the sensitivity-block ids are harness-INTERNAL and exempt from the orphan check, mirroring the spec 08 \u00a79 Q7 wrapper engine-owned precedent). The values_hash of these + the active prior bands enters the run_id preimage (D60 rec 3a). N5 review fix: per-candidate crossing COUNTS (spec 04 \u00a73.3) are a candidate_universe field, not a registry constant -- only the per-crossing RATES (cap_crossing_low/ut) are registry leaves here; both feed capital_bands(), and the counts enter the run_id preimage separately as candidate_crossings (below), not the values_hash.",
     "values_hash": "ffbb80af7ba178a11f1429bda821b39e264485b385d17a86bdc4df2152ac274c"
   },
   "budget_ut": null,
@@ -100,6 +100,7 @@
     ],
     "substitution_note": "spec 07 \u00a74.3: the candidate pool is meant to come from the stage-1 DRM screen re-run against the updated network (gate 1). Until spec 01 lands, the candidate universe is HAND-SUPPLIED -- the 13-arterial HANDOFF shortlist is the natural seed. This N1b run supplies the TWO corridors that already have committed configs + derived files [harbor, streetcar], which is exactly the point: 2 candidates -> 2 singles + 2 directional pairs + trivial swaps at full N=40,000 CRN, small enough to prove the sequencing machinery end to end. More candidates arrive with stage 1. This substitution is surfaced in the primary artifact (network_sequence.json.candidate_universe.hand_supplied)."
   },
+  "channel_split_note": "channel_split (spec 07 N4) only ever appears on a candidate evaluated against a NONEMPTY network -- cycle 2 onward, 1-based (cycles[k].cycle == k, 0-based internally; see stopping_record.cycle_numbering); it has no meaning at cycle 1's empty network and is null there by construction. In THIS interim run every candidate is eventually committed (candidate_exhaustion, no budget bound), so a real, non-null channel_split DOES appear from cycle 2 onward (cycles[1].candidate_results) -- unlike the sibling NPV artifact, where the \u00a77 marginal stop fires at cycle 1 before any commitment and every channel_split field is null.",
   "cycles": [
     {
       "archetype_gap": {
@@ -229,15 +230,19 @@
       ],
       "commitment": {
         "capital_delta_K": {
-          "LOW": 1807.150719,
-          "US_TYPICAL": 2949.991602
+          "LOW": 1951.150719,
+          "US_TYPICAL": 3311.989602
         },
         "capital_delta_K_pv": {
-          "LOW": 1807.150719,
-          "US_TYPICAL": 2949.991602,
+          "LOW": 1951.150719,
+          "US_TYPICAL": 3311.989602,
           "cycle_gap": 6.0,
           "discount_note": "Delta-K_PV display only (spec 07 \u00a73); interim welfare is never discounted. rate 7% real, BCA-wrapper property, cited not owned",
           "pv_factor": 1.0
+        },
+        "crossings": {
+          "basis": "spec 04 \u00a73.3's named set for this corridor: Caltrans I-5, Caltrans SR-22, the Santa Ana River flood-control channel, and the BNSF Fullerton terminal approach -- 4 major freeway/river/railroad special structures (N5 review fix: previously priced at crossings=0, silently omitting this line).",
+          "count": 4
         },
         "depth": 1,
         "depth_label": "decision-grade",
@@ -249,8 +254,8 @@
         "rationale": "harbor = argmax CV (own Delta-wm P50 163,549 + continuation 54,493 = CV 218,114).",
         "scenario": "fold",
         "welfare_per_dollar_ratio_DISPLAY_ONLY": {
-          "LOW": 90.501119,
-          "US_TYPICAL": 55.440552,
+          "LOW": 83.821901,
+          "US_TYPICAL": 49.380941,
           "label": "INTERIM / DISPLAY ONLY -- never quoted as BCA output",
           "units": "welfare-min per $M Delta-K_PV"
         }
@@ -399,15 +404,19 @@
       ],
       "commitment": {
         "capital_delta_K": {
-          "LOW": 923.590085,
-          "US_TYPICAL": 1551.705316
+          "LOW": 959.590085,
+          "US_TYPICAL": 1642.204816
         },
         "capital_delta_K_pv": {
-          "LOW": 615.427071,
-          "US_TYPICAL": 1033.966771,
+          "LOW": 639.415391,
+          "US_TYPICAL": 1094.270409,
           "cycle_gap": 6.0,
           "discount_note": "Delta-K_PV display only (spec 07 \u00a73); interim welfare is never discounted. rate 7% real, BCA-wrapper property, cited not owned",
           "pv_factor": 0.666342
+        },
+        "crossings": {
+          "basis": "Determined honestly from the real alignment, not assumed equal to harbor's count (N5 review fix). ONE major crossing counts under spec 04 \u00a73.3's freeway/river/railroad categories: the Santa Ana River channel (~mi 2.8, near Raitt St) -- OCTA's own project description has the line 'cross over the Santa Ana River ... on bridges' (a new double-track structure paralleling the inadequate single-track PE-era bridge), the same flood-control-authority category as harbor's river crossing. NOT counted: I-5 (geometry check against OSM I-5 way geometry -- the corridor_waypoints polyline's longitude band, -117.857 to -117.920, stays entirely west of I-5's alignment near this latitude, -117.845 to -117.863; SARTC sits ~0.4-0.6 mi west of I-5 and the route heads further west from there, so it never crosses); SR-22 (runs at lat 33.766-33.779 per OSM, north of the corridor's max latitude 33.7609); and no BNSF/active-railroad special structure (the corridor's own OSM geometry shows exactly two dedicated bridges -- the river crossing above and a Westminster Ave. grade separation near the terminus -- and Westminster Ave is an ordinary arterial street, not one of \u00a73.3's three named categories, so it is excluded from the count under the same category discipline as harbor's, even though the real project grade-separates it operationally).",
+          "count": 1
         },
         "depth": 2,
         "depth_label": "decision-grade",
@@ -419,8 +428,8 @@
         "rationale": "streetcar = argmax CV (own Delta-wm P50 54,493 + continuation 0 = CV 54,493).",
         "scenario": "fold",
         "welfare_per_dollar_ratio_DISPLAY_ONLY": {
-          "LOW": 88.544733,
-          "US_TYPICAL": 52.702685,
+          "LOW": 85.222887,
+          "US_TYPICAL": 49.798318,
           "label": "INTERIM / DISPLAY ONLY -- never quoted as BCA output",
           "units": "welfare-min per $M Delta-K_PV"
         }
@@ -456,10 +465,10 @@
     "flyvbjerg_annotation": "portfolio optimism is worse than single-project optimism -- forecast errors are correlated across the model's lines (spec 05 \u00a74.3; within-draw aggregation plus the sigma_struct row make this arithmetic, not rhetoric).",
     "points": [
       {
-        "capital_LOW": 1807.150719,
-        "capital_US_TYPICAL": 2949.991602,
-        "cum_capital_pv_LOW": 1807.150719,
-        "cum_capital_pv_US_TYPICAL": 2949.991602,
+        "capital_LOW": 1951.150719,
+        "capital_US_TYPICAL": 3311.989602,
+        "cum_capital_pv_LOW": 1951.150719,
+        "cum_capital_pv_US_TYPICAL": 3311.989602,
         "cum_wm_abc": [
           130499.700026,
           158032.274327,
@@ -488,10 +497,10 @@
         "step": 0
       },
       {
-        "capital_LOW": 923.590085,
-        "capital_US_TYPICAL": 1551.705316,
-        "cum_capital_pv_LOW": 2422.57779,
-        "cum_capital_pv_US_TYPICAL": 3983.958373,
+        "capital_LOW": 959.590085,
+        "capital_US_TYPICAL": 1642.204816,
+        "cum_capital_pv_LOW": 2590.56611,
+        "cum_capital_pv_US_TYPICAL": 4406.260011,
         "cum_wm_abc": [
           170081.395975,
           209449.608232,
@@ -588,7 +597,7 @@
     "operating_mode": "a planning tool re-run between real build cycles as lines open and forecasts become measurements; provenance depth resets from the updated network_asbuilt each re-run (spec 07 \u00a76.2).",
     "run_id_preimage": "run_id = sha256 of canonical{candidates, asbuilt lines, seed, n, scenario, budget, assumptions_values_hash}. D60 review rec 3a added assumptions_values_hash = sha256{consumed capital constants + harness knobs + active prior bands}; it MOVES the id whenever the rate card or a prior band changes. Consequence recorded for provenance: the id here DIFFERS from the committed N1b/D60 artifact (d8b4a016...), which was keyed on inputs only and did not track the forecast-moving 60-mph v_cruise recenter. No timestamps enter the preimage (gate G6)."
   },
-  "run_id": "1ebdf92922693b966d0cfd0143183d83beb6482679af0b1f97bb71fe33ae9805",
+  "run_id": "81e08eb0fa340e1eb74610509c1991bbcb16f8e9f70fbb36231d07ae69a02c09",
   "safeguard_comparison": {
     "best_feasible_archetype": {
       "status": "skipped",
@@ -613,8 +622,8 @@
     "computed_n1b": [
       {
         "display": {
-          "cum_capital_pv_LOW": 2511.753172,
-          "cum_capital_pv_US_TYPICAL": 4133.780158,
+          "cum_capital_pv_LOW": 2683.2174,
+          "cum_capital_pv_US_TYPICAL": 4564.819793,
           "cycle_gap_yr": 4.0
         },
         "id": "cycle_gap_lo",
@@ -626,8 +635,8 @@
       },
       {
         "display": {
-          "cum_capital_pv_LOW": 2344.688557,
-          "cum_capital_pv_US_TYPICAL": 3853.098223,
+          "cum_capital_pv_LOW": 2509.640885,
+          "cum_capital_pv_US_TYPICAL": 4267.767756,
           "cycle_gap_yr": 8.0
         },
         "id": "cycle_gap_hi",
@@ -771,8 +780,8 @@
       },
       {
         "display": {
-          "cum_capital_pv_LOW": 2361.407573,
-          "cum_capital_pv_US_TYPICAL": 3912.98563,
+          "cum_capital_pv_LOW": 2529.395894,
+          "cum_capital_pv_US_TYPICAL": 4335.287268,
           "fixed_cost_share": 0.5
         },
         "id": "fixed_cost_share_0.5",
@@ -784,8 +793,8 @@
       },
       {
         "display": {
-          "cum_capital_pv_LOW": 2300.237357,
-          "cum_capital_pv_US_TYPICAL": 3842.012886,
+          "cum_capital_pv_LOW": 2468.225677,
+          "cum_capital_pv_US_TYPICAL": 4264.314524,
           "fixed_cost_share": 0.0
         },
         "id": "fixed_cost_share_0.0",
@@ -794,6 +803,32 @@
         "objective_p50": 218113.600034,
         "pct": 0.0,
         "value": 0.0
+      },
+      {
+        "display": {
+          "crossing_count_harbor": 2,
+          "cum_capital_pv_LOW": 2518.56611,
+          "cum_capital_pv_US_TYPICAL": 4225.261011
+        },
+        "id": "crossing_count_lo",
+        "knob": "crossing_count",
+        "note": "harbor crossing count 2 (base 4, spec 04 \u00a73.3 count uncertainty -- I-5/SR-22/Santa Ana River/BNSF Fullerton); Delta-K_PV display only, welfare objective invariant",
+        "objective_p50": 218113.600034,
+        "pct": 0.0,
+        "value": 2
+      },
+      {
+        "display": {
+          "crossing_count_harbor": 6,
+          "cum_capital_pv_LOW": 2662.56611,
+          "cum_capital_pv_US_TYPICAL": 4587.259011
+        },
+        "id": "crossing_count_hi",
+        "knob": "crossing_count",
+        "note": "harbor crossing count 6 (base 4, spec 04 \u00a73.3 count uncertainty -- I-5/SR-22/Santa Ana River/BNSF Fullerton); Delta-K_PV display only, welfare objective invariant",
+        "objective_p50": 218113.600034,
+        "pct": 0.0,
+        "value": 6
       }
     ],
     "named_spec_pending": [
@@ -819,11 +854,12 @@
   },
   "stopping_record": {
     "bcr_rule_note": "the BCR < 1 marginal stop is N5's NPV mode; the interim layer stops on budget exhaustion or candidate exhaustion and reports the economic margin at which it emptied (spec 07 \u00a77).",
-    "cycle": 2,
+    "cycle": 3,
+    "cycle_numbering": "1-based: cycle 1 is the first evaluation, against the empty network-before (N5 review fix -- this field previously read 0-based, contradicting spec 07's own \u00a77/\u00a79 prose, which always calls the first evaluation 'cycle 1').",
     "last_commitment": {
       "capital_delta_K": {
-        "LOW": 923.590085,
-        "US_TYPICAL": 1551.705316
+        "LOW": 959.590085,
+        "US_TYPICAL": 1642.204816
       },
       "cv_p50": 54492.825423,
       "line": "streetcar"
