@@ -92,6 +92,25 @@ final ridership; stage 3 is the number of record.
     values) and are **never read additively** in a gate memo. Until W1,
     BCA output was informational only; the amendment makes it a companion,
     not a decision metric (final gate authority stays with the owner).
+  - *Network sequence (PRIMARY planning output, adopted 2026-07-17 per spec 07
+    §1/§9-N6):* the greedy portfolio harness (`scripts/sequence_network.py`,
+    spec 07) produces a build ORDER and a ΔNPV-vs-ΔK_PV portfolio frontier as
+    the planning layer's PRIMARY output — `outputs/network_sequence.json`,
+    regenerable from committed configs + seed. It sits ABOVE the pipeline and
+    replaces nothing in it: in-run cycle commitments are RECOMMENDATIONS, and
+    this gate discipline (gate memo, owner authority, stage-3 STOPS) applies at
+    each REAL programmatic commitment — each line's forecast of record remains
+    its own stage-3 STOPS run. The NPV objective (default) ranks candidates by
+    within-draw CV in common-base-year PV dollars and stops on the §7 marginal-
+    BCR rule (best CV ≤ 0), carrying the premium-bracket rows and both spec 04
+    cost bands. RULE-5 note (binding): the network sequence inherits spec 02's
+    frozen-market / no-induced-demand firewall verbatim — network assembly is
+    where the temptation to close the land-use loop is strongest, and it stays
+    closed; the agglomeration/user-benefit share of the sequence's NPV and the
+    economic-potential uplift column remain two lenses on one channel, never
+    read additively. Provenance depth shades the frontier (head decision-grade,
+    tail exploratory); output beyond the depth cap is EXPLORATORY and excluded
+    from gate memos.
   - *Second finalist:* advances to stage 3 only when gate-2 bands
     overlap (conditional, not a fixed count).
 - **Gate 3 -> publish**: stage-3 vs stage-2 reconciliation memo required

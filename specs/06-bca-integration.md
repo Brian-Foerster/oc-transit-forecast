@@ -20,7 +20,19 @@ TBCR v2). It produces, per corridor × design × scenario:
 - full-uncertainty NPV / PV-BCR distributions (per-draw, N=40,000),
 - reported **uncapped | ABC-calibrated side by side** where a calibration
   target exists (governance rule 1; corridors without one — the streetcar
-  until post-launch — degrade to uncapped-only with the reason printed),
+  until post-launch — degrade to uncapped-only with the reason printed).
+  **AMENDED 2026-07-17 (spec 07 §1/§6.1, N6, this repo's own precedent for a
+  logged convention change):** the ABC weights are properties of the SHARED
+  parameter posterior — the spec 02 §4.4 joint kernel — and are applicable to
+  ANY corridor evaluated under the same draws (the parameters are county-common;
+  every corridor runs the same PRIORS, so conditioning them on OC's own
+  experiments is the model's own logic, local-data calibration not a literature
+  filter). Degrade-to-uncapped therefore applies ONLY when NO county kernel
+  exists AT ALL — not per-corridor. Where it bites is the STOPPING RULE (spec 07
+  §7), which carries the R2 premium-bracket {1.0, 1.5, 2.0} rows because the
+  bus→rail transportability of the premium is common-mode for ranking but
+  decision-relevant at the stop. This is a deliberate, logged change to §7 W1's
+  omit-ABC-columns behavior, made for the reasons in spec 07 §6.1/§11 Q4,
 - **fold and retain reported separately, no blend of any kind** — a stated,
   deliberate deviation from spec 02 §4.7's labeled expected-blend summary
   line: fold and retain carry different cost structures (avoided base O&M,
@@ -101,7 +113,25 @@ ABC weights flush to zero, immaterial at the round-trip gate's tolerance):
                                                   // spec-02 §4.4 joint kernel can
                                                   // join without churning the schema
   "base_service": { "rev_hours_weekday": { "43": ..., "543": ... } },  // {} when routes_removed is empty
-  "routes_removed": { "fold": ["43", "543"], "retain": ["543"] }       // {"fold": [], "retain": []} when nothing folds
+  "routes_removed": { "fold": ["43", "543"], "retain": ["543"] },      // {"fold": [], "retain": []} when nothing folds
+
+  // spec 07 N5 EXPORTER additions (OPTIONAL; present ONLY on a harness-built
+  // candidate-given-network export, absent on the standalone CLI path so the
+  // B4 schema/bytes are unchanged):
+  "network_fingerprint": "sha256 hex",  // of the canonical networked-rebuild descriptor
+                                        // (candidate + network-before + injected/excluded +
+                                        // n + seed); drives the fingerprint-bearing filename
+                                        // bca_export_<corridor>_<fp12>.json.gz (gitignored,
+                                        // regenerable) and the wrapper's fp-named output.
+  "cost_design": {                      // the harness OWNS capital (capcost.py / spec 04);
+    "capital": { "LOW": ..., "US_TYPICAL": ... },   // $M, both bands -> engine K ($B) = $M/1000
+    "service_plan": { "route_km": ..., "cars_per_train": ..., "periods": [...] },  // car_km (E5)
+    "base_boardings": ...,             // measured base the line captures (net-new revenue, D3)
+    "seat_capacity": { "seatCap": ... }  // loadFlag denominator (D4)
+  }                                     // the wrapper's networked mode OVERRIDES the static
+                                        // cost-profile capital + service design with this block,
+                                        // pricing every candidate under the SHARED central profile
+                                        // (county-common prices/posterior, spec 07 §6.1).
 }
 ```
 
@@ -516,7 +546,15 @@ writes the §3 schema (+ `--seed-check` companion at seed+1 for G4). Gates:
   avg-fare-per-incremental-boarding lo/hi, ABC σ350/σ800 (weights already
   exported), crowding-haircut variant, eq_days 300/330.
   Where a corridor lacks `abc_weights` (streetcar pre-launch), the ABC
-  columns are omitted with the reason printed.
+  columns are omitted with the reason printed. **AMENDED 2026-07-17 (spec 07
+  §1/§6.1, N6):** "lacks `abc_weights`" now means the EXPORT ships none — and
+  in the spec 07 network-sequencing harness EVERY candidate's export ships the
+  SHARED county posterior (543_launch_s500) because the weights are properties
+  of that posterior, applicable to any corridor under the same draws (§1
+  above). So the harness-built candidate exports (spec 07 N5) carry the ABC
+  columns for the streetcar candidate too; degrade-to-uncapped fires only when
+  NO county kernel exists at all. The wrapper's harbor-only weight gate is
+  lifted accordingly (the weights ship in the export, keyed by kernel label).
   **LANDED 2026-07-15 (tbc `aa16e0d`, `outputs/bca_harbor.json`):** headline
   **NPV −$4.17B / PV-BCR 0.075** (fold, ABC-weighted, US-TYPICAL band, P50);
   every scenario × treatment × band is deeply negative (P(NPV>0)=0). The

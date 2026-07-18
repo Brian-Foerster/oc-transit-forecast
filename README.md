@@ -445,13 +445,32 @@ tornado (`bca_harbor.json`).
     tornado rows, the latter 0 at today's flat fare). Charts: `outputs/bca_harbor.png` +
     `bca_tornado_harbor.png` (`python scripts/make_charts.py bca harbor`).
 
-28. **Network-sequencing harness landed (spec 07 N1–N4, interim objective).** A
-    greedy portfolio harness ABOVE the pipeline (`scripts/sequence_network.py`)
-    evaluates each candidate ALM line against the network built so far and commits
-    one per cycle, producing a build ORDER + a within-draw portfolio frontier as
-    the planning layer's primary output (`outputs/network_sequence.json`, G6-
-    deterministic). Interim objective = Δ(welfare-minutes) LEVEL; the full-NPV
-    objective is N5 (gated R1→R6→W1). The N4 batch added: the per-cycle
+28. **Network-sequencing harness — the sequencing headline is now an NPV
+    statement (spec 07 BUILT, N1–N6).** A greedy portfolio harness ABOVE the
+    pipeline (`scripts/sequence_network.py`) evaluates each candidate ALM line
+    against the network built so far, producing a build ORDER + a portfolio
+    frontier as the planning layer's primary output (`outputs/network_sequence.json`,
+    G6-deterministic). **N5 landed the full NPV objective (the DEFAULT).** Per
+    candidate-given-network the harness builds a spec 06 §3 export from the
+    in-memory `run()` result (no re-run) and prices it through the tbc v3 wrapper
+    (`bca-pipeline.mjs`, node, synchronous), reading per-draw ΔNPV back for the
+    within-draw CV in common-base-year PV dollars (§3), δ = one-cycle_gap deferral
+    on the profile 4% clock, both spec 04 cost bands carried. **Headline: at the
+    welfare-BCA central profile NO Orange County ALM corridor clears BCR=1 — the
+    §7 marginal stop fires at CYCLE 1 and the decision-grade recommended build
+    order is EMPTY** (build nothing). Best marginal BCR ≈ 0.09 US-TYPICAL / 0.14
+    LOW (harbor); streetcar wins by NPV level (least-negative, −$2.2B US-TYPICAL)
+    but has the lower ratio (0.042/0.060). The stopping record prints the economic
+    margin (the marginal BCR + the R2 premium-bracket {1,1.5,2} rows — even a 2×
+    ASC premium leaves it far below 1), never "candidates ran out." The N5
+    follow-ups also made std-based σ_struct widening the PRIMARY reported measure
+    (P90−P10 secondary) and added a channel-split P50 non-additivity note. The
+    interim welfare-minutes objective is retained as `--objective interim` (the
+    byte-identical N4 regression anchor, `outputs/network_sequence_interim.json`).
+    N6 landed the amendments: spec 00 §3 gains the network-sequence gate row, and
+    spec 06 §1/§7's degrade-to-uncapped convention is amended (ABC weights are
+    properties of the shared county posterior, applicable to any corridor under
+    the same draws). The N4 batch added: the per-cycle
     **anchor-vs-rebuild channel split** (the reviewer's toggle method — separates
     synthetic-feeder MARKET ENLARGEMENT from crossing complementarity; the cycle-2
     streetcar|{harbor} lift is ~all the anchor-margin channel, rebuild ≈0); the

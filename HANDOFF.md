@@ -134,8 +134,8 @@ the ASC at 0.14/0.19/0.24 vs prior 0.09/0.20/0.31 (matured-target row:
     scripts/make_charts.py harbor             # -> outputs/*.png
     scripts/bca_export.py harbor [--seed-check]  # OPTIONAL: -> outputs/bca_export_harbor.json.gz (spec 06 B4 BCA handoff; post-ABC, gitignored)
     scripts/make_charts.py bca harbor         # OPTIONAL (spec 06 W2): -> outputs/bca_harbor.png + bca_tornado_harbor.png; reads the tbc welfare-BCA artifact (existence-gated), skips if absent
-    scripts/sequence_network.py               # spec 07 N1-N4 greedy portfolio harness -> outputs/network_sequence.json (interim Δwelfare-min objective; ~8-15 min full run w/ sensitivity + channel split at N=40,000)
-    scripts/make_charts.py network            # spec 07 N4: -> outputs/network_frontier.png + network_build_sequence.png + network_channels.png
+    scripts/sequence_network.py               # spec 07 BUILT greedy portfolio harness. DEFAULT --objective npv: prices each candidate-given-network through the tbc v3 wrapper (node, synchronous), within-draw CV in PV$ -> outputs/network_sequence.json (~3 min at N=40,000; needs the sibling transit-benefit-cost repo + node). --objective interim: Δwelfare-min level -> outputs/network_sequence_interim.json (the byte-identical N4 regression anchor; ~20 min w/ sensitivity)
+    scripts/make_charts.py network            # spec 07: -> outputs/network_frontier.png + network_build_sequence.png + network_channels.png (NPV-aware: ΔNPV-vs-ΔK_PV scatter + marginal-BCR bars when the artifact is the NPV objective)
     scripts/check_assumptions.py [--appendix] # STANDING GATE (spec 08): 7 registry checks, exit nonzero on drift; --appendix regenerates outputs/assumptions.{md,json}
 
 `data/derived` is committed, so **model.py `run()` and a fresh clone's
@@ -154,7 +154,10 @@ from check-3 (spec 08 §9 Q7); absent sibling ⇒ pending warnings, never a fail
 Since spec 07 N4 it ALSO scans `outputs/network_sequence.json` (override
 `NETWORK_SEQUENCE_ARTIFACT`) the same way: the 17 capital + network-mechanics
 registry leaves claim its `assumptions_manifest` rows, and the harness-internal
-sensitivity ids are engine-owned/exempt (`ENGINE_OWNED_NETWORK`). That
+sensitivity ids are engine-owned/exempt (`ENGINE_OWNED_NETWORK`). (Since spec 07
+N5 that artifact is the NPV objective; its `assumptions_manifest` is unchanged in
+shape, so the scan is identical. The interim N4 anchor now lives at
+`outputs/network_sequence_interim.json`.) That
 conversion dropped the spec-pending warnings 21 → 4 (the remaining 4 are the
 spec-02 §4.8/§4.9 street-cal + LODES rows).
 Everything is plain

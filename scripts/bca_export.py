@@ -95,19 +95,28 @@ def compute_weights(name, params, seed):
     return abc_weights(pred, HARBOR_KERNELS)
 
 
-def build_design_point(name, seed):
-    """Run one design point (one seed) and assemble the §3 export dict.
-    Shared params flow through both the forward run and (for harbor) the
-    backtest run -- the same common random numbers reweight_abc.py uses."""
-    cor = Corridor(os.path.join(DER, f"corridor_{name}.json"))
-    params = draw_params(N, seed)
-    res = run(cor, params=params, seed=seed)
-    weights = compute_weights(name, params, seed)
+def build_export(name, res, seed, weights, design, routes_removed, base_service,
+                 n=None, network_fp=None, cost_design=None):
+    """Assemble the spec 06 §3 export dict FROM IN-MEMORY run() RESULTS -- no
+    re-run (spec 07 N5). The standalone CLI path (build_design_point) and the
+    sequencing harness both funnel through here, so the schema is single-source.
 
+    The two spec 07 N5 EXPORTER additions ride OPTIONAL kwargs, so the standalone
+    path (which passes neither) writes the byte-identical B4 schema:
+      * network_fingerprint (spec 06 §3, N5): sha256 of the networked rebuild
+        descriptor -- present only on the harness-built candidate-given-network
+        exports, so the fingerprint-bearing filename and the wrapper's networked
+        output can never collide across candidates/cycles.
+      * cost_design (N5): the harness-owned capital bands (capcost.py / spec 04)
+        + the corridor service design the wrapper prices under. The harness OWNS
+        capital (spec 06 §2 division of labor), so it ships it here rather than
+        letting the wrapper re-read a static cost profile K; the wrapper's
+        networked mode overrides profile.capital with this block.
+    """
     export = {
         "corridor": name,
-        "design": cor.cfg["service_new"],
-        "n": N,
+        "design": design,
+        "n": n if n is not None else len(res["anchor"]),
         "seed": seed,
         "eq_days": EQ_DAYS,
         "scenarios": {scen: scenario_block(res["uncapped"][scen])
@@ -127,14 +136,39 @@ def build_design_point(name, seed):
     # folds nothing). base_service carries ONLY rev_hours_weekday -- empty {}
     # (rev_hours_weekday absent) when the corridor defines none, e.g. the
     # streetcar's synthetic composite local has no single route to remove.
-    # Config prose notes (rev_hours_note etc.) are NOT shipped in the export.
-    bca = cor.cfg.get("bca", {})
-    export["routes_removed"] = bca.get("routes_removed",
-                                       {"fold": [], "retain": []})
-    rev_hours = bca.get("rev_hours_weekday", {})
-    export["base_service"] = ({"rev_hours_weekday": rev_hours}
-                              if rev_hours else {})
+    export["routes_removed"] = routes_removed
+    export["base_service"] = base_service
+    # spec 07 N5 exporter additions (optional; absent on the standalone path so
+    # the B4 schema/bytes are unchanged).
+    if network_fp is not None:
+        export["network_fingerprint"] = network_fp
+    if cost_design is not None:
+        export["cost_design"] = cost_design
     return export
+
+
+def _bca_block(cor):
+    """(design, routes_removed, base_service) for the standalone CLI path, read
+    from the committed corridor config's bca block (spec 06 §3)."""
+    bca = cor.cfg.get("bca", {})
+    routes_removed = bca.get("routes_removed", {"fold": [], "retain": []})
+    rev_hours = bca.get("rev_hours_weekday", {})
+    base_service = {"rev_hours_weekday": rev_hours} if rev_hours else {}
+    return cor.cfg["service_new"], routes_removed, base_service
+
+
+def build_design_point(name, seed):
+    """Run one design point (one seed) and assemble the §3 export dict (standalone
+    CLI path). Shared params flow through both the forward run and (for harbor)
+    the backtest run -- the same common random numbers reweight_abc.py uses.
+    Passes NO network_fp / cost_design, so the schema/bytes are the B4 schema."""
+    cor = Corridor(os.path.join(DER, f"corridor_{name}.json"))
+    params = draw_params(N, seed)
+    res = run(cor, params=params, seed=seed)
+    weights = compute_weights(name, params, seed)
+    design, routes_removed, base_service = _bca_block(cor)
+    return build_export(name, res, seed, weights, design, routes_removed,
+                        base_service, n=N)
 
 
 def write_gz(path, obj):
@@ -177,6 +211,41 @@ def roundtrip_check(name, path):
     print(f"round-trip [{tag}] {what}: export {got:,.4f} vs committed "
           f"{ref:,.4f}  (rel {abs(got - ref) / abs(ref):.2e})")
     return ok
+
+
+def networked_export_path(name, fp, out_dir=OUT):
+    """Gitignored, fingerprint-bearing filename for a harness-built candidate-
+    given-network export (spec 07 N5). The 12-char fp keeps distinct candidate /
+    cycle points from colliding; the bca_export_* glob (B4) already gitignores
+    it, so these heavy files are never committed."""
+    return os.path.join(out_dir, f"bca_export_{name}_{fp[:12]}.json.gz")
+
+
+def selfcheck_weighted_p50(path, label=None):
+    """Networked round-trip SELF-CONSISTENCY (spec 07 N5): read the gz back and
+    recompute ONE weighted (ABC central) -- or unweighted, for a corridor with no
+    kernel -- retain newline P50 from its OWN arrays. A candidate-given-network
+    point has NO committed reference (it is a hypothetical), so this proves the
+    write/read/float32 path is lossless-consistent, NOT a committed match; the
+    caller compares it to the same P50 computed from the in-memory export."""
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        e = json.load(f)
+    newline = np.asarray(e["scenarios"]["retain"]["newline"])
+    if "abc_weights" in e:
+        lbl = label or central_label()
+        return float(wpct(newline, np.asarray(e["abc_weights"][lbl]), 50))
+    return float(pct(newline, 50))
+
+
+def inmemory_weighted_p50(export, label=None):
+    """The same P50 selfcheck_weighted_p50 recomputes, but from the IN-MEMORY
+    export dict (before the gz write) -- the reference side of the self-
+    consistency check."""
+    newline = np.asarray(export["scenarios"]["retain"]["newline"])
+    if "abc_weights" in export:
+        lbl = label or central_label()
+        return float(wpct(newline, np.asarray(export["abc_weights"][lbl]), 50))
+    return float(pct(newline, 50))
 
 
 def main(argv):

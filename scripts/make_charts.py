@@ -509,6 +509,129 @@ def network_channel_panel(seq, name="network"):
     return p
 
 
+# ===========================================================================
+# spec 07 N5 NPV-objective network charts. The NPV artifact's frontier is a
+# CANDIDATE SCATTER in ΔNPV vs ΔK_PV (the recommended portfolio is EMPTY -- the
+# §7 marginal stop fires at cycle 1), so the frontier panel plots each candidate
+# far below the ΔNPV=0 (BCR=1) hurdle, and the build-sequence panel becomes a
+# marginal-BCR bar chart against BCR=1 with the premium-bracket rows.
+# ===========================================================================
+def npv_frontier(seq, name="network"):
+    """ΔNPV vs ΔK_PV candidate scatter (US-TYPICAL, ABC), σ_struct std whiskers,
+    the ΔNPV=0 (BCR=1) hurdle line. Every candidate sits far below it: the
+    recommended portfolio is EMPTY (build nothing at the welfare-BCA profile)."""
+    pts = seq["frontier"]["points"]
+    scen = seq.get("scenario", "fold")
+    fig, ax = plt.subplots(figsize=(10.6, 5.8), dpi=200)
+    fig.patch.set_facecolor(SURFACE); ax.set_facecolor(SURFACE)
+    fig.subplots_adjust(left=0.12, right=0.965, top=0.79, bottom=0.13)
+    xs = [p["dK_pv_US_TYPICAL"] for p in pts]
+    ys = [(p["npv_abc_US_TYPICAL"] or p["npv_uncapped_US_TYPICAL"])[1] for p in pts]
+    ax.axhline(0, color=BASE, lw=1.4, zorder=2)
+    ax.annotate("BCR = 1 (ΔNPV = 0) hurdle", (max(xs) * 0.5, 0), xytext=(0, 6),
+                textcoords="offset points", ha="center", va="bottom",
+                fontsize=8.4, color=MUTED)
+    for p in pts:
+        x = p["dK_pv_US_TYPICAL"]
+        cell = p["npv_abc_US_TYPICAL"] or p["npv_uncapped_US_TYPICAL"]
+        c = RED       # every candidate is below the hurdle
+        # within-draw P10-P90 band + σ_struct std whisker behind
+        ss = p.get("sigma_struct", {})
+        halfstd = ss.get("std_sigma_struct", 0.0)
+        ax.plot([x, x], [cell[1] - halfstd, cell[1] + halfstd], color=c, lw=10,
+                solid_capstyle="round", alpha=0.16, zorder=2)
+        ax.plot([x, x], [cell[0], cell[2]], color=c, lw=7, solid_capstyle="round",
+                alpha=0.7, zorder=3)
+        ax.plot([x], [cell[1]], "o", ms=12, mfc=c, mec=SURFACE, mew=2, zorder=5)
+        # LOW-capital x-position (hollow)
+        xl = p["dK_pv_LOW"]
+        yl = (p["npv_abc_LOW"] or p["npv_uncapped_LOW"])[1]
+        ax.plot([xl], [yl], "o", ms=7, mfc=SURFACE, mec=c, mew=1.7, zorder=4)
+        ax.plot([xl, x], [yl, cell[1]], color=c, lw=0.9, ls=":", alpha=0.6, zorder=2)
+        ax.annotate(f"{p['line']}\nBCR {p['marginal_bcr_US_TYPICAL']:.3f}",
+                    (x, cell[0]), xytext=(7, -6), textcoords="offset points",
+                    ha="left", va="top", fontsize=8.8, fontweight="bold", color=INK)
+    ax.set_xlim(0, max(xs) * 1.22)
+    ymin = min((p["npv_uncapped_US_TYPICAL"][0]) for p in pts)
+    ax.set_ylim(ymin * 1.14, abs(ymin) * 0.10)
+    ax.grid(color=GRID, lw=0.8, zorder=0)
+    ax.tick_params(length=0, labelsize=9, labelcolor=MUTED)
+    ax.xaxis.set_major_formatter(lambda v, _: f"${v/1000:.1f}B")
+    ax.yaxis.set_major_formatter(lambda v, _: f"-${abs(v)/1000:.1f}B" if v < 0 else f"${v/1000:.1f}B")
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
+    for sp in ("bottom", "left"):
+        ax.spines[sp].set_color(BASE)
+    ax.set_xlabel("ΔK_PV (US-TYPICAL; hollow = LOW band), $M capcost",
+                  fontsize=9, color=INK2)
+    ax.set_ylabel(f"ΔNPV ({scen}, ABC, within-draw P10-P90)", fontsize=9, color=INK2)
+    fig.text(0.02, 0.94, "Network NPV frontier - recommended build order: EMPTY",
+             fontsize=13.5, fontweight="bold", color=INK)
+    fig.text(0.02, 0.885, "ΔNPV x ΔK_PV per candidate (US-TYPICAL solid, LOW hollow); "
+             "faint whisker = +/-1 σ_struct std. Every OC ALM corridor sits FAR "
+             "below the BCR=1 hurdle -> the §7 marginal stop fires at cycle 1.",
+             fontsize=8.3, color=INK2)
+    fig.text(0.02, 0.845, seq["frontier"]["flyvbjerg_annotation"],
+             fontsize=7.6, color=MUTED, wrap=True)
+    p = os.path.join(OUT, f"{name}_frontier.png")
+    fig.savefig(p, facecolor=SURFACE); plt.close(fig)
+    return p
+
+
+def npv_bcr_bars(seq, name="network"):
+    """Marginal-BCR bars per candidate (LOW | US-TYPICAL, ABC) against the BCR=1
+    hurdle, with the premium-bracket {1,1.5,2} ticks -- the stopping-rule verdict
+    made visual: nothing clears 1, and even a 2x ASC premium does not."""
+    pts = seq["frontier"]["points"]
+    cyc0 = seq["cycles"][0]["candidate_results"]
+    byid = {b["id"]: b for b in cyc0}
+    scen = seq.get("scenario", "fold")
+    fig, ax = plt.subplots(figsize=(10.6, 0.95 * len(pts) + 2.4), dpi=200)
+    fig.patch.set_facecolor(SURFACE); ax.set_facecolor(SURFACE)
+    fig.subplots_adjust(left=0.16, right=0.965, top=0.79, bottom=0.16)
+    ys = list(range(len(pts)))[::-1]
+    for p, y in zip(pts, ys):
+        b = byid[p["line"]]
+        bcr_ut = (b[scen]["US_TYPICAL"]["bcr_abc"] or b[scen]["US_TYPICAL"]["bcr_uncapped"])[1]
+        bcr_lo = (b[scen]["LOW"]["bcr_abc"] or b[scen]["LOW"]["bcr_uncapped"])[1]
+        ax.barh(y + 0.16, bcr_lo, height=0.30, color=TEAL, zorder=3, label="LOW" if y == ys[0] else None)
+        ax.barh(y - 0.16, bcr_ut, height=0.30, color=BLUE, zorder=3, label="US-TYPICAL" if y == ys[0] else None)
+        ax.annotate(f"{bcr_lo:.3f}", (bcr_lo, y + 0.16), xytext=(5, 0),
+                    textcoords="offset points", ha="left", va="center", fontsize=8.2, color=INK)
+        ax.annotate(f"{bcr_ut:.3f}", (bcr_ut, y - 0.16), xytext=(5, 0),
+                    textcoords="offset points", ha="left", va="center", fontsize=8.2, color=INK)
+        # premium-bracket ticks (US-TYPICAL first-order scaling)
+        for row in b["premium_bracket_rows"]["rows"]:
+            if row["premium"] == 1.0:
+                continue
+            ax.plot([row["marginal_bcr_first_order"]], [y - 0.16], "|", ms=10,
+                    mec=GOLD, mew=1.8, zorder=4)
+        ax.text(-0.01, y, p["line"], transform=ax.get_yaxis_transform(),
+                ha="right", va="center", fontsize=9.2, fontweight="bold", color=INK2)
+    ax.axvline(1.0, color=RED, lw=1.6, ls="--", zorder=2)
+    ax.annotate("BCR = 1", (1.0, len(pts) - 0.5), xytext=(4, 0),
+                textcoords="offset points", ha="left", va="center", fontsize=8.6, color=RED)
+    ax.set_xlim(0, 1.1)
+    ax.set_ylim(-0.7, len(pts) - 0.3)
+    ax.set_yticks([])
+    ax.grid(axis="x", color=GRID, lw=0.8, zorder=0)
+    ax.tick_params(length=0, labelsize=8.6, labelcolor=MUTED)
+    for sp in ("top", "right", "left"):
+        ax.spines[sp].set_visible(False)
+    ax.spines["bottom"].set_color(BASE)
+    ax.set_xlabel(f"marginal welfare BCR ({scen}, ABC) - gold ticks = premium x1.5/x2 (first-order)",
+                  fontsize=8.6, color=INK2)
+    ax.legend(loc="lower right", fontsize=8.4, frameon=False)
+    fig.text(0.02, 0.945, "Marginal BCR vs the BCR=1 hurdle (stopping verdict)",
+             fontsize=13.0, fontweight="bold", color=INK)
+    fig.text(0.02, 0.895, "no Orange County ALM corridor clears BCR=1 on either cost "
+             "band; even a 2x ASC premium (gold tick) leaves it far below -> "
+             "recommended portfolio EMPTY (spec 07 §7)", fontsize=8.2, color=INK2)
+    p = os.path.join(OUT, f"{name}_build_sequence.png")
+    fig.savefig(p, facecolor=SURFACE); plt.close(fig)
+    return p
+
+
 def network_charts(name="network"):
     path = os.path.join(OUT, "network_sequence.json")
     if not os.path.exists(path):
@@ -516,10 +639,15 @@ def network_charts(name="network"):
               "(run scripts/sequence_network.py first)")
         return
     seq = json.load(open(path, encoding="utf-8"))
-    p1 = network_frontier(seq, name)
-    p2 = network_build_sequence(seq, name)
+    mode = seq.get("objective", {}).get("mode", "interim")
+    if mode == "npv":
+        p1 = npv_frontier(seq, name)
+        p2 = npv_bcr_bars(seq, name)
+    else:
+        p1 = network_frontier(seq, name)
+        p2 = network_build_sequence(seq, name)
     p3 = network_channel_panel(seq, name)
-    print(f"network charts written: {os.path.basename(p1)}, "
+    print(f"network charts written [{mode}]: {os.path.basename(p1)}, "
           f"{os.path.basename(p2)}, {os.path.basename(p3)}")
 
 

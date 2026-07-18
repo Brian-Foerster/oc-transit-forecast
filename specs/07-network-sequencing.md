@@ -1,12 +1,18 @@
 # Spec 07 — Network sequencing: a greedy portfolio harness with anti-myopia guards
 
-Status: PROPOSED 2026-07-11, revised same day after a three-lens adversarial
-review (optimization economics, governance consistency, code feasibility);
-all blocking and major findings incorporated. The skeleton (§4–§6) is
-buildable now against the merged stage-2 machinery (spec 06 B1–B4); the NPV
-objective (§3) is gated on R1 → R6 → W1, the same chain spec 06 §8 declares.
-Nothing in the existing R-queue changes. The county-wide always-ALM scope and
-the owner decisions that shaped this spec are recorded in §11.
+Status: **BUILT 2026-07-17** (N1–N6 all landed). PROPOSED 2026-07-11, revised
+same day after a three-lens adversarial review (optimization economics,
+governance consistency, code feasibility); all blocking and major findings
+incorporated. N1–N4 landed the interim (welfare-minutes) harness; N5 landed the
+full NPV objective (the DEFAULT) after R1 → R6 → W1, pricing every candidate-
+given-network through the tbc v3 wrapper (`bca-pipeline.mjs`) and ranking by
+within-draw CV in common-base-year PV dollars; N6 landed the spec 00 §3 /
+spec 06 §1/§7 amendments. **Headline (NPV objective, 2026-07-17):** at the
+welfare-BCA central profile NO Orange County ALM corridor clears BCR=1 — the §7
+marginal stop fires at cycle 1 and the decision-grade recommended build order is
+EMPTY (best marginal BCR ≈ 0.09 US-TYPICAL / 0.14 LOW, harbor; streetcar lower).
+The county-wide always-ALM scope and the owner decisions that shaped this spec
+are recorded in §11.
 
 > One sentence of role: each cycle, candidate ALM lines are evaluated against
 > the network built so far, one is committed, and the loop repeats — producing
@@ -530,18 +536,53 @@ only committed lines + finalists by default, knob to export all.
   spec 08 §9 Q7 precedent) — warnings 21 → 4. Charts: depth-shaded frontier,
   build-sequence, interaction/channel-split panel (make_charts.py `network`);
   the archetype-gap section renders the N3-pending placeholder.
-- **N5 — full NPV objective** (after R1 → R6 → W1): consumes the spec 06
-  §3 export schema with these EXPORTER changes (not "unchanged" — corrected
-  at review): `network_fingerprint` field AND fingerprint-bearing
-  filenames (`bca_export_<corridor>_<fingerprint>.json.gz`, already inside
-  B4's gitignore glob); ABC weights un-gated from harbor and shipped once
-  per cycle as a kernel-labeled weights file; a networked-point mode for
-  the round-trip gate (self-consistency check — committed reference files
-  cannot exist for candidate-given-network points).
-- **N6 — amendments commit**: spec 00 §3 (network output as a named
-  gate-relevant row, one line + rule-5 note, 653bc68 precedent) AND the
-  spec 06 §1/W1 degrade-convention amendment (§6.1). Rides the first
-  gate-relevant landing.
+- **N5 — full NPV objective. LANDED 2026-07-17** (branch spec07-n5, after
+  R1 → R6 → W1). `sequence_network.py --objective npv` is the DEFAULT; the
+  interim welfare-minutes objective is retained as `--objective interim` (the
+  byte-identical N4 regression anchor). Mechanics as built:
+  (a) **Exporter (`bca_export.py`).** An importable `build_export(name, res,
+  …)` assembles the §3 export FROM the in-memory `run()` result (no re-run); the
+  standalone CLI path funnels through it unchanged (byte-identical B4 schema).
+  The two N5 additions ride OPTIONAL kwargs: `network_fingerprint` (sha256 of
+  the networked-rebuild descriptor) AND fingerprint-bearing filenames
+  (`bca_export_<corridor>_<fp12>.json.gz`, already inside B4's gitignore glob);
+  and a `cost_design` block (the harness-owned capcost capital bands + corridor
+  service design). A networked ROUND-TRIP mode is a SELF-CONSISTENCY check
+  (recompute one weighted P50 from the arrays) — a candidate-given-network point
+  has no committed reference, so the committed-reference comparison stays scoped
+  to the standalone empty-network case.
+  (b) **Wrapper (`bca-pipeline.mjs`, tbc `feat(v3)`).** A networked mode accepts
+  an explicit `--export` path, reads `cost_design` to OVERRIDE the static
+  cost-profile capital + service design (the harness owns capital; the wrapper
+  prices every candidate under the SHARED central profile, §6.1 — the harbor-
+  only weight gate is lifted because the ABC weights ship in the export), and
+  emits a fingerprint-named `bca_<corridor>_<fp12>.json` PLUS a compact per-draw
+  ΔNPV companion (`.npv.json`) — the documented mechanism for reading 40k
+  per-draw NPVs back from node (the exact linear decomposition produces them for
+  free). The committed-artifact identity test stays scoped to the standalone
+  harbor artifact.
+  (c) **Harness (`sequence_network.py`).** Per candidate-given-network the
+  harness builds the export in-process, invokes the wrapper (node, synchronous,
+  ~2 s at N=40,000), and reads back per-draw ΔNPV for the WITHIN-DRAW CV (§3),
+  with δ = one-cycle_gap deferral on the profile 4% clock. Both cost bands are
+  carried (LOW | US-TYPICAL); the §7 stopping rule fires on the marginal-BCR
+  test with the R2 premium-bracket rows and the max{greedy, best-single, best-
+  archetype-placeholder} safeguard line; the frontier is ΔNPV vs ΔK_PV. The N4
+  carry-ins land here too: std-based σ_struct widening is the PRIMARY reported
+  measure (P90−P10 secondary), and the channel split gains a P50-non-additivity
+  note field.
+  **Result:** the §7 marginal stop fires at CYCLE 1 — every OC ALM candidate's
+  ΔNPV is deeply negative (best marginal BCR ≈ 0.09 US-TYPICAL / 0.14 LOW,
+  harbor) and no continuation is positive, so the decision-grade recommended
+  portfolio is EMPTY, reported per §7 with the economic margin printed, never
+  "candidates ran out."
+- **N6 — amendments. LANDED 2026-07-17** (same commit as N5): spec 00 §3 gains
+  the network-sequence row (PRIMARY planning output, one line + rule-5 note,
+  653bc68 precedent) AND the spec 06 §1/§7 W1 degrade-to-uncapped amendment
+  (§6.1 — ABC weights are properties of the shared posterior, applicable to any
+  corridor under the same draws; degrade fires only when no county kernel exists
+  at all). Spec 06 §3 gains the `network_fingerprint` + `cost_design` export
+  fields. Spec 07 status → BUILT.
 
 Nothing here reorders R1/R2/R6 or the W-items; the interim objective
 exists precisely so N1–N4 need not wait on them.

@@ -130,10 +130,50 @@ def test_round_trip(name):
     print(f"  test_round_trip({name}) OK")
 
 
+def test_build_export_networked():
+    """spec 07 N5: build_export from IN-MEMORY run() results. The standalone path
+    (no network_fp/cost_design) yields the byte-identical B4 schema; the networked
+    path ADDS network_fingerprint + cost_design (and a fingerprint-bearing
+    filename). The networked round-trip is a SELF-CONSISTENCY check (recompute one
+    weighted P50 from the arrays vs the in-memory value), not a committed match."""
+    from model import Corridor, run, draw_params
+    import numpy as np
+    n = 200
+    cor = Corridor(os.path.join(bx.DER, "corridor_harbor.json"))
+    params = draw_params(n, 42)
+    res = run(cor, n=n, params=params, seed=42)
+    w = {"543_launch_s500": np.full(n, 1.0 / n)}
+    design, rr, bs = bx._bca_block(cor)
+    # standalone: schema unchanged (no network keys)
+    e0 = bx.build_export("harbor", res, 42, w, design, rr, bs, n=n)
+    assert "network_fingerprint" not in e0 and "cost_design" not in e0, \
+        "standalone build_export must not carry network keys (B4 schema)"
+    # networked: the two N5 additions ride optional kwargs
+    fp = nm_fp = "abcdef0123456789" * 4
+    cd = {"capital": {"LOW": 1804.2, "US_TYPICAL": 2945.2}}
+    e1 = bx.build_export("harbor", res, 42, w, design, rr, bs, n=n,
+                         network_fp=fp, cost_design=cd)
+    assert e1["network_fingerprint"] == fp and e1["cost_design"] == cd
+    # keys 0..(before extras) identical between standalone and networked
+    assert list(e0.keys()) == [k for k in e1.keys()
+                               if k not in ("network_fingerprint", "cost_design")]
+    # fingerprint-bearing filename + self-consistency round-trip
+    path = bx.networked_export_path("harbor", fp, bx.OUT)
+    assert os.path.basename(path) == f"bca_export_harbor_{fp[:12]}.json.gz"
+    bx.write_gz(path, e1)
+    in_mem = bx.inmemory_weighted_p50(e1, "543_launch_s500")
+    rt = bx.selfcheck_weighted_p50(path, "543_launch_s500")
+    assert abs(rt - in_mem) <= 1e-6 * max(1.0, abs(in_mem)), (rt, in_mem)
+    os.remove(path)
+    print(f"  test_build_export_networked OK  (standalone schema unchanged; "
+          f"networked +fp +cost_design; self-consistency {rt:.3f}=={in_mem:.3f})")
+
+
 if __name__ == "__main__":
     names = sys.argv[1:] or ["harbor", "streetcar"]
     test_prior_order_fingerprint()
     test_abc_weights_normalize()
+    test_build_export_networked()
     for nm in names:
         test_schema_shape(nm)
         test_round_trip(nm)

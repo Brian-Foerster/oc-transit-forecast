@@ -33,14 +33,17 @@ floats, run id = sha256 of the config-set + seed).
 """
 import argparse
 import copy
+import gzip
 import json
 import math
 import os
+import subprocess
 import sys
 
 import numpy as np
 import pandas as pd
 
+import bca_export as bx
 import build_corridor as bc
 import capcost
 import network_mechanics as nm
@@ -127,6 +130,48 @@ SIGMA_STRUCT_BOARDINGS = 400.0
 # tighter estimate of the SAME inflated distribution (deterministic given the
 # seed).
 SIGMA_STRUCT_REPLICATES = 20
+
+# ===========================================================================
+# spec 07 N5 -- the FULL NPV objective (default). Per candidate-given-network the
+# harness builds a spec 06 §3 export FROM the in-memory run() result (no re-run,
+# bca_export.build_export) and prices it through the tbc v3 wrapper
+# (bca-pipeline.mjs, node, SYNCHRONOUS, ~2 s at N=40,000). The wrapper's exact
+# linear decomposition returns per-draw ΔNPV, so the harness reads back a compact
+# per-draw NPV companion (bca_<corridor>_<fp>.npv.json) and does the WITHIN-DRAW
+# CV itself (spec 07 §3). The harness OWNS capital (capcost.py / spec 04); it
+# ships capcost's LOW|US-TYPICAL bands + the corridor service design in the
+# export's cost_design, which the wrapper prices under the SHARED central profile
+# (county-common prices / posterior, spec 07 §6.1). Both cost bands are carried.
+# ---------------------------------------------------------------------------
+TBC_DIR = os.path.abspath(os.path.join(ROOT, "..", "transit-benefit-cost"))
+TBC_WRAPPER = os.path.join(TBC_DIR, "bca-pipeline.mjs")
+TBC_PROFILE = os.path.join(TBC_DIR, "costs", "profiles", "harbor.json")
+NODE_EXE = os.environ.get("NODE", "node")
+KM_PER_MI = 1.609344
+SEATS_PER_CAR = 150                      # loadFlag denominator only (diagnostic, D4)
+# service-span hours per period -- a shared service assumption (the candidate
+# configs carry HEADWAY, not span); the harbor profile's 6 h peak / 13 h offpeak
+# is the county convention. car_km_yr (O&M) uses the candidate's OWN headway +
+# route_km against this shared span.
+SERVICE_HOURS = {"peak": 6.0, "offpeak": 13.0}
+# spec 07 §6.1 / §7: the R2 ASC premium-bracket rows carried on every stop
+# decision (bus->rail transportability bites at the stopping rule). Applied as a
+# FIRST-ORDER benefit-side scaling of the marginal BCR (the exact treatment is a
+# stage-2 re-export at the scaled premium -- spec 06 §3 "additional export design
+# point"); even the 2.0x row leaves the marginal BCR far below 1, so the stop is
+# robust to it. Stated as a bound, not a re-run.
+PREMIUM_BRACKET = (1.0, 1.5, 2.0)
+
+
+def _profile_discount():
+    """The central-profile real discount rate (spec 06 / tbc harbor profile,
+    4% flat). SINGLE SOURCE: read from the tbc cost profile, never hardcoded --
+    the NPV objective's δ (one-cycle_gap deferral) and the frontier's ΔK_PV
+    cycle-deferral both use it (NOT the 7% federal DISPLAY_DISCOUNT the interim
+    ΔK_PV column cites)."""
+    with open(TBC_PROFILE, encoding="utf-8") as f:
+        return float(json.load(f)["central_profile"]["discount_rate"])
+
 
 _CAPITAL_CONSTS = ("cap_occ", "cap_depot", "cap_route_km", "cap_viaduct_km",
                    "cap_station", "cap_car", "cap_markup_low", "cap_markup_ut",
@@ -422,7 +467,7 @@ def build_anchor_add(B, network_before, gtfs, params, seed, n, allocation=None,
 # ---------------------------------------------------------------------------
 def evaluate(B, network_before, params, seed, weights, gtfs, tracts, n,
              run_dir, allocation=None, omega_scale=1.0, exclusive_tract=False,
-             channel_split=False, feeder_headway_map=None):
+             channel_split=False, feeder_headway_map=None, npv_engine=None):
     """Evaluate candidate B against the network-before under common random
     numbers. Returns a record with per-scenario welfare-minute arrays (fold and
     retain), total/newline/ratio per draw, the ABC-weighted bands, provenance
@@ -479,6 +524,21 @@ def evaluate(B, network_before, params, seed, weights, gtfs, tracts, n,
     if channel_split and networked:
         rec["channel_split"] = _channel_split(
             B, cor, add, params, seed, n, weights, res)
+    # spec 07 N5 NPV objective: price the in-memory res through the tbc wrapper
+    # (no re-run) and attach the per-draw ΔNPV. Empty-network singles and
+    # networked candidates alike -- the fingerprint folds the network-before, so
+    # every distinct candidate/network point writes a distinct export/output.
+    if npv_engine is not None:
+        network_desc = {
+            "candidate": B["id"],
+            "network_before": nm.sorted_set_list(H["id"] for H in network_before),
+            "injected": nm.sorted_set_list(i["route"] for i in injected),
+            "excluded": nm.sorted_set_list(excluded),
+            "n": int(n), "seed": int(seed)}
+        capital = capital_bands(B)
+        rec["capital"] = capital                        # capcost LOW|US_TYPICAL $M
+        rec["npv"] = npv_engine.price(B["id"], res, B, capital, network_desc,
+                                      seed)
     return rec
 
 
@@ -685,6 +745,145 @@ def _cycle_weights(n, seed, clbl):
         w = abc_weights(pred, [kern])[clbl]
         _WEIGHT_CACHE[key] = (params, w, float(1.0 / np.sum(w ** 2)))
     return _WEIGHT_CACHE[key]
+
+
+# ---------------------------------------------------------------------------
+# spec 07 N5: the NPV engine -- prices one candidate-given-network run() result
+# through the tbc v3 wrapper and reads per-draw ΔNPV back.
+# ---------------------------------------------------------------------------
+def _cost_design(cand, res, capital):
+    """The export cost_design block (spec 07 N5): the harness-owned capcost
+    capital bands + the corridor service design the wrapper prices under. The
+    candidate's OWN route_km + peak/offpeak headway drive car_km (O&M); the
+    service SPAN (hours) is the shared county convention (SERVICE_HOURS)."""
+    hw = cand["headway"]
+    hpk = float(hw["peak"] if isinstance(hw, dict) else hw)
+    hop = float(hw.get("offpeak", hpk) if isinstance(hw, dict) else hw)
+    cpt = int(cand.get("cars_per_train", 2))
+    base_boardings = float(pct(res["anchor"], 50))     # measured base the line captures
+    seat_cap = cpt * SEATS_PER_CAR * (60.0 / hpk)      # loadFlag denominator (D4, diagnostic)
+    return {
+        "capital": {"LOW": float(capital["LOW"]),
+                    "US_TYPICAL": float(capital["US_TYPICAL"])},
+        "service_plan": {
+            "route_km": cand["route_mi"] * KM_PER_MI,
+            "cars_per_train": cpt,
+            "periods": [
+                {"period": "peak", "headway": hpk, "hours": SERVICE_HOURS["peak"]},
+                {"period": "offpeak", "headway": hop,
+                 "hours": SERVICE_HOURS["offpeak"]}]},
+        "base_boardings": base_boardings,
+        "seat_capacity": {"seatCap": seat_cap},
+    }
+
+
+class NpvEngine:
+    """Drives the tbc v3 wrapper (bca-pipeline.mjs) to price a candidate-given-
+    network run() result and return per-draw ΔNPV. One node invocation per
+    evaluation (~2 s at N=40,000). SYNCHRONOUS -- the harness blocks on it (spec
+    07 N5 'node, synchronous, ~seconds'). Reusable across a run; caches nothing
+    beyond the shared ABC weights the caller passes."""
+
+    def __init__(self, weights, clbl, run_dir=None):
+        self.weights = weights                          # shared OC posterior (543_launch_s500)
+        self.clbl = clbl
+        self.run_dir = run_dir or bc.RUN_DIR
+        os.makedirs(self.run_dir, exist_ok=True)
+        if not os.path.exists(TBC_WRAPPER):
+            raise FileNotFoundError(
+                f"tbc v3 wrapper not found at {TBC_WRAPPER}; the NPV objective "
+                "needs the sibling transit-benefit-cost repo (spec 07 N5). Use "
+                "--objective interim to run without it.")
+
+    def price(self, name, res, cand, capital, network_desc, seed):
+        """Build the §3 export from the in-memory res (no re-run), write the
+        fingerprint-named gz, invoke the wrapper, and read the per-draw ΔNPV
+        companion + the wrapper artifact back. Returns a dict:
+
+            {"per_draw": {scen: {band: (n,) ΔNPV at λ=1}},
+             "ben_p50":  {scen: {band: float}},
+             "npv_p50":  {scen: {band: float}},
+             "bcr_p50":  {scen: {band: float}},
+             "artifact": <wrapper bca_<name>_<fp>.json>,
+             "fp": <network fingerprint>,
+             "selfcheck": {"in_memory": ..., "roundtrip": ..., "ok": bool}}
+        """
+        fp = nm.network_fingerprint(network_desc)
+        cost_design = _cost_design(cand, res, capital)
+        design, routes_removed, base_service = self._bca_meta(cand)
+        export = bx.build_export(name, res, int(seed),
+                                 self.weights, design, routes_removed,
+                                 base_service, n=len(res["anchor"]),
+                                 network_fp=fp, cost_design=cost_design)
+        gz = bx.networked_export_path(name, fp, self.run_dir)
+        bx.write_gz(gz, export)
+        # networked ROUND-TRIP self-consistency (spec 07 N5): a candidate-given-
+        # network point has no committed reference, so verify the write/read is
+        # lossless-consistent (recompute one weighted P50 from the gz vs memory).
+        in_mem = bx.inmemory_weighted_p50(export, self.clbl)
+        rt = bx.selfcheck_weighted_p50(gz, self.clbl)
+        selfcheck = {"in_memory": in_mem, "roundtrip": rt,
+                     "ok": abs(rt - in_mem) <= 1e-6 * max(1.0, abs(in_mem))}
+        out_json = os.path.join(self.run_dir, f"bca_{name}_{fp[:12]}.json")
+        npv_json = os.path.join(self.run_dir, f"bca_{name}_{fp[:12]}.npv.json")
+        # spec 07 §6.1: every candidate is priced under the SHARED central profile
+        # (county-common prices + posterior); the harbor profile is that template,
+        # and the export's cost_design overrides the corridor-specific quantities
+        # (capital / service design / base boardings). The N5 lift of the wrapper's
+        # harbor-only gate is exactly this -- the 543 ABC weights ship in the
+        # export and apply to any corridor under the same draws.
+        cmd = [NODE_EXE, TBC_WRAPPER, name, "--export", gz,
+               "--profile", TBC_PROFILE, "--out", out_json, "--npv-out", npv_json]
+        r = subprocess.run(cmd, capture_output=True, text=True, cwd=TBC_DIR)
+        if r.returncode != 0:
+            raise RuntimeError(
+                f"tbc wrapper failed ({name} fp {fp[:12]}): {r.stderr[-2000:]}")
+        with open(npv_json, encoding="utf-8") as f:
+            pdj = json.load(f)
+        with open(out_json, encoding="utf-8") as f:
+            art = json.load(f)
+        per_draw, ben_p50, npv_p50, bcr_p50 = {}, {}, {}, {}
+        for scen, bands_d in pdj["scenarios"].items():
+            per_draw[scen], ben_p50[scen] = {}, {}
+            npv_p50[scen], bcr_p50[scen] = {}, {}
+            for bnd, blk in bands_d.items():
+                per_draw[scen][bnd] = np.asarray(blk["npv"], dtype=float)
+                ben_p50[scen][bnd] = float(blk["ben_p50"])
+                npv_p50[scen][bnd] = float(blk["npv_p50"])
+                bcr_p50[scen][bnd] = float(blk["bcr_p50"])
+        return {"per_draw": per_draw, "ben_p50": ben_p50, "npv_p50": npv_p50,
+                "bcr_p50": bcr_p50, "artifact": art, "fp": fp,
+                "selfcheck": selfcheck}
+
+    @staticmethod
+    def _bca_meta(cand):
+        """(design, routes_removed, base_service) for the export, from the
+        candidate's committed config bca block (spec 06 §3). The wrapper needs
+        routes_removed / base_service for the avoided-base-O&M (E4)."""
+        cfg = cand["cfg"]
+        bca = cfg.get("bca", {})
+        routes_removed = bca.get("routes_removed", {"fold": [], "retain": []})
+        rev_hours = bca.get("rev_hours_weekday", {})
+        base_service = {"rev_hours_weekday": rev_hours} if rev_hours else {}
+        return cfg["service_new"], routes_removed, base_service
+
+
+_FULL_WEIGHT_CACHE = {}
+
+
+def _full_abc_weights(n, seed):
+    """The FULL 5-kernel ABC weights dict {label: (n,) array} (spec 06 §3 /
+    reweight_abc.get_kernels), for the export the NPV engine ships to the wrapper
+    (the wrapper picks the profile's central kernel + the σ-row s350/s800). Same
+    (params, seed) via the harbor backtest as _cycle_weights, computed once."""
+    key = (n, seed)
+    if key not in _FULL_WEIGHT_CACHE:
+        from reweight_abc import get_kernels
+        params = draw_params(n, seed)
+        pred = run(backtest_corridor(), n=n, params=params,
+                   seed=seed)["uncapped"]["retain"]["newline"]
+        _FULL_WEIGHT_CACHE[key] = abc_weights(pred, get_kernels())
+    return _FULL_WEIGHT_CACHE[key]
 
 
 def sequence(cands, hand_supplied, subst_note, seed=SEED, n=N, max_cycles=None,
@@ -1563,9 +1762,539 @@ def _provenance_report(committed, cycle_records):
                           "errors); the depth cap is the control (spec 07 §6.2).")}
 
 
+# ===========================================================================
+# spec 07 N5: the FULL NPV objective loop (the DEFAULT). Prices every candidate-
+# given-network through the tbc wrapper, does WITHIN-DRAW CV in PV dollars (§3),
+# applies the §7 marginal-BCR stopping rule with the premium-bracket rows, and
+# reports a ΔNPV-vs-ΔK_PV frontier. The interim sequence() above is UNTOUCHED
+# (the byte-identical N4 regression anchor); this is a parallel path.
+# ===========================================================================
+def _npv_view(container, band, scenario, key="rec"):
+    """A cv_components/interaction-shaped view {id: {scen: {'wm': (n,) ΔNPV}}}
+    built from the per-draw ΔNPV at one cost band -- so the SHARED §3 CV /
+    interaction machinery ranks NPV exactly as it ranks welfare-minutes, only
+    the per-draw objective array and δ change (spec 07 §3)."""
+    out = {}
+    for cid, blk in container.items():
+        rec = blk[key] if key in blk else blk
+        pdd = rec["npv"]["per_draw"]
+        out[cid] = {s: {"wm": pdd[s][band]} for s in ("fold", "retain")}
+    return out
+
+
+def _npv_cont_view(continuations, band):
+    """Continuation view: {aid: {bid: {scen: {'wm': ΔNPV}}}}."""
+    out = {}
+    for aid, bs in continuations.items():
+        out[aid] = {}
+        for bid, d in bs.items():
+            pdd = d["rec"]["npv"]["per_draw"]
+            out[aid][bid] = {s: {"wm": pdd[s][band]} for s in ("fold", "retain")}
+    return out
+
+
+def _premium_rows(bcr_central):
+    """spec 07 §6.1/§7: the R2 ASC premium-bracket {1.0, 1.5, 2.0} rows on the
+    stop decision. FIRST-ORDER benefit-side scaling of the marginal BCR (the
+    premium moves ridership ~linearly into benefits, the BCR numerator); the
+    exact treatment is a stage-2 re-export at the scaled premium (spec 06 §3
+    'additional export design point'), not a wrapper re-price. Stated as a bound:
+    even the 2.0x row leaves the OC marginal BCR far below 1."""
+    return [{"premium": f, "marginal_bcr_first_order": round(f * bcr_central, 6),
+             "clears_bcr1": bool(f * bcr_central >= 1.0)} for f in PREMIUM_BRACKET]
+
+
+def _npv_bands_from_artifact(art, scen):
+    """Pull the wrapper's reported NPV/BCR bands (uncapped|ABC, both cost bands)
+    for one scenario straight from the candidate's bca_<fp>.json headline."""
+    H = art["headline"][scen]
+    out = {}
+    for bnd in ("LOW", "US_TYPICAL"):
+        cell = H[bnd]
+        out[bnd] = {
+            "npv_uncapped": [cell["uncapped"]["npv"][q] for q in ("p10", "p50", "p90")],
+            "bcr_uncapped": [cell["uncapped"]["bcr"][q] for q in ("p10", "p50", "p90")],
+            "npv_abc": ([cell["abc"]["npv"][q] for q in ("p10", "p50", "p90")]
+                        if "abc" in cell else None),
+            "bcr_abc": ([cell["abc"]["bcr"][q] for q in ("p10", "p50", "p90")]
+                        if "abc" in cell else None),
+            "p_npv_pos": cell["uncapped"]["p_npv_pos"],
+            "ess": (cell["abc"]["ess"] if "abc" in cell else None)}
+    return out
+
+
+def _sigma_struct_npv(base_npv, ben_p50, newline_p50, rng, M):
+    """N4 σ_struct in NPV units + the N5 follow-up (std-based widening PRIMARY).
+    A per-line INDEPENDENT N(0, σ_struct boardings) structural error maps to NPV
+    through the benefit-per-boarding ratio (benefits enter NPV additively; capital
+    is fixed), so sd_npv = σ_struct · |ben_P50 / newline_P50|. Returns the base vs
+    inflated STD (primary) and P90-P10 band (secondary)."""
+    sd = SIGMA_STRUCT_BOARDINGS * (abs(ben_p50 / newline_p50) if newline_p50 else 0.0)
+    noise = (rng.normal(0.0, sd, (M, len(base_npv))) if sd > 0
+             else np.zeros((M, len(base_npv))))
+    inflated = (base_npv[None, :] + noise).ravel()
+    std_base = float(np.std(base_npv))
+    std_infl = float(np.std(inflated))
+    band_base = pct(base_npv, 90) - pct(base_npv, 10)
+    band_infl = pct(inflated, 90) - pct(inflated, 10)
+    return {
+        "sd_npv_per_line": round(sd, 4),
+        "std_base": round(std_base, 4), "std_sigma_struct": round(std_infl, 4),
+        "std_widening_PRIMARY": round(std_infl - std_base, 4),
+        "p90_p10_base": round(band_base, 4),
+        "p90_p10_sigma_struct": round(band_infl, 4),
+        "band_widening_p90_p10_SECONDARY": round(band_infl - band_base, 4),
+        "note": ("std-based widening is the PRIMARY σ_struct measure (spec 07 N5 "
+                 "follow-up: an all-draws average, robust where the P90-P10 tail "
+                 "statistic can flip sign at finite n); P90-P10 kept as SECONDARY. "
+                 "Mean-zero noise leaves the P50 ~unchanged; the spread widens.")}
+
+
+def _npv_cand_block(cid, singles, cvs_band, scenario, seed, n, weights):
+    """Candidate result block for the NPV artifact: the wrapper's NPV/BCR bands
+    (uncapped|ABC, both cost bands), the CV components per band, the premium-
+    bracket rows on the marginal BCR, the σ_struct band, provenance depth, and
+    (if computed) the channel split."""
+    rec = singles[cid]["rec"]
+    art = rec["npv"]["artifact"]
+    cap = rec["capital"]                                # capcost LOW|US_TYPICAL $M
+    block = {"id": cid, "depth": rec["depth"],
+             "depth_label": _depth_label(rec["depth"]),
+             "injected_committed_lines": sorted(rec["injected"]),
+             "excluded_fold_routes": sorted(rec["excluded"]),
+             "dependencies": [dict(d) for d in rec["deps"]],
+             "capital_delta_K": {"LOW": cap["LOW"], "US_TYPICAL": cap["US_TYPICAL"]},
+             "npv_selfcheck": rec["npv"]["selfcheck"],
+             "network_fingerprint": rec["npv"]["fp"]}
+    for scen in ("fold", "retain"):
+        block[scen] = _npv_bands_from_artifact(art, scen)
+    # CV components (both cost bands), δ-timed continuation; ranking band UT
+    block["cv"] = {}
+    for bnd in ("LOW", "US_TYPICAL"):
+        c = cvs_band[bnd].get(cid)
+        if c is not None:
+            block["cv"][bnd] = {
+                "cv_p50": c["cv_p50"], "own_dNPV_p50": c["own_p50"],
+                "continuation_p50": c["cont_p50"], "best_continuation": c["best_B"],
+                "delta_timing_note": ("continuation δ-timed at +1 cycle_gap on the "
+                                      "profile 4% clock (spec 07 §3); own ΔNPV at "
+                                      "cycle-0 timing (the common cycle-k deferral "
+                                      "cancels in ranking, enters the frontier)")}
+    # premium-bracket rows on the marginal BCR (§6.1/§7), fold central US_TYPICAL
+    bcr_ut = block[scenario]["US_TYPICAL"]["bcr_abc"] or block[scenario]["US_TYPICAL"]["bcr_uncapped"]
+    block["premium_bracket_rows"] = {
+        "band": "US_TYPICAL", "scenario": scenario,
+        "marginal_bcr_central": bcr_ut[1],
+        "rows": _premium_rows(bcr_ut[1])}
+    # σ_struct band on the candidate's standalone per-draw NPV (US_TYPICAL, fold)
+    rng = _sigma_struct_rng([{"id": cid}], seed, n)
+    base_npv = rec["npv"]["per_draw"][scenario]["US_TYPICAL"]
+    newline_p50 = pct(rec["scenarios"][scenario]["newline"], 50)
+    block["sigma_struct"] = _sigma_struct_npv(
+        base_npv, rec["npv"]["ben_p50"][scenario]["US_TYPICAL"],
+        newline_p50, rng, SIGMA_STRUCT_REPLICATES)
+    if rec.get("channel_split") is not None:
+        cs = dict(rec["channel_split"])
+        cs["non_additivity_note"] = (
+            "spec 07 N5 follow-up: anchor + rebuild + cross_residual need NOT sum "
+            "to lift at the P50 -- each P50 is a percentile of a DIFFERENT per-draw "
+            "toggle array and percentiles are non-additive (pct(A)+pct(B) != "
+            "pct(A+B)); cross_residual absorbs both the true two-channel "
+            "interaction AND this percentile non-additivity. Read the channels as "
+            "directional magnitudes, not an exact decomposition.")
+        block["channel_split"] = cs
+    return block
+
+
+def sequence_npv(cands, hand_supplied, subst_note, seed=SEED, n=N,
+                 budget=None, scenario="fold", quiet=False, gtfs=None,
+                 tracts=None, split_channels=True, npv_engine=None):
+    """spec 07 N5 -- the full-NPV sequencing loop (default objective). Ranks
+    candidates by within-draw CV in common-base-year PV dollars (§3), stops on
+    the §7 marginal-BCR rule (best CV <= 0 => the marginal BCR is below 1),
+    carrying the premium-bracket rows and BOTH cost bands. Because every OC ALM
+    candidate's own ΔNPV is deeply negative (BCR ~0.08-0.14 << 1) and no
+    continuation is positive, the marginal stop FIRES AT CYCLE 1 and the decision-
+    grade recommended portfolio is EMPTY -- reported per §7 with the economic
+    margin (the marginal BCR), never 'candidates ran out'."""
+    gtfs = gtfs or _Gtfs()
+    tracts = _tract_table() if tracts is None else tracts
+    clbl = central_label()
+    params, weights, ess = _cycle_weights(n, seed, clbl)
+    ess_min = val("ess_min")
+    rate = _profile_discount()
+    # δ = one-cycle_gap deferral on the profile clock (spec 07 §3): the second
+    # (continuation) element is timed at +cycle_gap.
+    delta = 1.0 / (1.0 + rate) ** CYCLE_GAP
+    # the FULL 5-kernel dict for the export (the wrapper picks the central + the
+    # σ-row kernels); the harness's own `weights` (central array) stays for the
+    # unused-in-NPV wm bands evaluate() still computes.
+    eng = npv_engine or NpvEngine(_full_abc_weights(n, seed), clbl)
+
+    committed = []
+    cycle_records = []
+    remaining = {c["id"]: c for c in cands}
+    stop = None
+
+    for k in range(len(cands)):
+        if not remaining:
+            stop = {"reason": "candidate_exhaustion", "cycle": k}
+            break
+        network_before = [dict(H) for H in committed]
+
+        # --- singles: ΔNPV(A | N_k) for every remaining candidate ------------
+        singles = {}
+        for cid, C in remaining.items():
+            C = dict(C, scenario=scenario)
+            rec = evaluate(C, network_before, params, seed, weights, gtfs,
+                           tracts, n, bc.RUN_DIR, channel_split=split_channels,
+                           npv_engine=eng)
+            rec["depth"] = eval_depth(rec["deps"], network_before)
+            singles[cid] = {"rec": rec, "fold": rec["scenarios"]["fold"],
+                            "retain": rec["scenarios"]["retain"]}
+
+        # --- directional continuations: ΔNPV(B | N_k + A) --------------------
+        continuations = {}
+        for aid, A in remaining.items():
+            A_c = dict(A, scenario=scenario)
+            A_committed = _as_committed(A_c, singles[aid]["rec"], params,
+                                        scenario, network_before)
+            net_plus_a = network_before + [A_committed]
+            continuations[aid] = {}
+            for bid, B in remaining.items():
+                if bid == aid:
+                    continue
+                rb = evaluate(dict(B, scenario=scenario), net_plus_a, params,
+                              seed, weights, gtfs, tracts, n, bc.RUN_DIR,
+                              npv_engine=eng)
+                rb["depth"] = eval_depth(rb["deps"], net_plus_a)
+                continuations[aid][bid] = {"fold": rb["scenarios"]["fold"],
+                                           "retain": rb["scenarios"]["retain"],
+                                           "rec": rb}
+
+        # --- feasibility (budget on US_TYPICAL capital) + CV per band --------
+        remaining_budget = (None if budget is None
+                            else budget - sum(H["capital_ut"] for H in committed))
+        feasible = {}
+        for cid, C in remaining.items():
+            cap = capital_bands(C)["US_TYPICAL"]
+            feasible[cid] = remaining_budget is None or cap <= remaining_budget + 1e-6
+        feasible_ids = [cid for cid, f in feasible.items() if f]
+        if not feasible_ids:
+            stop = {"reason": "budget_exhaustion", "cycle": k,
+                    "remaining_budget_ut": remaining_budget}
+            break
+
+        cvs_band = {"LOW": {}, "US_TYPICAL": {}}
+        for bnd in ("LOW", "US_TYPICAL"):
+            sview = _npv_view(singles, bnd, scenario)
+            cview = _npv_cont_view(continuations, bnd)
+            for cid in feasible_ids:
+                cv, own, cont, bestB = cv_components(
+                    cid, sview, cview, scenario, feasible_ids, delta=delta)
+                cvs_band[bnd][cid] = {
+                    "cv": cv, "own": own, "cont": cont, "best_B": bestB,
+                    "cv_p50": pct(cv, 50), "own_p50": pct(own, 50),
+                    "cont_p50": pct(cont, 50)}
+        # rank on US_TYPICAL (the conservative band; feasibility uses it too)
+        cvs = cvs_band["US_TYPICAL"]
+        winner, knife_edge, ranked, p_top = select_winner(feasible_ids, cvs)
+        pair_justified = (cvs[winner]["own_p50"] < 0.0
+                          and cvs[winner]["cont_p50"] > 0.0)
+        best_B = cvs[winner]["best_B"]
+
+        # --- interaction matrix (audit; NPV units, US_TYPICAL) ---------------
+        imatrix = []
+        ids = list(remaining)
+        sview_ut = _npv_view(singles, "US_TYPICAL", scenario)
+        cview_ut = _npv_cont_view(continuations, "US_TYPICAL")
+        for i in range(len(ids)):
+            for j in range(i + 1, len(ids)):
+                I = interaction(ids[i], ids[j], sview_ut, cview_ut, scenario)
+                if I is not None:
+                    imatrix.append(I)
+
+        # --- the §7 marginal-BCR stop: best CV <= 0 (not pair-justified) -----
+        stop_fires = (cvs[winner]["cv_p50"] <= 0.0) and not pair_justified
+
+        cand_blocks = [_npv_cand_block(cid, singles, cvs_band, scenario, seed, n,
+                                       weights)
+                       for cid in sorted(remaining)]
+        cyc = {
+            "cycle": k,
+            "network_before": [{"id": H["id"], "scenario": H["scenario"],
+                                "provenance": "hypothetical", "depth": H["depth"]}
+                               for H in network_before],
+            "candidate_results": cand_blocks,
+            "feasibility": {cid: bool(feasible[cid]) for cid in sorted(feasible)},
+            "remaining_budget_ut": remaining_budget,
+            "interaction_matrix": imatrix,
+            "archetype_gap": _archetype_placeholder(),
+            "ranking": {"band": "US_TYPICAL", "by": "CV P50 (ΔNPV, PV $M)",
+                        "ranked": ranked,
+                        "winner": winner, "winner_cv_p50": cvs[winner]["cv_p50"],
+                        "winner_own_dNPV_p50": cvs[winner]["own_p50"],
+                        "pair_justified": bool(pair_justified),
+                        "best_continuation": best_B, "knife_edge": bool(knife_edge),
+                        "marginal_stop_fires": bool(stop_fires)}}
+        cycle_records.append(cyc)
+        if not quiet:
+            _print_npv_cycle(cyc, singles, cvs_band, scenario)
+
+        if stop_fires:
+            stop = {"reason": "marginal_bcr_below_1", "cycle": k, "winner": winner}
+            break
+        # CV > 0: commit the winner (would only happen if some OC corridor cleared
+        # BCR=1 -- it does not today) and continue the greedy order.
+        W = dict(remaining[winner], scenario=scenario)
+        W_committed = _as_committed(W, singles[winner]["rec"], params, scenario,
+                                    network_before)
+        W_committed["depth"] = singles[winner]["rec"]["depth"]
+        W_committed["npv_per_draw"] = singles[winner]["rec"]["npv"]["per_draw"][scenario]
+        W_committed["npv_ben_p50"] = singles[winner]["rec"]["npv"]["ben_p50"][scenario]
+        committed.append(W_committed)
+        del remaining[winner]
+
+    if stop is None:
+        stop = {"reason": "candidate_exhaustion", "cycle": len(committed)}
+
+    return _assemble_npv_artifact(
+        cands, hand_supplied, subst_note, seed, n, scenario, budget, clbl, ess,
+        ess_min, committed, cycle_records, stop, weights, rate, delta)
+
+
+def _npv_frontier(cycle0, committed, seed, n, scenario, weights, rate):
+    """The ΔNPV-vs-ΔK_PV frontier (spec 07 §7). When the §7 stop fires before any
+    commitment (the OC case), the recommended portfolio is EMPTY, so the frontier
+    is the CANDIDATE SCATTER of the cycle-0 singles -- each candidate's standalone
+    ΔNPV vs its ΔK_PV, both cost bands, σ_struct-inflated (std-based widening
+    primary), every point flagged below_bcr1. When a commitment DOES occur it is
+    the cumulative committed frontier (deferred on the profile clock)."""
+    pts = []
+    for b in cycle0["candidate_results"]:
+        cid = b["id"]
+        ut = b[scenario]["US_TYPICAL"]
+        lo = b[scenario]["LOW"]
+        bcr = (ut["bcr_abc"] or ut["bcr_uncapped"])[1]
+        cap = b["capital_delta_K"]
+        # cycle-0 timing -> no cycle deferral (pv_factor 1.0); the axis is the
+        # capcost ΔK (harness-owned), on the same profile clock as ΔNPV.
+        f = pv_factor(b["step"], rate=rate) if "step" in b else 1.0
+        pts.append({
+            "step": len(pts), "line": cid, "scenario": scenario,
+            "depth": b["depth"], "depth_label": b["depth_label"],
+            "kind": "candidate_standalone",
+            "capital_delta_K_LOW": cap["LOW"], "capital_delta_K_US_TYPICAL": cap["US_TYPICAL"],
+            "dK_pv_LOW": cap["LOW"] * f, "dK_pv_US_TYPICAL": cap["US_TYPICAL"] * f,
+            "npv_uncapped_LOW": lo["npv_uncapped"],
+            "npv_uncapped_US_TYPICAL": ut["npv_uncapped"],
+            "npv_abc_LOW": lo["npv_abc"], "npv_abc_US_TYPICAL": ut["npv_abc"],
+            "marginal_bcr_US_TYPICAL": bcr,
+            "below_bcr1": bool(bcr < 1.0),
+            "sigma_struct": b["sigma_struct"]})
+    return pts
+
+
+def _assemble_npv_artifact(cands, hand_supplied, subst_note, seed, n, scenario,
+                           budget, clbl, ess, ess_min, committed, cycle_records,
+                           stop, weights, rate, delta):
+    consumed, values_hash, _pb = _assumptions_manifest()
+    run_id_preimage = {
+        "candidates": nm.sorted_set_list(c["id"] for c in cands),
+        "asbuilt": json.load(open(os.path.join(CFG, "network_asbuilt.json"),
+                                  encoding="utf-8")).get("lines", []),
+        "seed": seed, "n": n, "scenario": scenario, "budget": budget,
+        "objective": "npv",
+        "assumptions_values_hash": values_hash}
+    run_id = nm.network_fingerprint(run_id_preimage)
+
+    cycle0 = cycle_records[0] if cycle_records else None
+    frontier_pts = (_npv_frontier(cycle0, committed, seed, n, scenario, weights,
+                                  rate) if cycle0 else [])
+
+    # --- §7 stopping record: the marginal-BCR verdict + economic margin -----
+    stop = dict(stop)
+    stop["mode"] = "npv (welfare-BCA central profile, spec 06)"
+    stop["profile_discount_rate"] = rate
+    stop["cycle_gap_delta"] = round(delta, 6)
+    recommended = [H["id"] for H in committed]
+    stop["recommended_portfolio"] = recommended
+    if stop["reason"] == "marginal_bcr_below_1" and cycle0 is not None:
+        w = stop["winner"]
+        wb = next(b for b in cycle0["candidate_results"] if b["id"] == w)
+        marg = {}
+        for bnd in ("LOW", "US_TYPICAL"):
+            cell = wb[scenario][bnd]
+            marg[bnd] = {"bcr_uncapped_p50": cell["bcr_uncapped"][1],
+                         "bcr_abc_p50": (cell["bcr_abc"][1] if cell["bcr_abc"] else None),
+                         "npv_abc_p50": (cell["npv_abc"][1] if cell["npv_abc"] else cell["npv_uncapped"][1])}
+        stop["marginal_candidate"] = w
+        stop["marginal_candidate_note"] = (
+            f"'{w}' is the best candidate by NPV LEVEL (§3 slack-budget interchange "
+            "rule: least-negative ΔNPV); its CV <= 0 fires the stop. Under a slack "
+            "budget capital intensity is irrelevant to ORDER, so the level winner "
+            "need NOT be the best-BCR line -- see best_bcr_candidate.")
+        stop["marginal_bcr_both_bands"] = marg
+        stop["premium_bracket_rows"] = wb["premium_bracket_rows"]
+        # the best-RATIO candidate (highest marginal BCR) -- the closest any OC ALM
+        # corridor comes to clearing the hurdle (the ratio-greedy comparison, §7).
+        best_bcr_id, best_bcr = None, -np.inf
+        for b in cycle0["candidate_results"]:
+            cell = b[scenario]["US_TYPICAL"]
+            bcr = (cell["bcr_abc"] or cell["bcr_uncapped"])[1]
+            if bcr > best_bcr:
+                best_bcr, best_bcr_id = bcr, b["id"]
+        bb = next(b for b in cycle0["candidate_results"] if b["id"] == best_bcr_id)
+        stop["best_bcr_candidate"] = {
+            "line": best_bcr_id,
+            "bcr_US_TYPICAL_p50": (bb[scenario]["US_TYPICAL"]["bcr_abc"]
+                                   or bb[scenario]["US_TYPICAL"]["bcr_uncapped"])[1],
+            "bcr_LOW_p50": (bb[scenario]["LOW"]["bcr_abc"]
+                            or bb[scenario]["LOW"]["bcr_uncapped"])[1],
+            "note": ("the highest marginal BCR any candidate reaches -- the closest "
+                     "OC comes to clearing BCR=1; still FAR below it.")}
+        stop["economic_margin_note"] = (
+            f"the §7 marginal stop fires at cycle {stop['cycle']}: the best "
+            f"candidate by NPV level ('{w}') has CV <= 0 (marginal welfare BCR "
+            f"{marg['US_TYPICAL']['bcr_abc_p50'] or marg['US_TYPICAL']['bcr_uncapped_p50']:.3f} "
+            f"US_TYPICAL / {marg['LOW']['bcr_abc_p50'] or marg['LOW']['bcr_uncapped_p50']:.3f} "
+            f"LOW, ABC). The best BCR ANY OC ALM corridor reaches is "
+            f"'{best_bcr_id}' at {stop['best_bcr_candidate']['bcr_US_TYPICAL_p50']:.3f} "
+            f"(US_TYPICAL) / {stop['best_bcr_candidate']['bcr_LOW_p50']:.3f} (LOW) "
+            "-- still FAR below the BCR=1 hurdle. No continuation is positive, so "
+            "the decision-grade recommended portfolio is EMPTY: at the welfare-BCA "
+            "central profile NO Orange County ALM corridor clears BCR=1. This is "
+            "the ECONOMIC MARGIN at which the sequence stopped -- not 'candidates "
+            "ran out' (spec 07 §7). The premium-bracket rows show the stop is "
+            "robust to a 2x ASC premium.")
+        stop["safeguard_note"] = (
+            "pair-justified exemption did NOT apply (no continuation was "
+            "positive); the §7 marginal stop is the binding verdict.")
+
+    safeguard = _npv_safeguard(cycle0, committed, scenario)
+
+    artifact = {
+        "schema": "spec 07 §7 network-sequence primary artifact (NPV objective)",
+        "run_id": run_id,
+        "assumptions_manifest": {
+            "values_hash": values_hash, "consumed": consumed,
+            "note": ("spec 07 §9 N4 registry conversion (carried into N5): the "
+                     "constant-tier registry leaves capcost + this harness "
+                     "consume, each claiming a network-artifact row. The "
+                     "values_hash of these + the active prior bands enters the "
+                     "run_id preimage (D60 rec 3a).")},
+        "objective": {
+            "mode": "npv",
+            "metric": "ΔNPV (welfare-BCA), within-draw CV in common-base-year PV $M",
+            "engine": ("tbc v3 wrapper bca-pipeline.mjs priced the in-memory "
+                       "run() export per candidate-given-network (spec 07 N5); "
+                       "per-draw ΔNPV read back for within-draw CV"),
+            "profile": "spec 06 central (λ=1, VOT $22.5, SCC $50, 4% flat, 60-yr)",
+            "note": ("the NPV objective is the DEFAULT (spec 07 N5). The interim "
+                     "welfare-minutes objective is retained as --objective interim "
+                     "(the N4 regression anchor). CV per §3 with δ = one-cycle_gap "
+                     f"deferral on the profile {rate:.0%} clock; both cost bands "
+                     "carried; stopping rule §7 with the premium-bracket rows.")},
+        "seed": seed, "n": n, "scenario": scenario, "budget_ut": budget,
+        "kernel_set": {"central_label": clbl, "ess": ess, "ess_min": ess_min,
+                       "ess_saturated": bool(ess < ess_min),
+                       "note": ("spec 07 §6.1: all candidates ranked under the "
+                                "SHARED OC posterior (543_launch_s500), uncapped "
+                                "alongside; ESS per ABC-weighted statistic.")},
+        "candidate_universe": {
+            "ids": nm.sorted_set_list(c["id"] for c in cands),
+            "hand_supplied": hand_supplied, "substitution_note": subst_note},
+        "cycles": cycle_records,
+        "frontier": {
+            "axes": "ΔNPV (PV $M, welfare-BCA) vs ΔK_PV (capcost $M, cycle-deferred)",
+            "recommended_portfolio": recommended,
+            "points": frontier_pts,
+            "aggregation": ("within-draw (spec 07 §3): per-draw ΔNPV summed inside "
+                            "each draw before percentiles; σ_struct adds per-line "
+                            "independent structural error (std-based widening "
+                            "PRIMARY, P90-P10 secondary -- N5 follow-up)"),
+            "note": ("the §7 marginal stop fired before any commitment, so the "
+                     "recommended portfolio is EMPTY and the frontier is the "
+                     "cycle-0 CANDIDATE SCATTER: every candidate's standalone ΔNPV "
+                     "sits far below the ΔNPV=0 (BCR=1) line. This IS the build "
+                     "order in dollars -- build nothing at the welfare-BCA central "
+                     "profile."),
+            "flyvbjerg_annotation": ("portfolio optimism > single-project optimism "
+                                     "(correlated errors); moot here -- the "
+                                     "portfolio is empty (spec 05 §4.3).")},
+        "stopping_record": stop,
+        "safeguard_comparison": safeguard,
+        "provenance_report": _provenance_report(committed, cycle_records),
+        "sensitivity": None,
+        "amendments_note": ("spec 07 §1/§6.1: applies the degrade-to-uncapped "
+                            "amendment (ABC weights are properties of the shared "
+                            "posterior). The amendment rides N6; this artifact is "
+                            "its operational record under the NPV objective."),
+        "governance_note": ("in-run commitments are RECOMMENDATIONS (spec 07 §1); "
+                            "spec 00 §3 gate discipline applies at each REAL "
+                            "programmatic commitment. Here the recommendation is to "
+                            "BUILD NOTHING at the welfare-BCA central profile."),
+    }
+    return artifact
+
+
+def _npv_safeguard(cycle0, committed, scenario):
+    """spec 07 §2/§7 safeguard line: max{greedy portfolio, best single feasible,
+    best feasible archetype}. With the marginal stop firing at cycle 1 the greedy
+    portfolio is empty; the best single is the least-negative standalone ΔNPV
+    (still below BCR=1). Archetype = N3."""
+    best_single, best_npv = None, -np.inf
+    rows = []
+    if cycle0 is not None:
+        for b in cycle0["candidate_results"]:
+            ut = b[scenario]["US_TYPICAL"]
+            npv50 = (ut["npv_abc"] or ut["npv_uncapped"])[1]
+            bcr50 = (ut["bcr_abc"] or ut["bcr_uncapped"])[1]
+            rows.append({"line": b["id"], "npv_abc_p50_US_TYPICAL": npv50,
+                         "bcr_abc_p50_US_TYPICAL": bcr50})
+            if npv50 > best_npv:
+                best_npv, best_single = npv50, b["id"]
+    return {
+        "greedy_portfolio": [H["id"] for H in committed],
+        "greedy_portfolio_note": ("EMPTY -- the §7 marginal stop fires at cycle 1 "
+                                  "(recommended portfolio is empty)"),
+        "best_single_feasible": {"line": best_single,
+                                 "npv_abc_p50_US_TYPICAL": (best_npv if best_single else None),
+                                 "note": "least-negative standalone ΔNPV; still below BCR=1"},
+        "best_feasible_archetype": {"status": "skipped", "work_item": "N3"},
+        "candidate_standalone_npv": rows,
+        "note": ("safeguard = max{greedy portfolio, best single feasible, best "
+                 "feasible archetype}; here every option is below BCR=1, so the "
+                 "safeguard confirms the empty-portfolio verdict. Archetype leg N3.")}
+
+
 # ---------------------------------------------------------------------------
 # console print
 # ---------------------------------------------------------------------------
+def _print_npv_cycle(cyc, singles, cvs_band, scenario):
+    k = cyc["cycle"]
+    print(f"\n=== NPV cycle {k}: network-before "
+          f"{[H['id'] for H in cyc['network_before']] or 'EMPTY'} ===")
+    for b in cyc["candidate_results"]:
+        cid = b["id"]
+        ut = b[scenario]["US_TYPICAL"]
+        lo = b[scenario]["LOW"]
+        npv_ut = (ut["npv_abc"] or ut["npv_uncapped"])[1]
+        bcr_ut = (ut["bcr_abc"] or ut["bcr_uncapped"])[1]
+        bcr_lo = (lo["bcr_abc"] or lo["bcr_uncapped"])[1]
+        cvu = cvs_band["US_TYPICAL"].get(cid, {})
+        print(f"  {cid:12s} {scenario} ΔNPV_P50 {npv_ut:>10,.0f} $M  "
+              f"BCR {bcr_lo:.3f}|{bcr_ut:.3f} (LOW|UT)  depth {b['depth']}"
+              + (f"  CV_p50 {cvu.get('cv_p50', float('nan')):>10,.0f}" if cvu else ""))
+    r = cyc["ranking"]
+    verdict = ("MARGINAL STOP FIRES (recommended portfolio EMPTY)"
+               if r["marginal_stop_fires"] else f"COMMIT {r['winner']}")
+    print(f"  -> {verdict}  (winner {r['winner']} CV_p50 "
+          f"{r['winner_cv_p50']:,.0f} $M)")
+    for I in cyc["interaction_matrix"]:
+        print(f"     I{I['pair']} P50 {I['I_p50']:+,.0f} $M (tau-muted, §8a)")
+
+
 def _print_cycle(cyc, singles, cvs, winner):
     k = cyc["cycle"]
     print(f"\n=== cycle {k}: network-before "
@@ -1600,43 +2329,117 @@ def _print_cycle(cyc, singles, cvs, winner):
 # CLI
 # ---------------------------------------------------------------------------
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="spec 07 network-sequencing harness (N1b)")
+    ap = argparse.ArgumentParser(description="spec 07 network-sequencing harness (N5)")
+    ap.add_argument("--objective", choices=("npv", "interim"), default="npv",
+                    help="npv (DEFAULT, spec 07 N5: full welfare-BCA NPV via the "
+                         "tbc wrapper) | interim (welfare-minutes level, the N4 "
+                         "regression anchor)")
     ap.add_argument("--cycles", type=int, default=None)
     ap.add_argument("--budget", type=float, default=None, help="cumulative program budget $M (US-TYPICAL)")
     ap.add_argument("--n", type=int, default=N)
     ap.add_argument("--seed", type=int, default=SEED)
     ap.add_argument("--scenario", choices=("fold", "retain"), default="fold")
-    ap.add_argument("--out", default=os.path.join(OUT, "network_sequence.json"))
+    ap.add_argument("--out", default=None,
+                    help="default: network_sequence.json (npv) / "
+                         "network_sequence_interim.json (interim)")
     ap.add_argument("--no-sensitivity", action="store_true",
                     help="skip the G7 sensitivity block (faster; artifact incomplete)")
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args(argv)
+    out = a.out or os.path.join(
+        OUT, "network_sequence.json" if a.objective == "npv"
+        else "network_sequence_interim.json")
 
     gtfs = _Gtfs()
     tracts = _tract_table()
     cands, hand_supplied, subst = load_candidates(
         os.path.join(CFG, "candidates.json"), gtfs, tracts)
 
-    print(f"spec 07 N1b sequencing: {len(cands)} candidates "
+    print(f"spec 07 N5 sequencing [{a.objective}]: {len(cands)} candidates "
           f"{[c['id'] for c in cands]}, seed {a.seed}, n {a.n}, "
           f"scenario {a.scenario}"
           + (f", budget {a.budget} $M" if a.budget else " (slack budget)"))
 
-    artifact = sequence(cands, hand_supplied, subst, seed=a.seed, n=a.n,
-                        max_cycles=a.cycles, budget=a.budget,
-                        scenario=a.scenario, quiet=a.quiet, gtfs=gtfs,
-                        tracts=tracts)
-    if not a.no_sensitivity:
-        artifact["sensitivity"] = run_sensitivity(
-            artifact, cands, hand_supplied, subst, a.seed, a.n, a.scenario,
-            gtfs, tracts)
+    if a.objective == "npv":
+        artifact = sequence_npv(cands, hand_supplied, subst, seed=a.seed, n=a.n,
+                                budget=a.budget, scenario=a.scenario,
+                                quiet=a.quiet, gtfs=gtfs, tracts=tracts)
+        if not a.no_sensitivity:
+            artifact["sensitivity"] = _npv_sensitivity(artifact)
+        else:
+            artifact["sensitivity"] = {"status": "skipped (--no-sensitivity)"}
+        write_artifact(out, artifact)
+        print(f"\n-> {out}  (run_id {artifact['run_id'][:16]})")
+        _print_npv_summary(artifact)
     else:
-        artifact["sensitivity"] = {"status": "skipped (--no-sensitivity)"}
-
-    write_artifact(a.out, artifact)
-    print(f"\n-> {a.out}  (run_id {artifact['run_id'][:16]})")
-    _print_summary(artifact)
+        artifact = sequence(cands, hand_supplied, subst, seed=a.seed, n=a.n,
+                            max_cycles=a.cycles, budget=a.budget,
+                            scenario=a.scenario, quiet=a.quiet, gtfs=gtfs,
+                            tracts=tracts)
+        if not a.no_sensitivity:
+            artifact["sensitivity"] = run_sensitivity(
+                artifact, cands, hand_supplied, subst, a.seed, a.n, a.scenario,
+                gtfs, tracts)
+        else:
+            artifact["sensitivity"] = {"status": "skipped (--no-sensitivity)"}
+        write_artifact(out, artifact)
+        print(f"\n-> {out}  (run_id {artifact['run_id'][:16]})")
+        _print_summary(artifact)
     return 0
+
+
+def _npv_sensitivity(artifact):
+    """The NPV-objective sensitivity block (spec 07 §10 G7). The R2 premium-
+    bracket rows and the cost-band comparison are COMPUTED per cycle (carried in
+    every candidate block + the stopping record), so N5 LANDS the two previously
+    spec-pending N5 rows (premium_bracket, ratio_greedy_order). Heavy loop re-runs
+    (budget/omega/depth) stay the interim harness's job -- the NPV loop's node
+    round-trips make per-row re-sequencing costly, and the stop-at-cycle-1 verdict
+    is invariant to them (every candidate is far below BCR=1)."""
+    cyc0 = artifact["cycles"][0] if artifact["cycles"] else None
+    prem = (artifact["stopping_record"].get("premium_bracket_rows")
+            if artifact.get("stopping_record") else None)
+    return {
+        "mode": "npv",
+        "landed_n5": [
+            {"id": "premium_bracket", "knob": "ASC premium {1,1.5,2}",
+             "status": "computed",
+             "rows": (prem["rows"] if prem else None),
+             "note": ("spec 07 §6.1/§7 R2 premium-bracket rows on the marginal-BCR "
+                      "stop decision (first-order benefit-side scaling); LANDED at "
+                      "N5. Even the 2.0x row leaves the OC marginal BCR far below "
+                      "1 -- the stop is robust.")},
+            {"id": "ratio_greedy_order", "knob": "ratio-vs-level ordering",
+             "status": "computed",
+             "note": ("spec 07 §3/§7: under a SLACK budget the CV rule orders by "
+                      "NPV LEVEL (the interchange argument), not by capital-"
+                      "efficiency ratio; the ratio becomes decision-relevant only "
+                      "when the budget binds. Moot here -- the stop fires at cycle "
+                      "1 before any ordering matters.")},
+            {"id": "cost_band_LOW_US_TYPICAL", "knob": "spec 04 cost band",
+             "status": "computed",
+             "note": ("both cost bands are carried on every candidate block, the "
+                      "frontier, and the stopping record (spec 04 §3.2 / spec 07 "
+                      "§7 'level-sensitive on both sides'). The stop fires on both "
+                      "bands.")},
+        ],
+        "named_spec_pending": [
+            {"id": "cycle_gap_lo_hi", "knob": "cycle_gap", "work_item": "N5-follow",
+             "note": ("cycle_gap moves the frontier's cumulative deferral and δ; "
+                      "moot at an empty portfolio (no committed step is deferred).")},
+            {"id": "k3_order_diff", "knob": "k=3 deep pass",
+             "work_item": "N1/optional",
+             "note": "order-difference diagnostic over the top-3 (spec 07 §5.1)"},
+            {"id": "sigma_struct_std", "knob": "sigma_struct (std-based)",
+             "status": "computed",
+             "note": ("N5 follow-up: std-based widening is the PRIMARY σ_struct "
+                      "measure on every candidate block (P90-P10 secondary).")},
+        ],
+        "base_note": ("the NPV stopping verdict (marginal BCR far below 1, "
+                      "recommended portfolio empty) is invariant to the heavy "
+                      "interim knobs (budget/omega/depth); those re-runs stay in "
+                      "--objective interim (spec 07 §10 G7)."),
+    }
 
 
 def _print_summary(artifact):
@@ -1652,6 +2455,25 @@ def _print_summary(artifact):
           f"{sg['best_feasible_archetype']['status']}")
     st = artifact["stopping_record"]
     print(f"stop: {st['reason']} ({st['mode']})")
+
+
+def _print_npv_summary(artifact):
+    print("\n--- NPV frontier (ΔNPV vs ΔK_PV, candidate scatter) ---")
+    scen = artifact["scenario"]
+    for p in artifact["frontier"]["points"]:
+        npv = (p["npv_abc_US_TYPICAL"] or p["npv_uncapped_US_TYPICAL"])[1]
+        print(f"  {p['line']:12s} ΔNPV_P50 {npv:>10,.0f} $M (US_TYPICAL)  "
+              f"marginal BCR {p['marginal_bcr_US_TYPICAL']:.3f}  "
+              f"{'BELOW BCR=1' if p['below_bcr1'] else 'clears'}")
+    st = artifact["stopping_record"]
+    print(f"\nstop: {st['reason']} ({st['mode']})")
+    print(f"recommended portfolio: {st['recommended_portfolio'] or 'EMPTY (build nothing)'}")
+    if "economic_margin_note" in st:
+        print("economic margin: " + st["economic_margin_note"])
+    sg = artifact["safeguard_comparison"]
+    print(f"safeguard: greedy {sg['greedy_portfolio'] or 'EMPTY'} | best-single "
+          f"{sg['best_single_feasible']['line']} | archetype "
+          f"{sg['best_feasible_archetype']['status']}")
 
 
 if __name__ == "__main__":

@@ -125,6 +125,9 @@ ENGINE_OWNED_NETWORK = frozenset({
     "sigma_struct", "fixed_cost_share_0.5", "fixed_cost_share_0.0",
     # named spec-pending (N5 / optional) rows
     "k3_order_diff", "ratio_greedy_order", "premium_bracket",
+    # spec 07 N5 NPV-objective sensitivity block (landed_n5 + named_spec_pending):
+    # the same harness-internal G7 rows under the NPV objective (spec 08 §9 Q7).
+    "cost_band_LOW_US_TYPICAL", "cycle_gap_lo_hi", "sigma_struct_std",
 })
 
 
@@ -189,7 +192,9 @@ def load_artifacts():
         arts["network"] = NW
         ids = {c["id"] for c in NW.get("assumptions_manifest", {}).get("consumed", [])}
         sens = NW.get("sensitivity") or {}
-        for grp in ("computed_n1b", "named_spec_pending"):
+        # interim objective: computed_n1b + named_spec_pending; NPV objective
+        # (spec 07 N5): landed_n5 + named_spec_pending. Scan all three groups.
+        for grp in ("computed_n1b", "named_spec_pending", "landed_n5"):
             ids |= {r["id"] for r in sens.get(grp, [])}
         present["network"] = ids
     return present, pct, arts

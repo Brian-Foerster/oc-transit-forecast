@@ -1,5 +1,5 @@
 {
-  "amendments_note": "spec 07 \u00a71/\u00a76.1: this run applies the degrade-to-uncapped amendment (ABC weights are properties of the shared posterior, applicable to any corridor under the same draws). The amendment itself rides N6; this artifact is its operational record.",
+  "amendments_note": "spec 07 \u00a71/\u00a76.1: applies the degrade-to-uncapped amendment (ABC weights are properties of the shared posterior). The amendment rides N6; this artifact is its operational record under the NPV objective.",
   "assumptions_manifest": {
     "consumed": [
       {
@@ -88,7 +88,7 @@
         "value": "line_spacing"
       }
     ],
-    "note": "spec 07 \u00a79 N4 registry conversion: the constant-tier registry leaves capcost + this harness consume, declared here so the assumptions registry claims each as a network-artifact row (check_assumptions' network scan; the sensitivity-block ids are harness-INTERNAL and exempt from the orphan check, mirroring the spec 08 \u00a79 Q7 wrapper engine-owned precedent). The values_hash of these + the active prior bands enters the run_id preimage (D60 rec 3a).",
+    "note": "spec 07 \u00a79 N4 registry conversion (carried into N5): the constant-tier registry leaves capcost + this harness consume, each claiming a network-artifact row. The values_hash of these + the active prior bands enters the run_id preimage (D60 rec 3a).",
     "values_hash": "ffbb80af7ba178a11f1429bda821b39e264485b385d17a86bdc4df2152ac274c"
   },
   "budget_ut": null,
@@ -109,152 +109,338 @@
       },
       "candidate_results": [
         {
+          "capital_delta_K": {
+            "LOW": 1807.150719,
+            "US_TYPICAL": 2949.991602
+          },
           "cv": {
-            "best_continuation": "streetcar",
-            "continuation_p50": 54492.825423,
-            "cv_p50": 218113.600034,
-            "own_dNPV_p50": 163549.161904,
-            "timing_split_note": "interim: delta = 1 (welfare-minutes are a level, never discounted); the one-cycle_gap deferral shows only in the Delta-K_PV display"
+            "LOW": {
+              "best_continuation": "streetcar",
+              "continuation_p50": 0.0,
+              "cv_p50": -2221.892268,
+              "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
+              "own_dNPV_p50": -2221.892268
+            },
+            "US_TYPICAL": {
+              "best_continuation": "streetcar",
+              "continuation_p50": 0.0,
+              "cv_p50": -3434.056418,
+              "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
+              "own_dNPV_p50": -3434.056418
+            }
           },
           "dependencies": [],
           "depth": 1,
           "depth_label": "decision-grade",
           "excluded_fold_routes": [],
           "fold": {
-            "newline_abc": [
-              11113.257934,
-              12418.557868,
-              13847.687701
-            ],
-            "newline_uncapped": [
-              10841.996759,
-              12468.108277,
-              14367.583784
-            ],
-            "wm_abc": [
-              130499.700026,
-              158032.274327,
-              189052.224585
-            ],
-            "wm_uncapped": [
-              111766.10632,
-              163549.161904,
-              224941.835842
-            ]
+            "LOW": {
+              "bcr_abc": [
+                0.111316,
+                0.135138,
+                0.162156
+              ],
+              "bcr_uncapped": [
+                0.095606,
+                0.139826,
+                0.192399
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -2302.16,
+                -2234.73,
+                -2158.36
+              ],
+              "npv_uncapped": [
+                -2344.75,
+                -2221.89,
+                -2078.02
+              ],
+              "p_npv_pos": 0
+            },
+            "US_TYPICAL": {
+              "bcr_abc": [
+                0.075802,
+                0.091988,
+                0.110293
+              ],
+              "bcr_uncapped": [
+                0.065149,
+                0.095167,
+                0.13081
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -3514.33,
+                -3446.89,
+                -3370.52
+              ],
+              "npv_uncapped": [
+                -3556.91,
+                -3434.06,
+                -3290.19
+              ],
+              "p_npv_pos": 0
+            }
           },
           "id": "harbor",
           "injected_committed_lines": [],
+          "network_fingerprint": "d3f64ca100febfb0fa6590b04f15d9db4095333369bd66a5376bc8b3d774a046",
+          "npv_selfcheck": {
+            "in_memory": 11458.130287,
+            "ok": true,
+            "roundtrip": 11458.130287
+          },
+          "premium_bracket_rows": {
+            "band": "US_TYPICAL",
+            "marginal_bcr_central": 0.091988,
+            "rows": [
+              {
+                "clears_bcr1": false,
+                "marginal_bcr_first_order": 0.091988,
+                "premium": 1.0
+              },
+              {
+                "clears_bcr1": false,
+                "marginal_bcr_first_order": 0.137981,
+                "premium": 1.5
+              },
+              {
+                "clears_bcr1": false,
+                "marginal_bcr_first_order": 0.183975,
+                "premium": 2.0
+              }
+            ],
+            "scenario": "fold"
+          },
           "retain": {
-            "newline_abc": [
-              10108.357892,
-              11458.130065,
-              12949.619015
-            ],
-            "newline_uncapped": [
-              9491.045997,
-              11578.698785,
-              13779.618218
-            ],
-            "wm_abc": [
-              136221.65206,
-              162909.430232,
-              193244.13054
-            ],
-            "wm_uncapped": [
-              120836.81435,
-              167892.766942,
-              226797.494364
-            ]
+            "LOW": {
+              "bcr_abc": [
+                0.110699,
+                0.132824,
+                0.158126
+              ],
+              "bcr_uncapped": [
+                0.098369,
+                0.13692,
+                0.185021
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -2414.54,
+                -2348.71,
+                -2273.78
+              ],
+              "npv_uncapped": [
+                -2449.44,
+                -2337.24,
+                -2198.91
+              ],
+              "p_npv_pos": 0
+            },
+            "US_TYPICAL": {
+              "bcr_abc": [
+                0.076538,
+                0.091757,
+                0.109146
+              ],
+              "bcr_uncapped": [
+                0.068021,
+                0.094575,
+                0.127672
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -3626.71,
+                -3560.88,
+                -3485.94
+              ],
+              "npv_uncapped": [
+                -3661.61,
+                -3549.4,
+                -3411.07
+              ],
+              "p_npv_pos": 0
+            }
+          },
+          "sigma_struct": {
+            "band_widening_p90_p10_SECONDARY": 1.375,
+            "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
+            "p90_p10_base": 266.7294,
+            "p90_p10_sigma_struct": 268.1044,
+            "sd_npv_per_line": 11.5872,
+            "std_base": 102.4823,
+            "std_sigma_struct": 103.1125,
+            "std_widening_PRIMARY": 0.6301
           }
         },
         {
+          "capital_delta_K": {
+            "LOW": 923.590085,
+            "US_TYPICAL": 1551.705316
+          },
           "cv": {
-            "best_continuation": "harbor",
-            "continuation_p50": 169952.463936,
-            "cv_p50": 217097.53055,
-            "own_dNPV_p50": 46948.3541,
-            "timing_split_note": "interim: delta = 1 (welfare-minutes are a level, never discounted); the one-cycle_gap deferral shows only in the Delta-K_PV display"
+            "LOW": {
+              "best_continuation": "harbor",
+              "continuation_p50": 0.0,
+              "cv_p50": -1499.214809,
+              "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
+              "own_dNPV_p50": -1499.214809
+            },
+            "US_TYPICAL": {
+              "best_continuation": "harbor",
+              "continuation_p50": 0.0,
+              "cv_p50": -2165.430707,
+              "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
+              "own_dNPV_p50": -2165.430707
+            }
           },
           "dependencies": [],
           "depth": 1,
           "depth_label": "decision-grade",
           "excluded_fold_routes": [],
           "fold": {
-            "newline_abc": [
-              4760.742045,
-              5653.376065,
-              6573.368411
-            ],
-            "newline_uncapped": [
-              4674.422624,
-              5692.639394,
-              6828.678673
-            ],
-            "wm_abc": [
-              33981.565226,
-              44356.8236,
-              57344.312891
-            ],
-            "wm_uncapped": [
-              25220.46844,
-              46948.3541,
-              74909.073058
-            ]
+            "LOW": {
+              "bcr_abc": [
+                0.045639,
+                0.059699,
+                0.077296
+              ],
+              "bcr_uncapped": [
+                0.033872,
+                0.063179,
+                0.101024
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -1531.12,
+                -1504.83,
+                -1472.54
+              ],
+              "npv_uncapped": [
+                -1550.27,
+                -1499.21,
+                -1433.22
+              ],
+              "p_npv_pos": 0
+            },
+            "US_TYPICAL": {
+              "bcr_abc": [
+                0.032246,
+                0.042147,
+                0.054532
+              ],
+              "bcr_uncapped": [
+                0.02394,
+                0.044608,
+                0.071281
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -2197.33,
+                -2171.05,
+                -2138.75
+              ],
+              "npv_uncapped": [
+                -2216.49,
+                -2165.43,
+                -2099.44
+              ],
+              "p_npv_pos": 0
+            }
           },
           "id": "streetcar",
           "injected_committed_lines": [],
+          "network_fingerprint": "a39daddf54e82f32adcfa9f3aff309ed76750410414a12df3ffdbd25e6f0d80d",
+          "npv_selfcheck": {
+            "in_memory": 5475.681296,
+            "ok": true,
+            "roundtrip": 5475.681296
+          },
+          "premium_bracket_rows": {
+            "band": "US_TYPICAL",
+            "marginal_bcr_central": 0.042147,
+            "rows": [
+              {
+                "clears_bcr1": false,
+                "marginal_bcr_first_order": 0.042147,
+                "premium": 1.0
+              },
+              {
+                "clears_bcr1": false,
+                "marginal_bcr_first_order": 0.06322,
+                "premium": 1.5
+              },
+              {
+                "clears_bcr1": false,
+                "marginal_bcr_first_order": 0.084293,
+                "premium": 2.0
+              }
+            ],
+            "scenario": "fold"
+          },
           "retain": {
-            "newline_abc": [
-              4630.616529,
-              5475.681321,
-              6384.707878
-            ],
-            "newline_uncapped": [
-              4324.946434,
-              5479.548099,
-              6757.125052
-            ],
-            "wm_abc": [
-              34401.746216,
-              44682.446617,
-              57614.966627
-            ],
-            "wm_uncapped": [
-              26605.703064,
-              47210.654507,
-              74935.632738
-            ]
+            "LOW": {
+              "bcr_abc": [
+                0.046232,
+                0.060155,
+                0.077691
+              ],
+              "bcr_uncapped": [
+                0.035752,
+                0.063523,
+                0.10106
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -1530.06,
+                -1504.05,
+                -1471.85
+              ],
+              "npv_uncapped": [
+                -1547.18,
+                -1498.5,
+                -1433.14
+              ],
+              "p_npv_pos": 0
+            },
+            "US_TYPICAL": {
+              "bcr_abc": [
+                0.03266,
+                0.042463,
+                0.054802
+              ],
+              "bcr_uncapped": [
+                0.02525,
+                0.044857,
+                0.071299
+              ],
+              "ess": 15090.4,
+              "npv_abc": [
+                -2196.28,
+                -2170.26,
+                -2138.07
+              ],
+              "npv_uncapped": [
+                -2213.4,
+                -2164.72,
+                -2099.35
+              ],
+              "p_npv_pos": 0
+            }
+          },
+          "sigma_struct": {
+            "band_widening_p90_p10_SECONDARY": 1.4364,
+            "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
+            "p90_p10_base": 117.0521,
+            "p90_p10_sigma_struct": 118.4885,
+            "sd_npv_per_line": 7.1049,
+            "std_base": 45.332,
+            "std_sigma_struct": 45.907,
+            "std_widening_PRIMARY": 0.575
           }
         }
       ],
-      "commitment": {
-        "capital_delta_K": {
-          "LOW": 1807.150719,
-          "US_TYPICAL": 2949.991602
-        },
-        "capital_delta_K_pv": {
-          "LOW": 1807.150719,
-          "US_TYPICAL": 2949.991602,
-          "cycle_gap": 6.0,
-          "discount_note": "Delta-K_PV display only (spec 07 \u00a73); interim welfare is never discounted. rate 7% real, BCA-wrapper property, cited not owned",
-          "pv_factor": 1.0
-        },
-        "depth": 1,
-        "depth_label": "decision-grade",
-        "knife_edge": false,
-        "knife_edge_note": null,
-        "line": "harbor",
-        "pair_justification": null,
-        "pair_justified": false,
-        "rationale": "harbor = argmax CV (own Delta-wm P50 163,549 + continuation 54,493 = CV 218,114).",
-        "scenario": "fold",
-        "welfare_per_dollar_ratio_DISPLAY_ONLY": {
-          "LOW": 90.501119,
-          "US_TYPICAL": 55.440552,
-          "label": "INTERIM / DISPLAY ONLY -- never quoted as BCA output",
-          "units": "welfare-min per $M Delta-K_PV"
-        }
-      },
       "cycle": 0,
       "feasibility": {
         "harbor": true,
@@ -262,12 +448,12 @@
       },
       "interaction_matrix": [
         {
-          "I_p10": 2582.321217,
-          "I_p50": 6862.428824,
-          "I_p90": 14110.59009,
-          "approximation_component_p50": 6862.428824,
-          "leg_a_given_b_p50": 6330.819173,
-          "leg_b_given_a_p50": 7374.373982,
+          "I_p10": 4.733027,
+          "I_p50": 16.002445,
+          "I_p90": 34.33641,
+          "approximation_component_p50": 16.002445,
+          "leg_a_given_b_p50": 14.942739,
+          "leg_b_given_a_p50": 17.012443,
           "pair": [
             "harbor",
             "streetcar"
@@ -277,559 +463,287 @@
         }
       ],
       "network_before": [],
-      "pairwise_p_beats": {
-        "harbor>streetcar": 0.972275
-      },
-      "remaining_budget_ut": null,
-      "swap_results": {
-        "hypothetical_positions_tested": [],
-        "note": "runner-up-only bounded swap (spec 07 \u00a75.2); no committed HYPOTHETICAL line was displaced -- with 2 candidates the swap suffix is trivial (the runner-up is the sole alternative). Built (asbuilt) lines are never swapped.",
-        "runner_up": "streetcar",
-        "runner_up_cv_p50": 217097.53055,
-        "winner_cv_p50": 218113.600034
-      }
-    },
-    {
-      "archetype_gap": {
-        "reason": "archetypes are owner-designed complete networks with declared internal build orders (spec 07 \u00a75.3 / \u00a711 Q3); the harness must not generate them (a generator reintroduces the combinatorial problem this spec declines to solve). N3 supplies config/archetypes/*.json + the matched-capital gap series; until then the safeguard comparison line carries greedy vs best-single only.",
-        "status": "skipped",
-        "work_item": "N3"
-      },
-      "candidate_results": [
-        {
-          "channel_split": {
-            "method": "reviewer toggle (spec 07 N4): anchor-add-only vs rebuild-only vs both, common random numbers; the rebuild channel is synthetic-feeder MARKET ENLARGEMENT, not crossing complementarity",
-            "scenarios": {
-              "fold": {
-                "anchor_channel_abc_p50": 6809.526076,
-                "anchor_channel_p50": 7383.811432,
-                "cross_residual_p50": 0.294356,
-                "full_p50": 54492.825423,
-                "lift_p50": 7374.373982,
-                "rebuild_channel_abc_p50": 2.054626,
-                "rebuild_channel_p50": 2.325249,
-                "standalone_p50": 46948.3541
-              },
-              "retain": {
-                "anchor_channel_abc_p50": 6859.850326,
-                "anchor_channel_p50": 7429.938441,
-                "cross_residual_p50": 0.286665,
-                "full_p50": 54793.477259,
-                "lift_p50": 7418.893427,
-                "rebuild_channel_abc_p50": 2.04127,
-                "rebuild_channel_p50": 2.283813,
-                "standalone_p50": 47210.654507
-              }
-            },
-            "units": "welfare-minutes P50 (D8-blended, within-draw)"
-          },
-          "cv": {
-            "best_continuation": null,
-            "continuation_p50": 0.0,
-            "cv_p50": 54492.825423,
-            "own_dNPV_p50": 54492.825423,
-            "timing_split_note": "interim: delta = 1 (welfare-minutes are a level, never discounted); the one-cycle_gap deferral shows only in the Delta-K_PV display"
-          },
-          "dependencies": [
-            {
-              "H": "harbor",
-              "co_located": false,
-              "depends": true,
-              "fold_sub": 0.0,
-              "fold_sub_routes": [],
-              "omega": 0.184233,
-              "omega_effective": 0.184233
-            }
-          ],
-          "depth": 2,
-          "depth_label": "decision-grade",
-          "excluded_fold_routes": [
-            "43",
-            "543"
-          ],
-          "fold": {
-            "newline_abc": [
-              5516.889396,
-              6526.671903,
-              7601.035431
-            ],
-            "newline_uncapped": [
-              5322.549294,
-              6580.957748,
-              8075.43306
-            ],
-            "wm_abc": [
-              38698.241525,
-              51352.547456,
-              67049.562202
-            ],
-            "wm_uncapped": [
-              28193.87455,
-              54492.825423,
-              89630.219204
-            ]
-          },
-          "id": "streetcar",
-          "injected_committed_lines": [
-            "committed_harbor"
-          ],
-          "retain": {
-            "newline_abc": [
-              5349.716343,
-              6319.906215,
-              7403.250803
-            ],
-            "newline_uncapped": [
-              4867.040422,
-              6371.048823,
-              8001.252781
-            ],
-            "wm_abc": [
-              39196.672831,
-              51734.323217,
-              67342.698883
-            ],
-            "wm_uncapped": [
-              29724.150882,
-              54793.477259,
-              89653.476665
-            ]
-          }
-        }
-      ],
-      "commitment": {
-        "capital_delta_K": {
-          "LOW": 923.590085,
-          "US_TYPICAL": 1551.705316
-        },
-        "capital_delta_K_pv": {
-          "LOW": 615.427071,
-          "US_TYPICAL": 1033.966771,
-          "cycle_gap": 6.0,
-          "discount_note": "Delta-K_PV display only (spec 07 \u00a73); interim welfare is never discounted. rate 7% real, BCA-wrapper property, cited not owned",
-          "pv_factor": 0.666342
-        },
-        "depth": 2,
-        "depth_label": "decision-grade",
+      "ranking": {
+        "band": "US_TYPICAL",
+        "best_continuation": "harbor",
+        "by": "CV P50 (\u0394NPV, PV $M)",
         "knife_edge": false,
-        "knife_edge_note": null,
-        "line": "streetcar",
-        "pair_justification": null,
+        "marginal_stop_fires": true,
         "pair_justified": false,
-        "rationale": "streetcar = argmax CV (own Delta-wm P50 54,493 + continuation 0 = CV 54,493).",
-        "scenario": "fold",
-        "welfare_per_dollar_ratio_DISPLAY_ONLY": {
-          "LOW": 88.544733,
-          "US_TYPICAL": 52.702685,
-          "label": "INTERIM / DISPLAY ONLY -- never quoted as BCA output",
-          "units": "welfare-min per $M Delta-K_PV"
-        }
-      },
-      "cycle": 1,
-      "feasibility": {
-        "streetcar": true
-      },
-      "interaction_matrix": [],
-      "network_before": [
-        {
-          "depth": 1,
-          "id": "harbor",
-          "provenance": "hypothetical",
-          "scenario": "fold"
-        }
-      ],
-      "pairwise_p_beats": {},
-      "remaining_budget_ut": null,
-      "swap_results": {
-        "hypothetical_positions_tested": [
+        "ranked": [
+          "streetcar",
           "harbor"
         ],
-        "note": "runner-up-only bounded swap (spec 07 \u00a75.2); no committed HYPOTHETICAL line was displaced -- with 2 candidates the swap suffix is trivial (the runner-up is the sole alternative). Built (asbuilt) lines are never swapped.",
-        "runner_up": null,
-        "runner_up_cv_p50": null,
-        "winner_cv_p50": 54492.825423
-      }
+        "winner": "streetcar",
+        "winner_cv_p50": -2165.430707,
+        "winner_own_dNPV_p50": -2165.430707
+      },
+      "remaining_budget_ut": null
     }
   ],
   "frontier": {
-    "aggregation": "within-draw (spec 07 \u00a73): sum lines per draw, then percentiles",
-    "flyvbjerg_annotation": "portfolio optimism is worse than single-project optimism -- forecast errors are correlated across the model's lines (spec 05 \u00a74.3; within-draw aggregation plus the sigma_struct row make this arithmetic, not rhetoric).",
+    "aggregation": "within-draw (spec 07 \u00a73): per-draw \u0394NPV summed inside each draw before percentiles; \u03c3_struct adds per-line independent structural error (std-based widening PRIMARY, P90-P10 secondary -- N5 follow-up)",
+    "axes": "\u0394NPV (PV $M, welfare-BCA) vs \u0394K_PV (capcost $M, cycle-deferred)",
+    "flyvbjerg_annotation": "portfolio optimism > single-project optimism (correlated errors); moot here -- the portfolio is empty (spec 05 \u00a74.3).",
+    "note": "the \u00a77 marginal stop fired before any commitment, so the recommended portfolio is EMPTY and the frontier is the cycle-0 CANDIDATE SCATTER: every candidate's standalone \u0394NPV sits far below the \u0394NPV=0 (BCR=1) line. This IS the build order in dollars -- build nothing at the welfare-BCA central profile.",
     "points": [
       {
-        "capital_LOW": 1807.150719,
-        "capital_US_TYPICAL": 2949.991602,
-        "cum_capital_pv_LOW": 1807.150719,
-        "cum_capital_pv_US_TYPICAL": 2949.991602,
-        "cum_wm_abc": [
-          130499.700026,
-          158032.274327,
-          189052.224585
-        ],
-        "cum_wm_sigma_struct_abc": [
-          129749.493793,
-          158011.576176,
-          189876.506446
-        ],
-        "cum_wm_sigma_struct_uncapped": [
-          111393.839172,
-          163572.474116,
-          225172.833134
-        ],
-        "cum_wm_uncapped": [
-          111766.10632,
-          163549.161904,
-          224941.835842
-        ],
+        "below_bcr1": true,
+        "capital_delta_K_LOW": 1807.150719,
+        "capital_delta_K_US_TYPICAL": 2949.991602,
+        "dK_pv_LOW": 1807.150719,
+        "dK_pv_US_TYPICAL": 2949.991602,
         "depth": 1,
         "depth_label": "decision-grade",
+        "kind": "candidate_standalone",
         "line": "harbor",
-        "pv_factor": 1.0,
+        "marginal_bcr_US_TYPICAL": 0.091988,
+        "npv_abc_LOW": [
+          -2302.16,
+          -2234.73,
+          -2158.36
+        ],
+        "npv_abc_US_TYPICAL": [
+          -3514.33,
+          -3446.89,
+          -3370.52
+        ],
+        "npv_uncapped_LOW": [
+          -2344.75,
+          -2221.89,
+          -2078.02
+        ],
+        "npv_uncapped_US_TYPICAL": [
+          -3556.91,
+          -3434.06,
+          -3290.19
+        ],
         "scenario": "fold",
+        "sigma_struct": {
+          "band_widening_p90_p10_SECONDARY": 1.375,
+          "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
+          "p90_p10_base": 266.7294,
+          "p90_p10_sigma_struct": 268.1044,
+          "sd_npv_per_line": 11.5872,
+          "std_base": 102.4823,
+          "std_sigma_struct": 103.1125,
+          "std_widening_PRIMARY": 0.6301
+        },
         "step": 0
       },
       {
-        "capital_LOW": 923.590085,
-        "capital_US_TYPICAL": 1551.705316,
-        "cum_capital_pv_LOW": 2422.57779,
-        "cum_capital_pv_US_TYPICAL": 3983.958373,
-        "cum_wm_abc": [
-          170081.395975,
-          209449.608232,
-          255177.841856
-        ],
-        "cum_wm_sigma_struct_abc": [
-          169362.698887,
-          209425.332371,
-          255893.085581
-        ],
-        "cum_wm_sigma_struct_uncapped": [
-          140089.945939,
-          218136.983099,
-          314235.098968
-        ],
-        "cum_wm_uncapped": [
-          140561.214847,
-          218113.600034,
-          313929.906288
-        ],
-        "depth": 2,
+        "below_bcr1": true,
+        "capital_delta_K_LOW": 923.590085,
+        "capital_delta_K_US_TYPICAL": 1551.705316,
+        "dK_pv_LOW": 923.590085,
+        "dK_pv_US_TYPICAL": 1551.705316,
+        "depth": 1,
         "depth_label": "decision-grade",
+        "kind": "candidate_standalone",
         "line": "streetcar",
-        "pv_factor": 0.666342,
+        "marginal_bcr_US_TYPICAL": 0.042147,
+        "npv_abc_LOW": [
+          -1531.12,
+          -1504.83,
+          -1472.54
+        ],
+        "npv_abc_US_TYPICAL": [
+          -2197.33,
+          -2171.05,
+          -2138.75
+        ],
+        "npv_uncapped_LOW": [
+          -1550.27,
+          -1499.21,
+          -1433.22
+        ],
+        "npv_uncapped_US_TYPICAL": [
+          -2216.49,
+          -2165.43,
+          -2099.44
+        ],
         "scenario": "fold",
+        "sigma_struct": {
+          "band_widening_p90_p10_SECONDARY": 1.4364,
+          "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
+          "p90_p10_base": 117.0521,
+          "p90_p10_sigma_struct": 118.4885,
+          "sd_npv_per_line": 7.1049,
+          "std_base": 45.332,
+          "std_sigma_struct": 45.907,
+          "std_widening_PRIMARY": 0.575
+        },
         "step": 1
       }
     ],
-    "sigma_struct_row": {
-      "final_portfolio": {
-        "band_widening_uncapped": 776.5,
-        "base_abc": [
-          170081.395975,
-          209449.608232,
-          255177.841856
-        ],
-        "base_uncapped": [
-          140561.214847,
-          218113.600034,
-          313929.906288
-        ],
-        "sigma_struct_abc": [
-          169362.698887,
-          209425.332371,
-          255893.085581
-        ],
-        "sigma_struct_uncapped": [
-          140089.945939,
-          218136.983099,
-          314235.098968
-        ]
-      },
-      "mechanism": "harness-side per-line INDEPENDENT N(0, sigma_struct) noise on the boardings scale, converted to welfare-minutes by each line's welfare-per-boarding ratio and summed within-draw; seeded deterministically from the run fingerprint. NO new PRIORS key (the model rng stream is untouched) -- an append-last prior is not required because the error is post-processing, not a swept model input (spec 07 \u00a73/\u00a78g).",
-      "note": "the within-draw sum carries only the correlated parameter component; sigma_struct adds the per-line idiosyncratic structural error the portfolio bands otherwise omit -- they widen (P10 down, P90 up), the P50 is ~unchanged (mean-zero noise). This is the arithmetic behind the Flyvbjerg annotation.",
-      "sigma_struct_boardings": 400.0,
-      "status": "computed",
-      "work_item": "N4"
-    }
+    "recommended_portfolio": []
   },
-  "governance_note": "in-run commitments are RECOMMENDATIONS (spec 07 \u00a71); spec 00 \u00a73 gate discipline applies at each REAL programmatic commitment. Each line's forecast of record remains its own stage-3 STOPS run.",
+  "governance_note": "in-run commitments are RECOMMENDATIONS (spec 07 \u00a71); spec 00 \u00a73 gate discipline applies at each REAL programmatic commitment. Here the recommendation is to BUILD NOTHING at the welfare-BCA central profile.",
   "kernel_set": {
     "central_label": "543_launch_s500",
     "ess": 15090.441474,
     "ess_min": 1000,
     "ess_saturated": false,
-    "note": "spec 07 \u00a76.1: all candidates ranked under the SHARED OC posterior (the 543_launch_s500 ABC weights), uncapped alongside; identical across corridors under CRN, so computed once per cycle. ESS reported for every ABC-weighted statistic (spec 02 \u00a74.4 ESS<1000 saturation rule)."
+    "note": "spec 07 \u00a76.1: all candidates ranked under the SHARED OC posterior (543_launch_s500), uncapped alongside; ESS per ABC-weighted statistic."
   },
   "n": 40000,
   "objective": {
-    "metric": "Delta(welfare-minutes) LEVEL, within-draw",
-    "mode": "interim",
-    "note": "INTERIM (spec 07 \u00a73): the full-NPV objective is N5, gated on R1 -> R6 -> W1. Delta-K shown as the spec 04 LOW | US-TYPICAL band; welfare-per-dollar ratio is a display column only."
+    "engine": "tbc v3 wrapper bca-pipeline.mjs priced the in-memory run() export per candidate-given-network (spec 07 N5); per-draw \u0394NPV read back for within-draw CV",
+    "metric": "\u0394NPV (welfare-BCA), within-draw CV in common-base-year PV $M",
+    "mode": "npv",
+    "note": "the NPV objective is the DEFAULT (spec 07 N5). The interim welfare-minutes objective is retained as --objective interim (the N4 regression anchor). CV per \u00a73 with \u03b4 = one-cycle_gap deferral on the profile 4% clock; both cost bands carried; stopping rule \u00a77 with the premium-bracket rows.",
+    "profile": "spec 06 central (\u03bb=1, VOT $22.5, SCC $50, 4% flat, 60-yr)"
   },
   "provenance_report": {
     "dependency_predicate": "depends = omega>0.01 OR co-located persistent injection OR feeder/transfer edge in the rebuilt inputs.",
     "depth_rule": "depth(measured)=0; depth(eval)=1+max{depth(H): H hypothetical in network-before AND candidate depends on H}; committed line inherits eval depth; cap 2 -> EXPLORATORY, excluded from gate memos (spec 07 \u00a76.2).",
     "flyvbjerg": "network optimism > single-project optimism (correlated errors); the depth cap is the control (spec 07 \u00a76.2).",
-    "lines": [
-      {
-        "depth": 1,
-        "depth_label": "decision-grade",
-        "id": "harbor",
-        "provenance": "hypothetical",
-        "scenario": "fold"
-      },
-      {
-        "depth": 2,
-        "depth_label": "decision-grade",
-        "id": "streetcar",
-        "provenance": "hypothetical",
-        "scenario": "fold"
-      }
-    ],
+    "lines": [],
     "operating_mode": "a planning tool re-run between real build cycles as lines open and forecasts become measurements; provenance depth resets from the updated network_asbuilt each re-run (spec 07 \u00a76.2).",
     "run_id_preimage": "run_id = sha256 of canonical{candidates, asbuilt lines, seed, n, scenario, budget, assumptions_values_hash}. D60 review rec 3a added assumptions_values_hash = sha256{consumed capital constants + harness knobs + active prior bands}; it MOVES the id whenever the rate card or a prior band changes. Consequence recorded for provenance: the id here DIFFERS from the committed N1b/D60 artifact (d8b4a016...), which was keyed on inputs only and did not track the forecast-moving 60-mph v_cruise recenter. No timestamps enter the preimage (gate G6)."
   },
-  "run_id": "1ebdf92922693b966d0cfd0143183d83beb6482679af0b1f97bb71fe33ae9805",
+  "run_id": "991a80bfaee8198aed7af550fdc71b18b80a645a83f70e0520af0d4f00523704",
   "safeguard_comparison": {
     "best_feasible_archetype": {
       "status": "skipped",
       "work_item": "N3"
     },
     "best_single_feasible": {
-      "line": "harbor",
-      "wm_p50": 163549.161904
+      "line": "streetcar",
+      "note": "least-negative standalone \u0394NPV; still below BCR=1",
+      "npv_abc_p50_US_TYPICAL": -2171.05
     },
-    "greedy_portfolio": [
-      "harbor",
-      "streetcar"
-    ],
-    "note": "safeguard = max{greedy portfolio, best single feasible, best feasible archetype}; the archetype leg lands with N3."
-  },
-  "scenario": "fold",
-  "schema": "spec 07 \u00a77 network-sequence primary artifact (interim objective)",
-  "seed": 42,
-  "sensitivity": {
-    "base_objective_note": "committed-order cumulative welfare-minutes P50 (final portfolio, within-draw)",
-    "base_objective_p50": 218113.600034,
-    "computed_n1b": [
+    "candidate_standalone_npv": [
       {
-        "display": {
-          "cum_capital_pv_LOW": 2511.753172,
-          "cum_capital_pv_US_TYPICAL": 4133.780158,
-          "cycle_gap_yr": 4.0
-        },
-        "id": "cycle_gap_lo",
-        "knob": "cycle_gap",
-        "note": "cycle_gap is Delta-K_PV display only; welfare objective invariant (interim: level, not discounted)",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": 4.0
+        "bcr_abc_p50_US_TYPICAL": 0.091988,
+        "line": "harbor",
+        "npv_abc_p50_US_TYPICAL": -3446.89
       },
       {
-        "display": {
-          "cum_capital_pv_LOW": 2344.688557,
-          "cum_capital_pv_US_TYPICAL": 3853.098223,
-          "cycle_gap_yr": 8.0
-        },
-        "id": "cycle_gap_hi",
-        "knob": "cycle_gap",
-        "note": "cycle_gap is Delta-K_PV display only; welfare objective invariant (interim: level, not discounted)",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": 8.0
-      },
-      {
-        "display": {
-          "committed": [
-            "streetcar"
-          ],
-          "stop": "budget_exhaustion"
-        },
-        "id": "budget_lo",
-        "knob": "network_budget",
-        "note": "portfolio re-selected under budget 2000.0 $M",
-        "objective_p50": 46948.3541,
-        "pct": -78.475274,
-        "value": 2000.0
-      },
-      {
-        "display": {
-          "committed": [
-            "harbor",
-            "streetcar"
-          ],
-          "stop": "candidate_exhaustion"
-        },
-        "id": "budget_hi",
-        "knob": "network_budget",
-        "note": "portfolio re-selected under budget 5000.0 $M",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": 5000.0
-      },
-      {
-        "id": "omega_0.5",
-        "knob": "omega_scale",
-        "note": "omega x 0.5 (anchor-margin apportionment, \u00a78i)",
-        "objective_p50": 214461.340923,
-        "pct": -1.674476,
-        "value": 0.5
-      },
-      {
-        "id": "omega_1.5",
-        "knob": "omega_scale",
-        "note": "omega x 1.5 (anchor-margin apportionment, \u00a78i)",
-        "objective_p50": 221819.563591,
-        "pct": 1.699098,
-        "value": 1.5
-      },
-      {
-        "id": "omega_uniform",
-        "knob": "omega_allocation",
-        "note": "omega uniform-along-line allocation (\u00a78i variant)",
-        "objective_p50": 217259.62635,
-        "pct": -0.391527,
-        "value": "uniform"
-      },
-      {
-        "id": "omega_walk_bin_mass",
-        "knob": "omega_allocation",
-        "note": "omega walk-bin-mass allocation (spec 07 N4 margin-distribution variant: H's margin allocated by its measured walk-access mass profile at each tract's nearest-stop distance, \u00a74.2)",
-        "objective_p50": 218141.060309,
-        "pct": 0.01259,
-        "value": "walk_bin_mass"
-      },
-      {
-        "display": {
-          "over_threshold": false,
-          "overlap_pct_of_smaller": 27.272727,
-          "shared_tracts": 6,
-          "threshold_pct": 30.0
-        },
-        "id": "exclusive_tract",
-        "knob": "exclusive_tract",
-        "note": "spec 02 \u00a74.3 exclusive-tract assignment (each shared catchment tract to its NEARER corridor); the harbor/streetcar pair shares 27.3% of the smaller catchment (near-threshold, computed anyway per the N1b review)",
-        "objective_p50": 216617.485651,
-        "pct": -0.685934,
-        "value": true
-      },
-      {
-        "display": {
-          "cap": 1,
-          "exploratory_lines": [
-            "streetcar"
-          ],
-          "n_exploratory": 1
-        },
-        "id": "depth_cap_1",
-        "knob": "depth_cap",
-        "note": "depth_cap 1 relabels the exploratory tail; objective invariant",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": 1
-      },
-      {
-        "display": {
-          "cap": 3,
-          "exploratory_lines": [],
-          "n_exploratory": 0
-        },
-        "id": "depth_cap_3",
-        "knob": "depth_cap",
-        "note": "depth_cap 3 relabels the exploratory tail; objective invariant",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": 3
-      },
-      {
-        "id": "offpeak_to_midday",
-        "knob": "feeder_headway_map",
-        "note": "peak-mapped synthetic-feeder headway variant (spec 07 \u00a74.2.1 G7 row: the injected committed line's {peak, offpeak} plan mapped to the feeder midday scalar via PEAK instead of the declared offpeak->midday convention)",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": "peak_to_midday"
-      },
-      {
-        "display": {
-          "band_widening_uncapped": 776.5,
-          "base_band_uncapped": [
-            140561.214847,
-            218113.600034,
-            313929.906288
-          ],
-          "sigma_struct_band_uncapped": [
-            140089.945939,
-            218136.983099,
-            314235.098968
-          ]
-        },
-        "id": "sigma_struct",
-        "knob": "sigma_struct",
-        "note": "per-line INDEPENDENT structural error N(0, sigma_struct=400 boardings) inflates the portfolio bands; P50 ~unchanged (mean-zero), the band widens (spec 07 \u00a73/\u00a78g)",
-        "objective_p50": 218136.983099,
-        "pct": 0.010721,
-        "value": true
-      },
-      {
-        "display": {
-          "cum_capital_pv_LOW": 2361.407573,
-          "cum_capital_pv_US_TYPICAL": 3912.98563,
-          "fixed_cost_share": 0.5
-        },
-        "id": "fixed_cost_share_0.5",
-        "knob": "fixed_cost_share",
-        "note": "fixed_cost_share 0.5 on lines 2..k (shared OCC+depot, \u00a78j); Delta-K_PV display only, welfare objective invariant",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": 0.5
-      },
-      {
-        "display": {
-          "cum_capital_pv_LOW": 2300.237357,
-          "cum_capital_pv_US_TYPICAL": 3842.012886,
-          "fixed_cost_share": 0.0
-        },
-        "id": "fixed_cost_share_0.0",
-        "knob": "fixed_cost_share",
-        "note": "fixed_cost_share 0.0 on lines 2..k (shared OCC+depot, \u00a78j); Delta-K_PV display only, welfare objective invariant",
-        "objective_p50": 218113.600034,
-        "pct": 0.0,
-        "value": 0.0
+        "bcr_abc_p50_US_TYPICAL": 0.042147,
+        "line": "streetcar",
+        "npv_abc_p50_US_TYPICAL": -2171.05
       }
     ],
-    "named_spec_pending": [
+    "greedy_portfolio": [],
+    "greedy_portfolio_note": "EMPTY -- the \u00a77 marginal stop fires at cycle 1 (recommended portfolio is empty)",
+    "note": "safeguard = max{greedy portfolio, best single feasible, best feasible archetype}; here every option is below BCR=1, so the safeguard confirms the empty-portfolio verdict. Archetype leg N3."
+  },
+  "scenario": "fold",
+  "schema": "spec 07 \u00a77 network-sequence primary artifact (NPV objective)",
+  "seed": 42,
+  "sensitivity": {
+    "base_note": "the NPV stopping verdict (marginal BCR far below 1, recommended portfolio empty) is invariant to the heavy interim knobs (budget/omega/depth); those re-runs stay in --objective interim (spec 07 \u00a710 G7).",
+    "landed_n5": [
       {
-        "id": "k3_order_diff",
-        "knob": "k=3 deep pass",
-        "note": "order-difference diagnostic over the top-3 candidates (spec 07 \u00a75.1)",
-        "work_item": "N1/optional"
+        "id": "premium_bracket",
+        "knob": "ASC premium {1,1.5,2}",
+        "note": "spec 07 \u00a76.1/\u00a77 R2 premium-bracket rows on the marginal-BCR stop decision (first-order benefit-side scaling); LANDED at N5. Even the 2.0x row leaves the OC marginal BCR far below 1 -- the stop is robust.",
+        "rows": [
+          {
+            "clears_bcr1": false,
+            "marginal_bcr_first_order": 0.042147,
+            "premium": 1.0
+          },
+          {
+            "clears_bcr1": false,
+            "marginal_bcr_first_order": 0.06322,
+            "premium": 1.5
+          },
+          {
+            "clears_bcr1": false,
+            "marginal_bcr_first_order": 0.084293,
+            "premium": 2.0
+          }
+        ],
+        "status": "computed"
       },
       {
         "id": "ratio_greedy_order",
         "knob": "ratio-vs-level ordering",
-        "note": "capital-efficiency-ratio ordering comparison (\u00a73/\u00a77)",
-        "work_item": "N5"
+        "note": "spec 07 \u00a73/\u00a77: under a SLACK budget the CV rule orders by NPV LEVEL (the interchange argument), not by capital-efficiency ratio; the ratio becomes decision-relevant only when the budget binds. Moot here -- the stop fires at cycle 1 before any ordering matters.",
+        "status": "computed"
       },
       {
-        "id": "premium_bracket",
-        "knob": "ASC premium {1,1.5,2}",
-        "note": "R2 premium-bracket rows on every stop decision (\u00a76.1)",
-        "work_item": "N5"
+        "id": "cost_band_LOW_US_TYPICAL",
+        "knob": "spec 04 cost band",
+        "note": "both cost bands are carried on every candidate block, the frontier, and the stopping record (spec 04 \u00a73.2 / spec 07 \u00a77 'level-sensitive on both sides'). The stop fires on both bands.",
+        "status": "computed"
+      }
+    ],
+    "mode": "npv",
+    "named_spec_pending": [
+      {
+        "id": "cycle_gap_lo_hi",
+        "knob": "cycle_gap",
+        "note": "cycle_gap moves the frontier's cumulative deferral and \u03b4; moot at an empty portfolio (no committed step is deferred).",
+        "work_item": "N5-follow"
+      },
+      {
+        "id": "k3_order_diff",
+        "knob": "k=3 deep pass",
+        "note": "order-difference diagnostic over the top-3 (spec 07 \u00a75.1)",
+        "work_item": "N1/optional"
+      },
+      {
+        "id": "sigma_struct_std",
+        "knob": "sigma_struct (std-based)",
+        "note": "N5 follow-up: std-based widening is the PRIMARY \u03c3_struct measure on every candidate block (P90-P10 secondary).",
+        "status": "computed"
       }
     ]
   },
   "stopping_record": {
-    "bcr_rule_note": "the BCR < 1 marginal stop is N5's NPV mode; the interim layer stops on budget exhaustion or candidate exhaustion and reports the economic margin at which it emptied (spec 07 \u00a77).",
-    "cycle": 2,
-    "last_commitment": {
-      "capital_delta_K": {
-        "LOW": 923.590085,
-        "US_TYPICAL": 1551.705316
-      },
-      "cv_p50": 54492.825423,
-      "line": "streetcar"
+    "best_bcr_candidate": {
+      "bcr_LOW_p50": 0.135138,
+      "bcr_US_TYPICAL_p50": 0.091988,
+      "line": "harbor",
+      "note": "the highest marginal BCR any candidate reaches -- the closest OC comes to clearing BCR=1; still FAR below it."
     },
-    "mode": "interim (welfare-minutes level ranking)",
-    "reason": "candidate_exhaustion",
-    "shadow_price_note": "under a binding budget the marginal committed line's welfare margin is the shadow-price cutoff (spec 07 \u00a77); it exceeds the null continuation, so the hurdle was not merely 0."
+    "cycle": 0,
+    "cycle_gap_delta": 0.790315,
+    "economic_margin_note": "the \u00a77 marginal stop fires at cycle 0: the best candidate by NPV level ('streetcar') has CV <= 0 (marginal welfare BCR 0.042 US_TYPICAL / 0.060 LOW, ABC). The best BCR ANY OC ALM corridor reaches is 'harbor' at 0.092 (US_TYPICAL) / 0.135 (LOW) -- still FAR below the BCR=1 hurdle. No continuation is positive, so the decision-grade recommended portfolio is EMPTY: at the welfare-BCA central profile NO Orange County ALM corridor clears BCR=1. This is the ECONOMIC MARGIN at which the sequence stopped -- not 'candidates ran out' (spec 07 \u00a77). The premium-bracket rows show the stop is robust to a 2x ASC premium.",
+    "marginal_bcr_both_bands": {
+      "LOW": {
+        "bcr_abc_p50": 0.059699,
+        "bcr_uncapped_p50": 0.063179,
+        "npv_abc_p50": -1504.83
+      },
+      "US_TYPICAL": {
+        "bcr_abc_p50": 0.042147,
+        "bcr_uncapped_p50": 0.044608,
+        "npv_abc_p50": -2171.05
+      }
+    },
+    "marginal_candidate": "streetcar",
+    "marginal_candidate_note": "'streetcar' is the best candidate by NPV LEVEL (\u00a73 slack-budget interchange rule: least-negative \u0394NPV); its CV <= 0 fires the stop. Under a slack budget capital intensity is irrelevant to ORDER, so the level winner need NOT be the best-BCR line -- see best_bcr_candidate.",
+    "mode": "npv (welfare-BCA central profile, spec 06)",
+    "premium_bracket_rows": {
+      "band": "US_TYPICAL",
+      "marginal_bcr_central": 0.042147,
+      "rows": [
+        {
+          "clears_bcr1": false,
+          "marginal_bcr_first_order": 0.042147,
+          "premium": 1.0
+        },
+        {
+          "clears_bcr1": false,
+          "marginal_bcr_first_order": 0.06322,
+          "premium": 1.5
+        },
+        {
+          "clears_bcr1": false,
+          "marginal_bcr_first_order": 0.084293,
+          "premium": 2.0
+        }
+      ],
+      "scenario": "fold"
+    },
+    "profile_discount_rate": 0.04,
+    "reason": "marginal_bcr_below_1",
+    "recommended_portfolio": [],
+    "safeguard_note": "pair-justified exemption did NOT apply (no continuation was positive); the \u00a77 marginal stop is the binding verdict.",
+    "winner": "streetcar"
   }
 }
