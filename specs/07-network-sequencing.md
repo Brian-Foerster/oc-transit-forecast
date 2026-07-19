@@ -272,8 +272,12 @@ is screened at reduced n. An "evaluation" = one corridor rebuild (~4 s
 measured) + one `run()` (~7 s measured at n = 40,000; the ~56 s figure
 elsewhere is model.py's full main() with its sensitivity table) ≈ ~12 s.
 
-**Candidate pool.** Candidates per cycle come from the stage-1 DRM screen
-re-run against the updated network, as gate 1 defines. Until spec 01 lands,
+**Candidate pool.** The stage-1 DRM screen refreshes the candidate POOL
+between real programmatic commitments (windows may enter or exit per the
+gate-1 rules, promotion owner-mediated per spec 01 §4b); it does NOT
+re-score counterfactual networks — the screen is a static cross-sectional
+fit, and network interaction is this harness's job via `anchor_add`.
+Until spec 01's first artifact lands,
 the candidate universe may be hand-supplied (`config/candidates.json`; the
 13-arterial shortlist in HANDOFF is the natural seed), with that
 substitution stated in the artifact.

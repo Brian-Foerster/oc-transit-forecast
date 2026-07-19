@@ -35,9 +35,16 @@ final ridership; stage 3 is the number of record.
 
 ## 3. Stage gates
 
-- **Gate 1 -> 2**: top 5-8 corridors by stage-1 score, PLUS any corridor
-  within one standard error of the cutoff (report ties, don't hide them),
-  PLUS underservice-residual outliers (fundamentals >> current ridership).
+- **Gate 1 -> 2**: top 5-8 corridors by stage-1 score, PLUS any window
+  whose `tie_with_cutoff` flag is set — i.e. its rank distribution
+  overlaps the rank-5 boundary in the screen's JOINT bootstrap rank
+  distribution (spec 01 §3.4; this is the bootstrap-rank restatement of
+  the old "within one standard error of the cutoff" rule — report ties,
+  don't hide them), PLUS underservice-flagged windows (predicted at
+  standardized service exceeds actual beyond the leave-route-out P90
+  log error; spec 01 §3.2). Promotion of gate-1 finalists into
+  `config/candidates.json` follows the owner-mediated protocol in
+  spec 01 §4b.
 - **Gate 2 -> 3**: highest ABC-calibrated P50 among finalists, unless
   bands overlap so much that secondary criteria (cost proxy, overlap
   conflicts, equity) decide — in which case the overlap is stated in the
