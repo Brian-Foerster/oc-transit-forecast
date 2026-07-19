@@ -1,0 +1,18 @@
+{
+  "note": "Special-generator flag list for the stage-1 screen's b4 dummy (spec 01 s3.1-3.2; registry entry special_generators, config tier, basis judgment). Hand-coded judgment data, NOT regenerable -- edits require an append-only history entry on the registry entry (panel D15). Coordinates are site centroids to 4dp (adequate for a 0.9-mi catchment buffer test); type in {resort, college, medical}. The b4 dummy is derived geometrically on BOTH fit and scan sides inside the shared compute_predictors: any listed generator within the buffer of the catchment window. Upgrade path: measured magnitudes (enrollment / attendance / LEHD workplace counts).",
+  "generators": [
+    {"name": "Disneyland Resort", "type": "resort", "lat": 33.8121, "lon": -117.9190},
+    {"name": "Anaheim Convention Center", "type": "resort", "lat": 33.8003, "lon": -117.9210},
+    {"name": "Knott's Berry Farm", "type": "resort", "lat": 33.8443, "lon": -118.0000},
+    {"name": "Cal State Fullerton (CSUF)", "type": "college", "lat": 33.8823, "lon": -117.8851},
+    {"name": "UC Irvine", "type": "college", "lat": 33.6405, "lon": -117.8443},
+    {"name": "Chapman University", "type": "college", "lat": 33.7936, "lon": -117.8517},
+    {"name": "Santa Ana College", "type": "college", "lat": 33.7655, "lon": -117.8885},
+    {"name": "Golden West College", "type": "college", "lat": 33.7280, "lon": -118.0060},
+    {"name": "Orange Coast College", "type": "college", "lat": 33.6716, "lon": -117.9143},
+    {"name": "UCI Medical Center (Orange)", "type": "medical", "lat": 33.7860, "lon": -117.8900},
+    {"name": "St. Joseph Hospital / CHOC (Orange)", "type": "medical", "lat": 33.7810, "lon": -117.8690},
+    {"name": "Kaiser Permanente Anaheim Medical Center", "type": "medical", "lat": 33.8545, "lon": -117.8440},
+    {"name": "Hoag Hospital Newport Beach", "type": "medical", "lat": 33.6213, "lon": -117.9310}
+  ]
+}

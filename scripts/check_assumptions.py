@@ -130,6 +130,23 @@ ENGINE_OWNED_NETWORK = frozenset({
     "cost_band_LOW_US_TYPICAL", "cycle_gap_lo_hi", "sigma_struct_std",
 })
 
+# spec 01 §5b (S2): the stage-1 DRM screen artifact. The scan reads the
+# `sensitivity` block ONLY -- never the ~612 per-window result rows -- and
+# extends checks 2/3/5 to screen-claiming registry entries. STAGE-1
+# MATERIALITY CONVENTION (spec 01 §4): each sensitivity row's pct =
+# 100 * (1 - Spearman rho of the full window ranking vs headline), i.e. rank
+# churn, because an ordinal screen has no ridership headline to move; check 5
+# consumes that pct unchanged against the same MATERIAL_PCT threshold. There
+# is NO engine-owned exemption set for the screen: it has no engine, every
+# screen sensitivity id is oc-registry-owned (spec 01 §5b -- the spec 08 §9
+# Q7 tie-break does not apply, unlike wrapper/network), so any unclaimed
+# present id is a real check-3 orphan. Absent file -> the screen claims
+# degrade to check-2 'pending' warnings (spec-pending semantics), exactly
+# like any other not-yet-generated artifact (S34 generates it).
+SCREEN_ARTIFACT = os.environ.get(
+    "SCREEN_RESULTS_ARTIFACT",
+    os.path.join(OUT, "screen_results.json"))
+
 
 def _load(path):
     with open(path, encoding="utf-8") as f:
@@ -197,6 +214,16 @@ def load_artifacts():
         for grp in ("computed_n1b", "named_spec_pending", "landed_n5"):
             ids |= {r["id"] for r in sens.get(grp, [])}
         present["network"] = ids
+    # spec 01 §5b (S2): the stage-1 screen artifact -- `sensitivity` block
+    # ONLY (never the per-window rows); pct is the stage-1 rank-churn
+    # convention, 100 * (1 - Spearman rho) -- see the SCREEN_ARTIFACT note.
+    # No engine-owned exemption set: every screen id is oc-registry-owned.
+    if os.path.exists(SCREEN_ARTIFACT):
+        SC = _load(SCREEN_ARTIFACT)
+        arts["screen"] = SC
+        present["screen"] = {r["id"] for r in SC.get("sensitivity", [])}
+        for r in SC.get("sensitivity", []):
+            pct[("screen", r["id"])] = r["pct"]
     return present, pct, arts
 
 
@@ -876,6 +903,11 @@ def write_appendix():
     L.append("Sorted by measured one-at-a-time effect (|effect| desc, id asc). "
              "These are NOT in the headline band -- they are the audit's "
              "headline.")
+    L.append("")
+    L.append("UNITS CAVEAT: effects sourced from `screen:*` rows are stage-1 "
+             "RANK-CHURN percentages (100 * (1 - Spearman rho) of the window "
+             "ranking vs headline, spec 01 §4) -- not ridership-headline "
+             "deltas; the two magnitudes are not comparable across rows.")
     L.append("")
     L.append("| effect | id | tier | basis | rows / note |")
     L.append("|---:|---|---|---|---|")

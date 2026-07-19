@@ -27,6 +27,10 @@ where available):
 2. **Stop-level average weekday boardings and alightings** (APC data) for
    Routes 43 and 543, most recent available service period, ideally split by
    time-of-day period (peak / midday / evening).
+   If a **systemwide** extract (all fixed routes, same fields) is no harder
+   to produce, that broader version is preferred — it would additionally
+   ground catchment-level validation for a county-wide corridor screen
+   (stage 1 of the same analysis), not only the two corridor routes.
 
 3. From the **most recent systemwide on-board / customer survey**: the share
    of riders whose one-way trip involves a transfer between routes, and, if

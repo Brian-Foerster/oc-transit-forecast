@@ -1,10 +1,10 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 45,
+    "judgment": 58,
     "literature": 9,
     "locally-calibrated": 1,
-    "measured": 28
+    "measured": 30
   },
   "dispositions": [
     {
@@ -26,6 +26,16 @@
       "id": "anchor_trend",
       "no_row_reason": "covered-elsewhere:anchor_lo",
       "tier": "config"
+    },
+    {
+      "accepted": [
+        "spec01 panel adjudication 2026-07-18",
+        "2026-07-18"
+      ],
+      "basis": "measured",
+      "id": "apc_fy17_19_20",
+      "no_row_reason": "covered-elsewhere:drop_fy2020",
+      "tier": "data"
     },
     {
       "accepted": [
@@ -54,16 +64,6 @@
       ],
       "basis": "judgment",
       "id": "bin_edges",
-      "no_row_reason": "quality-knob",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "owner-directive 2026-07-11",
-        "2026-07-11"
-      ],
-      "basis": "definitional",
-      "id": "buffer_mi",
       "no_row_reason": "quality-knob",
       "tier": "constant"
     },
@@ -299,6 +299,56 @@
     },
     {
       "accepted": [
+        "spec01 panel adjudication 2026-07-18",
+        "2026-07-18"
+      ],
+      "basis": "judgment",
+      "id": "screen_loo_rho",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec01 panel adjudication 2026-07-18",
+        "2026-07-18"
+      ],
+      "basis": "judgment",
+      "id": "screen_male",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec01 panel adjudication 2026-07-18",
+        "2026-07-18"
+      ],
+      "basis": "judgment",
+      "id": "screen_n_boot",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec01 panel adjudication 2026-07-18",
+        "2026-07-18"
+      ],
+      "basis": "definitional",
+      "id": "screen_seed",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec01 panel adjudication 2026-07-18",
+        "2026-07-18"
+      ],
+      "basis": "judgment",
+      "id": "screen_step_mi",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-11"
       ],
@@ -461,6 +511,34 @@
   "exposures": [
     {
       "basis": "judgment",
+      "effect_pct": 61.4,
+      "id": "buffer_mi",
+      "rows": [
+        [
+          "screen",
+          "buffer_lo"
+        ],
+        [
+          "screen",
+          "buffer_hi"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 57.8,
+      "id": "screen_scale_term",
+      "rows": [
+        [
+          "screen",
+          "offset_variant"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
       "effect_pct": 53.8,
       "id": "streetcar_service_new",
       "rows": [
@@ -535,6 +613,22 @@
         [
           "streetcar",
           "variety_logsum"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 25.4,
+      "id": "screen_endog_controls",
+      "rows": [
+        [
+          "screen",
+          "drop_rh"
+        ],
+        [
+          "screen",
+          "e016_swap"
         ]
       ],
       "tier": "structural"
@@ -626,6 +720,38 @@
         ]
       ],
       "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 9.0,
+      "id": "special_generators",
+      "rows": [
+        [
+          "screen",
+          "b4_off"
+        ],
+        [
+          "screen",
+          "gen_leave_class_out"
+        ]
+      ],
+      "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 6.7,
+      "id": "screen_window_mi",
+      "rows": [
+        [
+          "screen",
+          "window_10"
+        ],
+        [
+          "screen",
+          "window_15"
+        ]
+      ],
+      "tier": "constant"
     },
     {
       "basis": "literature",
@@ -808,6 +934,18 @@
       "tier": "constant"
     },
     {
+      "basis": "judgment",
+      "effect_pct": 0.2,
+      "id": "screen_fy2020_clip",
+      "rows": [
+        [
+          "screen",
+          "drop_fy2020"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
       "basis": "literature",
       "effect_pct": 0.2,
       "id": "j_comfort",
@@ -826,6 +964,18 @@
         ]
       ],
       "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 0.2,
+      "id": "estimator_screen",
+      "rows": [
+        [
+          "screen",
+          "nb_estimator"
+        ]
+      ],
+      "tier": "structural"
     },
     {
       "basis": "judgment",
@@ -855,6 +1005,50 @@
         [
           "streetcar",
           "intra_tract_alt"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 0.0,
+      "id": "x_vintage_mismatch",
+      "rows": [
+        [
+          "screen",
+          "year_fe_vs_pooled"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 0.0,
+      "id": "screen_overlap_threshold",
+      "rows": [
+        [
+          "screen",
+          "overlap_lo"
+        ],
+        [
+          "screen",
+          "overlap_hi"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": 0.0,
+      "id": "screen_svc_std",
+      "rows": [
+        [
+          "screen",
+          "svc_p25"
+        ],
+        [
+          "screen",
+          "svc_p75"
         ]
       ],
       "tier": "constant"
@@ -1148,7 +1342,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 108,
+  "n_entries": 123,
   "priors": [
     {
       "basis": "judgment",
@@ -1285,11 +1479,11 @@
     }
   ],
   "tier_census": {
-    "config": 13,
-    "constant": 62,
-    "data": 4,
+    "config": 14,
+    "constant": 70,
+    "data": 5,
     "prior": 19,
-    "structural": 10
+    "structural": 15
   },
   "values": {
     "default_fare": 2.0,
@@ -1340,6 +1534,23 @@
       "history": [
         [
           "2026-07-11",
+          0.9,
+          "definitional",
+          "spec08 A1 harvest -- introduced spec01/spec02"
+        ],
+        [
+          "2026-07-18",
+          0.9,
+          "judgment",
+          "spec01 Q1 + external challenge 2026-07-17 -- basis definitional->judgment (a catchment radius with a defensible 0.5 alternative is a judgment, not a definition); band (0.5, 1.25); the rowless quality-knob disposition is superseded by screen rows buffer_lo/buffer_hi (panel D13)"
+        ]
+      ],
+      "id": "buffer_mi"
+    },
+    {
+      "history": [
+        [
+          "2026-07-11",
           "dirichlet_strength",
           "judgment",
           "spec08 A2 harvest -- introduced spec02, structural"
@@ -1374,6 +1585,23 @@
         ]
       ],
       "id": "s0_se_width"
+    },
+    {
+      "history": [
+        [
+          "2026-07-18",
+          "13 generators (3 resort / 6 college / 4 medical)",
+          "judgment",
+          "spec01 S2 -- panel D15 initial hand-coding; an append-only history entry is REQUIRED per list edit"
+        ],
+        [
+          "2026-07-19",
+          "13 generators (3 resort / 6 college / 4 medical)",
+          "judgment",
+          "review fix batch -- Kaiser Anaheim corrected to the verified 3440 E La Palma Ave campus (33.8545, -117.8440); the initial coordinate sat ~2.8 mi east near Weir Canyon, outside any 0.9-mi catchment of the actual site"
+        ]
+      ],
+      "id": "special_generators"
     },
     {
       "history": [

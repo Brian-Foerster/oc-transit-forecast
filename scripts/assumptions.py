@@ -750,17 +750,38 @@ ASSUMPTIONS = {
 
     # ---- build_corridor.py ----------------------------------------------
     "buffer_mi": {
-        "title": "corridor tract inclusion buffer",
+        "title": "corridor tract inclusion buffer (SHARED: stage-2 corridors "
+                 "+ stage-1 screen)",
         "tier": "constant", "status": "active",
-        "value": 0.9, "units": "mi", "band": None, "basis": "definitional",
+        "value": 0.9, "units": "mi", "band": (0.5, 1.25), "basis": "judgment",
         "history": [("2026-07-11", 0.9, "definitional",
-                     "spec08 A1 harvest -- introduced spec01/spec02")],
-        "provenance": "centroid-within distance for corridor tract membership; a "
-                      "build-geometry knob (a rebuilt-variant sensitivity is "
-                      "possible but not mandated -- disposition-only, spec 08 A2b)",
-        "rows": {}, "no_row_reason": "quality-knob",
-        "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
-        "logged": None, "upgrade": "corridor-membership rebuilt-variant sensitivity",
+                     "spec08 A1 harvest -- introduced spec01/spec02"),
+                    ("2026-07-18", 0.9, "judgment",
+                     "spec01 Q1 + external challenge 2026-07-17 -- basis "
+                     "definitional->judgment (a catchment radius with a "
+                     "defensible 0.5 alternative is a judgment, not a "
+                     "definition); band (0.5, 1.25); the rowless quality-knob "
+                     "disposition is superseded by screen rows "
+                     "buffer_lo/buffer_hi (panel D13)")],
+        "provenance": "centroid-within distance for corridor tract membership; "
+                      "ONE entry, TWO consumers (the corr_share precedent, "
+                      "spec 08 §2): build_corridor.py's stage-2 corridors AND "
+                      "the spec 01 screen's shared compute_predictors "
+                      "catchment cite the same id, so drift is machine-"
+                      "visible. The value is under EXTERNAL CHALLENGE as a "
+                      "stage-2 constant (2026-07-17), which raises -- not "
+                      "lowers -- the bar for its stage-1 reuse: the screen "
+                      "sweeps BOTH band edges as full-rescan rows (buffer_lo "
+                      "= 0.5 / buffer_hi = 1.25); the stage-2 corridor-"
+                      "membership rebuilt-variant rows (0.5 / 0.75, "
+                      "build_corridor --variant mechanism) remain QUEUED, not "
+                      "landed. Challenge + unification logged (README "
+                      "known-issue 30)",
+        "rows": {"screen": ["buffer_lo", "buffer_hi"]},
+        "no_row_reason": None,
+        "accepted": None,
+        "logged": "README known-issue 30",
+        "upgrade": "stage-2 corridor-membership rebuilt-variant rows (0.5/0.75)",
     },
     "xfer_buffer_mi": {
         "title": "transfer feeder-access buffer",
@@ -1262,6 +1283,176 @@ ASSUMPTIONS = {
         "logged": None, "upgrade": "engineering reference per crossing (spec 04 §3.3)",
     },
 
+    # ---- stage-1 DRM screen constants (spec 01 §5b; S2 landing) -----------
+    # Stage-1 materiality convention (spec 01 §4): a `screen` sensitivity
+    # row's pct = 100 * (1 - Spearman rho of the full window ranking vs
+    # headline) -- rank churn, never a ridership delta (stage-1 scores are
+    # ordinal only, spec 00 §1; there is no ridership headline to move).
+    # ALL screen row ids are oc-registry-owned: the screen has no engine, so
+    # no engine-owned exemption set applies to the check_assumptions
+    # `screen` artifact scan (spec 01 §5b; unlike wrapper/network).
+    "screen_window_mi": {
+        "title": "screen window length (stage-1 county-wide scan)",
+        "tier": "constant", "status": "active",
+        "value": 12.5, "units": "mi", "band": (10.0, 15.0), "basis": "judgment",
+        "history": [("2026-07-18", 12.5, "judgment",
+                     "spec01 S2 -- panel D5: FIXED window length (a swept "
+                     "length makes windows of different lengths incomparable "
+                     "within one scan); 12.5 = the 13-arterial prototype's "
+                     "best-window length")],
+        "provenance": "fixed sliding-window length for the mechanical scan "
+                      "universe (spec 01 §3.2): every weekday GTFS route "
+                      "shape with main-shape length >= this. Measured counts: "
+                      "53 weekday shapes; ~612 windows at 12.5 mi (846 at 10, "
+                      "430 at 15). Judgment resting on the prototype "
+                      "precedent -- the near-circularity of leaning on the "
+                      "prototype is logged (README known-issue 31). Both band "
+                      "edges are full-rescan sensitivity rows",
+        "rows": {"screen": ["window_10", "window_15"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": "README known-issue 31",
+        "upgrade": "ALM line-length economics study (spec 04)",
+    },
+    "screen_step_mi": {
+        "title": "screen window slide step",
+        "tier": "constant", "status": "active",
+        "value": 0.5, "units": "mi", "band": None, "basis": "judgment",
+        "history": [("2026-07-18", 0.5, "judgment",
+                     "spec01 S2 -- panel D5 window semantics; w0 = k*0.5 "
+                     "exactly (integer k, never accumulated floats)")],
+        "provenance": "window slide step for the scan (spec 01 §3.2); a "
+                      "resolution knob -- a finer step adds near-duplicate "
+                      "windows the overlap grouping collapses, it does not "
+                      "reorder distinct corridors",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
+        "logged": None, "upgrade": "finer-step rescan",
+    },
+    "screen_overlap_threshold": {
+        "title": "screen overlap-grouping threshold (shared catchment tracts)",
+        "tier": "constant", "status": "active",
+        "value": 0.30, "units": "share", "band": (0.2, 0.4), "basis": "judgment",
+        "history": [("2026-07-18", 0.30, "judgment",
+                     "spec01 S2 -- panel D17; connected components over "
+                     "windows sharing > threshold of catchment tracts")],
+        "provenance": "windows sharing more than this fraction of catchment "
+                      "tracts are grouped by connected components "
+                      "(deterministic group ids = lexicographically smallest "
+                      "member window_id) so gate 1 cannot double-count "
+                      "central Santa Ana demand (spec 01 §3.3). Grouping "
+                      "addresses double-counted DEMAND; correlated errors "
+                      "across windows are the joint bootstrap's job (§3.4). "
+                      "Both band edges are regrouping sensitivity rows. "
+                      "MEASURED DEGENERACY (review 2026-07-19): the "
+                      "components collapse to ONE county-wide group at 0.30 "
+                      "(one at 0.2, two at 0.4) -- single-linkage "
+                      "transitivity defeats the dedup purpose; gate 1 uses "
+                      "the artifact's overlap_diagnostics (best window per "
+                      "host shape + per-pair shares) instead. A non-chaining "
+                      "regrouping is an open owner decision (spec 01 §3.3 "
+                      "caveat)",
+        "rows": {"screen": ["overlap_lo", "overlap_hi"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": "README known issue 34",
+        "upgrade": "non-chaining grouping (complete-linkage or "
+                   "host-shape-scoped) -- owner decision",
+    },
+    "screen_svc_std": {
+        "title": "standardized service level (median FY2019 RVH per route-mile)",
+        "tier": "constant", "status": "active",
+        "value": 1577.65, "units": "rev-hr/route-mi/yr",
+        "band": (1119.07, 2773.07), "basis": "measured",
+        "history": [("2026-07-18", 1577.65, "measured",
+                     "spec01 S2 -- panel D8: computed from route_boardings.csv "
+                     "rvh_fy2019 / GTFS main-shape miles over the 41 fitted "
+                     "routes (S2 derivation)")],
+        "provenance": "svc_std = median over the 41 fitted routes (the "
+                      "route_boardings.csv x 2026-07 GTFS weekday-shape "
+                      "intersection; the 6 discontinued routes 24/53X/57X/"
+                      "64X/82/153 drop out) of FY2019 annual revenue hours "
+                      "per main-shape route-mile: rvh_fy2019 (extract_apc.py, "
+                      "b/RVH-validated to 2dp) / build_corridor.main_shape_xy "
+                      "length. Median 1577.65 (Route 30's 32,134 / 20.368 mi; "
+                      "Route 43 reads 3,739.0); the band records the "
+                      "distribution's p25 1119.07 (Route 33) / p75 2773.07 "
+                      "(Route 55) = the svc_p25/svc_p75 probe rows. Windows "
+                      "are scored at svc_std x window length -- a "
+                      "PRESENTATION convention, not an identification fix "
+                      "(spec 01 §1/§3.2): a single additive b3 term shifts "
+                      "every window's log-score by the same constant, so the "
+                      "probes are expected rank-inert; the rows PROVE that "
+                      "rather than asserting it. The index-normalization "
+                      "choice built on top is logged (README known-issue 33)",
+        "rows": {"screen": ["svc_p25", "svc_p75"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": "README known-issue 33",
+        "upgrade": "records request items 1a/1b (post-FY2021 RVH refresh)",
+    },
+    "screen_n_boot": {
+        "title": "screen route-cluster bootstrap replicate count",
+        "tier": "constant", "status": "active",
+        "value": 2000, "units": "replicates", "band": None, "basis": "judgment",
+        "history": [("2026-07-18", 2000, "judgment",
+                     "spec01 S2 -- panel D9 route-cluster bootstrap")],
+        "provenance": "B replicates: resample ROUTES with replacement, refit, "
+                      "rescore ALL windows jointly per replicate (spec 01 "
+                      "§3.4; cross-window correlation captured for free). A "
+                      "convergence/resolution knob for the p10/p90, rank_ci "
+                      "and tie_with_cutoff outputs, not a rank-affecting "
+                      "choice",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
+        "logged": None, "upgrade": "convergence study",
+    },
+    "screen_seed": {
+        "title": "screen bootstrap RNG seed",
+        "tier": "constant", "status": "active",
+        "value": 7, "units": "seed", "band": None, "basis": "definitional",
+        "history": [("2026-07-18", 7, "definitional",
+                     "spec01 S2 -- panel D9; single seeded default_rng, "
+                     "determinism checklist item 5")],
+        "provenance": "the single numpy default_rng seed behind the screen's "
+                      "route-cluster bootstrap + within-replicate ACS MOE "
+                      "perturbation (spec 01 §3.4); part of the "
+                      "dual-generation byte-identity gate (spec 01 §6)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
+        "logged": None, "upgrade": None,
+    },
+    "screen_loo_rho": {
+        "title": "screen LOO-route rank-stability floor (leverage screen)",
+        "tier": "constant", "status": "active",
+        "value": 0.9, "units": "Spearman rho", "band": None, "basis": "judgment",
+        "history": [("2026-07-18", 0.9, "judgment",
+                     "spec01 S2 -- review 2026-07-08 comment 16 threshold, "
+                     "DEMOTED by panel D12 from primary gate to leverage "
+                     "screen (single-route deletion barely moves a 41-route "
+                     "fit)")],
+        "provenance": "leave-one-ROUTE-out Spearman rho floor (spec 01 §5) -- "
+                      "a leverage screen only; the PRIMARY gate is the "
+                      "rank-stability battery whose perturbations are the "
+                      "screen artifact's sensitivity rows. An acceptance-"
+                      "threshold knob, not a swept model quantity",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
+        "logged": None, "upgrade": "post-records-request panel extension",
+    },
+    "screen_male": {
+        "title": "screen LOO median-absolute-log-error ceiling (secondary)",
+        "tier": "constant", "status": "active",
+        "value": 0.35, "units": "log points", "band": None, "basis": "judgment",
+        "history": [("2026-07-18", 0.35, "judgment",
+                     "spec01 S2 -- review 2026-07-08 comment 16, retained as "
+                     "a secondary diagnostic by panel D12")],
+        "provenance": "LOO median absolute log error ceiling (~±40% on a "
+                      "held-out route); secondary diagnostic, worst-5 routes "
+                      "named in fit_diagnostics (spec 01 §5). An acceptance-"
+                      "threshold knob, not a swept model quantity",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
+        "logged": None, "upgrade": "post-records-request panel extension",
+    },
+
     # ===== structural tier (governance toggles; NOT owned) ==================
     # Each names a run() over-key toggle and the sensitivity row-id it produces
     # in BOTH corridor results (spec 08 §2/§3). No value/band -- structural
@@ -1368,6 +1559,124 @@ ASSUMPTIONS = {
                       "quadrature; this toggle's row IS where the walk_spread_grid "
                       "constant is exercised (covered-elsewhere target)",
         "rows": {"harbor": ["walk_spread"], "streetcar": ["walk_spread"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+
+    # ---- stage-1 screen structural choices (spec 01 §5b; S2 landing) -------
+    # Screen structural entries satisfy materiality (check 5) by enumerating
+    # every alternative code path as a `screen` sensitivity row; row pct is
+    # the stage-1 rank-churn convention (see the screen-constants block).
+    "estimator_screen": {
+        "title": "screen estimator choice (log-OLS primary / NB2 always-fitted)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-18", "log-OLS primary, NB2 permanent robustness",
+                     "judgment",
+                     "spec01 S2 -- panel D1 estimator flip; no silent "
+                     "fallback branch")],
+        "provenance": "PRIMARY = log-OLS on log(annual boardings) with "
+                      "cluster-by-route SEs; NB2 (statsmodels, "
+                      "loglike_method='nb2', fixed start_params/maxiter) is a "
+                      "PERMANENT robustness row -- BOTH estimators are always "
+                      "fitted, and the nb_estimator row reports Spearman rho "
+                      "of the full window ranking + top-8 set churn vs "
+                      "primary (spec 01 §3.1). Rationale: at annual boardings "
+                      "1e5-1e6 the NB2 variance is effectively alpha*mu^2 -- "
+                      "pure multiplicative error, log-OLS territory -- and NB "
+                      "adds convergence fragility at n_eff~41. The always-"
+                      "fitted row replaces any conditional fallback: an "
+                      "estimator switch can never happen silently",
+        "rows": {"screen": ["nb_estimator"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None,
+        "upgrade": "post-records-request panel (more routes/years)",
+    },
+    "screen_fy2020_clip": {
+        "title": "screen FY2020-Q3 COVID clip (March-in, 9-month YTD)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-18", "March-in (9-mo YTD)", "judgment",
+                     "spec01 S2 -- panel D11: the draft 'Jul-Feb only if "
+                     "March distorts' clause is DELETED (unimplementable from "
+                     "the on-disk YTD PDF); mandatory drop_fy2020 row "
+                     "instead")],
+        "provenance": "FY2020-Q3 rows are kept with March 2020 (COVID onset) "
+                      "included: the on-disk PDF prints a 9-month YTD total "
+                      "and a monthly cut would need a network fetch. "
+                      "Handling: year FE, plus an explicit months_observed=9 "
+                      "exposure adjustment on the fit side only if trivially "
+                      "cleaner (spec 01 §3.1). The pre-registered drop_fy2020 "
+                      "row is the honest handle; it is SHARED with "
+                      "x_vintage_mismatch and apc_fy17_19_20, which point at "
+                      "it (covered-elsewhere style) rather than "
+                      "double-claiming",
+        "rows": {"screen": ["drop_fy2020"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None,
+        "upgrade": "records request item 1b (post-FY2021 route-level data "
+                   "de-confounds the COVID clip)",
+    },
+    "x_vintage_mismatch": {
+        "title": "screen X-vs-y vintage mismatch (2022 LODES / 2023 ACS X on "
+                 "FY2017-20 y)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-18", "pooled years with year FE", "judgment",
+                     "spec01 S2 -- panel D16: the temporal X-vs-y mismatch is "
+                     "a structural assumption of the fit, not a footnote")],
+        "provenance": "the screen regresses FY2017/FY2019/FY2020-Q3 boardings "
+                      "on 2022 LODES / 2019-2023 ACS predictors -- a "
+                      "post-COVID, WFH-reshaped commute shape explaining "
+                      "pre-COVID ridership (2026-07 GTFS alignments also "
+                      "differ from the service that generated the boardings; "
+                      "spec 01 §2/§7). Rows: year_fe_vs_pooled (year-FE vs "
+                      "pooled fit); the SHARED drop_fy2020 row (owned by "
+                      "screen_fy2020_clip) probes the most COVID-contaminated "
+                      "y year. A pre-COVID-X refit row is QUEUED on the "
+                      "spec 02 §4.8 LODES-2019 rebuilt-variant mechanism when "
+                      "it lands (see lodes_2022)",
+        "rows": {"screen": ["year_fe_vs_pooled"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None,
+        "upgrade": "LODES 2019 rebuilt-variant refit (spec 02 §4.8 mechanism)",
+    },
+    "screen_endog_controls": {
+        "title": "screen endogenous-controls choice (RH control kept; E016 out)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-18",
+                     "b3 RVH allocation control kept; E016 -> E002 swap",
+                     "judgment",
+                     "spec01 S2 -- panel D14 endogeneity firewall, "
+                     "mechanized")],
+        "provenance": "BOTH revenue hours and ACS B08141 E016 transit workers "
+                      "are reclassified endogenous-to-service (spec 01 §1): "
+                      "b3 log(RVH) stays as an allocation CONTROL, never "
+                      "causal; E016 is REMOVED from the predictor set "
+                      "(replaced by E002 zero-vehicle workers -- E016 is also "
+                      "mostly noise: 39% zero tracts, median MOE/estimate "
+                      "1.26). Enforcement is mechanized, not prose: drop_rh "
+                      "(fit without RH) and e016_swap (E016 back in) are "
+                      "always-run battery rows, and standing tests forbid any "
+                      "published prediction at a counterfactual service "
+                      "level. The standardized-service dilemma is logged "
+                      "(README known-issue 29)",
+        "rows": {"screen": ["drop_rh", "e016_swap"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": "README known-issue 29",
+        "upgrade": "exogenous transit-propensity instrument / post-records-"
+                   "request panel",
+    },
+    "screen_scale_term": {
+        "title": "screen scale-term choice (b5 free elasticity vs offset)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-18", "b5 log(length) free elasticity", "judgment",
+                     "spec01 S2 -- panel D3/Q8 length-scale confound fix")],
+        "provenance": "fit and scan share an exposure footing through b5 = "
+                      "log(route/window length mi) as a FREE elasticity: "
+                      "without a scale term, coefficients fitted on "
+                      "3.3-46.9-mi whole-route catchments are incomparable "
+                      "with fixed 12.5-mi windows (spec 01 §3.1). The "
+                      "enumerated alternative -- offset log(length) with the "
+                      "coefficient pinned to 1 -- is the offset_variant row",
+        "rows": {"screen": ["offset_variant"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": None,
     },
@@ -1593,6 +1902,42 @@ ASSUMPTIONS = {
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "OCTA service-calendar / cost model",
     },
+    "special_generators": {
+        "title": "special-generator flag list (resort / college / medical)",
+        "tier": "config", "status": "active", "basis": "judgment",
+        "config_key": "config/special_generators.json",
+        "history": [("2026-07-18", "13 generators (3 resort / 6 college / 4 "
+                     "medical)", "judgment",
+                     "spec01 S2 -- panel D15 initial hand-coding; an "
+                     "append-only history entry is REQUIRED per list edit"),
+                    ("2026-07-19", "13 generators (3 resort / 6 college / 4 "
+                     "medical)", "judgment",
+                     "review fix batch -- Kaiser Anaheim corrected to the "
+                     "verified 3440 E La Palma Ave campus (33.8545, "
+                     "-117.8440); the initial coordinate sat ~2.8 mi east "
+                     "near Weir Canyon, outside any 0.9-mi catchment of the "
+                     "actual site")],
+        "provenance": "the hand-coded special-generator list ({name, type in "
+                      "{resort, college, medical}, lat, lon to 4dp}) behind "
+                      "the screen's b4 dummy. Judgment data, NOT regenerable "
+                      "-- hence config/, not data/derived (repo rule 4). The "
+                      "dummy is derived GEOMETRICALLY on BOTH fit and scan "
+                      "sides inside the shared compute_predictors (any "
+                      "flagged generator within the buffer of the catchment "
+                      "window, spec 01 §3.2), so fit/score consistency is "
+                      "structural. b4 is high-leverage from a handful of "
+                      "routes and the flagged routes are also the highest-"
+                      "boardings ones: rows b4_off (drop the dummy, report "
+                      "churn) + gen_leave_class_out (leave one class out); "
+                      "fit-side dfbetas and Harbor-area with/without-b4 "
+                      "scores are mandatory fit_diagnostics. Initial "
+                      "hand-coding logged (README known-issue 32)",
+        "rows": {"screen": ["b4_off", "gen_leave_class_out"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": "README known-issue 32",
+        "upgrade": "measured magnitudes (enrollment / attendance / LEHD "
+                   "workplace counts) replacing judgment flags",
+    },
 
     # ===== width-block owners (spec 08 §4; rows in the 'width' artifact) =====
     # The band-WIDTH knobs. A point() row is vacuously 0.0% (it pins fix_bins),
@@ -1673,7 +2018,15 @@ ASSUMPTIONS = {
                       "rationale, reweight_abc.py). Mandated sensitivity: "
                       "rebuild bins with pre-COVID LODES 2019 (spec 02 §4.8 "
                       "rebuilt-variant row), not yet landed -- hence the row "
-                      "is spec-pending, not disposed",
+                      "is spec-pending, not disposed. SCREEN-SCOPED CAVEAT "
+                      "(spec 01 §2, S2): the same 2022 vintage is the "
+                      "stage-1 screen's X side (both-ends-in catchment "
+                      "flows), regressed on FY2017-FY2020-Q3 boardings -- "
+                      "that temporal X-vs-y mismatch is registered as its own "
+                      "structural entry (x_vintage_mismatch, rows "
+                      "year_fe_vs_pooled + the shared drop_fy2020); the "
+                      "screen's pre-COVID-X refit row REUSES this entry's "
+                      "§4.8 rebuilt-variant mechanism when it lands",
         "rows": {}, "no_row_reason": "spec-pending:02§4.8",
         "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
         "logged": None, "upgrade": "LODES 2019 rebuilt-variant row (spec 02 §4.8)",
@@ -1707,7 +2060,15 @@ ASSUMPTIONS = {
                       "that role is swept, via s0_se_width, which stresses "
                       "the CURRENT vintage's own measurement uncertainty, not "
                       "a vintage SWAP). Recorded here as an imperfect fit, not "
-                      "a clean covered-elsewhere claim",
+                      "a clean covered-elsewhere claim. SCREEN-SCOPED CAVEAT "
+                      "(spec 01 §2, S2): the screen consumes B08141 E002 "
+                      "zero-vehicle workers (+MOEs, propagated inside each "
+                      "bootstrap replicate as MOE/1.645 normal perturbations) "
+                      "as predictor b2; the 2019-2023 pooled window vs "
+                      "FY2017-20 outcomes exposure is registered at "
+                      "x_vintage_mismatch, and the rejected E016 transit-"
+                      "workers alternative is the e016_swap row (owned by "
+                      "screen_endog_controls)",
         "rows": {}, "no_row_reason": "covered-elsewhere:anchor_lo",
         "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
         "logged": None, "upgrade": "ACS vintage rebuilt-variant row (mechanism TBD)",
@@ -1735,7 +2096,20 @@ ASSUMPTIONS = {
                       "build_corridor.py, the street_cal_local/street_cal_rapid "
                       "calibration points, or the streetcar corridor, which "
                       "has no rapid base and so no rapid_gtfs row) -- a "
-                      "partial, not full, coverage; flagged for owner review",
+                      "partial, not full, coverage; flagged for owner review. "
+                      "SCREEN-SCOPED CAVEAT (spec 01 §2, S2): the stage-1 "
+                      "screen's scan universe AND fit-side route shapes are "
+                      "this 2026-07 snapshot while the outcomes are "
+                      "FY2017-FY2020-Q3; six APC routes (24, 53X, 57X, 64X, "
+                      "82, 153) were discontinued and have no 2026 weekday "
+                      "shape, so they cannot be fitted -- a SURVIVORSHIP-"
+                      "biased drop (systematically low performers; the model "
+                      "never sees fundamentals-poor failures and the "
+                      "underservice logic is correspondingly flattered, "
+                      "spec 01 §7). Accepted as a survivorship disposition; "
+                      "screen_fit.py prints the dropped list by name; the "
+                      "broader alignment-vintage exposure is registered at "
+                      "x_vintage_mismatch",
         "rows": {}, "no_row_reason": "covered-elsewhere:rapid_gtfs",
         "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
         "logged": None, "upgrade": "GTFS refetch / periodic re-vintage",
@@ -1763,6 +2137,45 @@ ASSUMPTIONS = {
         "rows": {}, "no_row_reason": "covered-elsewhere:543_launch14_s500",
         "accepted": ("owner-directive 2026-07-11", "2026-07-14"),
         "logged": None, "upgrade": "NTD annual refresh",
+    },
+    "apc_fy17_19_20": {
+        "title": "APC route-level boardings+RVH extraction vintage "
+                 "(FY2017 / FY2019 / FY2020-Q3)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-18",
+                     "OCTA Bus Operations Performance Measurements "
+                     "FY2017/FY2019/FY2020-Q3 PDFs",
+                     "measured",
+                     "spec01 S2 -- panel D16; extract_apc.py full-row parse "
+                     "(S0), boardings/RVH validated against the printed "
+                     "b/RVH column to 2dp for every row")],
+        "provenance": "the y-side vintage of the stage-1 screen: route-level "
+                      "annual boardings + revenue hours extracted from the "
+                      "on-disk OCTA quarterly performance PDFs (data/raw/apc "
+                      "via scripts/extract_apc.py -> "
+                      "data/derived/route_boardings.csv; 68/63/61 rows "
+                      "parsed+validated; three FY2017 RVH cells blanked as "
+                      "internally inconsistent with the printed BoardVSH -- "
+                      "the KNOWN_BAD_RVH whitelist, routes 35/70/150). The "
+                      "dataset itself is measured; the ASSUMPTION is the "
+                      "VINTAGE CHOICE: FY2017-FY2020-Q3 are the only "
+                      "route-level years public on octa.net, and the most "
+                      "COVID-contaminated year already carries the "
+                      "drop_fy2020 row (owned by screen_fy2020_clip) -- "
+                      "pointed there as the vintage choice's one registry-"
+                      "visible sensitivity, an imperfect fit recorded "
+                      "honestly (the acs_2023 least-bad-disposition "
+                      "precedent). This entry also owns the committed-"
+                      "universe floor frozen in extract_apc.py as "
+                      "LEGACY_MIN_BOARDINGS (boardings >= 100,000 -- the old "
+                      "regex's implicit selection, kept so the 47-route/132-"
+                      "cell fit universe is unchanged); widening the "
+                      "universe is an edit HERE, not an extraction default",
+        "rows": {}, "no_row_reason": "covered-elsewhere:drop_fy2020",
+        "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
+        "logged": None,
+        "upgrade": "records request items 1a/1b (FY2014-16 + post-FY2021 "
+                   "route-level; widened item 2 = systemwide stop-level APC)",
     },
 }
 

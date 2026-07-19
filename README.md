@@ -485,3 +485,67 @@ tornado (`bca_harbor.json`).
     engine-owned/exempt, the spec 08 §9 Q7 precedent). Charts:
     `outputs/network_frontier.png` / `network_build_sequence.png` /
     `network_channels.png` (`python scripts/make_charts.py network`).
+
+Items 29-33 were opened by the **spec 01 stage-1 screen panel revision
+(2026-07-18, 3-lens adversarial panel; `specs/01-screen-drm.md` §5b)**. Each
+is the `logged` pointer of a screen registry entry; the screen's sensitivity
+rows land with the S34 build (`outputs/screen_results.json`).
+
+29. **Standardized-service scoring is a presentation convention, not an
+    identification fix** (spec 01 §1). Both revenue hours (b3) and ACS E016
+    transit workers are endogenous to service: OCTA allocates service partly
+    on unobserved demand (bad-control/collider risk that biases the demand
+    coefficients generating every ranking), and tracts commute by transit
+    because service exists (scoring on E016 would mechanically penalize
+    never-served arterials — the exact corridors the underservice mechanism
+    exists to surface). The dilemma: no cross-sectional fit on observed
+    OCTA routes can fully identify fundamentals separate from service
+    history. Resolution, mechanized rather than prose: E016 removed (E002
+    zero-vehicle workers in; `e016_swap` row), RH kept as an allocation
+    control with a `drop_rh` battery row, standing tests forbid published
+    predictions at any counterfactual service level, and scoring at
+    standardized service is labeled a comparison convention (registry
+    `screen_endog_controls`).
+30. **The 0.9-mi catchment buffer is ONE entry with TWO consumers, and it is
+    under external challenge** (2026-07-17). Spec 01's screen reuses stage
+    2's `buffer_mi` rather than minting a duplicate (the `corr_share`
+    unification precedent); the entry's basis moved definitional→judgment
+    with band (0.5, 1.25) and both-edge screen rescan rows
+    (`buffer_lo`/`buffer_hi`). The stage-2 corridor-membership
+    rebuilt-variant rows (0.5/0.75) are queued, not landed — until they land,
+    the challenge is answered at stage 1 only.
+31. **The 13-arterial prototype reproduction is a near-circular smoke test**
+    (spec 01 §5). The prototype is what the fitted screen supersedes, so
+    reproducing its ranking cannot validate the model — it is demoted to a
+    smoke test (failure prompts investigation, not rejection). The 12.5-mi
+    window length (`screen_window_mi`) also inherits the prototype's
+    precedent as its judgment basis; the (10, 15) band edges are full-rescan
+    sensitivity rows so the inheritance is probed, not assumed.
+32. **Special-generator flags are hand-coded judgment data**
+    (`config/special_generators.json`, 13 sites: resort/college/medical;
+    registry `special_generators`, append-only history per edit). The b4
+    dummy is identified from a handful of routes that are also the
+    highest-boardings ones (Harbor/Disneyland), so it is high-leverage where
+    the screen's discrimination matters most: `b4_off` and
+    `gen_leave_class_out` rows plus mandatory dfbetas and Harbor-area
+    with/without-b4 diagnostics keep the exposure visible. Upgrade: measured
+    magnitudes (enrollment/attendance/LEHD workplace counts).
+33. **The screen index normalization is a choice** (spec 01 §3.2/§4):
+    `screen_index` = 100 × predicted-at-standardized-service / median
+    fitted-route prediction, with standardized service = median fitted-route
+    FY2019 revenue hours per route-mile × window length (`screen_svc_std`,
+    measured 1577.65 rev-hr/route-mi/yr; p25/p75 probe rows expected
+    rank-inert). Chosen so no field in `screen_results.json` is denominated
+    in boardings — an ordinal screening index, never a ridership forecast
+    (spec 00 §1); standing tests assert the guardrail.
+34. **Overlap grouping is measured-degenerate at county scale** (spec 01
+    §3.3, review 2026-07-19). The connected components over >0.30
+    shared-catchment windows collapse to ONE county-wide group on the real
+    universe (one at the 0.2 band edge, two at 0.4): single-linkage
+    transitivity chains ~96%-overlapping adjacent windows and the
+    min-denominator share links parallel/crossing routes. `overlap_group`
+    is kept in the artifact as specced but CANNOT deduplicate the gate-1
+    shortlist; the artifact's `overlap_diagnostics` block (best window per
+    host shape + per-pair overlap shares, no transitive closure) is what
+    gate 1 uses. Replacing the grouping with a non-chaining rule
+    (complete-linkage or host-shape-scoped) is an open owner decision.
