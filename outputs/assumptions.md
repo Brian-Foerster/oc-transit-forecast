@@ -36,7 +36,7 @@ UNITS CAVEAT: effects sourced from `screen:*` rows are stage-1 RANK-CHURN percen
 | 0.9% | exogenous_speed | structural | judgment | harbor:exogenous_speed, streetcar:exogenous_speed |
 | 0.8% | s0_se_width | structural | measured | width_harbor:s0se_half, width_harbor:s0se_double, width_streetcar:s0se_half, width_streetcar:s0se_double |
 | 0.7% | a_comfort | constant | literature | harbor:a_comfort_hi |
-| 0.4% | dirichlet_strength | constant | judgment | width_harbor:dirichlet_half, width_harbor:dirichlet_double, width_streetcar:dirichlet_half, width_streetcar:dirichlet_double |
+| 0.5% | dirichlet_strength | constant | judgment | width_harbor:dirichlet_half, width_harbor:dirichlet_double, width_streetcar:dirichlet_half, width_streetcar:dirichlet_double |
 | 0.2% | screen_fy2020_clip | structural | judgment | screen:drop_fy2020 |
 | 0.2% | j_comfort | constant | literature | harbor:jk_lo, harbor:jk_hi, harbor:jk_trapezoid |
 | 0.2% | estimator_screen | structural | judgment | screen:nb_estimator |
@@ -87,22 +87,22 @@ Reported SEPARATELY from the exposure sort (spec 08 §5): a prior's spread is al
 | 0.7% | ws | work share of boardings | judgment | -- |
 | 0.6% | dwell | station dwell (ALM) | literature | -- |
 | 0.5% | phi | visitor share of base boardings | judgment | -- |
-| 0.3% | v_cruise | grade-separated cruise speed (ALM) | judgment | -- |
 | 0.3% | s0v | visitor base transit share | judgment | -- |
 | 0.0% | pcar0 | car-diversion probability, 0-vehicle segment | judgment | -- |
 | 0.0% | pcar1 | car-diversion probability, 1-vehicle segment | judgment | -- |
 | 0.0% | pcar2 | car-diversion probability, 2+-vehicle segment | judgment | -- |
 | 0.0% | pcarv | car-diversion probability, visitor market | judgment | -- |
+| 0.0% | v_cruise | grade-separated cruise speed (ALM; pinned owner design value) | judgment | -- |
 | 0.0% | vot_behav | behavioral value of time (fare response) | literature | -- |
 
 ## 3. Width sensitivities (band-width, not central)
 
 | corridor | id | band | Δband | % of headline band |
 |---|---|---:|---:|---:|
-| harbor | dirichlet_half | 4062.7 | +1.6 | +0.04% |
-| harbor | dirichlet_double | 4043.8 | -17.3 | -0.43% |
-| harbor | s0se_half | 4055.3 | -5.8 | -0.14% |
-| harbor | s0se_double | 4090.3 | +29.2 | +0.72% |
+| harbor | dirichlet_half | 4060.9 | +1.5 | +0.04% |
+| harbor | dirichlet_double | 4040.7 | -18.7 | -0.46% |
+| harbor | s0se_half | 4050.7 | -8.8 | -0.22% |
+| harbor | s0se_double | 4091.6 | +32.2 | +0.79% |
 | streetcar | dirichlet_half | 2288.2 | -3.5 | -0.15% |
 | streetcar | dirichlet_double | 2290.8 | -0.9 | -0.04% |
 | streetcar | s0se_half | 2298.7 | +7.0 | +0.31% |
@@ -190,6 +190,7 @@ What changed (entries whose append-only history records a transition):
 - **v_cruise**
     - 2026-07-11: value `(70.0, 90.0, 'uni')`, basis literature (spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca)
     - 2026-07-17: value `(90.0, 103.2, 'uni')`, basis judgment (owner decision: design top speed 60 mph; band = delivery/degraded-ops uncertainty around the design value)
+    - 2026-07-18: value `(96.56064, 96.56064, uni) — pinned at 60.000 mph exactly`, basis judgment (owner decision 2026-07-18: no cruise-speed variability; degenerate uniform preserves rng streams + prior fingerprint; supersedes the 90-103.2 band from the 2026-07-17 60-mph design change)
 
 Spec-pending warnings (counted, not failures):
 

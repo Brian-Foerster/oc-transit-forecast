@@ -272,19 +272,29 @@ ASSUMPTIONS = {
         "logged": None, "upgrade": "diverted-mode survey / STOPS",
     },
     "v_cruise": {
-        "title": "grade-separated cruise speed (ALM)",
+        "title": "grade-separated cruise speed (ALM; pinned owner design value)",
         "tier": "prior", "status": "active",
-        "value": (90.0, 103.2, "uni"), "order": 17, "units": "km/h",
+        "value": (96.56064, 96.56064, "uni"), "order": 17, "units": "km/h",
         "basis": "judgment",
         "history": [("2026-07-11", (70.0, 90.0, "uni"), "literature",
                      "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca"),
                     ("2026-07-17", (90.0, 103.2, "uni"), "judgment",
                      "owner decision: design top speed 60 mph; band = "
-                     "delivery/degraded-ops uncertainty around the design value")],
+                     "delivery/degraded-ops uncertainty around the design value"),
+                    ("2026-07-18", "(96.56064, 96.56064, uni) — pinned at "
+                     "60.000 mph exactly", "judgment",
+                     "owner decision 2026-07-18: no cruise-speed variability; "
+                     "degenerate uniform preserves rng streams + prior "
+                     "fingerprint; supersedes the 90-103.2 band from the "
+                     "2026-07-17 60-mph design change")],
         "provenance": "REM-class automated-light-metro cruise speed; owner design "
-                      "decision 2026-07-17 sets the top speed to 60 mph outright "
-                      "(central 96.6 km/h), the band spanning delivery / degraded-"
-                      "ops uncertainty; derived average speed (spec 02 s4.9 R6)",
+                      "decision 2026-07-18 PINS the cruise speed at 60.000 mph "
+                      "exactly (96.56064 km/h = 60 x 1.609344) with ZERO "
+                      "variability -- a degenerate uniform (lo == hi) kept in the "
+                      "prior tier so the rng stream ordering and the committed "
+                      "prior-order fingerprint are preserved; the lo/hi "
+                      "sensitivity rows are expected 0.0%; derived average speed "
+                      "(spec 02 s4.9 R6)",
         "rows": "auto", "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "vehicle procurement spec / observed REM telemetry",
     },

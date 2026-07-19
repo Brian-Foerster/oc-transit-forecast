@@ -911,7 +911,7 @@
     },
     {
       "basis": "judgment",
-      "effect_pct": 0.4,
+      "effect_pct": 0.5,
       "id": "dirichlet_strength",
       "rows": [
         [
@@ -1419,12 +1419,6 @@
     {
       "basis": "judgment",
       "extras_pct": null,
-      "id": "v_cruise",
-      "tornado_pct": 0.3
-    },
-    {
-      "basis": "judgment",
-      "extras_pct": null,
       "id": "s0v",
       "tornado_pct": 0.3
     },
@@ -1450,6 +1444,12 @@
       "basis": "judgment",
       "extras_pct": null,
       "id": "pcarv",
+      "tornado_pct": 0.0
+    },
+    {
+      "basis": "judgment",
+      "extras_pct": null,
+      "id": "v_cruise",
       "tornado_pct": 0.0
     },
     {
@@ -1624,6 +1624,12 @@
           ],
           "judgment",
           "owner decision: design top speed 60 mph; band = delivery/degraded-ops uncertainty around the design value"
+        ],
+        [
+          "2026-07-18",
+          "(96.56064, 96.56064, uni) — pinned at 60.000 mph exactly",
+          "judgment",
+          "owner decision 2026-07-18: no cruise-speed variability; degenerate uniform preserves rng streams + prior fingerprint; supersedes the 90-103.2 band from the 2026-07-17 60-mph design change"
         ]
       ],
       "id": "v_cruise"
@@ -1631,36 +1637,36 @@
   ],
   "width_sensitivities": [
     {
-      "band": 4062.685670085255,
-      "band_delta": 1.589338404872251,
+      "band": 4060.946642770632,
+      "band_delta": 1.4579660721938126,
       "corridor": "harbor",
       "id": "dirichlet_half",
       "label": "Dirichlet concentration x0.5 (all 4 sites: looser bin shapes)",
       "pct_of_headline_band": 0.04
     },
     {
-      "band": 4043.8255641166816,
-      "band_delta": -17.270767563701156,
+      "band": 4040.738792190323,
+      "band_delta": -18.74988450811543,
       "corridor": "harbor",
       "id": "dirichlet_double",
       "label": "Dirichlet concentration x2 (all 4 sites: tighter bin shapes)",
-      "pct_of_headline_band": -0.43
+      "pct_of_headline_band": -0.46
     },
     {
-      "band": 4055.295680194433,
-      "band_delta": -5.800651485949857,
+      "band": 4050.700748927042,
+      "band_delta": -8.787927771396426,
       "corridor": "harbor",
       "id": "s0se_half",
       "label": "S0 lognormal jitter x0.5 (tighter base-share draws)",
-      "pct_of_headline_band": -0.14
+      "pct_of_headline_band": -0.22
     },
     {
-      "band": 4090.33354305345,
-      "band_delta": 29.23721137306711,
+      "band": 4091.6446913100735,
+      "band_delta": 32.15601461163533,
       "corridor": "harbor",
       "id": "s0se_double",
       "label": "S0 lognormal jitter x2 (wider base-share draws)",
-      "pct_of_headline_band": 0.72
+      "pct_of_headline_band": 0.79
     },
     {
       "band": 2288.192193850932,
