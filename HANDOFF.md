@@ -323,6 +323,24 @@ numpy/pandas/matplotlib (requirements.txt); model runs take seconds
 4. New visitor demand (tourists not already riding) is unmodeled upside.
 5. ~~No GitHub remote~~ **Closed 2026-07-08:** pushed to
    https://github.com/Brian-Foerster/oc-transit-forecast (private).
+6. **Stage-1 screen v2.1 rebuild campaign (PRE-REGISTERED, spec 01 §9,
+   2026-07-20).** The §5 tripwire failed at landing (ordinal_ok=FALSE;
+   README issues 35–37), so the input stack is being rebuilt under a
+   pre-registration written before any new data is fitted. Phases:
+   (a) acquisition — vintage-matched LODES OD+WAC 2017/2019, ACS
+   B25044/B01003 2013-17 + 2015-19, TIGER 2010 block centroids,
+   archived OCTA GTFS (~FY2017/~FY2019; the 6 discontinued routes
+   re-enter the fit), optional EPA SLD (spec 01 §9.6 manifest — status
+   column filled by acquisition reports, provenance sidecars under
+   data/raw/); (b) rebuild — block-centroid catchments, per-year X
+   vintages, generator-jobs b4 replacing the hand-coded dummy, swaps
+   only from the §9.1 pre-registered list; (c) verdict — the SAME §5
+   tripwire; if the demand block still fails, the threshold shortlist
+   becomes the screen's PERMANENT decision output and stage-1 ordinal
+   ranking is declared out of reach for OC data (§9.5 — no v2.2, no
+   predictor shopping). Registry entries for the new knobs are OWED to
+   the consolidation pass that owns scripts/assumptions.py (list in
+   spec 01 §9.7).
 
 (Closed 2026-07: knife-edge smoothing — rider-position quadrature;
 time-of-day — 5/10 peak/off design; sub-half-mile market — intra-tract

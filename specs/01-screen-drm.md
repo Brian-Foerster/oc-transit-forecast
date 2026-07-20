@@ -1,7 +1,8 @@
 # Spec 01 — Stage 1: Direct-Demand Regression Screen
 
 Status: panel-revised 2026-07-18 (3-lens adversarial panel; 9 blocking
-findings adjudicated) · BUILD IN PROGRESS
+findings adjudicated) · BUILD IN PROGRESS · §9 v2.1 rebuild
+PRE-REGISTERED 2026-07-20 (before any new data fitted)
 (prototype: the 13-arterial screen, summarized in HANDOFF.md "Dropped
 work"; superseded draft: 2026-07-08)
 
@@ -555,3 +556,152 @@ resolutions, briefly):
 - Q11 (no registry integration): §5b, in the same branch as the code.
 - Q12 (buffer_mi collision with landed disposition): unified entry,
   history transition, check-7 citations throughout (§5b).
+
+## 9. v2.1 rebuild — PRE-REGISTRATION (amendment 2026-07-20; written BEFORE any new data is fitted)
+
+**This section is a pre-registration document. It is committed
+2026-07-20, before any v2.1 input has been fitted — before most of it
+has even been downloaded. That timing is the section's entire
+epistemic value: the predictor set, catchment rule, fit-data vintages,
+fit universe, and decision rule below are fixed while the rebuilt
+fit's numbers are unknown, so a later pass or fail cannot be narrated
+as a choice made after seeing the results.**
+
+Context. The §5 tripwire measured ordinal_ok = FALSE at landing
+(README known issues 35–37): min demand-block |t| = 0.81 (b2), min
+battery rho = 0.39 (buffer_lo), top-8 churn 8. The external critique's
+trace attributes this in part to v2.0 input mechanics — one
+time-invariant 2022/2023 X cross-section explaining three boardings
+years, a saturated hand-coded generator dummy, tract-resolution
+catchments, and a fit universe missing the six discontinued routes.
+v2.1 rebuilds those inputs and NOTHING else: §3's estimator,
+clustering, bootstrap, index definition and output guardrails, §3.4's
+uncertainty machinery, and §5's tripwire all govern the rebuilt fit
+unchanged, at unchanged df discipline.
+
+### 9.1 Pre-registered PRIMARY predictor set
+
+5 slopes + intercept + 2 year FE, exactly as §3.1:
+
+- **b1** log1p(LODES both-ends-in flows, VINTAGE-MATCHED (9.3),
+  block-buffer catchment (9.2))
+- **b2** log1p(ACS B25044 zero-vehicle HOUSEHOLDS in catchment) —
+  replaces B08141 E002 zero-vehicle workers as the headline
+  car-access predictor
+- **b3** log(annual revenue hours) — allocation control, UNCHANGED;
+  the §1 endogeneity firewall and the `drop_rh` row carry over intact
+- **b4** log1p(generator jobs: LODES WAC jobs in NAICS
+  education + health care + accommodation/arts-entertainment within
+  the catchment) — a measured, continuous magnitude REPLACING the
+  saturated hand-coded binary generator dummy
+- **b5** log(length mi) — unchanged
+
+Pre-registered SWAP rows (sensitivity battery only, NEVER headline):
+
+| swap row | replaces | with |
+|---|---|---|
+| `popden_swap` | b1 | log1p(B01003 population / ALAND density in catchment) |
+| `e016_swap` | b2 | legacy B08141 E016 transit workers (carried over from §5b) |
+| `e002_swap` | b2 | legacy B08141 E002 zero-vehicle workers (the v2.0 headline) |
+| `sld_swap` | b1+b2 demand block | EPA SLD D-index aggregate — ONLY IF the SLD is acquired; the row drops silently from the battery otherwise |
+| `gen_dummy_swap` | b4 | legacy binary special-generator dummy (config/special_generators.json) |
+
+No other predictor may enter the rebuilt fit — see the 9.5
+no-shopping rule.
+
+### 9.2 Catchment v2.1: block resolution
+
+Membership rule: a census BLOCK is in the catchment iff its centroid's
+|offset| <= 0.9 [buffer_mi] AND its projected position lies in
+[w0, w1] (clipped to the window) — the §3.2 rule verbatim, applied at
+block rather than tract resolution. Blocks are small enough relative
+to a 0.9-mi buffer that the centroid test approximates full
+buffer-polygon intersection; that approximation is a stated property
+of the rule, not a hidden one, and no polygon-intersection variant is
+pre-registered. The `buffer_mi` entry keeps its single §5b identity,
+band (0.5, 1.25), and the SAME `buffer_lo`/`buffer_hi` rescan rows.
+
+### 9.3 Fit data v2.1: vintage-matched X
+
+Each boardings year receives its own predictor vintage:
+
+| boardings year | LODES (OD + WAC) | ACS 5-year |
+|---|---|---|
+| FY2017 | 2017 vintage | 2013–2017 |
+| FY2019 | 2019 vintage | 2015–2019 |
+| FY2020-Q3 | 2019 vintage | 2015–2019 |
+
+Route-years therefore stop collapsing onto one cross-section: X varies
+within route across years, and the year FE stop absorbing pure vintage
+drift. CONDITION (pre-registered): leave-one-YEAR-out rank stability
+returns to the §5 battery — reversing the SC-batch demotion — IF AND
+ONLY IF the fitted X actually varies by year, verified mechanically
+(the fit prints per-predictor within-route across-year variance; if a
+source cannot be acquired at the matching vintage and X remains
+effectively time-invariant, the check keeps its demoted
+consistency-check label and stays excluded from tripwire
+criterion (ii)).
+
+### 9.4 Fit-side universe: archived GTFS (explicit asymmetry)
+
+FIT side: contemporaneous archived GTFS shapes (transitfeeds.com /
+mobilitydatabase.org snapshots matching each boardings year), so the
+six discontinued routes — 24, 82, 153, 53X, 57X, 64X — RE-ENTER the
+fit and the §2/§7 survivorship drop is removed; the model finally sees
+the fundamentals-poor failures. SCAN side: stays on CURRENT (2026-07)
+GTFS — candidates must be buildable today. This asymmetry is
+deliberate and stated: the fit learns from the historical network
+including its failures; the scan ranks only windows that exist on
+today's geometry. The shared `compute_predictors` discipline (§3.2)
+is unchanged on both sides; the Route 43 fit==scan identity test is
+evaluated on the snapshot pair the two sides actually share
+(43's archived shape vs its current shape is itself a printed
+diagnostic, not an assumed identity).
+
+### 9.5 Decision rule (pre-committed)
+
+The §5 tripwire — `screen_t_min` / `screen_battery_rho_min` /
+`screen_top8_churn_max`, pending owner ratification — governs the
+rebuilt output IDENTICALLY: same thresholds, same three criteria, same
+mechanized `decision_output` block. PRE-COMMITTED interpretation: if
+the rebuilt demand block STILL fails the tripwire, the screen's
+PERMANENT decision output is the threshold shortlist plus the
+measured-indicator table (rank_ci, tie_with_cutoff, underservice_flag,
+leverage_flag), and the pipeline treats stage-1 ordinal ranking as OUT
+OF REACH for OC data — the external critique's structural suggestion,
+adopted verbatim. There is no v2.2: no post-hoc predictor shopping
+beyond the 9.1 pre-registered swaps, no threshold re-tuning after
+seeing the rebuilt numbers, no third rebuild of the input stack.
+
+### 9.6 Acquisition manifest
+
+Status column to be filled by the acquisition reports (per-file
+provenance sidecars under `data/raw/`; raw files stay untracked).
+
+| # | Source | Vintage | Geography | Feeds | Status |
+|---|---|---|---|---|---|
+| 1 | LODES OD (lehd.ces.census.gov, LODES7) | 2017, 2019 | CA blocks (2010 geography), OC subset | b1 vintage-matched both-ends flows | pending |
+| 2 | LODES WAC (lehd.ces.census.gov, LODES7) | 2017, 2019 | CA blocks (2010), OC subset | b4 generator jobs (NAICS edu + health + accomm/arts) | pending |
+| 3 | ACS B25044 zero-vehicle households (census.gov summary files / api) | 2013–17, 2015–19 | OC tracts/block groups (finest published) | b2 | pending |
+| 4 | ACS B01003 population + ALAND | 2013–17, 2015–19 | OC tracts | `popden_swap` row | pending |
+| 5 | TIGER block centroids + ALAND (census.gov) | 2010 blocks (LODES7-matching) | OC blocks | 9.2 catchment membership | pending |
+| 6 | Archived OCTA GTFS (transitfeeds.com / mobilitydatabase.org) | ~FY2017, ~FY2019 snapshots | OCTA network | 9.4 fit-side shapes incl. discontinued routes | pending |
+| 7 | EPA Smart Location Database (conditional) | latest | OC block groups | `sld_swap` row only | conditional — row drops if not acquired |
+| 8 | CDE enrollment / NHTS context (cde.ca.gov, nhts) | latest | OC | logged context / b4 cross-check ONLY — never a predictor (9.7) | optional |
+
+### 9.7 What v2.1 does NOT do
+
+One paragraph, binding: v2.1 adds NO networked scoring — windows are
+still scored in isolation, and transfers/feeder interaction remain the
+sequencing harness's job (spec 07); it builds NO non-commute demand
+model — CDE enrollment and NHTS trip-purpose data enter only insofar
+as the b4 generator-jobs term proxies non-commute attraction, or as
+logged context in the fit diagnostics, never as predictors; and the §1
+endogeneity confession is UNCHANGED — vintage-matched X does not
+identify fundamentals separately from service history, b3 remains an
+allocation control that is never read causally, and no prediction at
+any counterfactual service level is published. Registry entries for
+the new knobs (vintage-match structure, generator-jobs NAICS set,
+block-catchment transition, archived-GTFS data vintages, swap-row
+structural claims) land with the build branch per the §5b / A3 / W1 /
+N4 pattern — a later consolidation pass owns `scripts/assumptions.py`.
