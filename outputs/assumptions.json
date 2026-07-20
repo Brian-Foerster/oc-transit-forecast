@@ -1,9 +1,9 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 61,
-    "literature": 9,
-    "locally-calibrated": 1,
+    "judgment": 64,
+    "literature": 10,
+    "locally-calibrated": 2,
     "measured": 30
   },
   "dispositions": [
@@ -146,6 +146,16 @@
       "id": "gtfs_2026_07",
       "no_row_reason": "covered-elsewhere:rapid_gtfs",
       "tier": "data"
+    },
+    {
+      "accepted": [
+        "R2 review fix 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "judgment",
+      "id": "induced_gc_clip",
+      "no_row_reason": "non-binding:review-2026-07-20",
+      "tier": "constant"
     },
     {
       "accepted": [
@@ -483,16 +493,6 @@
         "2026-07-11"
       ],
       "basis": "measured",
-      "id": "upt_fy2013_mb",
-      "no_row_reason": "covered-elsewhere:543_launch14_s500",
-      "tier": "constant"
-    },
-    {
-      "accepted": [
-        "owner-directive 2026-07-11",
-        "2026-07-11"
-      ],
-      "basis": "measured",
       "id": "upt_fy2017_mb",
       "no_row_reason": "covered-elsewhere:543_launch14_s500",
       "tier": "constant"
@@ -680,6 +680,30 @@
       "tier": "structural"
     },
     {
+      "basis": "literature",
+      "effect_pct": 24.8,
+      "id": "induced_eps",
+      "rows": [
+        [
+          "harbor",
+          "induced_lo"
+        ],
+        [
+          "harbor",
+          "induced_hi"
+        ],
+        [
+          "streetcar",
+          "induced_lo"
+        ],
+        [
+          "streetcar",
+          "induced_hi"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
       "basis": "measured",
       "effect_pct": 21.1,
       "id": "streetcar_anchor",
@@ -694,6 +718,38 @@
         ]
       ],
       "tier": "config"
+    },
+    {
+      "basis": "locally-calibrated",
+      "effect_pct": 19.2,
+      "id": "asc_calibrated_launch",
+      "rows": [
+        [
+          "harbor",
+          "asc_premium_10"
+        ],
+        [
+          "harbor",
+          "asc_premium_15"
+        ],
+        [
+          "harbor",
+          "asc_premium_20"
+        ],
+        [
+          "streetcar",
+          "asc_premium_10"
+        ],
+        [
+          "streetcar",
+          "asc_premium_15"
+        ],
+        [
+          "streetcar",
+          "asc_premium_20"
+        ]
+      ],
+      "tier": "constant"
     },
     {
       "basis": "judgment",
@@ -734,6 +790,38 @@
         ]
       ],
       "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 16.2,
+      "id": "gamma_t",
+      "rows": [
+        [
+          "harbor",
+          "gamma_07"
+        ],
+        [
+          "harbor",
+          "gamma_08"
+        ],
+        [
+          "harbor",
+          "gamma_09"
+        ],
+        [
+          "streetcar",
+          "gamma_07"
+        ],
+        [
+          "streetcar",
+          "gamma_08"
+        ],
+        [
+          "streetcar",
+          "gamma_09"
+        ]
+      ],
+      "tier": "structural"
     },
     {
       "basis": "judgment",
@@ -782,6 +870,30 @@
         ]
       ],
       "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 8.1,
+      "id": "softmax_theta",
+      "rows": [
+        [
+          "harbor",
+          "theta_01"
+        ],
+        [
+          "harbor",
+          "theta_02"
+        ],
+        [
+          "streetcar",
+          "theta_01"
+        ],
+        [
+          "streetcar",
+          "theta_02"
+        ]
+      ],
+      "tier": "structural"
     },
     {
       "basis": "judgment",
@@ -1378,6 +1490,18 @@
     {
       "basis": "measured",
       "effect_pct": null,
+      "id": "upt_fy2013_mb",
+      "rows": [
+        [
+          "abc",
+          "543_launch_bt_s507"
+        ]
+      ],
+      "tier": "constant"
+    },
+    {
+      "basis": "measured",
+      "effect_pct": null,
       "id": "upt_fy2014_mb",
       "rows": [
         [
@@ -1388,7 +1512,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 126,
+  "n_entries": 131,
   "priors": [
     {
       "basis": "judgment",
@@ -1526,10 +1650,10 @@
   ],
   "tier_census": {
     "config": 14,
-    "constant": 73,
+    "constant": 76,
     "data": 5,
     "prior": 19,
-    "structural": 15
+    "structural": 17
   },
   "values": {
     "default_fare": 2.0,
@@ -1544,6 +1668,7 @@
         "543_launch_s350",
         "543_launch_s800",
         "543_launch14_s500",
+        "543_launch_bt_s507",
         "543_matured_s500"
       ]
     },
@@ -1671,6 +1796,23 @@
         ]
       ],
       "id": "special_generators"
+    },
+    {
+      "history": [
+        [
+          "2026-07-11",
+          51067292,
+          "measured",
+          "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db"
+        ],
+        [
+          "2026-07-20",
+          51067292,
+          "measured",
+          "R2 batch: value unchanged; entry gains the 543_launch_bt_s507 back-trend-BAND kernel row (the standing README-issue-13 promise that the vintage factor's uncertainty be carried explicitly, not only as the discrete FY2014 alternative)"
+        ]
+      ],
+      "id": "upt_fy2013_mb"
     },
     {
       "history": [

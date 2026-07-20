@@ -6,11 +6,11 @@ round-trip checks read the generated gz, so run the exports first:
     python test_bca_export.py
 
   - test_abc_weights_normalize: the refactored abc_weights returns per-kernel
-    weights that sum to 1, one array per label (all five launch/matured
+    weights that sum to 1, one array per label (all six launch/matured
     kernels), tighter sigma concentrating more mass near mu (fast; no file).
   - test_schema_shape(name): every §3 key is present with the right array
     lengths (N) and float dtype; abc_weights present iff a calibration target
-    exists (harbor yes -> all five kernel labels from reweight_abc, streetcar
+    exists (harbor yes -> all six kernel labels from reweight_abc, streetcar
     no -> absence reason instead). The 15 streams include the FB-batch
     vot_behav per-draw behavioral-VOT stream, checked finite + inside the
     registry prior band (val('vot_behav')) + scenario-invariant.
@@ -83,7 +83,10 @@ def test_abc_weights_normalize():
     w = abc_weights(pred, kernels)
     labels = {lbl for lbl, _, _ in kernels}
     assert set(w) == labels, set(w)
-    assert len(w) == 5, len(w)                     # two launch, launch14, matured
+    # R2 batch: 5 -> 6 with the back-trend-BAND kernel 543_launch_bt_s507
+    # (three launch-width, launch14, launch_bt, matured). Updating this pinned
+    # count is the explicit act of appending a kernel.
+    assert len(w) == 6, len(w)
     for lbl, v in w.items():
         assert v.shape == (1000,), (lbl, v.shape)
         assert abs(v.sum() - 1.0) < 1e-12, (lbl, v.sum())
@@ -125,7 +128,7 @@ def test_schema_shape(name):
     assert len(e["params"]["anchor"]) == N
     if name == "harbor":
         assert set(e["abc_weights"]) == {lbl for lbl, _, _ in get_kernels()}
-        assert len(e["abc_weights"]) == 5, len(e["abc_weights"])
+        assert len(e["abc_weights"]) == 6, len(e["abc_weights"])   # R2: +launch_bt
         assert all(len(v) == N for v in e["abc_weights"].values())
         assert "abc_weights_absent_reason" not in e
         # routes_removed is top-level; base_service is ONLY rev_hours_weekday

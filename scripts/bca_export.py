@@ -39,7 +39,7 @@ EQ_DAYS = val("eq_days")              # weekday->annual band (anchor_from_apc co
 
 # ABC kernels for a corridor that has a backtest target: (label, mu, sigma),
 # central first. Imported from reweight_abc (single source of truth) so the
-# export carries exactly the same five launch/matured kernels the calibration
+# export carries exactly the same six launch/matured kernels the calibration
 # writes -- no hardcoded labels here.
 HARBOR_KERNELS = get_kernels()
 

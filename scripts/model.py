@@ -59,6 +59,16 @@ S0_CLIP_LO, S0_CLIP_HI = val("s0_pivot_clip")  # S0 pivot clips (1e-6 floor, 0.9
 SUBCELL_MERGE_DECIMALS = val("subcell_merge_decimals")  # round(W, 9) sub-cell merge epsilon
 WALK_SPREAD_TASTE, WALK_SPREAD_WEIGHTS = val("walk_spread_grid")  # +/-15% walk-taste grid
 NONWORK_TILT_L = val("nonwork_tilt_l")   # non-work shorter-trip exp-tilt scale (mi)
+# spec 02 §4.5b: induced-demand elasticity band for the "with induced demand"
+# SIDE COLUMN (registry-owned; eps ~ U(lo, hi) per draw on a third SeedSequence
+# child stream -- NOT a PRIORS key, so the prior-order fingerprint and every
+# committed draw are untouched). Never the headline, never a gate criterion.
+INDUCED_EPS_LO, INDUCED_EPS_HI = val("induced_eps")
+# generalized-cost-ratio clip for the induced multiplier (GC1/GC0 in utility
+# units; both logsums are negative in practice -- the clip is a numerical
+# guard, not an assumption doing work at central). Registry-owned (R2 review
+# fix: was a bare literal), matching the s0_pivot_clip idiom above.
+INDUCED_GC_CLIP = val("induced_gc_clip")
 # spec 08 A2b: the four Dirichlet bin-shape concentrations (walk/transfer/
 # visitor/car-frac), single-sourced from the registry (was four bare literals
 # 300/300/100/400 in run()). dirichlet_strength is now a constant-tier entry;
@@ -339,6 +349,17 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
     else:   # pins still apply on top of shared draws
         p = {k: (np.full(n, float(over[k])) if k in over else v)
              for k, v in params.items()}
+    # spec 02 §4.5b: induced-demand elasticity draws for the side column, on a
+    # THIRD SeedSequence child (children 0/1 are draw_params / run's jitter
+    # stream, untouched -- spawn keys are index-deterministic, so a fresh
+    # spawn(3)[2] never perturbs them). over-key "induced_eps" pins it (the
+    # induced_lo/induced_hi rows); same seed => common random numbers.
+    ieps = (np.full(n, float(over["induced_eps"])) if "induced_eps" in over
+            else np.random.default_rng(np.random.SeedSequence(seed).spawn(3)[2])
+                 .uniform(INDUCED_EPS_LO, INDUCED_EPS_HI, n))
+    # spec 02 §4.5a: nonlinear-time damping exponent (gamma rows); None =
+    # headline linear path, byte-identical (separate branch in util()).
+    gamma_t = over.get("gamma_t")
     anchor = (np.full(n, float(over["anchor"])) if "anchor" in over
               else rng.uniform(cfg["anchor_low"], cfg["anchor_high"], n))
     # spec 07 §4.2 anchor adjustment: an (n,) network term added AFTER the
@@ -404,7 +425,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         # inv_v[id(svc)] is 60/speed in min/mi, pre-shaped to broadcast against
         # (n, cells): a python scalar for exogenous services (old path, bitwise
         # unchanged) or an (n, 1) per-draw column where speed is derived.
-        u = (p["bivt"][:, None] * dists[None, :] * inv_v[id(svc)]
+        # spec 02 §4.5a: gamma rows damp the IVT term to bivt*t^gamma (IVT
+        # minutes only; walk/wait keep the ovt weighting). The gamma_t=None
+        # headline path keeps the ORIGINAL expression (same association
+        # order), so it is bitwise unchanged.
+        if gamma_t is None:
+            u_ivt = p["bivt"][:, None] * dists[None, :] * inv_v[id(svc)]
+        else:
+            u_ivt = (p["bivt"][:, None]
+                     * (dists[None, :] * inv_v[id(svc)]) ** gamma_t)
+        u = (u_ivt
              + bwait[:, None] * (wait_of(svc, market, h)[:, None]
                                  + walk_min[None, :]))
         if is_new:
@@ -494,6 +524,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             m = us.max(axis=0)
             ls = m + np.log(np.exp(us - m).sum(axis=0))
             pnew = np.exp(us[0] - ls) if svcs[0][1] else None
+            return ls, pnew
+        # spec 02 §4.5d: small-theta softmax rows -- the principled middle
+        # between the hard max (headline) and the theta=1 variety logsum:
+        # genuine idiosyncratic taste without the full variety bonus.
+        # theta -> 0 recovers the hard max.
+        th = over.get("softmax_theta")
+        if th:
+            m = us.max(axis=0)
+            ls = m + th * np.log(np.exp((us - m) / th).sum(axis=0))
+            pnew = np.exp((us[0] - ls) / th) if svcs[0][1] else None
             return ls, pnew
         best = us.max(axis=0)
         pnew = (us[0] >= best - TIE_EPS).astype(float) if svcs[0][1] else None
@@ -615,10 +655,25 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             # (dfare==0), same as fare_burden; no rng.
             fr_infra = (P * S0 * dfare).sum(axis=(1, 2))
             fr_margin = (P * dS * dfare).sum(axis=(1, 2))
+            # spec 02 §4.5b: induced-demand SIDE-COLUMN masses. Per-cell
+            # total-demand multiplier M = (GC1/GC0)^-eps with GC measured by
+            # the transit choice-model utility: GC = -ls/bivt > 0, so
+            # GC1/GC0 = ls1/ls0 (bivt cancels; both logsums are negative in
+            # practice -- the denominator floor and the ratio clip are
+            # numerical guards only). Applied to the POST-PIVOT transit mass
+            # (market creation on top of mode shift, the construction the
+            # headline pivot deliberately excludes -- spec 02 §1); fold cells
+            # that lose accessibility get M < 1 (honest suppression). Consumes
+            # NO rng; never the headline.
+            gc = np.clip(ls1 / np.minimum(ls0, -1e-9), *INDUCED_GC_CLIP)
+            Mi = gc[:, :, None] ** (-ieps[:, None, None])
+            ni = (P * S1 * Mi).sum(axis=(1, 2))
+            ni_new = (P * S1 * pn * Mi).sum(axis=(1, 2))
             out[scen] = ((P * S1).sum(axis=(1, 2)),
                          (P * S1 * pn).sum(axis=(1, 2)),
                          um_infra, um_margin, um0_infra, um0_margin,
-                         dcm, dcm_od, fb, um_roh_margin, fr_infra, fr_margin)
+                         dcm, dcm_od, fb, um_roh_margin, fr_infra, fr_margin,
+                         ni, ni_new)
             den = (P * S0).sum(axis=(1, 2))
         return out, den
 
@@ -658,6 +713,9 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         # equals um_infra by definition and is aliased in run().
         um_roh_m = {scen: 0.0 for scen in systems}
         frc = {scen: [0.0, 0.0] for scen in systems}
+        # spec 02 §4.5b: induced-demand side-column numerators [total, newline]
+        # ((n,), like num/num_new; same wgt/fx/fv blend). Never the headline.
+        ind = {scen: [0.0, 0.0] for scen in systems}
         den = fx = fv = None
         for period, wgt in periods:
             mk_w, den_w = market_terms("walk", cor.wd, wwA, period)
@@ -693,9 +751,15 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                     frc[scen][j] = frc[scen][j] + wgt * (
                         mk_w[scen][10 + j] + fx * mk_x[scen][10 + j]
                         + fv * mk_v[scen][10 + j])
-        return num, num_new, den, um, cm, fb, um_roh_m, frc
+                # spec 02 §4.5b: induced side-column numerators (idx 12/13)
+                for j in (0, 1):
+                    ind[scen][j] = ind[scen][j] + wgt * (
+                        mk_w[scen][12 + j] + fx * mk_x[scen][12 + j]
+                        + fv * mk_v[scen][12 + j])
+        return num, num_new, den, um, cm, fb, um_roh_m, frc, ind
 
-    num, num_new, den, um, cm, fb, um_roh_m, frc = system_response(ww, xw, vw)
+    num, num_new, den, um, cm, fb, um_roh_m, frc, ind = \
+        system_response(ww, xw, vw)
     rshort = None
     if over.get("nonwork_short"):
         # sensitivity probe: LODES is commute-only, so the non-work market
@@ -706,9 +770,9 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
             t = w * np.exp(-d / L)[None, :]
             return t / t.sum(axis=1, keepdims=True)
         # welfare/car-mile/fare-burden/receipts exports are main-path only
-        # (B1/B2/D3/W1); the tilted umS/cmS/fbS/rohS/frcS are a future export
-        # design point (D8), dropped.
-        numS, _, denS, _, _, _, _, _ = system_response(
+        # (B1/B2/D3/W1); the tilted umS/cmS/fbS/rohS/frcS/indS are a future
+        # export design point (D8), dropped.
+        numS, _, denS, _, _, _, _, _, _ = system_response(
             tilt(ww, cor.wd), tilt(xw, cor.xd), vw)
         rshort = {scen: numS[scen] / denS for scen in systems}
 
@@ -718,7 +782,16 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
         r_nw = r_work if rshort is None else rshort[scen]
         ratio = p["ws"] * r_work + (1 - p["ws"]) * (1 + p["kappa"] * (r_nw - 1))
         newshare = num_new[scen] / num[scen]
-        out[scen] = {"ratio": ratio, "newshare": newshare}
+        # spec 02 §4.5b: induced side column -- same ws/kappa blend, but the
+        # non-work leg uses the induced work response directly (the
+        # nonwork_short tilt probe is a separate one-at-a-time row and is
+        # never combined with the induced column).
+        r_work_i = ind[scen][0] / den
+        ratio_i = (p["ws"] * r_work_i
+                   + (1 - p["ws"]) * (1 + p["kappa"] * (r_work_i - 1)))
+        newshare_i = ind[scen][1] / ind[scen][0]
+        out[scen] = {"ratio": ratio, "newshare": newshare,
+                     "ratio_ind": ratio_i, "newshare_ind": newshare_i}
 
     res = {}
     for label, cap in ENVELOPES:
@@ -765,15 +838,35 @@ def run(cor, n=N, seed=42, linear_wait=False, no_transfer=False,
                                         / np.abs(p["bivt"]))
             d[scen]["fare_receipts_infra"] = anchor * (frc[scen][0] / den)
             d[scen]["fare_receipts_margin"] = anchor * (frc[scen][1] / den)
+            # spec 02 §4.5b: induced side column -- market creation on top of
+            # the pivot; clearly labeled, never the headline. Same envelope
+            # cap clamp as the headline ratio (R2 review fix: cap is None for
+            # today's single uncapped envelope, so this is byte-identical --
+            # but the column no longer silently ignores a future cap).
+            r_i = out[scen]["ratio_ind"]
+            rc_i = r_i if cap is None else np.minimum(r_i, 1 + cap)
+            d[scen]["newline_induced"] = (anchor * rc_i
+                                          * out[scen]["newshare_ind"])
         blend_ev = 0.5 * (d["fold"]["newline"] + d["retain"]["newline"])
-        blend = np.where(rng.random(n) < 0.5,
-                         d["fold"]["newline"], d["retain"]["newline"])
+        # the SAME single rng.random(n) consumption as before (byte-identical
+        # streams); the coin is shared with the induced side column -- the
+        # fold/retain operator decision is one decision, not two.
+        coin = rng.random(n) < 0.5
+        blend = np.where(coin, d["fold"]["newline"], d["retain"]["newline"])
         d["blend"], d["blend_ev"] = blend, blend_ev
+        d["blend_induced"] = np.where(coin, d["fold"]["newline_induced"],
+                                      d["retain"]["newline_induced"])
+        d["blend_induced_ev"] = 0.5 * (d["fold"]["newline_induced"]
+                                       + d["retain"]["newline_induced"])
         res[label] = d
     res["ratio_fold"] = out["fold"]["ratio"]
     res["ratio_retain"] = out["retain"]["ratio"]
     res["newshare_retain"] = out["retain"]["newshare"]
     res["params"], res["anchor"] = p, anchor
+    # spec 02 §4.5b: the side-column eps draws, exposed for reporting -- kept
+    # OUT of res["params"] deliberately (the bca_export params block and its
+    # N_PRIORS+1 contract must not grow: eps is not a PRIORS key).
+    res["induced_eps"] = ieps
     return res
 
 
@@ -876,6 +969,30 @@ def main(path):
         print(f"{label:>10} | {pct(d['fold']['newline'], 50):16,.0f} "
               f"{pct(d['retain']['newline'], 50):10,.0f} | "
               f"{pct(b, 10):9,.0f} {pct(b, 50):7,.0f} {pct(b, 90):7,.0f}")
+    # spec 02 §4.5b: the "with induced demand" SIDE COLUMN -- market creation
+    # (total-demand elasticity eps ~ U(0.1, 0.3) to the transit generalized-
+    # cost change) on top of the pivot's frozen-market response. Clearly
+    # labeled; NEVER the headline and NEVER a gate criterion.
+    du = res["uncapped"]
+    bi = du["blend_induced"]
+    induced_column = {
+        "eps_prior": [INDUCED_EPS_LO, INDUCED_EPS_HI, "uni (side column only)"],
+        "fold": [pct(du["fold"]["newline_induced"], q) for q in (10, 50, 90)],
+        "retain": [pct(du["retain"]["newline_induced"], q) for q in (10, 50, 90)],
+        "blend": [pct(bi, 10), pct(bi, 50), pct(bi, 90)],
+        "note": "side column (spec 02 s4.5b): total-demand elasticity to the "
+                "transit accessibility change, applied to the post-pivot "
+                "transit mass -- market creation OUTSIDE the pivot's "
+                "existing-market construction; never the headline, never a "
+                "gate criterion. Band edges are the induced_lo/induced_hi "
+                "sensitivity rows.",
+    }
+    print(f"{'w/ induced (side col)':>10} | "
+          f"{pct(du['fold']['newline_induced'], 50):16,.0f} "
+          f"{pct(du['retain']['newline_induced'], 50):10,.0f} | "
+          f"{pct(bi, 10):9,.0f} {pct(bi, 50):7,.0f} {pct(bi, 90):7,.0f}"
+          f"   [NEVER the headline: eps~U({INDUCED_EPS_LO:g},"
+          f"{INDUCED_EPS_HI:g}) market creation]")
     o = REFERENCE["optimism"]
     print(f"outside-view accuracy prior (annotation, never a filter): "
           f"{o['name']} -- {o['note']}")
@@ -888,10 +1005,12 @@ def main(path):
     # ---- one-at-a-time sensitivity (uncapped expected blend P50) ----------
     central = {k: (lo + hi) / 2 for k, (lo, hi, _) in PRIORS.items()}
     central["fix_bins"] = 1
-    def point(_cor=None, **kv):
+    def point(_cor=None, stream="blend_ev", **kv):
         # _cor overrides the corridor the point runs against (spec 08 §4
         # rebuilt-variant: the intra_tract_alt row runs central params against a
         # SCRATCH corridor rebuilt with the alternative intra-tract distance rule).
+        # stream selects the reported per-draw array (spec 02 §4.5b: the
+        # induced_lo/induced_hi rows read "blend_induced_ev").
         c = cor if _cor is None else _cor
         kv2 = dict(central); kv2.update({k: v for k, v in kv.items()
                                          if k not in ("cfg_patch",)})
@@ -901,7 +1020,7 @@ def main(path):
                        no_visitor=kv.get("no_visitor", False),
                        **{k: v for k, v in kv2.items()
                           if k not in ("linear_wait", "no_transfer",
-                                       "no_visitor")})["uncapped"]["blend_ev"], 50)
+                                       "no_visitor")})["uncapped"][stream], 50)
     base = point()
     rows = []
     # spec 08 A2/§3: each row carries a stable machine `id` (the join key the
@@ -1001,6 +1120,33 @@ def main(path):
          _cor=_variant_corridor(cor, "buffer_0p5"))
     sens("corridor buffer 0.75 mi (rebuilt inputs)", "buffer_0p75",
          _cor=_variant_corridor(cor, "buffer_0p75"))
+    # ---- spec 02 §4.5 structural risk-pricing rows (R2 batch) --------------
+    # (a) nonlinear time: damped IVT utility bivt*t^gamma, gamma {0.7,0.8,0.9}
+    #     (0.7 added per the 2026-07-08 review -- 0.8/0.9 alone too mild).
+    for g in (0.7, 0.8, 0.9):
+        sens(f"damped IVT utility t^{g:.1f}", f"gamma_{int(round(g * 10)):02d}",
+             gamma_t=g)
+    # (c) ASC transportability: forward ASC = launch-calibrated ASC x premium,
+    #     premium {1.0 (current assumption), 1.5, 2.0} -- the calibration
+    #     experiments are BUS overlays, the forward line is rail-class
+    #     (README issue 14; base = registry asc_calibrated_launch).
+    a0l = val("asc_calibrated_launch")
+    for m in (1.0, 1.5, 2.0):
+        sens(f"asc -> {a0l * m:.3f} (calibrated x{m:g} premium)",
+             f"asc_premium_{int(round(m * 10))}", asc=a0l * m)
+    # (d) choice-structure middle bracket: small-theta softmax between the
+    #     hard max (headline) and the theta=1 variety logsum (-37% row).
+    for th in (0.1, 0.2):
+        sens(f"softmax theta {th:.1f} (choice middle bracket)",
+             f"theta_{int(round(th * 10)):02d}", softmax_theta=th)
+    # (b) induced demand, band-edge rows for the SIDE COLUMN: eps pinned at
+    #     the registry band edges, reading the induced-INCLUSIVE expected
+    #     blend vs the headline base -- so the row pct IS the induced adder.
+    #     The column itself (eps ~ U prior) is reported below, never headline.
+    sens(f"with induced demand, eps={INDUCED_EPS_LO:g} (side column)",
+         "induced_lo", induced_eps=INDUCED_EPS_LO, stream="blend_induced_ev")
+    sens(f"with induced demand, eps={INDUCED_EPS_HI:g} (side column)",
+         "induced_hi", induced_eps=INDUCED_EPS_HI, stream="blend_induced_ev")
 
     print(f"\n--- one-at-a-time sensitivity (central={base:,.0f}, "
           f"uncapped expected blend) ---")
@@ -1118,6 +1264,7 @@ def main(path):
                         "..", "outputs", f"results_{cor.name}.json")
     out = {"config": cfg, "summary": summary,
            "reference": REFERENCE,
+           "induced_column": induced_column,
            "sensitivity": [{"id": i, "label": l, "value": v, "pct": d}
                            for l, v, d, i in rows],
            "sweep": {str(k): sweep[k] for k in keys},

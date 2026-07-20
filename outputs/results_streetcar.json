@@ -321,6 +321,29 @@
       "note": "9 of 10 rail forecasts overestimated; mean overestimation ~106%; 84% off by more than +/-20%"
     }
   },
+  "induced_column": {
+    "eps_prior": [
+      0.1,
+      0.3,
+      "uni (side column only)"
+    ],
+    "fold": [
+      5016.709166495148,
+      6275.305482328491,
+      7870.8109559341465
+    ],
+    "retain": [
+      4622.63184825842,
+      6089.089060081162,
+      7828.667715644816
+    ],
+    "blend": [
+      4823.7834262086835,
+      6185.866268361124,
+      7849.885404362123
+    ],
+    "note": "side column (spec 02 s4.5b): total-demand elasticity to the transit accessibility change, applied to the post-pivot transit mass -- market creation OUTSIDE the pivot's existing-market construction; never the headline, never a gate criterion. Band edges are the induced_lo/induced_hi sensitivity rows."
+  },
   "sensitivity": [
     {
       "id": "anchor_lo",
@@ -681,6 +704,66 @@
       "label": "corridor buffer 0.75 mi (rebuilt inputs)",
       "value": 5712.415870252193,
       "pct": -0.07432259055171593
+    },
+    {
+      "id": "gamma_07",
+      "label": "damped IVT utility t^0.7",
+      "value": 5721.384773466432,
+      "pct": 0.08256790020716245
+    },
+    {
+      "id": "gamma_08",
+      "label": "damped IVT utility t^0.8",
+      "value": 5720.261147031059,
+      "pct": 0.0629126203290811
+    },
+    {
+      "id": "gamma_09",
+      "label": "damped IVT utility t^0.9",
+      "value": 5718.735141362968,
+      "pct": 0.03621863418062562
+    },
+    {
+      "id": "asc_premium_10",
+      "label": "asc -> 0.189 (calibrated x1 premium)",
+      "value": 5653.043553641999,
+      "pct": -1.112905755957688
+    },
+    {
+      "id": "asc_premium_15",
+      "label": "asc -> 0.283 (calibrated x1.5 premium)",
+      "value": 6185.657750131022,
+      "pct": 8.203963952217983
+    },
+    {
+      "id": "asc_premium_20",
+      "label": "asc -> 0.378 (calibrated x2 premium)",
+      "value": 6715.680749187659,
+      "pct": 17.47550657556406
+    },
+    {
+      "id": "theta_01",
+      "label": "softmax theta 0.1 (choice middle bracket)",
+      "value": 5515.116472054344,
+      "pct": -3.525625238187231
+    },
+    {
+      "id": "theta_02",
+      "label": "softmax theta 0.2 (choice middle bracket)",
+      "value": 5251.884584745651,
+      "pct": -8.130266295934202
+    },
+    {
+      "id": "induced_lo",
+      "label": "with induced demand, eps=0.1 (side column)",
+      "value": 5999.149973652549,
+      "pct": 4.9414360953449545
+    },
+    {
+      "id": "induced_hi",
+      "label": "with induced demand, eps=0.3 (side column)",
+      "value": 6627.869000956405,
+      "pct": 15.939440465214757
     }
   ],
   "sweep": {

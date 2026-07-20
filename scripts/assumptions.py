@@ -616,6 +616,91 @@ ASSUMPTIONS = {
                    "central-kernel asc P50) or compute from abc_harbor.json -- a "
                    "deliberate revaluation, own commit",
     },
+    "asc_calibrated_launch": {
+        "title": "launch-equivalent ABC posterior ASC (spec 02 s4.5c premium base)",
+        "tier": "constant", "status": "active",
+        "value": 0.189, "units": "util", "band": (0.189, 0.378),
+        "basis": "locally-calibrated",
+        "history": [("2026-07-20", 0.189, "locally-calibrated",
+                     "R2 batch (spec02 s4.5c) -- abc_harbor central-kernel "
+                     "(543_launch_s500) asc posterior P50 0.18875, rounded to "
+                     "the 3dp display convention (asc_calibrated precedent)")],
+        "provenance": "the LAUNCH-EQUIVALENT ABC posterior ASC central from the "
+                      "bus 543 experiment (abc_harbor.json 543_launch_s500 asc "
+                      "P50 = 0.18875 -> 0.189), the base of the spec 02 s4.5c "
+                      "ASC-transportability premium rows: forward ASC = "
+                      "calibrated ASC x premium, premium in {1.0, 1.5, 2.0} "
+                      "(bracket sharpened by the 2026-07-08 elevated-ALM mode "
+                      "decision -- the calibration experiments are BUS overlays, "
+                      "the forward line is rail-class, so transporting the 543's "
+                      "premium at x1.0 is the conservative current assumption; "
+                      "README issue 14). The band is the swept bracket span "
+                      "(0.189-0.378 = x1.0-x2.0); x1.5 is the interior probe "
+                      "row. DISTINCT from asc_calibrated (0.109): that is the "
+                      "MATURED-era posterior kept frozen as the streetcar "
+                      "display anchor; this entry is the launch-equivalent "
+                      "value the s4.5c rows sweep in BOTH corridor tables",
+        "rows": {"harbor": ["asc_premium_10", "asc_premium_15",
+                            "asc_premium_20"],
+                 "streetcar": ["asc_premium_10", "asc_premium_15",
+                               "asc_premium_20"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": "README known-issue 14",
+        "upgrade": "post-launch rail-class APC (streetcar ~2027) -- the first "
+                   "measured rail-over-bus premium replaces the bracket",
+    },
+    "induced_eps": {
+        "title": "induced-demand elasticity band (side column, spec 02 s4.5b)",
+        "tier": "constant", "status": "active",
+        "value": (0.1, 0.3), "units": "elasticity (demand w.r.t. transit "
+                                      "generalized cost)", "band": (0.1, 0.3),
+        "basis": "literature",
+        "history": [("2026-07-20", (0.1, 0.3), "literature",
+                     "R2 batch (spec02 s4.5b) -- prior U(0.1, 0.3) per the "
+                     "spec; side column + band-edge rows, never the headline")],
+        "provenance": "total-demand elasticity to the accessibility change "
+                      "(spec 02 s4.5b): the 'with induced demand' SIDE COLUMN "
+                      "applies a per-cell multiplier (GC1/GC0)^-eps to the "
+                      "post-pivot transit mass, GC measured by the transit "
+                      "choice-model utility (ls1/ls0 -- bivt cancels, so the "
+                      "ratio is a generalized-cost ratio); eps ~ U(0.1, 0.3) "
+                      "drawn per draw on a THIRD SeedSequence child stream "
+                      "(consumes no existing rng; not a PRIORS key, so the "
+                      "prior-order fingerprint and every committed draw are "
+                      "untouched). Market creation is OUT OF SCOPE of the "
+                      "pivot by construction (spec 02 s1), so this column is "
+                      "clearly labeled, NEVER the headline and NEVER a gate "
+                      "criterion; the induced_lo/induced_hi rows pin eps at "
+                      "the band edges and report the induced-inclusive "
+                      "expected blend vs the headline base",
+        "rows": {"harbor": ["induced_lo", "induced_hi"],
+                 "streetcar": ["induced_lo", "induced_hi"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None,
+        "upgrade": "STOPS total-demand response / observed post-launch "
+                   "corridor totals",
+    },
+    "induced_gc_clip": {
+        "title": "induced-column GC-ratio clip (numerical guard)",
+        "tier": "constant", "status": "active",
+        "value": (0.05, 20.0), "units": "ratio", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-20", (0.05, 20.0), "judgment",
+                     "R2 review fix -- was a bare literal in model.py's new "
+                     "induced-column path; registry-owned per house rule")],
+        "provenance": "np.clip on GC1/GC0 (= ls1/ls0, transit choice-model "
+                      "logsums) before the (GC1/GC0)^-eps induced multiplier "
+                      "(spec 02 s4.5b): a numerical guard against a "
+                      "vanishing/blowing-up logsum ratio, not an assumption "
+                      "doing work at central (GC ratios sit near 1; the clip "
+                      "never binds on the shipped draws) -- the s0_pivot_clip "
+                      "idiom applied to the induced side column; rowless via "
+                      "the non-binding disposition like s0_pivot_clip, NOT "
+                      "laundered as definitional",
+        "rows": {}, "no_row_reason": "non-binding:review-2026-07-20",
+        "accepted": ("R2 review fix 2026-07-20", "2026-07-20"),
+        "logged": None, "upgrade": None,
+    },
 
     # ---- reweight_abc.py -------------------------------------------------
     "upt_fy2013_mb": {
@@ -624,15 +709,40 @@ ASSUMPTIONS = {
         "value": 51_067_292, "units": "unlinked trips/yr", "band": None,
         "basis": "measured",
         "history": [("2026-07-11", 51_067_292, "measured",
-                     "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db")],
+                     "spec08 A1 harvest -- introduced spec02 s4.6 (R1), 0e710db"),
+                    ("2026-07-20", 51_067_292, "measured",
+                     "R2 batch: value unchanged; entry gains the "
+                     "543_launch_bt_s507 back-trend-BAND kernel row (the "
+                     "standing README-issue-13 promise that the vintage "
+                     "factor's uncertainty be carried explicitly, not only "
+                     "as the discrete FY2014 alternative)")],
         "provenance": "NTD ID 90036 annual bus UPT (MB, DO+PT), FY2013; "
                       "dual-source verified (Socrata 8bui-9xvu + TS2.1 2018 "
                       "Excel); the central back-trend numerator (feeds the CENTRAL "
-                      "kernel 543_launch_s500, which is not a sensitivity row). Its "
-                      "vintage-choice sensitivity is the FY2014 alternative reading",
-        "rows": {}, "no_row_reason": "covered-elsewhere:543_launch14_s500",
+                      "kernel 543_launch_s500, which is not a sensitivity row). "
+                      "Owns the 543_launch_bt_s507 ABC kernel row: the back-trend "
+                      "factor treated as UNCERTAIN, B ~ U(FY2014 ratio 1.2236, "
+                      "FY2013 ratio 1.2868) -- the 543 launched June 2013, "
+                      "exactly the FY2013/FY2014 fiscal boundary, so the two "
+                      "annual readings bracket the launch instant -- "
+                      "marginalized into the Gaussian kernel form the ABC "
+                      "machinery uses: mu = 4,615 x mid(B) ~ 5,793, sigma = "
+                      "sqrt(500^2 + (4,615 x (B13-B14))^2 / 12) ~ 507 (the "
+                      "Gaussian approximation of the exact uniform-convolution "
+                      "is sub-0.1% here since the uniform half-width ~146 << "
+                      "sigma 500). REJECTED ALTERNATIVE: a second mu-shifted "
+                      "discrete kernel -- redundant, the FY2014-anchored "
+                      "reading already exists as 543_launch14_s500 "
+                      "(upt_fy2014_mb). The tbc welfare-BCA wrapper stays on "
+                      "the CENTRAL kernel (543_launch_s500) -- this kernel is "
+                      "an oc-side sensitivity only, deliberately NOT a wrapper "
+                      "tornado row (the abc_s350/abc_s800 wrapper rows remain "
+                      "the wrapper's ABC-width exposure). The FY2013-vs-FY2014 "
+                      "vintage CHOICE sensitivity remains 543_launch14_s500",
+        "rows": {"abc": ["543_launch_bt_s507"]},
+        "no_row_reason": None,
         "accepted": ("owner-directive 2026-07-11", "2026-07-11"),
-        "logged": None, "upgrade": "NTD annual refresh",
+        "logged": "README known-issue 13", "upgrade": "NTD annual refresh",
     },
     "upt_fy2014_mb": {
         "title": "OCTA annual bus UPT, motorbus, FY2014 (NTD 90036)",
@@ -1691,6 +1801,52 @@ ASSUMPTIONS = {
                       "quadrature; this toggle's row IS where the walk_spread_grid "
                       "constant is exercised (covered-elsewhere target)",
         "rows": {"harbor": ["walk_spread"], "streetcar": ["walk_spread"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": None,
+    },
+    "gamma_t": {
+        "title": "linear-in-time utility (nonlinear-time damping rows, spec 02 s4.5a)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-20", "gamma_t (headline 1.0 = linear)", "judgment",
+                     "R2 batch (spec02 s4.5a) -- gamma bracket {0.7, 0.8, 0.9}, "
+                     "0.7 added per the 2026-07-08 review (0.8/0.9 alone too "
+                     "mild to reveal whether nonlinearity matters)")],
+        "provenance": "headline utility is LINEAR in in-vehicle time (bivt*t). "
+                      "The gamma_07/gamma_08/gamma_09 rows damp it to "
+                      "bivt*t^gamma (IVT minutes only; walk/wait keep the ovt "
+                      "weighting) via the gamma_t over-key -- the spec 02 s4.5a "
+                      "structural risk-pricing bracket. The default path is "
+                      "byte-identical (the damped expression is a separate "
+                      "branch, entered only when the key is set)",
+        "rows": {"harbor": ["gamma_07", "gamma_08", "gamma_09"],
+                 "streetcar": ["gamma_07", "gamma_08", "gamma_09"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None, "upgrade": "spec 02 s7 known limitation closes when a "
+                                   "local time-of-day elasticity lands",
+    },
+    "softmax_theta": {
+        "title": "choice-structure middle bracket (small-theta softmax rows, "
+                 "spec 02 s4.5d)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-20", "softmax_theta (headline = hard max)",
+                     "judgment",
+                     "R2 batch (spec02 s4.5d) -- theta {0.1, 0.2} rows, the "
+                     "principled middle between the hard max and the theta=1 "
+                     "variety logsum (2026-07-08 review comment 7)")],
+        "provenance": "the hard max (headline) and the theta=1 logsum "
+                      "(variety_logsum row, -37%) bracket the truth; the "
+                      "theta_01/theta_02 rows are a smoothed max -- genuine "
+                      "idiosyncratic taste WITHOUT the full variety bonus "
+                      "(ls = m + theta*log(sum(exp((u-m)/theta)))). Registered "
+                      "expectation (spec 02 s4.5d): with typical inter-service "
+                      "utility gaps >= 0.3, small-theta lands within a few "
+                      "percent of the max -- showing that (or failing to) is "
+                      "the point. The existing walk_spread row perturbs walk "
+                      "DISTANCE, not choice-level taste, and is not a "
+                      "substitute (spec text). Default path byte-identical "
+                      "(separate branch)",
+        "rows": {"harbor": ["theta_01", "theta_02"],
+                 "streetcar": ["theta_01", "theta_02"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": None,
     },

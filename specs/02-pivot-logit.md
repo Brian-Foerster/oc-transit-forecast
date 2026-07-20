@@ -126,6 +126,15 @@ labeled "matured", not "launch" (README known issue 15).
 FY2014-ratio and matured-4,200 kept as rows — reweight_abc.py. Actuals:
 calibrated blend P50 10,757→11,836, ASC posterior 0.11→0.19, ESS 8,624→15,090,
 central residual +47%→+3.9%.)
+(R2 addendum, landed 2026-07-20: the back-trend factor is additionally
+carried as an explicit UNCERTAINTY BAND, closing the README-issue-13
+promise — kernel `543_launch_bt_s507`, B ~ U(1.2236, 1.2868): the June-2013
+launch sits exactly on the FY2013/FY2014 fiscal boundary, so the two annual
+readings bracket the launch instant; marginalized into Gaussian form
+mu≈5,793, sigma≈507 = sqrt(500² + (4,615·ΔB)²/12). Rejected alternative — a
+second discrete mu-shifted kernel — documented in the `upt_fy2013_mb`
+registry entry (redundant with `543_launch14_s500`). The tbc welfare-BCA
+wrapper stays on the central kernel.)
 
 **4.7 Reporting: separate the fold/retain scenarios.** The 50/50
 coin-flip blend mixes an operator decision into the forecast band. Lead

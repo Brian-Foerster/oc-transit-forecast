@@ -307,6 +307,13 @@ Recorded as they were made; each is exposed in the sensitivity output.
     543_launch14_s500 kernel, mu=5,647). At the launch-equivalent target
     (mu=5,938) the kernel sits inside the prediction mass, so sigma 350/800
     move the calibrated P50 by <0.2% (the matured target was more sensitive).
+    **R2 addendum (2026-07-20):** the vintage factor is now ALSO carried as
+    an explicit uncertainty band, not only a discrete alternative: kernel
+    `543_launch_bt_s507` marginalizes B ~ U(1.2236, 1.2868) -- the June-2013
+    launch sits exactly on the FY2013/FY2014 fiscal boundary, so the two
+    annual readings bracket it -- into Gaussian form (mu~5,793, sigma~507;
+    reweight_abc.py KERNELS block). The tbc welfare-BCA wrapper stays on the
+    central kernel; the band kernel is an oc-side sensitivity row.
 14. **ASC transportability is assumed, not shown** (review 2026-07-08).
     The ABC posterior moves essentially only the ASC (bivt/ovt barely
     shift), so the calibrated headline rests on one assumption: the new
@@ -314,9 +321,14 @@ Recorded as they were made; each is exposed in the sensitivity output.
     543 was a modest overlay; the proposed line is a categorically larger
     jump, which plausibly earns a LARGER premium — the calibration treats
     the weaker experiment's premium as a ceiling for a stronger
-    intervention. Defensible conservatism, now named. An
-    ASC-transportability sensitivity (forward ASC = calibrated x premium
-    factor) is queued.
+    intervention. Defensible conservatism, now named. **Landed 2026-07-20
+    (R2 batch, spec 02 §4.5c):** the ASC-transportability sensitivity is now
+    three rows in both corridor tables (`asc_premium_10/15/20`: forward ASC =
+    launch-calibrated 0.189 x premium {1.0, 1.5, 2.0}, registry entry
+    `asc_calibrated_launch`), alongside the §4.5a damped-time rows
+    (`gamma_07/08/09`), the §4.5d small-theta choice rows (`theta_01/02`),
+    and the §4.5b "with induced demand" side column + `induced_lo/hi` rows
+    (never the headline).
 15. ~~The calibration target is matured, not launch, ridership — and the
     backtest residual is one-sided.~~ **Closed 2026-07-11:** launch-equivalent
     retarget landed (spec 02 §4.6). mu=4,200 was the six-year matured average;

@@ -48,7 +48,11 @@ must be scaled to the SAME system vintage the model's anchor carries -- that
 is FY2013. The FY2014 ratio (the 543's first full operating year, 1.22363 ->
 mu ~5,647) is the defensible alternative reading of "launch-equivalent" and
 differs by ~5%; it is exposed as its own kernel (543_launch14_s500), not
-silently chosen against.
+silently chosen against. A THIRD kernel (543_launch_bt_s507, R2 batch)
+carries the factor as a BAND rather than a choice: B ~ U(1.22363, 1.28678)
+-- the June-2013 launch sits exactly on the FY2013/FY2014 boundary, so the
+two annual readings bracket it -- marginalized into Gaussian form
+(mu ~5,793, sigma ~507; see the KERNELS block comment).
 
 Sources (dual-source verified; do not "clean up" the ratio -- it is measured):
 - https://data.transportation.gov/resource/8bui-9xvu.json  (Complete Monthly
@@ -102,19 +106,40 @@ MU_MATURED = val("mu_matured")                     # old six-year avg (row)
 SIG_C = val("abc_sigma")                           # central sigma (wd boardings)
 SIG_LO, SIG_HI = band("abc_sigma")                 # 350/800 width sensitivities
 
-# Five kernels: (label, mu, sigma, tag), CENTRAL FIRST. This is the single
+# BACK-TREND-BAND kernel (R2 batch; README issue 13's standing promise made a
+# kernel): carry the vintage factor as UNCERTAIN instead of exact. The 543
+# launched June 2013 -- exactly the FY2013/FY2014 fiscal boundary -- so the two
+# annual back-trend readings BRACKET the launch instant: B ~ U(BACKTREND_14,
+# BACKTREND_13). Marginalizing the Gaussian kernel over that uniform gives
+# (to sub-0.1% here, since the uniform half-width ~146 << sigma 500) another
+# Gaussian: mu at the band midpoint, sigma widened by the uniform's variance,
+#     mu_bt  = 4,615 x (B13 + B14)/2                    ~ 5,793
+#     sig_bt = sqrt(500^2 + (4,615 x (B13 - B14))^2/12) ~ 507
+# -- which keeps the (label, mu, sigma) kernel form the whole downstream chain
+# consumes. REJECTED ALTERNATIVE (registry entry upt_fy2013_mb documents it):
+# a second discrete mu-shifted kernel, redundant with 543_launch14_s500. The
+# label derives from the computed sigma so a leaf revision renames the kernel
+# and trips check 2 loudly (deliberate drift alarm). The tbc welfare-BCA
+# wrapper stays on the CENTRAL kernel; this row is an oc-side sensitivity.
+MU_LAUNCH_BT = OBS_543_FY2017 * (BACKTREND_13 + BACKTREND_14) / 2.0
+SIG_BT = (SIG_C ** 2
+          + (OBS_543_FY2017 * (BACKTREND_13 - BACKTREND_14)) ** 2 / 12.0) ** 0.5
+LBL_BT = f"543_launch_bt_s{SIG_BT:.0f}"            # 543_launch_bt_s507
+
+# Six kernels: (label, mu, sigma, tag), CENTRAL FIRST. This is the single
 # source of truth -- bca_export, make_charts and the tests import get_kernels()
 # / central_label() instead of hardcoding labels, so the spec 02 §4.4 joint
 # multi-experiment kernel can join later by appending rows here (abc_weights'
 # signature does not change -- that is B4's design). Label = experiment +
-# target flavor + sigma; two kernels now share sigma=500, which is why the
+# target flavor + sigma; kernels share sigma values, which is why the
 # JSON is keyed by label rather than by bare sigma.
 KERNELS = [
-    ("543_launch_s500",   MU_LAUNCH,   SIG_C,  "central"),
-    ("543_launch_s350",   MU_LAUNCH,   SIG_LO, "sensitivity"),
-    ("543_launch_s800",   MU_LAUNCH,   SIG_HI, "sensitivity"),
-    ("543_launch14_s500", MU_LAUNCH14, SIG_C,  "sensitivity"),   # FY2014 vintage
-    ("543_matured_s500",  MU_MATURED,  SIG_C,  "sensitivity"),   # spec 02 §4.6
+    ("543_launch_s500",   MU_LAUNCH,    SIG_C,  "central"),
+    ("543_launch_s350",   MU_LAUNCH,    SIG_LO, "sensitivity"),
+    ("543_launch_s800",   MU_LAUNCH,    SIG_HI, "sensitivity"),
+    ("543_launch14_s500", MU_LAUNCH14,  SIG_C,  "sensitivity"),   # FY2014 vintage
+    (LBL_BT,              MU_LAUNCH_BT, SIG_BT, "sensitivity"),   # vintage BAND
+    ("543_matured_s500",  MU_MATURED,   SIG_C,  "sensitivity"),   # spec 02 §4.6
 ]
 
 
