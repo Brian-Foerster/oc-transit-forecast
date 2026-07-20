@@ -1,12 +1,32 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 64,
+    "judgment": 66,
     "literature": 10,
     "locally-calibrated": 2,
-    "measured": 30
+    "measured": 40
   },
   "dispositions": [
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "acs_2017_5yr",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "acs_2019_5yr",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
+    },
     {
       "accepted": [
         "owner-directive 2026-07-11",
@@ -66,6 +86,16 @@
       "id": "bin_edges",
       "no_row_reason": "quality-knob",
       "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "cde_enroll_2425",
+      "no_row_reason": "non-binding:context-only (spec01 §9.7 -- never a predictor)",
+      "tier": "data"
     },
     {
       "accepted": [
@@ -139,12 +169,32 @@
     },
     {
       "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "judgment",
+      "id": "gen_jobs_naics",
+      "no_row_reason": "covered-elsewhere:gen_dummy_swap",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-14"
       ],
       "basis": "measured",
       "id": "gtfs_2026_07",
       "no_row_reason": "covered-elsewhere:rapid_gtfs",
+      "tier": "data"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "hcai_util_2024",
+      "no_row_reason": "non-binding:context-only (spec01 §9.7 -- never a predictor)",
       "tier": "data"
     },
     {
@@ -179,6 +229,16 @@
     },
     {
       "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "ipeds_fall2023",
+      "no_row_reason": "non-binding:context-only (spec01 §9.7 -- never a predictor)",
+      "tier": "data"
+    },
+    {
+      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-11"
       ],
@@ -195,6 +255,36 @@
       "basis": "measured",
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8",
+      "tier": "data"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "lodes_od_2017",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "lodes_od_2019",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "lodes_wac",
+      "no_row_reason": "spec-pending:01§9",
       "tier": "data"
     },
     {
@@ -296,6 +386,16 @@
       "id": "oc_ref_lat",
       "no_row_reason": "definitional",
       "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "pl94171_block_pop",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
     },
     {
       "accepted": [
@@ -476,6 +576,16 @@
       "id": "tie_epsilon",
       "no_row_reason": "definitional",
       "tier": "constant"
+    },
+    {
+      "accepted": [
+        "spec01 §9 pre-registration 2026-07-20",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "tiger2020pl_blocks",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
     },
     {
       "accepted": [
@@ -1488,6 +1598,26 @@
       "tier": "constant"
     },
     {
+      "basis": "judgment",
+      "effect_pct": null,
+      "id": "screen_v21_swap_rows",
+      "rows": [
+        [
+          "screen_v21",
+          "popden_swap"
+        ],
+        [
+          "screen_v21",
+          "e002_swap"
+        ],
+        [
+          "screen_v21",
+          "gen_dummy_swap"
+        ]
+      ],
+      "tier": "structural"
+    },
+    {
       "basis": "measured",
       "effect_pct": null,
       "id": "upt_fy2013_mb",
@@ -1512,7 +1642,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 131,
+  "n_entries": 143,
   "priors": [
     {
       "basis": "judgment",
@@ -1632,8 +1762,32 @@
   "schema_version": "08-A3.3",
   "spec_pending_warnings": [
     {
+      "id": "acs_2017_5yr",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
+      "id": "acs_2019_5yr",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
+    },
+    {
+      "id": "lodes_od_2017",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
+      "id": "lodes_od_2019",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
+      "id": "lodes_wac",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
+      "id": "pl94171_block_pop",
+      "no_row_reason": "spec-pending:01§9"
     },
     {
       "id": "street_cal_local",
@@ -1644,16 +1798,20 @@
       "no_row_reason": "spec-pending:02§4.9"
     },
     {
+      "id": "tiger2020pl_blocks",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
       "id": "tsp_speedup",
       "no_row_reason": "spec-pending:02§4.9"
     }
   ],
   "tier_census": {
     "config": 14,
-    "constant": 76,
-    "data": 5,
+    "constant": 77,
+    "data": 15,
     "prior": 19,
-    "structural": 17
+    "structural": 18
   },
   "values": {
     "default_fare": 2.0,
@@ -1720,6 +1878,12 @@
           0.9,
           "judgment",
           "FB batch: the QUEUED stage-2 rebuilt-variant rows LANDED -- buffer_0p5/buffer_0p75 in BOTH corridor results (build_corridor --variant buffer_0p5/buffer_0p75, the intra_tract_alt mechanism on the buffer axis); closes the 2026-07-18 'queued, not landed' promise; value unchanged"
+        ],
+        [
+          "2026-07-20",
+          0.9,
+          "judgment",
+          "spec01 §9.2 pre-registration (phase 2a) -- THIRD consumer: the v2.1 block-resolution catchment (screen_common_v21) applies the SAME entry to block internal points, the tract rule verbatim; the centroid-test approximation of buffer-polygon intersection is stated in-spec. Value, band and the buffer_lo/buffer_hi rescan rows unchanged -- they carry over to the phase-2b rebuilt scan"
         ]
       ],
       "id": "buffer_mi"
@@ -1745,6 +1909,23 @@
         ]
       ],
       "id": "dirichlet_strength"
+    },
+    {
+      "history": [
+        [
+          "2026-07-14",
+          "LODES8 ca_od_main_JT00_2022",
+          "measured",
+          "spec08 A3 harvest -- introduced spec01/spec02, scripts/build_derived.py"
+        ],
+        [
+          "2026-07-20",
+          "LODES8 ca_od_main_JT00_2022",
+          "measured",
+          "phase 2a (spec01 §9) consolidation -- geography fact recorded: ALL LODES8 years are enumerated on 2020 tabulation blocks (LODESTechDoc8.3 'Geography Vintage'), so the 2017/2019/2022 OD vintages share one block frame; the §9.6 manifest's LODES7/2010-block plan was superseded at acquisition. Same raw now also feeds the v2.1 SCAN-side block table data/derived/oc_block_od_2022.csv.gz (858,534 pairs; jobs total 945,997 == the tract table exactly)"
+        ]
+      ],
+      "id": "lodes_2022"
     },
     {
       "history": [
@@ -1869,6 +2050,23 @@
         ]
       ],
       "id": "vot_behav"
+    },
+    {
+      "history": [
+        [
+          "2026-07-18",
+          "pooled years with year FE",
+          "judgment",
+          "spec01 S2 -- panel D16: the temporal X-vs-y mismatch is a structural assumption of the fit, not a footnote"
+        ],
+        [
+          "2026-07-20",
+          "pooled years with year FE",
+          "judgment",
+          "spec01 §9.3 pre-registration (phase 2a) -- SUPERSESSION QUEUED: the v2.1 rebuild vintage-matches X (FY2017 rows read 2017 LODES / 2013-17 ACS; FY2019 + FY2020-Q3 read 2019 / 2015-19; the scan keeps 2022/2023), removing the single-cross-section mismatch this entry registers. The supersession LANDS with the phase-2b rebuilt artifact; until then the v2.0 claim stands unchanged"
+        ]
+      ],
+      "id": "x_vintage_mismatch"
     }
   ],
   "width_sensitivities": [

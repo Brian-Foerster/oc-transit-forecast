@@ -1,0 +1,5 @@
+filename: oc_b25044_2017.csv
+derived_from: data/raw/acs/20175ca0105000.zip e/m20175ca0105000.txt + data/raw/acs/g20175ca.csv (see their .provenance.txt there); table B25044 start position 114, lookup data/raw/acs/ACS_5yr_Seq_Table_Number_Lookup.txt
+bytes: 19165
+sha256: 2a1787716159d274ca7e8553224e9d7e6645763a254284b4402cfb3b0b6b59e8
+created: 2026-07-20T12:45:05-0700

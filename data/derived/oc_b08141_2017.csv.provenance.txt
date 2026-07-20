@@ -1,0 +1,5 @@
+filename: oc_b08141_2017.csv
+derived_from: data/raw/acs/20175ca0028000.zip e/m20175ca0028000.txt + data/raw/acs/g20175ca.csv (see their .provenance.txt there); table B08141 start position 40, lookup data/raw/acs/ACS_5yr_Seq_Table_Number_Lookup.txt
+bytes: 46813
+sha256: 0a068cdbb93ad4f9c91d7f070e2ff32c1addcec43e28cf5cfb20becf346efaf1
+created: 2026-07-20T12:45:04-0700

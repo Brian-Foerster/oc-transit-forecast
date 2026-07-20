@@ -1,0 +1,5 @@
+filename: oc_b01003_2017.csv
+derived_from: data/raw/acs/20175ca0003000.zip e/m20175ca0003000.txt + data/raw/acs/g20175ca.csv (see their .provenance.txt there); table B01003 start position 130, lookup data/raw/acs/ACS_5yr_Seq_Table_Number_Lookup.txt
+bytes: 12866
+sha256: 7a73c2821240f4978166bbf46728a16548c1dfa2126dede129d24d7543321cc3
+created: 2026-07-20T12:45:05-0700

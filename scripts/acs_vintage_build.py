@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Build tidy OC tract CSVs from raw ACS summary files + crosswalk analysis."""
+"""Build tidy OC tract CSVs from raw ACS summary files + crosswalk analysis.
+
+Phase 2a (spec 01 §9): the tidy oc_* outputs are DERIVED tables, so they are
+written to data/derived (committed) rather than the gitignored data/raw/acs
+where the phase-1 acquisition first left them; the raw summary-file inputs
+stay in data/raw/acs with their provenance sidecars."""
 import csv, hashlib, io, os, time, zipfile
 
-RAW = r"C:\Users\aersl\oc-transit-forecast\data\raw\acs"
+HERE = os.path.dirname(os.path.abspath(__file__))
+RAW = os.path.join(HERE, "..", "data", "raw", "acs")
+DER = os.path.join(HERE, "..", "data", "derived")
 
 def sha256_file(p):
     h = hashlib.sha256()
@@ -12,7 +19,7 @@ def sha256_file(p):
     return h.hexdigest()
 
 def write_csv(fname, header, rows, source_desc):
-    path = os.path.join(RAW, fname)
+    path = os.path.join(DER, fname)
     rows = sorted(rows, key=lambda r: r[0])
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -48,7 +55,8 @@ def tidy_dat(vintage, table, keep_ids, fname):
                 state = int(row[e001])
     # interleave E/M per id to match existing convention (E block then M block, as oc_b08141.csv)
     path = write_csv(fname, ["GEOID"] + cols, rows,
-                     f"acsdt5y{vintage}-{table.lower()}.dat (see its .provenance.txt for URL/sha256); "
+                     f"data/raw/acs/acsdt5y{vintage}-{table.lower()}.dat "
+                     f"(see its .provenance.txt there for URL/sha256); "
                      f"filtered to GEO_ID prefix 1400000US06059")
     tract_sum = sum(int(r[1]) for r in rows if r[1] not in ("", ".") and int(r[1]) >= 0)
     print(f"  sanity {vintage} {table}: tracts={len(rows)} tract_sum_E001={tract_sum} "
@@ -94,9 +102,10 @@ def tidy_seq(seq, table, start, cell_offsets, fname):
     for lr, d in data.items():
         rows.append([logrec[lr]] + d["e"] + d["m"])
     path = write_csv(fname, ["GEOID"] + ids, rows,
-                     f"20175ca{seq}000.zip e/m20175ca{seq}000.txt + g20175ca.csv "
-                     f"(see their .provenance.txt); table {table} start position {start}, "
-                     f"lookup ACS_5yr_Seq_Table_Number_Lookup.txt")
+                     f"data/raw/acs/20175ca{seq}000.zip e/m20175ca{seq}000.txt "
+                     f"+ data/raw/acs/g20175ca.csv (see their .provenance.txt "
+                     f"there); table {table} start position {start}, "
+                     f"lookup data/raw/acs/ACS_5yr_Seq_Table_Number_Lookup.txt")
     tract_sum = sum(int(r[1]) for r in rows if r[1] not in ("", "."))
     print(f"  sanity 2017 {table}: tracts={len(rows)} tract_sum_E001={tract_sum}")
 
@@ -157,7 +166,7 @@ kinds_f, o_f, s_f, m_f, c_f = classify(t10f, t20f)
 
 # population share (2019 B01003 on 2010 tracts) in non-1:1 relationships
 pop = {}
-with open(os.path.join(RAW, "oc_b01003_2019.csv"), encoding="utf-8") as f:
+with open(os.path.join(DER, "oc_b01003_2019.csv"), encoding="utf-8") as f:
     rr = csv.reader(f); next(rr)
     for row in rr:
         pop[row[0]] = int(row[1])

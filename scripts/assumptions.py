@@ -914,7 +914,16 @@ ASSUMPTIONS = {
                      "results (build_corridor --variant buffer_0p5/buffer_"
                      "0p75, the intra_tract_alt mechanism on the buffer "
                      "axis); closes the 2026-07-18 'queued, not landed' "
-                     "promise; value unchanged")],
+                     "promise; value unchanged"),
+                    ("2026-07-20", 0.9, "judgment",
+                     "spec01 §9.2 pre-registration (phase 2a) -- THIRD "
+                     "consumer: the v2.1 block-resolution catchment "
+                     "(screen_common_v21) applies the SAME entry to block "
+                     "internal points, the tract rule verbatim; the "
+                     "centroid-test approximation of buffer-polygon "
+                     "intersection is stated in-spec. Value, band and the "
+                     "buffer_lo/buffer_hi rescan rows unchanged -- they "
+                     "carry over to the phase-2b rebuilt scan")],
         "provenance": "centroid-within distance for corridor tract membership; "
                       "ONE entry, TWO consumers (the corr_share precedent, "
                       "spec 08 §2): build_corridor.py's stage-2 corridors AND "
@@ -1694,6 +1703,36 @@ ASSUMPTIONS = {
         "logged": "README known-issue 35",
         "upgrade": "owner ratification; post-records-request refit",
     },
+    # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
+    "gen_jobs_naics": {
+        "title": "v2.1 generator-jobs NAICS column set (LODES WAC CNS15-18)",
+        "tier": "constant", "status": "active",
+        "value": ["CNS15", "CNS16", "CNS17", "CNS18"],
+        "units": "LODES WAC columns", "band": None, "basis": "judgment",
+        "history": [("2026-07-20",
+                     ["CNS15", "CNS16", "CNS17", "CNS18"], "judgment",
+                     "spec01 §9.1 pre-registration -- b4 measured generator "
+                     "jobs (education + health + arts/rec + accommodation-"
+                     "food) REPLACE the saturated hand-coded binary dummy; "
+                     "the set is fixed BEFORE any v2.1 input is fitted")],
+        "provenance": "the WAC columns summed into the §9.1 b4 predictor: "
+                      "CNS15 = NAICS 61 Educational Services, CNS16 = 62 "
+                      "Health Care and Social Assistance, CNS17 = 71 Arts, "
+                      "Entertainment, and Recreation, CNS18 = 72 "
+                      "Accommodation and Food Services (LODESTechDoc8.3 "
+                      "column map; sector choice mirrors the v2.0 special-"
+                      "generator classes resort/college/medical, measured "
+                      "instead of hand-flagged). Consumed via val() by "
+                      "screen_common_v21.load_data_v21 -- no literal in "
+                      "code. The enumerated alternative (the legacy binary "
+                      "dummy) is the pre-registered gen_dummy_swap battery "
+                      "row, owned by screen_v21_swap_rows and pending the "
+                      "phase-2b rebuilt artifact",
+        "rows": {}, "no_row_reason": "covered-elsewhere:gen_dummy_swap",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (the swap row goes live)",
+    },
 
     # ===== structural tier (governance toggles; NOT owned) ==================
     # Each names a run() over-key toggle and the sensitivity row-id it produces
@@ -1909,7 +1948,16 @@ ASSUMPTIONS = {
         "tier": "structural", "status": "active", "basis": "judgment",
         "history": [("2026-07-18", "pooled years with year FE", "judgment",
                      "spec01 S2 -- panel D16: the temporal X-vs-y mismatch is "
-                     "a structural assumption of the fit, not a footnote")],
+                     "a structural assumption of the fit, not a footnote"),
+                    ("2026-07-20", "pooled years with year FE", "judgment",
+                     "spec01 §9.3 pre-registration (phase 2a) -- "
+                     "SUPERSESSION QUEUED: the v2.1 rebuild vintage-matches "
+                     "X (FY2017 rows read 2017 LODES / 2013-17 ACS; FY2019 "
+                     "+ FY2020-Q3 read 2019 / 2015-19; the scan keeps "
+                     "2022/2023), removing the single-cross-section "
+                     "mismatch this entry registers. The supersession "
+                     "LANDS with the phase-2b rebuilt artifact; until then "
+                     "the v2.0 claim stands unchanged")],
         "provenance": "the screen regresses FY2017/FY2019/FY2020-Q3 boardings "
                       "on 2022 LODES / 2019-2023 ACS predictors -- a "
                       "post-COVID, WFH-reshaped commute shape explaining "
@@ -1924,7 +1972,13 @@ ASSUMPTIONS = {
         "rows": {"screen": ["year_fe_vs_pooled"]},
         "no_row_reason": None, "accepted": None,
         "logged": None,
-        "upgrade": "LODES 2019 rebuilt-variant refit (spec 02 §4.8 mechanism)",
+        "upgrade": "phase 2b v2.1 rebuilt fit (spec 01 §9.3 vintage-matched "
+                   "X supersedes this entry's mismatch; §9.4 archived-GTFS "
+                   "fit-side shapes are the remaining input, BLOCKED on the "
+                   "owner's Mobility Database token -- no archived-GTFS "
+                   "data-tier entries exist until that acquisition lands). "
+                   "Stage-2 side: LODES 2019 rebuilt-variant refit "
+                   "(spec 02 §4.8 mechanism)",
     },
     "screen_endog_controls": {
         "title": "screen endogenous-controls choice (RH control kept; E016 out)",
@@ -1967,6 +2021,41 @@ ASSUMPTIONS = {
         "rows": {"screen": ["offset_variant"]},
         "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": None,
+    },
+    "screen_v21_swap_rows": {
+        "title": "v2.1 pre-registered predictor swaps (spec 01 §9.1)",
+        "tier": "structural", "status": "active", "basis": "judgment",
+        "history": [("2026-07-20",
+                     "popden_swap / e002_swap / gen_dummy_swap "
+                     "(+ conditional sld_swap, not claimed)", "judgment",
+                     "spec01 §9 pre-registration (phase 2a landing) -- the "
+                     "swap set is fixed BEFORE any v2.1 input is fitted; "
+                     "claims point at the PENDING v2.1 rebuilt artifact")],
+        "provenance": "the §9.1 swap table, sensitivity battery only, never "
+                      "headline: the v2.1 b2 headline becomes B25044 "
+                      "zero-vehicle HOUSEHOLDS -- e002_swap restores the "
+                      "v2.0 B08141 E002 zero-vehicle-workers headline (the "
+                      "e016_swap row carries over unchanged, still owned by "
+                      "screen_endog_controls); popden_swap replaces b1 with "
+                      "log1p(B01003 population / ALAND density); "
+                      "gen_dummy_swap restores the legacy binary special-"
+                      "generator dummy in place of the b4 generator-jobs "
+                      "magnitude (gen_jobs_naics + special_generators point "
+                      "here for their alternatives). sld_swap (EPA SLD "
+                      "D-index) is pre-registered CONDITIONAL on acquiring "
+                      "the SLD and drops silently otherwise -- NOT claimed. "
+                      "Rows live in the v2.1 rebuilt artifact (artifact key "
+                      "`screen_v21`), generated by phase 2b; until then "
+                      "these claims sit as check-2 pending warnings by "
+                      "design (spec 01 §9.7 registry-landing pattern, "
+                      "'entries land with the build branch')",
+        "rows": {"screen_v21": ["popden_swap", "e002_swap",
+                                "gen_dummy_swap"]},
+        "no_row_reason": None, "accepted": None,
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit + battery (gated on the archived-"
+                   "GTFS acquisition, itself blocked on the owner's "
+                   "Mobility Database token)",
     },
 
     # ===== config tier (corridor-owned; entry points at a config key) =======
@@ -2293,7 +2382,17 @@ ASSUMPTIONS = {
         "tier": "data", "status": "active", "basis": "measured",
         "history": [("2026-07-14", "LODES8 ca_od_main_JT00_2022", "measured",
                      "spec08 A3 harvest -- introduced spec01/spec02, "
-                     "scripts/build_derived.py")],
+                     "scripts/build_derived.py"),
+                    ("2026-07-20", "LODES8 ca_od_main_JT00_2022", "measured",
+                     "phase 2a (spec01 §9) consolidation -- geography fact "
+                     "recorded: ALL LODES8 years are enumerated on 2020 "
+                     "tabulation blocks (LODESTechDoc8.3 'Geography "
+                     "Vintage'), so the 2017/2019/2022 OD vintages share "
+                     "one block frame; the §9.6 manifest's LODES7/2010-"
+                     "block plan was superseded at acquisition. Same raw "
+                     "now also feeds the v2.1 SCAN-side block table "
+                     "data/derived/oc_block_od_2022.csv.gz (858,534 pairs; "
+                     "jobs total 945,997 == the tract table exactly)")],
         "provenance": "US Census LEHD LODES8 CA commute O-D, block level, "
                       "aggregated to OC tract pairs (scripts/build_derived.py "
                       "reads ca_od_main_JT00_2022.csv.gz; scripts/download_data.py "
@@ -2464,6 +2563,243 @@ ASSUMPTIONS = {
         "logged": None,
         "upgrade": "records request items 1a/1b (FY2014-16 + post-FY2021 "
                    "route-level; widened item 2 = systemwide stop-level APC)",
+    },
+
+    # ---- v2.1 acquisition vintages (spec 01 §9.6; phase 2a consolidation) --
+    # Everything phase 1 acquired for the pre-registered rebuild. Sensitivity
+    # rows for these vintages are generated by the phase-2b rebuilt artifact
+    # (the §9.1 battery), so the predictor-feeding entries here are
+    # spec-pending:01§9 dispositions -- counted warnings until 2b lands.
+    # Provenance sidecars (URL + sha256 per file) sit next to each raw under
+    # data/raw/ (untracked); the committed derived tables are built by
+    # scripts/build_derived_v21.py + scripts/acs_vintage_build.py.
+    "lodes_od_2017": {
+        "title": "LODES8 commute O-D 2017 vintage (v2.1 fit-side b1, FY2017)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20", "LODES8 ca_od_main_JT00_2017", "measured",
+                     "spec01 §9.6 acquisition (phase 1) + phase 2a derived "
+                     "table oc_block_od_2017.csv.gz")],
+        "provenance": "US Census LEHD LODES8 CA O-D main JT00 2017, "
+                      "block level (data/raw/lodes8/ca_od_main_JT00_2017"
+                      ".csv.gz + sidecar; OC-to-OC block pairs compressed to "
+                      "data/derived/oc_block_od_2017.csv.gz, 854,800 pairs / "
+                      "945,769 jobs, scripts/build_derived_v21.py). The "
+                      "ASSUMPTION is the §9.3 VINTAGE MATCH: FY2017 boardings "
+                      "rows read THIS vintage for b1 both-ends-in flows. "
+                      "Enumerated on 2020 tabulation blocks like every "
+                      "LODES8 year (LODESTechDoc8.3 'Geography Vintage') -- "
+                      "the §9.6 manifest's LODES7/2010-block plan was "
+                      "superseded at acquisition by LODES8-on-2020-blocks, "
+                      "which shares one block frame across 2017/2019/2022",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
+    },
+    "lodes_od_2019": {
+        "title": "LODES8 commute O-D 2019 vintage (v2.1 fit-side b1, "
+                 "FY2019 + FY2020-Q3)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20", "LODES8 ca_od_main_JT00_2019", "measured",
+                     "spec01 §9.6 acquisition (phase 1) + phase 2a derived "
+                     "table oc_block_od_2019.csv.gz")],
+        "provenance": "US Census LEHD LODES8 CA O-D main JT00 2019, block "
+                      "level (data/raw/lodes8 sidecar; OC-to-OC pairs -> "
+                      "data/derived/oc_block_od_2019.csv.gz, 870,558 pairs / "
+                      "964,854 jobs). §9.3 vintage match: BOTH FY2019 and "
+                      "FY2020-Q3 boardings rows read this vintage (2019 is "
+                      "the last pre-COVID enumeration; 2020 LODES reflects "
+                      "the shock, not the fundamentals the screen ranks). "
+                      "2020-block geography per LODESTechDoc8.3",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
+    },
+    "lodes_wac": {
+        "title": "LODES8 WAC vintages 2017/2019/2022 (v2.1 b4 generator "
+                 "jobs, CNS15-18)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20",
+                     "LODES8 ca_wac_S000_JT00_{2017,2019,2022}", "measured",
+                     "spec01 §9.6 acquisition (phase 1) + phase 2a derived "
+                     "tables oc_block_wac_{2017,2019,2022}.csv")],
+        "provenance": "US Census LEHD LODES8 CA WAC S000 JT00, block level, "
+                      "three vintages (data/raw/lodes8 sidecars; OC blocks "
+                      "-> data/derived/oc_block_wac_{2017,2019,2022}.csv). "
+                      "Feeds the §9.1 b4 generator-jobs predictor as the "
+                      "sum of the gen_jobs_naics columns -- CNS15 = NAICS "
+                      "61 edu, CNS16 = 62 health, CNS17 = 71 arts/rec, "
+                      "CNS18 = 72 accommodation/food (LODESTechDoc8.3 "
+                      "column map, recorded in each sidecar). §9.3 vintage "
+                      "match: 2017 -> FY2017 rows, 2019 -> FY2019/FY2020-Q3 "
+                      "rows, 2022 -> the scan side. 2020-block geography "
+                      "for all years (TechDoc8.3)",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (b4 goes live; gen_dummy_swap row)",
+    },
+    "tiger2020pl_blocks": {
+        "title": "TIGER/Line 2020 PL tabulation blocks, OC (v2.1 catchment "
+                 "frame)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20", "tl_2020_06059_tabblock20 (TIGER2020PL)",
+                     "measured",
+                     "spec01 §9.6 acquisition (phase 1) + phase 2a derived "
+                     "table oc_blocks.csv")],
+        "provenance": "Census TIGER/Line 2020 PL-94-171-vintage tabulation "
+                      "blocks for Orange County (data/raw/tiger2020/"
+                      "tl_2020_06059_tabblock20.zip + sidecar; DBF "
+                      "attributes -> data/derived/oc_blocks.csv, 26,734 "
+                      "blocks: GEOID20, internal point INTPTLAT20/"
+                      "INTPTLON20, ALAND20). The §9.2 catchment rule runs "
+                      "on the block INTERNAL POINTS (|offset| <= buffer_mi "
+                      "AND position in-window) -- the centroid-test "
+                      "approximation of buffer-polygon intersection is a "
+                      "stated property of the rule, not hidden. ALAND20 "
+                      "also denominates the popden_swap density",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt scan on the block frame",
+    },
+    "pl94171_block_pop": {
+        "title": "2020 PL 94-171 block population (v2.1 apportionment "
+                 "weights)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20",
+                     "ca2020.pl.zip P0010001 (== API P1_001N)", "measured",
+                     "spec01 §9.6 acquisition (phase 1; legacy summary file "
+                     "because api.census.gov now requires a key) + phase 2a "
+                     "join into oc_blocks.csv pop2020")],
+        "provenance": "2020 Decennial PL 94-171 legacy summary file, "
+                      "California (data/raw/census2020/ca2020.pl.zip + "
+                      "sidecar; SUMLEV 750 GEOCODE 06059* P0010001 -> "
+                      "data/raw/census2020/oc_2020_p1_block_pop.csv -> "
+                      "oc_blocks.csv pop2020; OC total 3,186,989). These "
+                      "are the tract->block APPORTIONMENT WEIGHTS for every "
+                      "ACS-vintage predictor (screen_common_v21 docstring "
+                      "states the approximation honestly: 2020 weights are "
+                      "used for ALL vintages, zero-population tracts split "
+                      "equally, tract totals conserved), and the pop-land "
+                      "overlap estimator behind oc_tract10_to_tract20.csv",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "block-level ACS-period population if ever published",
+    },
+    "acs_2017_5yr": {
+        "title": "ACS 2013-2017 5-yr vintage (v2.1 FY2017 X: B25044 / "
+                 "B01003 / B08141)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20",
+                     "ACS 2017 5-yr summary-file sequences 0003/0028/0105",
+                     "measured",
+                     "spec01 §9.6 acquisition (phase 1) + phase 2a move of "
+                     "the tidy tables into data/derived (committed)")],
+        "provenance": "Census ACS 2013-2017 5-yr summary file, CA tract "
+                      "sequences (data/raw/acs/20175ca{0003,0028,0105}000"
+                      ".zip + g20175ca.csv + lookup, sidecars there; "
+                      "scripts/acs_vintage_build.py -> data/derived/"
+                      "oc_{b01003,b08141,b25044}_2017.csv, 583 tracts each, "
+                      "tract-sum sanity printed). §9.3 vintage match: "
+                      "FY2017 boardings rows read these for b2 zero-vehicle "
+                      "households (B25044 E003+E010), popden_swap (B01003/"
+                      "ALAND) and the e002/e016 swap inputs. Published on "
+                      "2010 TRACT geography -- bridged to the 2020 block "
+                      "frame via oc_tract10_to_tract20.csv (pop-land "
+                      "overlap estimator) then pop-weight apportioned; the "
+                      "two-stage approximation is documented in "
+                      "screen_common_v21",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
+    },
+    "acs_2019_5yr": {
+        "title": "ACS 2015-2019 5-yr vintage (v2.1 FY2019/FY2020-Q3 X: "
+                 "B25044 / B01003 / B08141)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20",
+                     "ACS 2019 5-yr prototype table-based files", "measured",
+                     "spec01 §9.6 acquisition (phase 1) + phase 2a move of "
+                     "the tidy tables into data/derived (committed)")],
+        "provenance": "Census ACS 2015-2019 5-yr prototype table-based "
+                      "summary files (data/raw/acs/acsdt5y2019-{b01003,"
+                      "b08141,b25044}.dat + sidecars; acs_vintage_build.py "
+                      "-> data/derived/oc_*_2019.csv, 583 tracts, tract-sum "
+                      "== county sanity TRUE for all three). §9.3 vintage "
+                      "match: FY2019 AND FY2020-Q3 boardings rows read "
+                      "these. 2010 tract geography, bridged + apportioned "
+                      "like acs_2017_5yr. The 2019-2023 scan-side tables "
+                      "stay under the existing acs_2023 entry (B08141) and "
+                      "the phase-1 oc_{b25044,b01003}_2023.csv tidies",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
+    },
+    "ipeds_fall2023": {
+        "title": "IPEDS fall-2023 enrollment + HD2024 directory (generator "
+                 "context)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20", "HD2024.zip + DRVEF2023.zip", "measured",
+                     "spec01 §9.6 acquisition row 8 (phase 1) -- context / "
+                     "b4 cross-check ONLY, never a predictor (§9.7)")],
+        "provenance": "NCES IPEDS institutional directory 2024 + derived "
+                      "fall-2023 enrollment (data/raw/generators/HD2024.zip "
+                      "/ DRVEF2023.zip -> ipeds_enrollment.csv, 8 target OC "
+                      "colleges with ENRTOT/FTE + lat/lon; sidecars there). "
+                      "§9.7 is binding: enters fit diagnostics as LOGGED "
+                      "CONTEXT or a b4 cross-check only -- never a "
+                      "predictor, so no sensitivity row will ever exist",
+        "rows": {},
+        "no_row_reason": "non-binding:context-only (spec01 §9.7 -- never a "
+                         "predictor)",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None, "upgrade": "EF2024A when NCES releases it",
+    },
+    "hcai_util_2024": {
+        "title": "HCAI hospital utilization CY2024 (generator context)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20", "hosp24_util_data_final.xlsx (Oct 2025 "
+                     "release)", "measured",
+                     "spec01 §9.6 acquisition row 8 (phase 1) -- context / "
+                     "b4 cross-check ONLY, never a predictor (§9.7)")],
+        "provenance": "HCAI Hospital Annual Utilization CY2024 FINAL via "
+                      "the CHHS open-data portal (data/raw/generators/"
+                      "hosp24_util_data_final.xlsx -> hcai_beds.csv, all 37 "
+                      "OC hospitals, licensed beds + lat/lon; sidecars "
+                      "there). §9.7 binding: logged context / b4 "
+                      "cross-check only, never a predictor",
+        "rows": {},
+        "no_row_reason": "non-binding:context-only (spec01 §9.7 -- never a "
+                         "predictor)",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None, "upgrade": "CY2025 release",
+    },
+    "cde_enroll_2425": {
+        "title": "CDE 2024-25 school enrollment + directory (generator "
+                 "context)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20", "cenroll2425.txt + pubschls.txt",
+                     "measured",
+                     "spec01 §9.6 acquisition row 8 (phase 1) -- context / "
+                     "b4 cross-check ONLY, never a predictor (§9.7)")],
+        "provenance": "CDE 2024-25 cumulative-enrollment download + public-"
+                      "schools directory (data/raw/generators/cenroll2425"
+                      ".txt + pubschls.txt -> cde_enrollment_oc.csv, 665 OC "
+                      "schools joined to lat/lon, 27 without coordinates; "
+                      "sidecars there). §9.7 binding: enrollment enters "
+                      "only as logged context / b4 cross-check -- the "
+                      "non-commute demand model v2.1 explicitly does NOT "
+                      "build",
+        "rows": {},
+        "no_row_reason": "non-binding:context-only (spec01 §9.7 -- never a "
+                         "predictor)",
+        "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None, "upgrade": "2025-26 files",
     },
 }
 

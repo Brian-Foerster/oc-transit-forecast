@@ -1,0 +1,5 @@
+filename: oc_b01003_2019.csv
+derived_from: data/raw/acs/acsdt5y2019-b01003.dat (see its .provenance.txt there for URL/sha256); filtered to GEO_ID prefix 1400000US06059
+bytes: 12861
+sha256: 0223e355b46431334aee099a5e09167626c4bd3e202da256ade34481f826dca7
+created: 2026-07-20T12:45:02-0700
