@@ -2,7 +2,10 @@
 
 Status: panel-revised 2026-07-18 (3-lens adversarial panel; 9 blocking
 findings adjudicated) · BUILD IN PROGRESS · §9 v2.1 rebuild
-PRE-REGISTERED 2026-07-20 (before any new data fitted)
+PRE-REGISTERED 2026-07-20 (before any new data fitted) · §5 tripwire
+v2 per owner review 2026-07-20 (criterion 1 revised + ratified;
+criteria 2/3 statistics rebuilt, values deferred pending the
+shortlist-stability report)
 (prototype: the 13-arterial screen, summarized in HANDOFF.md "Dropped
 work"; superseded draft: 2026-07-08)
 
@@ -232,12 +235,20 @@ values_hash}, `windows[]`, `overlap_diagnostics{}` (n_groups +
 degeneracy note + best window per host shape + per-pair overlap
 shares, §3.3 caveat — this also delivers the §3.2 best-window-per-
 host-shape report), `fit_diagnostics{}`, `sensitivity[]`,
-`decision_output{}` (the §5 pre-registered tripwire, mechanized:
-{ordinal_ok, criteria {t_demand, battery, churn — each with the
-measured number, the registry threshold, and a pass boolean},
-decision_format 'ordinal'|'threshold_shortlist', shortlist [all
-tie_with_cutoff windows grouped by host shape with
-screen_index_p50 + underservice_flag]}).
+`shortlist_stability{}` (the §5c report: per_row [id, unit,
+n_tie_row, tie_in/tie_out vs the margin-defined headline tie set,
+jaccard, tie_churn_frac, hard_top8_churn diagnostic with unit field;
+by_class for gen_leave_class_out], aggregate {min_jaccard, worst_row,
+max_tie_churn_frac, max_tie_churn_row, n_tie_headline, stable_core,
+n_stable_core}, note), `decision_output{}` (the §5 tripwire v2,
+mechanized: {ordinal_ok, criteria {sign_pos_frac (b1/b2 pos_frac,
+threshold, pass), battery_rho (min_rho, provisional threshold, pass),
+tie_churn (max_tie_churn_frac, threshold null, pass null — pending
+owner)}, decision_format 'ordinal'|'threshold_shortlist', shortlist
+[all tie_with_cutoff windows grouped by host shape with
+screen_index_p50 + underservice_flag], diagnostics {min_abs_t_demand,
+b4_pos_frac}, replicate_signs {b1/b2/b4 '+'/'-' strings, replicate
+order}}).
 
 Per window: `window_id` (route_id + w0, deterministic), `route_id`,
 `w0`, `w1`, `window_mi`, `screen_index_p50/p10/p90`, `rank`,
@@ -303,8 +314,15 @@ protocol:
    consumes `decision_output.shortlist` plus the measured indicator
    columns (rank_ci, tie_with_cutoff, underservice_flag,
    leverage_flag), NEVER a top-N by rank — the ordinal index is
-   diagnostic-only until the §5 pre-registered tripwire passes;
-   `decision_output.decision_format` states which mode applies;
+   diagnostic-only until the §5 tripwire passes;
+   `decision_output.decision_format` states which mode applies.
+   **Stability binding (owner review 2026-07-20):** additionally, if
+   the `shortlist_stability` aggregate shows heavy tie-set churn, the
+   memo MUST state that the honest stage-1 output is NARROWER than the
+   shortlist, and name the stable core if one exists —
+   `shortlist_stability.aggregate.stable_core`, the windows present in
+   the tie set under EVERY battery row (empty core ⇒ the memo says so
+   plainly: no window survives the whole battery);
 3. **Owner authors** per-finalist corridor configs and crossings
    counts under the spec 04 §3.3 category discipline (per-crossing
    geometry, not defaults);
@@ -320,29 +338,115 @@ owner (spec 00 §3).
 
 ## 5. Validation gates (must pass before first use)
 
-**PRE-REGISTERED DECISION TRIPWIRE (SC batch 2026-07-19; external
-critique's central governance fix — pending owner ratification).**
-The screen emits a decision-grade ORDINAL ranking only if ALL of:
+**DECISION TRIPWIRE v2 (owner review 2026-07-20 of the SC-batch
+pre-registration; criterion 1 revised AND ratified, criteria 2/3
+statistics rebuilt with values deferred).** The screen emits a
+decision-grade ORDINAL ranking only if ALL criteria pass:
 
-(i)   every demand-block coefficient (b1, b2) has cluster-robust
-      |t| >= 1.0 [screen_t_min];
-(ii)  the battery's minimum Spearman rho over the pre-registered
-      perturbations — EXCLUDING the leave-one-year-out consistency
-      check (see demotion below) — is >= 0.7 [screen_battery_rho_min];
-(iii) top-8 membership changes are <= 2 [screen_top8_churn_max] under
-      every perturbation.
+**Criterion 1 — signed bootstrap fraction (RATIFIED 2026-07-20).**
+For EACH demand-block coefficient, the fraction of the B=2000
+route-cluster bootstrap replicates (§3.4) in which the coefficient is
+STRICTLY POSITIVE must be >= 0.841 [screen_pos_frac_min]. The demand
+block is DEFINED as {b1_lodes, b2_e002}. b4 is OUTSIDE it, per the
+artifact's own grouped decomposition (demand b1+b2 / service b3 /
+generator b4 / scale b5): b4's wrong-sign risk is priced by the
+`b4_off` battery row, and v2.1 replaces the hand-coded dummy with
+measured WAC generator jobs (§9.1); b4's per-replicate sign IS still
+reported, as a diagnostic (`decision_output.diagnostics.b4_pos_frac`).
+Basis: 0.841 = Phi(1), the one-sided translation of |t| >= 1 with the
+sign requirement added; t = 1 is the threshold at which a regressor
+improves adjusted R-squared and out-of-sample prediction error — the
+decision-theoretic minimum for carrying a variable at all. The
+bootstrap-fraction form replaces the analytic cluster-SE t
+(`screen_t_min`, superseded) because cluster-robust SEs are
+downward-biased at ~41 clusters and that bias runs toward PASS; the
+analytic |t| values stay in the artifact as reported diagnostics.
+Implementation: per-replicate b1/b2/b4 signs are recorded in the
+EXISTING headline bootstrap (no new compute) and published as
+`decision_output.replicate_signs`; the pos_frac values recompute from
+those strings (test D6).
 
-Otherwise the decision output is the THRESHOLD SHORTLIST — all
-`tie_with_cutoff` windows grouped by host shape, presented beside the
-measured indicators — and the ordinal index is diagnostic-only. The
-rule is MECHANIZED: `screen_scan.py` writes the artifact's
-`decision_output` block (§4) with the measured numbers, the registry
-thresholds, per-criterion pass booleans, `decision_format`, and the
-shortlist; a standing test recomputes the booleans from the stored
-numbers (test_screen.py D6). Measured outcome at landing: ordinal_ok
-= FALSE, failing (i) (min |t| = 0.81, b2) and (ii) (min rho = 0.39,
-buffer_lo; max churn 8 also fails (iii)) — the screen currently
-delivers the shortlist, not a ranking. README known issue 35.
+**Criterion 2 — battery minimum Spearman rho (statistic ratified;
+VALUE provisional).** The battery's minimum Spearman rho over the
+FROZEN perturbation list [screen_battery_rows] — EXCLUDING the
+leave-one-year-out consistency check (see demotion below) — must be
+>= 0.7 [screen_battery_rho_min]. The 0.7 value is PROVISIONAL: the
+owner sets it after reading the shortlist-stability report (§5c).
+Any earlier calibration story anchoring 0.7 to an observed battery
+value is RETRACTED (recorded in the registry entry's history): it
+tuned the bar to a measured row (e016_swap's rho 0.746) and that
+example fails criterion 3's own statistic anyway.
+
+**Criterion 3 — margin-defined tie-set churn (statistic REBUILT;
+value pending owner).** The statistic is the maximum tie-set churn
+fraction across battery rows —
+`shortlist_stability.aggregate.max_tie_churn_frac` (§5c); for
+`gen_leave_class_out` the aggregate scans EVERY generator class
+(class max — the row's published entry is its min-Jaccard class
+tuple, and the two extremes need not coincide in one class, so
+per-row scanning alone could understate the statistic) — replacing
+the hard top-8 membership count (`screen_top8_churn_max`, superseded:
+rank-8 is an arbitrary boundary; the decision object is the
+MARGIN-DEFINED tie set). NO threshold value exists yet:
+`decision_output.criteria.tie_churn` carries threshold null and pass
+null until the owner sets the value after the shortlist-stability
+report. The legacy hard-top-8 churn survives as a per-row DIAGNOSTIC
+column with an explicit per-row UNIT field — 'window_id' for most
+rows, 'host_shape' for `window_10`/`window_15` (whose window sets
+differ from the headline scan).
+
+**Fail-safe rule.** ordinal_ok requires ALL criteria to pass; an
+UNSET threshold cannot pass. ordinal_ok is therefore FALSE BY
+CONSTRUCTION until the owner sets criteria 2/3 — the intended
+direction: while thresholds are open, the screen can only deliver the
+shortlist, never a ranking. Otherwise (any criterion failing) the
+decision output is the THRESHOLD SHORTLIST — all `tie_with_cutoff`
+windows grouped by host shape, presented beside the measured
+indicators — and the ordinal index is diagnostic-only. The rule is
+MECHANIZED: `screen_scan.py` writes the artifact's `decision_output`
+block (§4) with the measured numbers, the registry thresholds,
+per-criterion pass booleans, `decision_format`, and the shortlist; a
+standing test recomputes pos_frac from the stored replicate signs and
+every boolean from the stored numbers (test_screen.py D6). Measured
+outcome at the 2026-07-20 review build: ordinal_ok = FALSE —
+criterion 1 fails (b1_pos_frac 0.8115, b2_pos_frac 0.7435 vs 0.841),
+criterion 2 fails at its provisional value (min rho = 0.39,
+buffer_lo), criterion 3 is unset (measured statistic 0.848,
+e016_swap) — the screen delivers the shortlist, not a ranking.
+README known issues 35 (opened) and 38 (owner review).
+
+**FROZEN BATTERY (owner review 2026-07-20).** The battery is the
+exact row list in [screen_battery_rows] (registry entry; the 16
+sensitivity ids of §4, LOYO excluded as a consistency check). Adding
+or dropping a row is an OWNER-APPROVED SPEC AMENDMENT, never a build
+patch, because the battery criterion is a MIN: adding a row can only
+lower it, and deleting a row can only raise it — an unfrozen list is
+a tunable bar. A standing test asserts the artifact's battery rows ==
+the registry list exactly, order included (test D2).
+
+**§5c Shortlist-stability report (owner review 2026-07-20; the
+statistics behind criteria 2/3's pending values).** For EVERY battery
+row, the artifact's `shortlist_stability` block reruns that row's OWN
+route-cluster bootstrap (same B; per-row seed rule: every row
+re-derives `default_rng(screen_seed)` — common random numbers, so the
+route resamples and ACS z-draws are identical across rows and tie-set
+differences are attributable to the perturbation, never the draw; the
+z vector is drawn even where unwired, e.g. e016_swap has no E016 MOE,
+purely to keep the CRN stream aligned) and computes its
+`tie_with_cutoff` set. Per row: n_tie_row, tie_in/tie_out
+(replacements vs the MARGIN-DEFINED headline tie set — never hard
+rank-8), Jaccard overlap, tie_churn_frac = max(#in, #out)/|headline
+tie set|, and the legacy hard-top-8 churn as a unit-tagged diagnostic.
+The `nb_estimator` row's per-replicate NB2 refit holds alpha at the
+headline NB2 estimate and Fisher-scores beta
+(`screen_fit.nb2_beta_fixed_alpha` — a stated approximation, pinned
+to the statsmodels fit by test D7; profiling alpha per replicate is
+outside the block's runtime budget). The aggregate carries
+min_jaccard, max_tie_churn_frac (criterion 3's statistic), and the
+STABLE CORE: headline tie windows present in the tie set under every
+battery row (host-shape membership for the window-length rows; every
+generator class for gen_leave_class_out) — the §4b memo consumes it
+when churn is heavy.
 
 **PRIMARY — rank-stability battery** (panel 2026-07-18: for a screen
 that passes ties onward, ranking robustness under *specification
@@ -425,9 +529,11 @@ window rows — and checks 2/3/5 coverage for screen-claiming entries.
 | `x_vintage_mismatch` | 2022 LODES / 2023 ACS X vs FY2017-20 y | structural | judgment | — | `drop_fy2020` (shared), `year_fe_vs_pooled` |
 | `screen_loo_rho` | 0.9 | constant | judgment | quality-knob | — |
 | `screen_male` | 0.35 | constant | judgment | quality-knob | — |
-| `screen_t_min` | 1.0 | constant | judgment (tripwire (i); pending owner ratification 2026-07-19) | quality-knob (consumption verified by the `screen` scan) | — |
-| `screen_battery_rho_min` | 0.7 | constant | judgment (tripwire (ii); pending owner ratification 2026-07-19) | quality-knob (consumption verified by the `screen` scan) | — |
-| `screen_top8_churn_max` | 2 | constant | judgment (tripwire (iii); pending owner ratification 2026-07-19) | quality-knob (consumption verified by the `screen` scan) | — |
+| `screen_t_min` | 1.0 | constant | judgment — SUPERSEDED 2026-07-20 (criterion 1 revised to the signed bootstrap fraction; analytic \|t\| demoted to a diagnostic) | superseded, points forward to `screen_pos_frac_min` | — |
+| `screen_pos_frac_min` | 0.841 | constant | judgment (revised criterion 1, OWNER-RATIFIED 2026-07-20; 0.841 = Phi(1), the one-sided \|t\|>=1 translation with the sign requirement) | quality-knob (consumption verified by the `screen` scan) | — |
+| `screen_battery_rho_min` | 0.7 | constant | judgment (criterion 2; statistic ratified, VALUE PROVISIONAL pending owner post-report 2026-07-20; calibration story retracted) | quality-knob (consumption verified by the `screen` scan) | — |
+| `screen_top8_churn_max` | 2 | constant | judgment — SUPERSEDED 2026-07-20 (criterion-3 statistic rebuilt as margin-defined tie-set churn; hard top-8 churn demoted to a unit-tagged diagnostic; successor threshold entry pending the owner's post-report value) | superseded | — |
+| `screen_battery_rows` | 16 frozen row ids | constant (structural-governance role) | definitional (owner battery freeze 2026-07-20; the battery is a MIN — row changes are owner-approved spec amendments) | definitional (consumption verified by the `screen` scan; test D2 asserts artifact == registry list) | — |
 
 The predictor-set perturbation rows are claimed by two structural
 entries created at S2: the endogenous-controls choice (rows `drop_rh`,
@@ -658,20 +764,29 @@ evaluated on the snapshot pair the two sides actually share
 (43's archived shape vs its current shape is itself a printed
 diagnostic, not an assumed identity).
 
-### 9.5 Decision rule (pre-committed)
+### 9.5 Decision rule (pre-committed; permanence clause softened per owner review 2026-07-20)
 
-The §5 tripwire — `screen_t_min` / `screen_battery_rho_min` /
-`screen_top8_churn_max`, pending owner ratification — governs the
-rebuilt output IDENTICALLY: same thresholds, same three criteria, same
-mechanized `decision_output` block. PRE-COMMITTED interpretation: if
-the rebuilt demand block STILL fails the tripwire, the screen's
-PERMANENT decision output is the threshold shortlist plus the
-measured-indicator table (rank_ci, tie_with_cutoff, underservice_flag,
-leverage_flag), and the pipeline treats stage-1 ordinal ranking as OUT
-OF REACH for OC data — the external critique's structural suggestion,
-adopted verbatim. There is no v2.2: no post-hoc predictor shopping
-beyond the 9.1 pre-registered swaps, no threshold re-tuning after
-seeing the rebuilt numbers, no third rebuild of the input stack.
+The §5 tripwire v2 — `screen_pos_frac_min` (criterion 1, ratified) /
+`screen_battery_rho_min` (criterion 2, value provisional) / the
+tie-churn statistic (criterion 3, value pending owner) — governs the
+rebuilt output IDENTICALLY: same criteria, same registry thresholds
+as ratified/set by the owner, same mechanized `decision_output` and
+`shortlist_stability` blocks. PRE-COMMITTED interpretation: if the
+rebuilt demand block STILL fails the tripwire, the screen's decision
+output REMAINS the threshold shortlist plus the measured-indicator
+table (rank_ci, tie_with_cutoff, underservice_flag, leverage_flag) —
+or the NARROWER stable core per §4b when the stability report shows
+heavy tie-set churn — UNTIL a documented, owner-approved change of
+method (governance rule 3: a README known-issue log entry is
+required). The FROZEN OBJECT is this §9 rebuild spec itself:
+re-running the same spec hoping for a different answer is barred
+(same inputs, same spec ⇒ same artifact by the determinism gate), no
+post-hoc predictor shopping beyond the 9.1 pre-registered swaps, and
+no threshold re-tuning after seeing the rebuilt numbers. Method
+changes are GOVERNED — owner-approved, spec-amended, and logged —
+not banned. (The prior wording — "no v2.2, permanent, no re-tuning
+ever" — promised more than governance can honestly deliver and was
+softened by the owner review 2026-07-20; README known issue 38.)
 
 ### 9.6 Acquisition manifest
 

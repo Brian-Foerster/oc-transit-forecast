@@ -12,22 +12,31 @@ defined below in mi-space) with no data/raw dependency:
   P7  window grid: w0 = k*step exactly, count = floor((L-win)/step)+1
   P8  overlap grouping: connected components over >threshold shared tracts,
       deterministic group ids (lexicographically smallest member window_id)
+  P10 tie_churn_stats (shortlist-stability arithmetic) on synthetic tie
+      sets: margin-defined tie_in/tie_out, Jaccard, tie_churn_frac, and
+      the empty-set edge cases
 
 Data-gated tests (house Q6 pattern -- skip cleanly when data/raw or the
 generated artifact is absent):
 
   D1  fit==scan predictor identity on Route 43 (spec 01 §3.2 / panel D6)
-  D2  artifact schema (top-level + per-window + the 16 sensitivity ids)
+  D2  artifact schema (top-level + per-window + the 16 sensitivity ids +
+      shortlist_stability per-row ids == the FROZEN registry battery list,
+      order included, with explicit unit fields)
   D3  ordinal guardrails: no boardings-denominated field anywhere in the
       artifact; predictions at exactly TWO service levels (D10)
   D4  in-process double-run determinism of the scan pipeline (reduced B)
   D5  same-exposure index rebase (SC batch 2026-07-19) is a positive scalar
       multiple of the superseded own-length-route baseline -- rank vector
       identical (monotone rescale)
-  D6  decision_output tripwire block (spec 01 §5): internally consistent
-      (pass booleans recomputed from the stored numbers), thresholds from
-      the registry, shortlist == tie_with_cutoff windows grouped by host;
-      measured outcome on current data = ordinal_ok FALSE failing (i)+(ii)
+  D6  decision_output tripwire v2 (spec 01 §5, owner review 2026-07-20):
+      pos_frac values recomputed from the stored replicate_signs strings;
+      pass booleans recomputed; tie_churn threshold null -> pass null ->
+      ordinal_ok FALSE BY CONSTRUCTION (fail-safe); shortlist ==
+      tie_with_cutoff windows grouped by host; stability aggregate
+      recomputed from the stored per-row entries
+  D7  nb2_beta_fixed_alpha (the stability block's fixed-alpha NB2 refit)
+      reproduces the statsmodels NB2 beta at the headline alpha
 
     python test_screen.py
 """
@@ -197,6 +206,34 @@ def test_p9_pairwise_shares():
     print("  P9 OK  per-pair overlap shares (no transitive closure)")
 
 
+def test_p10_tie_churn_stats():
+    """Owner review 2026-07-20: the shortlist-stability arithmetic on
+    synthetic tie sets -- margin-defined replacements vs the headline tie
+    set, Jaccard, tie_churn_frac, empty-set edges."""
+    from screen_scan import tie_churn_stats
+    head = {"a", "b", "c", "d"}
+    st = tie_churn_stats(head, {"a", "b", "e"})
+    assert st["tie_in"] == ["e"] and st["tie_out"] == ["c", "d"]
+    assert st["n_tie_in"] == 1 and st["n_tie_out"] == 2
+    assert abs(st["jaccard"] - 2.0 / 5.0) < 1e-12
+    assert abs(st["tie_churn_frac"] - 2.0 / 4.0) < 1e-12   # max(1,2)/|head|
+    # identical sets: no churn, jaccard 1
+    st = tie_churn_stats(head, set(head))
+    assert st["jaccard"] == 1.0 and st["tie_churn_frac"] == 0.0
+    assert st["tie_in"] == [] and st["tie_out"] == []
+    # disjoint sets: jaccard 0; churn frac max(in,out)/|head|
+    st = tie_churn_stats(head, {"x", "y"})
+    assert st["jaccard"] == 0.0
+    assert abs(st["tie_churn_frac"] - 4.0 / 4.0) < 1e-12
+    # both empty: jaccard defined as 1.0, frac 0 (max(1,|head|) guard)
+    st = tie_churn_stats(set(), set())
+    assert st["jaccard"] == 1.0 and st["tie_churn_frac"] == 0.0
+    # empty headline, non-empty row: guard denominator 1
+    st = tie_churn_stats(set(), {"x"})
+    assert st["jaccard"] == 0.0 and st["tie_churn_frac"] == 1.0
+    print("  P10 OK  tie_churn_stats (margin-defined churn arithmetic)")
+
+
 # ---------------------------------------------------------------------------
 # data-gated (house Q6 pattern)
 # ---------------------------------------------------------------------------
@@ -247,7 +284,7 @@ def test_d2_artifact_schema():
     for k in ("run_id", "schema", "seed", "n_boot", "universe", "vintages",
               "disclaimer", "assumptions_manifest", "windows",
               "overlap_diagnostics", "fit_diagnostics", "sensitivity",
-              "decision_output", "notes"):
+              "shortlist_stability", "decision_output", "notes"):
         assert k in a, f"missing top-level key {k}"
     assert a["schema"] == "01-S1"
     assert a["seed"] == val("screen_seed")
@@ -271,6 +308,33 @@ def test_d2_artifact_schema():
     assert {r["id"] for r in a["sensitivity"]} == SENS_IDS
     for r in a["sensitivity"]:
         assert set(r) >= {"id", "label", "pct", "detail"}, r["id"]
+    # FROZEN battery row list (owner review 2026-07-20): the registry list
+    # is the single source; the artifact's sensitivity ids and the
+    # shortlist_stability per-row ids must match it exactly -- the
+    # stability rows IN ORDER (adding/dropping a row is an owner-approved
+    # spec amendment; the battery is a MIN)
+    frozen = val("screen_battery_rows")
+    assert SENS_IDS == set(frozen), "SENS_IDS drifted from the registry"
+    assert {r["id"] for r in a["sensitivity"]} == set(frozen)
+    ss = a["shortlist_stability"]
+    assert set(ss) == {"per_row", "aggregate", "note"}
+    assert [r["id"] for r in ss["per_row"]] == list(frozen), \
+        "shortlist_stability rows != frozen registry battery list (order)"
+    # explicit per-row unit fields ('host_shape' only for the two
+    # window-length rows -- the artifact's two admitted churn units)
+    for r in ss["per_row"]:
+        want = ("host_shape" if r["id"] in ("window_10", "window_15")
+                else "window_id")
+        assert r["unit"] == want, (r["id"], r["unit"])
+        assert r["hard_top8_churn"]["unit"] == want
+        for k in ("n_tie_row", "n_tie_headline", "tie_in", "tie_out",
+                  "n_tie_in", "n_tie_out", "jaccard", "tie_churn_frac",
+                  "hard_top8_churn"):
+            assert k in r, (r["id"], k)
+    assert set(ss["aggregate"]) == {
+        "min_jaccard", "worst_row", "max_tie_churn_frac",
+        "max_tie_churn_row", "n_tie_headline", "stable_core",
+        "n_stable_core"}
     for w in a["windows"]:
         assert set(w) == WINDOW_KEYS, (w["window_id"], set(w) ^ WINDOW_KEYS)
         assert w["window_id"].startswith(w["route_id"] + "_")
@@ -346,67 +410,125 @@ def test_d5_rebase_rank_invariance():
           f"({len(best)} fitted host routes in the baseline median)")
 
 
-def _churn_of(row):
-    d = row["detail"]
-    if "by_class" in d:
-        return max(max(len(v["entered"]), len(v["exited"]))
-                   for v in d["by_class"].values())
-    if "entered" in d:
-        return max(len(d["entered"]), len(d["exited"]))
-    return 0
-
-
 def test_d6_decision_output():
-    """SC batch 2026-07-19 item 5: the pre-registered tripwire block --
-    present, thresholds registry-sourced, pass booleans recomputable from
-    the stored numbers, shortlist == tie_with_cutoff windows grouped by
-    host; measured outcome on current data: ordinal_ok FALSE, failing
-    (i) demand |t| and (ii) battery min rho."""
+    """Decision tripwire v2 (owner review 2026-07-20): criterion 1's
+    pos_frac values recomputed from the stored replicate_signs strings;
+    pass booleans recomputed from the stored numbers; tie_churn threshold
+    null -> pass null -> ordinal_ok FALSE BY CONSTRUCTION (an unset
+    threshold cannot pass -- the intended fail-safe); shortlist ==
+    tie_with_cutoff windows grouped by host; stability aggregate
+    recomputed from the stored per-row entries."""
     if not os.path.exists(ARTIFACT):
         print("  D6 SKIP  (outputs/screen_results.json absent)")
         return
     a = json.load(open(ARTIFACT, encoding="utf-8"))
     do = a["decision_output"]
     assert set(do) == {"ordinal_ok", "criteria", "decision_format",
-                       "shortlist", "note"}, set(do)
+                       "shortlist", "note", "diagnostics",
+                       "replicate_signs"}, set(do)
     c = do["criteria"]
-    assert set(c) == {"t_demand", "battery", "churn"}
-    assert set(c["t_demand"]) == {"min_abs_t", "threshold", "pass"}
-    assert set(c["battery"]) == {"min_rho", "worst_row_id", "threshold",
-                                 "pass"}
-    assert set(c["churn"]) == {"max_churn", "worst_row_id", "threshold",
-                               "pass"}
-    # thresholds are the registry tripwire values
-    assert c["t_demand"]["threshold"] == val("screen_t_min")
-    assert c["battery"]["threshold"] == val("screen_battery_rho_min")
-    assert c["churn"]["threshold"] == val("screen_top8_churn_max")
+    assert set(c) == {"sign_pos_frac", "battery_rho", "tie_churn"}
+    assert set(c["sign_pos_frac"]) == {"b1_pos_frac", "b2_pos_frac",
+                                       "threshold", "pass"}
+    assert set(c["battery_rho"]) == {"min_rho", "worst_row_id", "threshold",
+                                     "threshold_status", "pass"}
+    assert set(c["tie_churn"]) == {"max_tie_churn_frac", "worst_row_id",
+                                   "threshold", "threshold_status", "pass"}
+    # thresholds: registry-sourced where live; NULL where the owner has
+    # not set a value (criterion 3)
+    assert c["sign_pos_frac"]["threshold"] == val("screen_pos_frac_min")
+    assert c["battery_rho"]["threshold"] == val("screen_battery_rho_min")
+    assert "provisional" in c["battery_rho"]["threshold_status"]
+    assert c["tie_churn"]["threshold"] is None
+    assert c["tie_churn"]["pass"] is None
+    assert "pending owner" in c["tie_churn"]["threshold_status"]
+    # criterion 1: recompute pos_frac from the stored replicate signs
+    rs = do["replicate_signs"]
+    n_boot = a["n_boot"]
+    for k in ("b1", "b2", "b4"):
+        assert len(rs[k]) == n_boot and set(rs[k]) <= {"+", "-"}, k
+    b1_pf = rs["b1"].count("+") / n_boot
+    b2_pf = rs["b2"].count("+") / n_boot
+    assert abs(b1_pf - c["sign_pos_frac"]["b1_pos_frac"]) < 1e-6
+    assert abs(b2_pf - c["sign_pos_frac"]["b2_pos_frac"]) < 1e-6
+    assert abs(rs["b4"].count("+") / n_boot
+               - do["diagnostics"]["b4_pos_frac"]) < 1e-6
     # internal consistency: recompute the pass booleans + ordinal_ok
-    assert c["t_demand"]["pass"] == (c["t_demand"]["min_abs_t"]
-                                     >= c["t_demand"]["threshold"])
-    assert c["battery"]["pass"] == (c["battery"]["min_rho"]
-                                    >= c["battery"]["threshold"])
-    assert c["churn"]["pass"] == (c["churn"]["max_churn"]
-                                  <= c["churn"]["threshold"])
-    ok = (c["t_demand"]["pass"] and c["battery"]["pass"]
-          and c["churn"]["pass"])
+    assert c["sign_pos_frac"]["pass"] == (
+        min(b1_pf, b2_pf) >= c["sign_pos_frac"]["threshold"])
+    assert c["battery_rho"]["pass"] == (c["battery_rho"]["min_rho"]
+                                        >= c["battery_rho"]["threshold"])
+    ok = all(cc["pass"] is True for cc in c.values())
     assert do["ordinal_ok"] == ok
-    assert do["decision_format"] == ("ordinal" if ok
-                                     else "threshold_shortlist")
-    # cross-checks against the stored fit + sensitivity blocks
+    # FALSE BY CONSTRUCTION while criterion 3's threshold is unset --
+    # regardless of how 1 and 2 measure (the fail-safe direction)
+    assert do["ordinal_ok"] is False
+    assert do["decision_format"] == "threshold_shortlist"
+    # diagnostics: analytic |t| retained, recomputable from coefficients
     coef = a["fit_diagnostics"]["coefficients"]
     min_t = min(abs(v["est"]) / v["se_cluster"] for k, v in coef.items()
                 if k.startswith(("b1_", "b2_")))
-    assert abs(min_t - c["t_demand"]["min_abs_t"]) < 1e-4, \
-        (min_t, c["t_demand"]["min_abs_t"])
+    assert abs(min_t - do["diagnostics"]["min_abs_t_demand"]) < 1e-4
+    # criterion 2 cross-check vs the stored sensitivity rows
     rhos = {r["id"]: r["detail"]["rho"] for r in a["sensitivity"]}
-    assert abs(min(rhos.values()) - c["battery"]["min_rho"]) < 5e-6
-    assert c["battery"]["worst_row_id"] in rhos
-    assert max(_churn_of(r) for r in a["sensitivity"]) \
-        == c["churn"]["max_churn"]
-    assert c["churn"]["worst_row_id"] in rhos
+    assert abs(min(rhos.values()) - c["battery_rho"]["min_rho"]) < 5e-6
+    assert c["battery_rho"]["worst_row_id"] in rhos
+    # criterion 3 statistic == stability aggregate; aggregate recomputed
+    # from the stored per-row entries (tie-churn recomputation)
+    ss = a["shortlist_stability"]
+    agg = ss["aggregate"]
+    assert c["tie_churn"]["max_tie_churn_frac"] == agg["max_tie_churn_frac"]
+    assert c["tie_churn"]["worst_row_id"] == agg["max_tie_churn_row"]
+    # by_class rows contribute CLASS-WISE extremes to the aggregate
+    # (review 2026-07-20 major finding 2: Jaccard-min and churn-frac-max
+    # need not coincide in one class; per_row-only scanning could
+    # understate criterion 3 -- bias toward PASS)
+    def _jacs(r):
+        bc = r.get("by_class")
+        return ([v["jaccard"] for v in bc.values()] if bc
+                else [r["jaccard"]])
+
+    def _fracs(r):
+        bc = r.get("by_class")
+        return ([v["tie_churn_frac"] for v in bc.values()] if bc
+                else [r["tie_churn_frac"]])
+
+    fracs = [max(_fracs(r)) for r in ss["per_row"]]
+    jacs = [min(_jacs(r)) for r in ss["per_row"]]
+    assert abs(max(fracs) - agg["max_tie_churn_frac"]) < 5e-6
+    assert abs(min(jacs) - agg["min_jaccard"]) < 5e-6
+    worst = ss["per_row"][jacs.index(min(jacs))]["id"]
+    assert agg["worst_row"] == worst
+    frac_worst = ss["per_row"][fracs.index(max(fracs))]["id"]
+    assert agg["max_tie_churn_row"] == frac_worst
+    # the by_class entry tuple is the min-Jaccard class (published rule)
+    for r in ss["per_row"]:
+        if "by_class" in r:
+            assert abs(r["jaccard"] - min(_jacs(r))) < 5e-6, r["id"]
+    # per-row churn stats recompute from the stored tie_in/tie_out lists
+    for r in ss["per_row"]:
+        assert r["n_tie_in"] == len(r["tie_in"])
+        assert r["n_tie_out"] == len(r["tie_out"])
+        expect = (max(r["n_tie_in"], r["n_tie_out"])
+                  / max(1, r["n_tie_headline"]))
+        # artifact floats are canonically rounded to 6 dp (CANON_DECIMALS)
+        assert abs(r["tie_churn_frac"] - expect) < 5e-6, r["id"]
+    # stable core: a subset of the headline tie set, consistent with every
+    # window-unit row's tie_out and every host-unit row's surviving hosts
+    ties = {w["window_id"]: w for w in a["windows"] if w["tie_with_cutoff"]}
+    core = set(agg["stable_core"])
+    assert core <= set(ties)
+    assert agg["n_stable_core"] == len(core)
+    for r in ss["per_row"]:
+        if r["unit"] != "window_id":
+            continue
+        if "by_class" in r:
+            for cls, v in r["by_class"].items():
+                assert not (core & set(v["tie_out"])), (r["id"], cls)
+        else:
+            assert not (core & set(r["tie_out"])), r["id"]
     # shortlist: exactly the tie_with_cutoff windows, indicators intact,
     # grouped by host shape (each host's entries contiguous)
-    ties = {w["window_id"]: w for w in a["windows"] if w["tie_with_cutoff"]}
     assert {s["window_id"] for s in do["shortlist"]} == set(ties)
     for s in do["shortlist"]:
         assert set(s) == {"route_id", "window_id", "screen_index_p50",
@@ -422,18 +544,48 @@ def test_d6_decision_output():
             assert h not in seen, "shortlist not grouped by host shape"
             seen.add(h)
             prev = h
-    # measured outcome on current data (SC batch verification): the
-    # tripwire FAILS -- criteria (i) demand |t| and (ii) battery min rho
-    assert do["ordinal_ok"] is False
-    assert c["t_demand"]["pass"] is False
-    assert c["battery"]["pass"] is False
-    print(f"  D6 OK  decision_output consistent; format "
-          f"{do['decision_format']}; min|t| {c['t_demand']['min_abs_t']:.3f}, "
-          f"min rho {c['battery']['min_rho']:.3f} "
-          f"({c['battery']['worst_row_id']}), max churn "
-          f"{c['churn']['max_churn']} ({c['churn']['worst_row_id']}); "
-          f"shortlist {len(do['shortlist'])} windows / "
-          f"{len(seen)} host shapes")
+    print(f"  D6 OK  decision_output v2 consistent; format "
+          f"{do['decision_format']}; pos_frac b1 "
+          f"{c['sign_pos_frac']['b1_pos_frac']:.4f} / b2 "
+          f"{c['sign_pos_frac']['b2_pos_frac']:.4f} vs "
+          f"{c['sign_pos_frac']['threshold']} "
+          f"({'PASS' if c['sign_pos_frac']['pass'] else 'FAIL'}); "
+          f"min rho {c['battery_rho']['min_rho']:.3f} "
+          f"({c['battery_rho']['worst_row_id']}, provisional); tie_churn "
+          f"{c['tie_churn']['max_tie_churn_frac']:.3f} "
+          f"({c['tie_churn']['worst_row_id']}, threshold UNSET); "
+          f"ordinal_ok false-by-construction; stable core "
+          f"{agg['n_stable_core']}/{agg['n_tie_headline']}; shortlist "
+          f"{len(do['shortlist'])} windows / {len(seen)} host shapes")
+
+
+def test_d7_nb2_fixed_alpha():
+    """The stability block's fixed-alpha NB2 refit (stated approximation,
+    spec 01 §5): at the statsmodels headline alpha, Fisher-scored beta
+    reproduces the statsmodels NB2 beta (at the joint MLE the fixed-alpha
+    beta optimum IS the joint beta optimum)."""
+    if not HAVE_DATA:
+        print("  D7 SKIP  (data/raw absent)")
+        return
+    import numpy as np
+    import screen_fit as sf
+    inputs = sf.load_screen_inputs()
+    projs = sf.gtfs_universe(inputs)
+    fit = sf.build_fit_frame(projs, inputs, val("buffer_mi"))
+    y, X, names, groups, df = sf.design_matrix(fit["rows"], sf.BASE_CFG)
+    beta_ols = sf.ols_beta(y, X)
+    counts = df["boardings"].to_numpy(float)
+    nb_beta, alpha, conv = sf.fit_nb2(counts, y, X, beta_ols)
+    assert conv
+    resid = y - X @ beta_ols
+    s2 = float(resid @ resid) / max(len(y) - X.shape[1], 1)
+    start = beta_ols.copy()
+    start[0] += s2 / 2.0
+    fb = sf.nb2_beta_fixed_alpha(counts, X, alpha, start)
+    diff = float(np.max(np.abs(fb - nb_beta)))
+    assert diff < 1e-5, f"fixed-alpha Fisher beta off by {diff}"
+    print(f"  D7 OK  nb2_beta_fixed_alpha == statsmodels NB2 beta at "
+          f"headline alpha {alpha:.5f} (max |diff| {diff:.2e})")
 
 
 def test_d4_double_run_determinism():
@@ -460,10 +612,12 @@ if __name__ == "__main__":
     test_p7_window_grid()
     test_p8_overlap_grouping()
     test_p9_pairwise_shares()
+    test_p10_tie_churn_stats()
     test_d1_fit_scan_identity()
     test_d2_artifact_schema()
     test_d3_ordinal_guardrails()
     test_d4_double_run_determinism()
     test_d5_rebase_rank_invariance()
     test_d6_decision_output()
+    test_d7_nb2_fixed_alpha()
     print("ALL SCREEN TESTS PASS")

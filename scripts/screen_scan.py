@@ -17,14 +17,24 @@ svc_std = 1577.65 [screen_svc_std] FY2019 RVH per route-mile x window
 length. NO field in the artifact is denominated in boardings; a standing
 test (test_screen.py D3) enforces it.
 
-Decision tripwire (spec 01 §5, SC batch 2026-07-19, pending owner
-ratification): the artifact carries a top-level decision_output block --
-the ordinal ranking is decision-grade only if (i) every demand-block
-coefficient has cluster-robust |t| >= screen_t_min, (ii) battery min
-Spearman rho >= screen_battery_rho_min (LOYO consistency check excluded),
-(iii) top-8 churn <= screen_top8_churn_max per perturbation; otherwise
-decision_format = 'threshold_shortlist' (tie_with_cutoff windows grouped
-by host shape) and the ordinal index is diagnostic-only.
+Decision tripwire v2 (spec 01 §5, owner review 2026-07-20): the artifact
+carries a top-level decision_output block. Criterion 1 (REVISED, RATIFIED):
+each demand-block coefficient (b1, b2 -- b4 is outside the block) must be
+strictly positive in >= screen_pos_frac_min = 0.841 = Phi(1) of the B=2000
+bootstrap replicates (per-replicate signs recorded in the existing headline
+bootstrap; analytic |t| demoted to a diagnostic -- cluster SEs are
+downward-biased at ~41 clusters). Criterion 2 (battery min Spearman rho,
+LOYO excluded): statistic unchanged, 0.7 threshold PROVISIONAL pending the
+owner's decision on the shortlist_stability report. Criterion 3 (REBUILT):
+max margin-defined tie-set churn across battery rows; threshold UNSET
+(null) pending owner. ordinal_ok requires all three to pass and an unset
+threshold cannot pass -> false-by-construction until the owner sets 2/3
+(fail-safe); decision_format = 'threshold_shortlist' (tie_with_cutoff
+windows grouped by host shape) and the ordinal index is diagnostic-only.
+The shortlist_stability block reruns EVERY frozen battery row's own
+route-cluster bootstrap (CRN per-row seed rule) and reports tie_in/tie_out
+vs the margin-defined headline tie set, Jaccard, tie_churn_frac, the
+legacy hard-top-8 churn as a unit-tagged diagnostic, and the stable core.
 
 Uncertainty: route-cluster bootstrap, B = 2000 [screen_n_boot], seeded
 default_rng(7 [screen_seed]) -- resample ROUTES with replacement, refit,
@@ -88,9 +98,13 @@ CONSUMED = (
     ("screen_seed", "bootstrap RNG seed"),
     ("screen_loo_rho", "LOO leverage-screen floor"),
     ("screen_male", "LOO MALE ceiling"),
-    ("screen_t_min", "tripwire (i): per-demand-coefficient min |t|"),
-    ("screen_battery_rho_min", "tripwire (ii): battery min Spearman rho"),
-    ("screen_top8_churn_max", "tripwire (iii): max top-8 membership changes"),
+    ("screen_pos_frac_min", "tripwire criterion 1 (revised, ratified "
+                            "2026-07-20): min demand-coefficient bootstrap "
+                            "positive-sign fraction"),
+    ("screen_battery_rho_min", "tripwire criterion 2: battery min Spearman "
+                               "rho (threshold provisional)"),
+    ("screen_battery_rows", "FROZEN battery row list (structural "
+                            "governance; owner review 2026-07-20)"),
     ("moe_z", "ACS 90% MOE -> SE conversion"),
     ("mi_lat", "mi per degree latitude"),
     ("mi_per_deg_lon", "mi per degree longitude at equator"),
@@ -286,7 +300,11 @@ def _churn(head_ids, var_ids):
 def bootstrap(asm, cfg, svc, inputs, n_boot, seed, quiet=False):
     """Route-cluster bootstrap with within-replicate ACS E002 MOE
     perturbation. ALL windows rescored jointly per replicate; returns
-    per-window index percentiles + joint rank distribution stats."""
+    per-window index percentiles + joint rank distribution stats + the
+    per-replicate b1/b2/b4 coefficient signs behind the REVISED tripwire
+    criterion 1 (owner review 2026-07-20): '+' iff strictly positive,
+    replicate order, no new compute -- the signs fall out of the
+    existing refits."""
     head = score(asm, cfg, svc)
     routes = head["routes"]
     nR = len(routes)
@@ -311,6 +329,9 @@ def bootstrap(asm, cfg, svc, inputs, n_boot, seed, quiet=False):
     idx_mat = np.empty((n_boot, nW))
     rank_mat = np.empty((n_boot, nW), int)
     wids = W["window_id"]
+    sign_cols = {"b1": head["names"].index("b1_lodes"), "b2": b2col,
+                 "b4": head["names"].index("b4_gen")}
+    signs = {k: [] for k in ("b1", "b2", "b4")}
     for b in range(n_boot):
         sample = rng.integers(0, nR, nR)
         z = rng.standard_normal(nT)
@@ -320,6 +341,8 @@ def bootstrap(asm, cfg, svc, inputs, n_boot, seed, quiet=False):
         X[:, b2col] = re[row_route]
         rows_sel = np.concatenate([route_rows[i] for i in sample])
         beta = sf.ols_beta(y[rows_sel], X[rows_sel])
+        for k, j in sign_cols.items():
+            signs[k].append("+" if beta[j] > 0.0 else "-")
         Xw[:, b2col] = we
         wp = Xw @ beta
         # per-replicate SAME-EXPOSURE baseline: within a replicate the swap
@@ -338,7 +361,97 @@ def bootstrap(asm, cfg, svc, inputs, n_boot, seed, quiet=False):
     tie = (rank_lo <= 5.0) & (rank_hi > 5.0)
     return {"p10": p10, "p50": p50, "p90": p90,
             "rank_lo": rank_lo, "rank_hi": rank_hi, "tie": tie,
-            "head": head, "window_ids": wids}
+            "head": head, "window_ids": wids,
+            "signs": {k: "".join(v) for k, v in signs.items()}}
+
+
+# ---------------------------------------------------------------------------
+# per-battery-row tie-set bootstrap (shortlist-stability report, owner
+# review 2026-07-20)
+# ---------------------------------------------------------------------------
+def row_tie_bootstrap(asm, cfg, svc, inputs, n_boot, seed, nb_alpha=None):
+    """One battery row's OWN route-cluster bootstrap -> its tie_with_cutoff
+    set. Same B and the same machinery as the headline bootstrap.
+
+    PER-ROW SEED RULE (documented, spec 01 §5): every row re-derives
+    default_rng(screen_seed) -- common random numbers. The route resamples
+    and the ACS z-draws are IDENTICAL across rows (the z vector is drawn
+    even where unwired -- e016_swap has no E016 MOE loaded -- purely to
+    keep the CRN stream aligned), so a tie-set difference is attributable
+    to the perturbation, never to the draw; identical-model rows
+    (overlap_lo/hi, svc_p25/p75) reproduce the headline tie set exactly.
+
+    nb_alpha (nb_estimator row only): per-replicate NB2 refit at FIXED
+    headline alpha via screen_fit.nb2_beta_fixed_alpha -- the stated
+    approximation documented there (statsmodels alpha-profiling x B is
+    outside the stability block's runtime budget)."""
+    head = score(asm, cfg, svc)
+    routes = head["routes"]
+    nR = len(routes)
+    nT = len(inputs["e002"])
+    W = asm["W"]
+    nW = len(W["window_id"])
+    perturb = not cfg["use_e016"]
+    b2col = head["names"].index("b2_e016" if cfg["use_e016"] else "b2_e002")
+    Mw = np.zeros((nW, nT))
+    for i, ti in enumerate(W["tract_idx"]):
+        Mw[i, ti] = 1.0
+    Mr = np.zeros((nR, nT))
+    for i, r in enumerate(routes):
+        Mr[i, asm["fit"]["route_pred"][r]["tract_idx"]] = 1.0
+    row_route = np.array([routes.index(r) for r in head["df"]["route"]])
+    route_rows = [np.flatnonzero(row_route == i) for i in range(nR)]
+    y, X = head["y"], head["X"].copy()
+    Xw = head["Xw"].copy()
+    e002, se = inputs["e002"], inputs["se_e002"]
+    counts = head["df"]["boardings"].to_numpy(float)
+    k_par = X.shape[1]
+    off = math.log(asm["window_mi"]) if cfg["offset"] else 0.0
+    rng = np.random.default_rng(seed)
+    rank_mat = np.empty((n_boot, nW), int)
+    for b in range(n_boot):
+        sample = rng.integers(0, nR, nR)
+        z = rng.standard_normal(nT)      # always drawn: CRN stream alignment
+        if perturb:
+            e = np.clip(e002 + se * z, 0.0, None)
+            X[:, b2col] = np.log1p(Mr @ e)[row_route]
+            Xw[:, b2col] = np.log1p(Mw @ e)
+        rows_sel = np.concatenate([route_rows[i] for i in sample])
+        beta = sf.ols_beta(y[rows_sel], X[rows_sel])
+        if nb_alpha is not None:
+            resid = y[rows_sel] - X[rows_sel] @ beta
+            s2 = float(resid @ resid) / max(len(rows_sel) - k_par, 1)
+            start = beta.copy()
+            start[0] += s2 / 2.0         # fit_nb2's lognormal moment map
+            beta = sf.nb2_beta_fixed_alpha(counts[rows_sel], X[rows_sel],
+                                           nb_alpha, start)
+        idx, _ = _index_from_preds(Xw @ beta + off, head["host_groups"])
+        order = np.argsort(-idx, kind="stable")
+        rank_mat[b, order] = np.arange(1, nW + 1)
+    rank_lo, rank_hi = np.percentile(rank_mat, [2.5, 97.5], axis=0)
+    tie = (rank_lo <= 5.0) & (rank_hi > 5.0)
+    tie_ids = [W["window_id"][i] for i in np.flatnonzero(tie)]
+    tie_hosts = sorted({W["route_id"][i] for i in np.flatnonzero(tie)},
+                       key=sf._route_sort_key)
+    return {"tie_ids": tie_ids, "tie_hosts": tie_hosts}
+
+
+def tie_churn_stats(head_set, row_set):
+    """Margin-defined churn between two tie sets in ONE comparison unit.
+    tie_in/tie_out are replacements vs the MARGIN-DEFINED headline set
+    (the headline tie set -- never hard rank-8); jaccard = |A&B|/|A|B|
+    (1.0 when both are empty); tie_churn_frac = max(#in, #out) /
+    max(1, |headline set|)."""
+    head_set, row_set = set(head_set), set(row_set)
+    union = head_set | row_set
+    tie_in = sorted(row_set - head_set)
+    tie_out = sorted(head_set - row_set)
+    return {"tie_in": tie_in, "tie_out": tie_out,
+            "n_tie_in": len(tie_in), "n_tie_out": len(tie_out),
+            "jaccard": (1.0 if not union
+                        else len(head_set & row_set) / len(union)),
+            "tie_churn_frac": (max(len(tie_in), len(tie_out))
+                               / max(1, len(head_set)))}
 
 
 # ---------------------------------------------------------------------------
@@ -441,7 +554,12 @@ def _length_row(rid, label, head, head_asm, var, var_asm):
 
 def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
                       groups_head, quiet=False):
+    """Returns (rows, nb_info, ctxs): ctxs maps every battery row id to the
+    (asm, cfg, svc[, nb_alpha, by_class]) context its OWN tie-set bootstrap
+    reruns (shortlist_stability, owner review 2026-07-20) -- the variant
+    assemblies are built once here and reused there."""
     rows = []
+    ctxs = {}
     hidx, hids = head["index"], asm["W"]["window_id"]
     step = val("screen_step_mi")
     win = val("screen_window_mi")
@@ -459,6 +577,8 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
         assert a["W"]["window_id"] == hids
         rows.append(_row(rid, f"catchment buffer {buf} mi", hidx, hids,
                          v["index"]))
+        ctxs[rid] = {"asm": a, "cfg": sf.BASE_CFG, "svc": svc,
+                     "unit": "window_id"}
     # window length band edges (best-per-shape comparison)
     for rid, wlen in (("window_10", band("screen_window_mi")[0]),
                       ("window_15", band("screen_window_mi")[1])):
@@ -467,6 +587,10 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
         v = score(a, sf.BASE_CFG, svc)
         rows.append(_length_row(rid, f"window length {wlen} mi", head, asm,
                                 v, a))
+        ctxs[rid] = {"asm": a, "cfg": sf.BASE_CFG, "svc": svc,
+                     "unit": "host_shape",
+                     "note": "window sets differ across lengths; the tie "
+                             "sets are compared in HOST-SHAPE units"}
     # model-config perturbations on the headline assembly
     cfg_rows = (
         ("drop_fy2020", "drop FY2020-Q3 rows", {"drop_fy2020": True}),
@@ -481,8 +605,16 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
     )
     for rid, label, over in cfg_rows:
         say(rid)
-        v = score(asm, dict(sf.BASE_CFG, **over), svc)
+        cfg_v = dict(sf.BASE_CFG, **over)
+        v = score(asm, cfg_v, svc)
         rows.append(_row(rid, label, hidx, hids, v["index"]))
+        ctxs[rid] = {"asm": asm, "cfg": cfg_v, "svc": svc,
+                     "unit": "window_id"}
+        if rid == "e016_swap":
+            ctxs[rid]["note"] = ("no E016 MOE is loaded, so the tie-set "
+                                 "bootstrap perturbs nothing within "
+                                 "replicates (the z draw still spends the "
+                                 "CRN stream)")
     # gen_leave_class_out: one row, per-class detail, pct = worst class
     say("gen_leave_class_out")
     classes = sorted({t for g in asm["W"]["gen_types"] for t in g}
@@ -500,6 +632,10 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
                           f"{'/'.join(classes)})",
                  "pct": 100.0 * (1.0 - rho_min),
                  "detail": {"rho": rho_min, "by_class": by_class}})
+    ctxs["gen_leave_class_out"] = {
+        "asm": asm, "svc": svc, "unit": "window_id",
+        "by_class": {cls: dict(sf.BASE_CFG, gen_exclude=cls)
+                     for cls in classes}}
     # NB2 estimator row (always fitted -- estimator_screen)
     say("nb_estimator")
     beta_ols = head["beta"]
@@ -510,6 +646,12 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
              v["index"],
              extra={"alpha": float(nb_alpha), "converged": bool(nb_conv)})
     rows.append(r)
+    ctxs["nb_estimator"] = {
+        "asm": asm, "cfg": sf.BASE_CFG, "svc": svc, "unit": "window_id",
+        "nb_alpha": float(nb_alpha),
+        "note": "per-replicate NB2 refit at FIXED headline alpha "
+                "(screen_fit.nb2_beta_fixed_alpha -- stated approximation; "
+                "test D7 pins it to the statsmodels fit)"}
     # svc p25/p75 (rank-inert by construction; the rows PROVE it)
     for rid, s in (("svc_p25", band("screen_svc_std")[0]),
                    ("svc_p75", band("screen_svc_std")[1])):
@@ -520,6 +662,11 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
                          note="a single additive b3 term shifts every "
                               "window and the baseline route identically, "
                               "so the index is invariant by construction"))
+        ctxs[rid] = {"asm": asm, "cfg": sf.BASE_CFG, "svc": s,
+                     "unit": "window_id",
+                     "note": "rank-inert by construction; under the CRN "
+                             "seed rule the tie set reproduces the "
+                             "headline exactly"}
     # overlap threshold band edges: ranking unchanged; regrouping reported
     thr_h = val("screen_overlap_threshold")
     n_head = len(set(groups_head.values()))
@@ -540,23 +687,32 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
                                 "n_groups": len(set(g.values())),
                                 "n_groups_headline": n_head,
                                 "top8_regrouped": changed}})
-    order = ["buffer_lo", "buffer_hi", "window_10", "window_15",
-             "drop_fy2020", "drop_rh", "e016_swap", "b4_off",
-             "gen_leave_class_out", "nb_estimator", "svc_p25", "svc_p75",
-             "offset_variant", "overlap_lo", "overlap_hi",
-             "year_fe_vs_pooled"]
+        ctxs[rid] = {"asm": asm, "cfg": sf.BASE_CFG, "svc": svc,
+                     "unit": "window_id",
+                     "note": "grouping-only row: the model is the headline "
+                             "model, so under the CRN seed rule the tie "
+                             "set reproduces the headline exactly"}
+    # the FROZEN battery row list (registry screen_battery_rows, owner
+    # review 2026-07-20): artifact row order == registry order, asserted
+    # by a standing test; adding/dropping a row is an owner-approved spec
+    # amendment (the battery is a MIN -- spec 01 §5)
+    order = val("screen_battery_rows")
     rows.sort(key=lambda r: order.index(r["id"]))
-    return rows, {"alpha": float(nb_alpha), "converged": bool(nb_conv)}
+    return rows, {"alpha": float(nb_alpha), "converged": bool(nb_conv)}, ctxs
 
 
 # ---------------------------------------------------------------------------
-# decision tripwire (spec 01 §5, SC batch 2026-07-19 -- pre-registered,
-# pending owner ratification)
+# shortlist-stability report (owner review 2026-07-20) + decision tripwire
+# v2 (spec 01 §5: criterion 1 revised AND ratified; criteria 2/3 statistics
+# rebuilt, threshold values deferred to the owner post-report)
 # ---------------------------------------------------------------------------
 def _row_churn(r):
-    """Top-8 membership changes for one battery row: max(#entered, #exited).
-    gen_leave_class_out reports per-class; worst class counts. Grouping-only
-    rows (overlap_lo/hi) leave the ranking unchanged by construction -> 0."""
+    """LEGACY DIAGNOSTIC -- top-8 membership changes for one battery row:
+    max(#entered, #exited). gen_leave_class_out reports per-class; worst
+    class counts. Grouping-only rows (overlap_lo/hi) leave the ranking
+    unchanged by construction -> 0. Demoted from tripwire criterion 3 to a
+    per-row diagnostic column (owner review 2026-07-20); the row's unit is
+    an explicit field ('window_id'; 'host_shape' for window_10/window_15)."""
     d = r["detail"]
     if "by_class" in d:
         return max(max(len(v["entered"]), len(v["exited"]))
@@ -566,43 +722,199 @@ def _row_churn(r):
     return 0
 
 
-def decision_block(pri, names, sens, windows):
-    """The pre-registered tripwire, mechanized: ordinal ranking is
-    decision-grade ONLY if (i) every demand-block coefficient (b1, b2) has
-    cluster-robust |t| >= screen_t_min, (ii) battery min Spearman rho >=
-    screen_battery_rho_min over the pre-registered perturbations (the
-    sensitivity rows; the LOYO consistency check lives in fit_diagnostics
-    and is excluded by construction -- mechanically near-1 with
-    time-invariant X), (iii) top-8 churn <= screen_top8_churn_max under
-    every perturbation. Otherwise decision_format = 'threshold_shortlist':
-    gate 1 consumes all tie_with_cutoff windows grouped by host shape
-    beside the measured indicators, and the ordinal index is
-    diagnostic-only (spec 01 §4b)."""
-    t_thr = float(val("screen_t_min"))
+def shortlist_stability(ctxs, sens, head_ties, head_tie_hosts, inputs,
+                        n_boot, seed, quiet=False):
+    """The shortlist-stability report (owner review 2026-07-20): every
+    battery row's OWN tie_with_cutoff set (row_tie_bootstrap, CRN seed
+    rule) compared against the MARGIN-DEFINED headline tie set --
+    tie_in/tie_out replacements, Jaccard overlap, tie_churn_frac -- with
+    the legacy hard-top-8 churn kept as a per-row diagnostic column
+    (explicit unit field). No thresholds live here: the owner sets
+    criteria 2/3 values AFTER seeing this report. The aggregate scans
+    EVERY generator class for gen_leave_class_out (class-min jaccard,
+    class-max tie_churn_frac -- the two extremes need not coincide in
+    one class, and criterion 3 must not be understated; review
+    2026-07-20) and carries the stable core: headline tie windows that
+    survive EVERY battery row (host-shape membership for the
+    window-length rows; every generator class for
+    gen_leave_class_out)."""
+    rows_order = val("screen_battery_rows")
+    sens_by_id = {r["id"]: r for r in sens}
+    head_set_w = set(head_ties)
+    head_set_h = set(head_tie_hosts)
+    per_row = []
+    core = set(head_ties)
+
+    def run_one(ctx, cfg):
+        return row_tie_bootstrap(ctx["asm"], cfg, ctx["svc"], inputs,
+                                 n_boot, seed,
+                                 nb_alpha=ctx.get("nb_alpha"))
+
+    for rid in rows_order:
+        if not quiet:
+            print(f"  stability row {rid}")
+        ctx = ctxs[rid]
+        unit = ctx["unit"]
+        head_set = head_set_h if unit == "host_shape" else head_set_w
+        legacy = {"value": _row_churn(sens_by_id[rid]),
+                  "unit": "host_shape" if rid in ("window_10", "window_15")
+                          else "window_id"}
+        if "by_class" in ctx:
+            by_class, worst = {}, None
+            for cls, cfg in sorted(ctx["by_class"].items()):
+                res = run_one(ctx, cfg)
+                st = tie_churn_stats(head_set, set(res["tie_ids"]))
+                by_class[cls] = {"n_tie_row": len(res["tie_ids"]), **st}
+                core &= set(res["tie_ids"])
+                if worst is None or st["jaccard"] < worst[1]["jaccard"]:
+                    worst = (cls, st, len(res["tie_ids"]))
+            entry = {"id": rid, "unit": unit,
+                     "n_tie_row": worst[2],
+                     "n_tie_headline": len(head_set),
+                     **worst[1], "worst_class": worst[0],
+                     "by_class": by_class,
+                     "hard_top8_churn": legacy}
+        else:
+            res = run_one(ctx, ctx["cfg"])
+            row_set = (set(res["tie_hosts"]) if unit == "host_shape"
+                       else set(res["tie_ids"]))
+            st = tie_churn_stats(head_set, row_set)
+            if unit == "host_shape":
+                hosts = set(res["tie_hosts"])
+                core = {w for w in core if w.rsplit("_", 1)[0] in hosts}
+            else:
+                core &= set(res["tie_ids"])
+            entry = {"id": rid, "unit": unit,
+                     "n_tie_row": len(res["tie_ids"]),
+                     "n_tie_headline": len(head_set),
+                     **st, "hard_top8_churn": legacy}
+        if "note" in ctx:
+            entry["note"] = ctx["note"]
+        per_row.append(entry)
+
+    # deterministic worst rows: first in battery order at the extreme.
+    # by_class rows contribute their CLASS-WISE extremes (min jaccard /
+    # max tie_churn_frac over classes): the published entry tuple is the
+    # min-Jaccard class, and Jaccard-min and churn-frac-max need not
+    # coincide across classes, so scanning per_row entries alone could
+    # understate criterion 3's statistic -- bias toward PASS (review
+    # 2026-07-20, major finding 2).
+    def _jac(r):
+        bc = r.get("by_class")
+        return (min(v["jaccard"] for v in bc.values()) if bc
+                else r["jaccard"])
+
+    def _frac(r):
+        bc = r.get("by_class")
+        return (max(v["tie_churn_frac"] for v in bc.values()) if bc
+                else r["tie_churn_frac"])
+
+    min_jac = min(_jac(r) for r in per_row)
+    worst_row = next(r["id"] for r in per_row if _jac(r) == min_jac)
+    max_frac = max(_frac(r) for r in per_row)
+    max_frac_row = next(r["id"] for r in per_row if _frac(r) == max_frac)
+    return {
+        "per_row": per_row,
+        "aggregate": {
+            "min_jaccard": min_jac,
+            "worst_row": worst_row,
+            "max_tie_churn_frac": max_frac,
+            "max_tie_churn_row": max_frac_row,
+            "n_tie_headline": len(head_set_w),
+            "stable_core": sorted(core),
+            "n_stable_core": len(core),
+        },
+        "note": "per battery row (the FROZEN screen_battery_rows list): the "
+                "row's OWN route-cluster bootstrap tie_with_cutoff set vs "
+                "the MARGIN-DEFINED headline tie set -- tie_in/tie_out are "
+                "replacements against the headline tie set, never hard "
+                "rank-8; jaccard = |A&B|/|A|B|; tie_churn_frac = "
+                "max(#in, #out)/|headline set| in the row's unit. "
+                "gen_leave_class_out's row entry is its min-Jaccard class "
+                "tuple (full per-class detail in by_class); the AGGREGATE "
+                "scans every generator class -- class-min jaccard, "
+                "class-max tie_churn_frac -- so criterion 3's statistic "
+                "cannot be understated by class selection. Per-row "
+                "seed rule: every row re-derives default_rng(screen_seed) "
+                "-- common random numbers, so tie-set differences are "
+                "attributable to the perturbation, not the draw. "
+                "window_10/window_15 compare in HOST-SHAPE units (window "
+                "sets differ across lengths). hard_top8_churn is the "
+                "LEGACY diagnostic (demoted criterion 3) with its unit "
+                "explicit. stable_core = headline tie windows in the tie "
+                "set under EVERY battery row (host-shape membership for "
+                "the window-length rows; all generator classes for "
+                "gen_leave_class_out) -- if churn is heavy, the honest "
+                "stage-1 output is this core, NARROWER than the shortlist "
+                "(spec 01 §4b). NO thresholds here: the owner sets "
+                "criteria 2/3 values after this report",
+    }
+
+
+def decision_block(pri, names, sens, windows, signs, n_boot, stability):
+    """Decision tripwire v2 (owner review 2026-07-20). Criteria:
+
+    sign_pos_frac (REVISED criterion 1, RATIFIED): for EACH demand-block
+      coefficient -- the demand block is {b1_lodes, b2_e002}; b4 is
+      OUTSIDE it (grouped decomposition; its wrong-sign risk is priced by
+      the b4_off row and v2.1 replaces the dummy with measured WAC jobs;
+      its per-replicate sign IS reported as a diagnostic) -- the fraction
+      of B route-cluster bootstrap replicates with a STRICTLY POSITIVE
+      coefficient must be >= screen_pos_frac_min = 0.841 = Phi(1): the
+      one-sided translation of |t| >= 1 with the sign requirement added;
+      t = 1 is where a regressor starts improving adjusted R-squared and
+      out-of-sample prediction error -- the decision-theoretic minimum
+      for carrying a variable at all. The bootstrap-fraction form
+      replaces the analytic cluster-SE t because cluster-robust SEs are
+      downward-biased at ~41 clusters (bias toward pass); the analytic
+      |t| stays as a reported diagnostic.
+
+    battery_rho: statistic unchanged (battery min Spearman rho, LOYO
+      excluded); threshold value PROVISIONAL pending the owner's decision
+      on the shortlist-stability report.
+
+    tie_churn (NEW statistic): max margin-defined tie-set churn fraction
+      across battery rows (shortlist_stability aggregate); NO threshold
+      yet -- field present, value null, pass null, pending owner.
+
+    ordinal_ok requires ALL criteria to pass; an unset threshold cannot
+    pass, so ordinal_ok is false-by-construction until the owner sets
+    criteria 2/3 -- the intended fail-safe direction."""
+    pf_thr = float(val("screen_pos_frac_min"))
     rho_thr = float(val("screen_battery_rho_min"))
-    churn_thr = int(val("screen_top8_churn_max"))
+    b1_pf = signs["b1"].count("+") / n_boot
+    b2_pf = signs["b2"].count("+") / n_boot
+    b4_pf = signs["b4"].count("+") / n_boot
     min_t = min(abs(b) / s for n, b, s in
                 zip(names, pri["params"], pri["se_cluster"])
                 if n.startswith(("b1_", "b2_")))
     min_rho, rho_row = None, None
-    max_churn, churn_row = None, None
     for r in sens:                      # artifact row order -> deterministic
         rho = r["detail"]["rho"]
         if min_rho is None or rho < min_rho:
             min_rho, rho_row = rho, r["id"]
-        ch = _row_churn(r)
-        if max_churn is None or ch > max_churn:
-            max_churn, churn_row = ch, r["id"]
+    agg = stability["aggregate"]
     criteria = {
-        "t_demand": {"min_abs_t": float(min_t), "threshold": t_thr,
-                     "pass": bool(min_t >= t_thr)},
-        "battery": {"min_rho": float(min_rho), "worst_row_id": rho_row,
-                    "threshold": rho_thr, "pass": bool(min_rho >= rho_thr)},
-        "churn": {"max_churn": int(max_churn), "worst_row_id": churn_row,
-                  "threshold": churn_thr,
-                  "pass": bool(max_churn <= churn_thr)},
+        "sign_pos_frac": {
+            "b1_pos_frac": float(b1_pf), "b2_pos_frac": float(b2_pf),
+            "threshold": pf_thr,
+            "pass": bool(min(b1_pf, b2_pf) >= pf_thr)},
+        "battery_rho": {
+            "min_rho": float(min_rho), "worst_row_id": rho_row,
+            "threshold": rho_thr,
+            "threshold_status": "provisional -- value pending owner "
+                                "decision on the shortlist-stability "
+                                "report",
+            "pass": bool(min_rho >= rho_thr)},
+        "tie_churn": {
+            "max_tie_churn_frac": float(agg["max_tie_churn_frac"]),
+            "worst_row_id": agg["max_tie_churn_row"],
+            "threshold": None,
+            "threshold_status": "pending owner -- set after the "
+                                "shortlist-stability report",
+            "pass": None},
     }
-    ok = all(c["pass"] for c in criteria.values())
+    ok = all(c["pass"] is True for c in criteria.values())
     ties = sorted((w for w in windows if w["tie_with_cutoff"]),
                   key=lambda w: (sf._route_sort_key(w["route_id"]),
                                  w["rank"]))
@@ -615,18 +927,50 @@ def decision_block(pri, names, sens, windows):
         "criteria": criteria,
         "decision_format": "ordinal" if ok else "threshold_shortlist",
         "shortlist": shortlist,
-        "note": "pre-registered tripwire (spec 01 §5, SC batch 2026-07-19, "
-                "pending owner ratification): the ordinal ranking is "
-                "decision-grade only if every demand-block coefficient's "
-                "cluster-robust |t| >= screen_t_min, battery min Spearman "
-                "rho >= screen_battery_rho_min over the pre-registered "
-                "perturbations (EXCLUDING the leave-one-year-out consistency "
-                "check, mechanically near-1 with time-invariant X), and "
-                "top-8 churn <= screen_top8_churn_max under every "
-                "perturbation. While ordinal_ok is false the gate-1 memo "
-                "consumes this shortlist (tie_with_cutoff windows grouped "
-                "by host shape) plus the measured indicator columns, NEVER "
-                "a top-N by rank (spec 01 §4b)",
+        "diagnostics": {
+            "min_abs_t_demand": float(min_t),
+            "b4_pos_frac": float(b4_pf),
+            "note": "analytic cluster-robust min |t| over the demand block "
+                    "is RETAINED AS A DIAGNOSTIC only (cluster-robust SEs "
+                    "are downward-biased at ~41 clusters -- the retired "
+                    "criterion screen_t_min is superseded by "
+                    "screen_pos_frac_min); b4's per-replicate sign fraction "
+                    "is a diagnostic because b4 sits OUTSIDE the demand "
+                    "block (grouped decomposition; b4_off row prices its "
+                    "wrong-sign risk; v2.1 replaces the dummy with "
+                    "measured WAC generator jobs)"},
+        "replicate_signs": {
+            **signs,
+            "note": "per-replicate coefficient signs from the EXISTING "
+                    "headline bootstrap ('+' iff strictly positive; "
+                    "replicate order; length n_boot) -- criterion 1's "
+                    "pos_frac values recompute from these strings "
+                    "(test_screen.py D6)"},
+        "note": "decision tripwire v2 (spec 01 §5; owner review "
+                "2026-07-20): criterion 1 REVISED AND RATIFIED -- each "
+                "demand-block coefficient (b1_lodes, b2_e002; b4 is "
+                "outside the block) must be strictly positive in >= "
+                "screen_pos_frac_min = 0.841 = Phi(1) of bootstrap "
+                "replicates (the one-sided translation of |t|>=1 with the "
+                "sign requirement added; t=1 is the adjusted-R-squared / "
+                "out-of-sample improvement threshold -- the "
+                "decision-theoretic minimum for carrying a variable). "
+                "battery_rho keeps its statistic; its 0.7 value is "
+                "PROVISIONAL pending the owner's post-report decision "
+                "(the earlier calibration story for 0.7 is RETRACTED -- "
+                "registry history). tie_churn is the rebuilt criterion-3 "
+                "statistic (max margin-defined tie-set churn across "
+                "battery rows, shortlist_stability); its threshold is "
+                "UNSET (null) pending owner. ordinal_ok requires ALL "
+                "criteria to pass and an unset threshold cannot pass, so "
+                "ordinal_ok is FALSE BY CONSTRUCTION until the owner sets "
+                "criteria 2/3 -- the intended fail-safe. While ordinal_ok "
+                "is false the gate-1 memo consumes the shortlist "
+                "(tie_with_cutoff windows grouped by host shape) plus the "
+                "measured indicator columns, NEVER a top-N by rank; if "
+                "shortlist_stability shows heavy tie-set churn the memo "
+                "must state the honest stage-1 output is NARROWER than "
+                "the shortlist and name the stable core (spec 01 §4b)",
     }
 
 
@@ -781,8 +1125,18 @@ def build_artifact(n_boot=None, quiet=False):
     tract_sets = {w: set(ti.tolist())
                   for w, ti in zip(wids, asm["W"]["tract_idx"])}
     groups_head = sc.overlap_groups(wids, tract_sets, thr)
-    sens, nb_info = sensitivity_block(inputs, projs, views, asm, head, svc,
-                                      tract_sets, groups_head, quiet=quiet)
+    sens, nb_info, ctxs = sensitivity_block(inputs, projs, views, asm, head,
+                                            svc, tract_sets, groups_head,
+                                            quiet=quiet)
+    # shortlist-stability report (owner review 2026-07-20): every battery
+    # row's own tie set vs the margin-defined headline tie set
+    head_tie_ids = [wids[i] for i in np.flatnonzero(boot["tie"])]
+    head_tie_hosts = sorted({asm["W"]["route_id"][i]
+                             for i in np.flatnonzero(boot["tie"])},
+                            key=sf._route_sort_key)
+    stability = shortlist_stability(ctxs, sens, head_tie_ids,
+                                    head_tie_hosts, inputs, n_boot, seed,
+                                    quiet=quiet)
     incumbents = _incumbents(asm, views, projs, buf, thr, inputs)
     gap, flag = _underservice(head, asm, inputs, svc, loo["p90_abs_err"])
 
@@ -836,9 +1190,11 @@ def build_artifact(n_boot=None, quiet=False):
         })
     windows.sort(key=lambda w: (sf._route_sort_key(w["route_id"]), w["w0"]))
 
-    # decision tripwire (spec 01 §5): mechanized pass/fail + the threshold
-    # shortlist gate 1 consumes while ordinal_ok is false
-    decision = decision_block(pri, names, sens, windows)
+    # decision tripwire v2 (spec 01 §5, owner review 2026-07-20): revised
+    # criterion 1 (live), provisional criterion 2, deferred criterion 3 +
+    # the threshold shortlist gate 1 consumes while ordinal_ok is false
+    decision = decision_block(pri, names, sens, windows, boot["signs"],
+                              n_boot, stability)
 
     # overlap diagnostics (review 2026-07-19): the §3.3 connected components
     # are MEASURED-DEGENERATE on the real universe -- single-linkage
@@ -988,6 +1344,7 @@ def build_artifact(n_boot=None, quiet=False):
         "overlap_diagnostics": overlap_diag,
         "fit_diagnostics": fit_diag,
         "sensitivity": sens,
+        "shortlist_stability": stability,
         "decision_output": decision,
         "notes": {
             "index": "screen_index = 100 * exp(window log-prediction at "
@@ -1065,18 +1422,35 @@ def main(argv):
     print("\nsensitivity (pct = 100*(1-Spearman rho) vs headline):")
     for r in artifact["sensitivity"]:
         print(f"  {r['id']:20s} {r['pct']:8.3f}  {r['label']}")
+    ss_blk = artifact["shortlist_stability"]
+    agg = ss_blk["aggregate"]
+    print("\nshortlist_stability (margin-defined tie-set churn per battery "
+          "row; unit in brackets):")
+    for r in ss_blk["per_row"]:
+        print(f"  {r['id']:20s} [{r['unit']:10s}] n_tie {r['n_tie_row']:3d} "
+              f"in {r['n_tie_in']:2d} out {r['n_tie_out']:2d} "
+              f"jaccard {r['jaccard']:.3f} churn_frac "
+              f"{r['tie_churn_frac']:.3f} "
+              f"top8diag {r['hard_top8_churn']['value']}")
+    print(f"  aggregate: min_jaccard {agg['min_jaccard']:.3f} "
+          f"({agg['worst_row']}); max_tie_churn_frac "
+          f"{agg['max_tie_churn_frac']:.3f} ({agg['max_tie_churn_row']}); "
+          f"stable core {agg['n_stable_core']}/{agg['n_tie_headline']} "
+          f"windows")
     do = artifact["decision_output"]
     c = do["criteria"]
-    print(f"\ndecision_output: {do['decision_format']} "
+    sp, br, tc = c["sign_pos_frac"], c["battery_rho"], c["tie_churn"]
+    print(f"\ndecision_output v2: {do['decision_format']} "
           f"(ordinal_ok {do['ordinal_ok']}); "
-          f"min|t| {c['t_demand']['min_abs_t']:.3f} vs {c['t_demand']['threshold']} "
-          f"-> {'PASS' if c['t_demand']['pass'] else 'FAIL'}; "
-          f"min rho {c['battery']['min_rho']:.3f} ({c['battery']['worst_row_id']}) "
-          f"vs {c['battery']['threshold']} "
-          f"-> {'PASS' if c['battery']['pass'] else 'FAIL'}; "
-          f"max churn {c['churn']['max_churn']} ({c['churn']['worst_row_id']}) "
-          f"vs {c['churn']['threshold']} "
-          f"-> {'PASS' if c['churn']['pass'] else 'FAIL'}; "
+          f"pos_frac b1 {sp['b1_pos_frac']:.4f} / b2 {sp['b2_pos_frac']:.4f} "
+          f"vs {sp['threshold']} -> {'PASS' if sp['pass'] else 'FAIL'}; "
+          f"min rho {br['min_rho']:.3f} ({br['worst_row_id']}) "
+          f"vs {br['threshold']} (provisional) "
+          f"-> {'PASS' if br['pass'] else 'FAIL'}; "
+          f"tie_churn {tc['max_tie_churn_frac']:.3f} ({tc['worst_row_id']}) "
+          f"vs UNSET -> pass null (fail-safe); "
+          f"diag min|t| {do['diagnostics']['min_abs_t_demand']:.3f}, "
+          f"b4_pos_frac {do['diagnostics']['b4_pos_frac']:.4f}; "
           f"shortlist {len(do['shortlist'])} windows")
     d = artifact["fit_diagnostics"]
     print(f"\nLOO leverage screen: rho_min {d['loo_route']['rho_min']:.4f} "

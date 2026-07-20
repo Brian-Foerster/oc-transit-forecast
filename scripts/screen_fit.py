@@ -296,6 +296,37 @@ def fit_nb2(boardings, y, X, start_beta):
             bool(res.mle_retvals.get("converged", False)))
 
 
+def nb2_beta_fixed_alpha(counts, X, alpha, beta0, maxiter=40, tol=1e-10):
+    """NB2 beta refit at FIXED alpha via Fisher scoring (log link).
+
+    The shortlist-stability block's nb_estimator bootstrap refits NB2 in
+    every replicate; profiling alpha per replicate via statsmodels (~210
+    ms/fit measured, x2000 replicates) is outside that block's runtime
+    budget, so per-replicate refits hold alpha at the HEADLINE NB2
+    estimate and Fisher-score beta only. STATED APPROXIMATION (spec 01
+    §5): a standing test (test_screen.py D7) asserts this routine
+    reproduces the statsmodels NB2 beta at the headline alpha (at the
+    joint MLE, the fixed-alpha beta optimum IS the joint beta optimum).
+    Deterministic: fixed start, iteration cap, tolerance; degenerate
+    resamples take the minimum-norm lstsq step; non-finite steps stop the
+    iteration at the last finite beta."""
+    r = 1.0 / float(alpha)
+    beta = np.asarray(beta0, float).copy()
+    counts = np.asarray(counts, float)
+    for _ in range(maxiter):
+        mu = np.exp(np.clip(X @ beta, -50.0, 50.0))
+        s = (counts - mu) * (r / (r + mu))       # score contribution
+        w = mu * r / (r + mu)                    # Fisher weights
+        step = np.linalg.lstsq(X.T @ (X * w[:, None]), X.T @ s,
+                               rcond=None)[0]
+        if not np.all(np.isfinite(step)):
+            break
+        beta = beta + step
+        if float(np.max(np.abs(step))) < tol:
+            break
+    return beta
+
+
 def vifs(X, names):
     """VIF per non-intercept column (required diagnostic, panel D3)."""
     out = {}

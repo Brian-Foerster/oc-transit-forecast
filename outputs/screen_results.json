@@ -46,8 +46,30 @@
       },
       {
         "id": "screen_battery_rho_min",
-        "role": "tripwire (ii): battery min Spearman rho",
+        "role": "tripwire criterion 2: battery min Spearman rho (threshold provisional)",
         "value": 0.7
+      },
+      {
+        "id": "screen_battery_rows",
+        "role": "FROZEN battery row list (structural governance; owner review 2026-07-20)",
+        "value": [
+          "buffer_lo",
+          "buffer_hi",
+          "window_10",
+          "window_15",
+          "drop_fy2020",
+          "drop_rh",
+          "e016_swap",
+          "b4_off",
+          "gen_leave_class_out",
+          "nb_estimator",
+          "svc_p25",
+          "svc_p75",
+          "offset_variant",
+          "overlap_lo",
+          "overlap_hi",
+          "year_fe_vs_pooled"
+        ]
       },
       {
         "id": "screen_loo_rho",
@@ -70,6 +92,11 @@
         "value": 0.3
       },
       {
+        "id": "screen_pos_frac_min",
+        "role": "tripwire criterion 1 (revised, ratified 2026-07-20): min demand-coefficient bootstrap positive-sign fraction",
+        "value": 0.841
+      },
+      {
         "id": "screen_seed",
         "role": "bootstrap RNG seed",
         "value": 7
@@ -85,47 +112,51 @@
         "value": 1577.65
       },
       {
-        "id": "screen_t_min",
-        "role": "tripwire (i): per-demand-coefficient min |t|",
-        "value": 1.0
-      },
-      {
-        "id": "screen_top8_churn_max",
-        "role": "tripwire (iii): max top-8 membership changes",
-        "value": 2
-      },
-      {
         "id": "screen_window_mi",
         "role": "window length",
         "value": 12.5
       }
     ],
     "note": "every registry leaf the screen consumes via val(), plus the band() edges the sensitivity rows consume; values_hash covers both and enters the run_id preimage (sequence_network.py pattern); the run_id preimage additionally hashes config/special_generators.json",
-    "values_hash": "2c0d560aac6fd2e94cc8eb1daa968ed4ef7c15f91e335b84e9416c943493a248"
+    "values_hash": "b0fddd1249fe69ec8b1b1b2d15d8c32f58cc496a44c7c87a2436a78d05a7194c"
   },
   "decision_output": {
     "criteria": {
-      "battery": {
+      "battery_rho": {
         "min_rho": 0.38575,
         "pass": false,
         "threshold": 0.7,
+        "threshold_status": "provisional -- value pending owner decision on the shortlist-stability report",
         "worst_row_id": "buffer_lo"
       },
-      "churn": {
-        "max_churn": 8,
+      "sign_pos_frac": {
+        "b1_pos_frac": 0.8115,
+        "b2_pos_frac": 0.7435,
         "pass": false,
-        "threshold": 2,
-        "worst_row_id": "buffer_lo"
+        "threshold": 0.841
       },
-      "t_demand": {
-        "min_abs_t": 0.811206,
-        "pass": false,
-        "threshold": 1.0
+      "tie_churn": {
+        "max_tie_churn_frac": 0.847826,
+        "pass": null,
+        "threshold": null,
+        "threshold_status": "pending owner -- set after the shortlist-stability report",
+        "worst_row_id": "e016_swap"
       }
     },
     "decision_format": "threshold_shortlist",
-    "note": "pre-registered tripwire (spec 01 \u00a75, SC batch 2026-07-19, pending owner ratification): the ordinal ranking is decision-grade only if every demand-block coefficient's cluster-robust |t| >= screen_t_min, battery min Spearman rho >= screen_battery_rho_min over the pre-registered perturbations (EXCLUDING the leave-one-year-out consistency check, mechanically near-1 with time-invariant X), and top-8 churn <= screen_top8_churn_max under every perturbation. While ordinal_ok is false the gate-1 memo consumes this shortlist (tie_with_cutoff windows grouped by host shape) plus the measured indicator columns, NEVER a top-N by rank (spec 01 \u00a74b)",
+    "diagnostics": {
+      "b4_pos_frac": 0.2445,
+      "min_abs_t_demand": 0.811206,
+      "note": "analytic cluster-robust min |t| over the demand block is RETAINED AS A DIAGNOSTIC only (cluster-robust SEs are downward-biased at ~41 clusters -- the retired criterion screen_t_min is superseded by screen_pos_frac_min); b4's per-replicate sign fraction is a diagnostic because b4 sits OUTSIDE the demand block (grouped decomposition; b4_off row prices its wrong-sign risk; v2.1 replaces the dummy with measured WAC generator jobs)"
+    },
+    "note": "decision tripwire v2 (spec 01 \u00a75; owner review 2026-07-20): criterion 1 REVISED AND RATIFIED -- each demand-block coefficient (b1_lodes, b2_e002; b4 is outside the block) must be strictly positive in >= screen_pos_frac_min = 0.841 = Phi(1) of bootstrap replicates (the one-sided translation of |t|>=1 with the sign requirement added; t=1 is the adjusted-R-squared / out-of-sample improvement threshold -- the decision-theoretic minimum for carrying a variable). battery_rho keeps its statistic; its 0.7 value is PROVISIONAL pending the owner's post-report decision (the earlier calibration story for 0.7 is RETRACTED -- registry history). tie_churn is the rebuilt criterion-3 statistic (max margin-defined tie-set churn across battery rows, shortlist_stability); its threshold is UNSET (null) pending owner. ordinal_ok requires ALL criteria to pass and an unset threshold cannot pass, so ordinal_ok is FALSE BY CONSTRUCTION until the owner sets criteria 2/3 -- the intended fail-safe. While ordinal_ok is false the gate-1 memo consumes the shortlist (tie_with_cutoff windows grouped by host shape) plus the measured indicator columns, NEVER a top-N by rank; if shortlist_stability shows heavy tie-set churn the memo must state the honest stage-1 output is NARROWER than the shortlist and name the stable core (spec 01 \u00a74b)",
     "ordinal_ok": false,
+    "replicate_signs": {
+      "b1": "+-+-+++++-++++++-++++++++++++++++----++++--+++++-+++++++++-+-+-+++-+++++++++--++++++--+++++++++++++-++++++++-+-+++++++-++++-+++-++-++++++-+++++++-+-+-++-++++++-++-++++++-+++++-++++++++++++--++++-++++++++++++--+++-++++-++-++++++-+++-+++++++-++-++++--+-+++-+-++-+++++++-++--++++++-+-++++++++++++++++++-+-++-++++++++++++-+++-+++--+-+++-+++-+++-++++-+++--+++++++-+++++--++++++-++++----++-+++++++++++-++--+-+++-+++++++-+++-++++++-+-+++-+--+-+++++++++++++++-+++++-+++++++++++++-++-++-+++++++++++++++++++-+++++++++++++++++++-++++-+-++++++++--++++--++-+++++-++-++++++++-++++---+++++++++++--++--++++-++++++-+--++-+-+++++++++++++++++--++++-++++++++++++++++++---++++++-++++-+--+++++++++++++++++++++++++-++++-++++++++++-+++-+-+++++-+-++++++-++++++++++++++++++++++-++++++-++++++++-++-+++++++-++++-+++-+-+++++++++-+++++++++++-+++++++++-++++++++-+++-+-+-++++++++-++++++++++++--+++++--++++++-+++-++++-++++-+-++++++++-+-++++++-++-+++--+++++++----++-++--+-+++++++++++++++-++++++++++++++++-+++++-++++--++-++++-+++++--++++++++++++++++-++-+--++++-+-++++++++-+++---++++++++-+-+++++++-++++++++++++++--+++--+++++-+++-++++++++++++--+++-++++-+++++--++--+--++-+++++-+-++++--+++++-+++++++++++++++++++++++-++++++++-+-+++++++--++++++++++++++++-+++++++--++++-++++-+-+-+++++-+-++++-++++++++++++++++++++++--+-++++++++++--+-++++--++-+++++++++++++++++-+++-++-++++++-+++++-++++-++++-+++++-++++++++++-+++++++-+++++-+--++-+++++-+++++++-+++++++++++-+--+++-+++-+-+++++++++++++++-++--++--+++++++++++++++-+--+++--++-+--+++-+++++++++-+++-++++++++++-+++-+-----+++++++-+++-+-++++++++++++-++-+++++++-++++++++++-+++++++++-++-+-+++++++-+-+-+++++++++++--++++++++-++++-+++++-+-+++++-++++++-+--+++++++++++++++++--++-+++++-+++++++-+--+++-+++++++++-++++++++++-+--+++-+++++++++-++-+-++++-++++++++++-++++-+++++++++++++++-+++++++++++-+++++++--+++++--+++-++++++-++++++++++++++++--++++-+++-++++++++--+++-+-+++++++-+++++++-++++++++++-++++++++-++-++++--+++++++++++++++++-++--++-++++-+++-++++++++-++-++++--+++-++-++-++-+-++-++++-++++++++++-+++++++++++++++++++++",
+      "b2": "++-++--++++-++++++-++++++-++++++++++++++++++-+++++++++-++++-+-++-++-+++++++++++-++++++-++++-+-+-++++-+++--+-+-+++++---+-++++++-+--+-+----+-+++++-+++-+--++--++-++++++--+++-+++++++++++-+----++++-++++-+++-+-+-+++-+-+-+-++-+++++-++++--++-++-+-++++-+++++-++++++++-+--+-++-+-++++-+-+-+-++-+-+++++++-++---++-++-+-+-++++++++++-+-+--+++++++++++++---++++-+++++++++---+++++--++++---++-+--++++-++-+++++-+++-+++++++-+-+-+--++++++-+++-+--+++---++++-+++-+++++--+-++++---+-++++--+-++++-+++++-++++++-+++-+-+-+--++++--+++++--++++++--+++++-++++++++-++++++-++++--++++-++-++--++-+++++++++++-+-+--++-+-+++-++++-++-+++--+++++-+++--+-++++++++--++-+++++++++++++--+-+++++++-+++-+++--++++-+++++-+++++-+-+-++++++++++-++++++++++++++-+-+++-+++++++--++++-+-++++++++++-+++++++-++++--+++++-+++-+++-+++-++++++-++++-+-+-++++++-+---+--+-+---++-++-+--+-+---+++--+++++++--+++-+-+++-++-++++++-+++-+-+++++-+++++-++++-+-++-+-++-++++++++---+++-++-++++++-++--+++--+++++++++-++++++++++---++++--+-+++-+++++++-++++--++++++++++-+++-+--++++++++++++++++++-++++++++-++-++++++++++-+-++-++-++++++-+++--++++-+++-++++++-++--+-+++++++--+++++++++++-+++++-++-+-+++-+++++++++-+++++++++++++-+++++++-+-+-+++---++++++++-++-+-+--+--+--+++++++--++-+++++++++++++++-+++-++++-++-+++-++++++++++++++++--+++++-+++++++++++-++-+++++-+++-+--+--+++++-++--+-++++++---+++++++++++++++++++-++++-+-++-++++++++-++++++++++--+++-++++++++++++--++-+++++-+++++-+-++-++---+-+-++--+-+--+-++-+++++++++++++-+++++-++-++----++-++++++++++++-+--+-++++++++-+++++++++++++-+-+++----++-+++++--++++--+-+++++++++++++-+-+-+-+++-++++--++-++--++-+++++-+++++++---++++++++-+++-+-++-+++++++-+-+++-++++++++++++-+-++++-+-+++++++-+++++-+-++-+-++++-+++--++++---+++++-+++--+--+-+++-++++++++++++++++-+++++++--+----++++++++++-+++++++-+-+++++-+-++++-+++++-++--++-++++-+-++-++++++++-++--+--+++-+-+-+++-+-++++++++++-+++++--+++++++--+++++++++++++++-+++++-+-+-++-++-+++--+++++---++--+--+-+-+-+-+--+++++++-+-++++++++-+++++-+++++--++--++-+++++++-++-++++++-+-++-++++-+-++++++-+++++++++++++++++-+--++-++++++++-+++-++++--",
+      "b4": "+++---+----+----+-+-------+-+--+---++---+-----+-+--------+------+--++---++----+++----------+-+---++++-+---++---------+-------+---+-----+-----++--+-+---+---++---+-+--------++-----++---++-+--++--------------++-----+--+-+--+---+--++---+---+--+----+--+--+-+------+---------+---+--+---+-+----+--+-++---+---+----++-------+-----+++-+--+--+-+------+----+--+---+-----+--+-+----+----------++--++-+---++-----++----------++-+-+----+--+-----+---++-++----+---------++-+++---+----+---+--------+---------+--------------+++---------+-+------+-+-----+-+----++-------+-+-+----+-----++--------------+++-+-------+----++---+--------+-------+----+-++-++----------++-++--+-++-+--+-++++++--------+------------+------+-+--+-+--+-----+-------+----+------------+--------+------++-+-----+-+-----+-+-++------+--+------++---++--+---++----+-----------++--------+--++---+++----------------++----------+-----+--------++-----+---+---++---+-+------+--+------+------+----------++-----+---+--+++-----+--+++--+----------++--------+--+-+--+-+----+------------+++-+------+-+-----+-+-+---+------------++-+-------+----------+------+---+----+----+-+------+----+---+----+-----+-----+-----++++-+--++-+----+++---++-+-+-+-+--------+---+---++-+-+-+--+----+-+--++--------+-+---+-+------+--+-+----+--+-----+-+------------+-+--+--------+-+-------------+-----+++-----------+-+--------+----------+--+++---------+----+++++--++-++--+++-++---+---+-+--------+---+--+-----------++--+-----+--++++----++---+-----+-----------------+--+-+-++--------+--+----+------+--+-----+-+--+--+--------+-+---------+--+------+---+----+------+-------+---+--+-++--++-+-------------+------++--+---+-+-----+--+----+----+-----+-----------++---+--+--++-----------+---+---------++----+++--+------+-----+-----------------------++-+--------------++------------+-++--+-----+-----+---+------------+--------+--+---++---+--++-++-++-------------+-----++-+++-+-++-+-+----+--------+-+--++++--+---------+--+------+------+--+-----+--------+--+-+---++-+-+------+---+-------+---+----++---+-------",
+      "note": "per-replicate coefficient signs from the EXISTING headline bootstrap ('+' iff strictly positive; replicate order; length n_boot) -- criterion 1's pos_frac values recompute from these strings (test_screen.py D6)"
+    },
     "shortlist": [
       {
         "route_id": "29",
@@ -1142,7 +1173,7 @@
     ],
     "single_component": true
   },
-  "run_id": "3a861ccc5cb58226326fa3d22e8914ff1302903d7e3d682604cd5cacb13ed4fa",
+  "run_id": "051c03e17608c07e41dd3b7d6687144020770c080473531da240182ced76f2d1",
   "schema": "01-S1",
   "seed": 7,
   "sensitivity": [
@@ -1486,6 +1517,790 @@
       "pct": 0.047834
     }
   ],
+  "shortlist_stability": {
+    "aggregate": {
+      "max_tie_churn_frac": 0.847826,
+      "max_tie_churn_row": "e016_swap",
+      "min_jaccard": 0.109375,
+      "n_stable_core": 0,
+      "n_tie_headline": 46,
+      "stable_core": [],
+      "worst_row": "e016_swap"
+    },
+    "note": "per battery row (the FROZEN screen_battery_rows list): the row's OWN route-cluster bootstrap tie_with_cutoff set vs the MARGIN-DEFINED headline tie set -- tie_in/tie_out are replacements against the headline tie set, never hard rank-8; jaccard = |A&B|/|A|B|; tie_churn_frac = max(#in, #out)/|headline set| in the row's unit. gen_leave_class_out's row entry is its min-Jaccard class tuple (full per-class detail in by_class); the AGGREGATE scans every generator class -- class-min jaccard, class-max tie_churn_frac -- so criterion 3's statistic cannot be understated by class selection. Per-row seed rule: every row re-derives default_rng(screen_seed) -- common random numbers, so tie-set differences are attributable to the perturbation, not the draw. window_10/window_15 compare in HOST-SHAPE units (window sets differ across lengths). hard_top8_churn is the LEGACY diagnostic (demoted criterion 3) with its unit explicit. stable_core = headline tie windows in the tie set under EVERY battery row (host-shape membership for the window-length rows; all generator classes for gen_leave_class_out) -- if churn is heavy, the honest stage-1 output is this core, NARROWER than the shortlist (spec 01 \u00a74b). NO thresholds here: the owner sets criteria 2/3 values after this report",
+    "per_row": [
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 8
+        },
+        "id": "buffer_lo",
+        "jaccard": 0.171429,
+        "n_tie_headline": 46,
+        "n_tie_in": 24,
+        "n_tie_out": 34,
+        "n_tie_row": 36,
+        "tie_churn_frac": 0.73913,
+        "tie_in": [
+          "123_008.5",
+          "123_009.0",
+          "123_009.5",
+          "123_011.0",
+          "123_011.5",
+          "123_012.0",
+          "123_012.5",
+          "1_000.0",
+          "1_019.0",
+          "1_020.5",
+          "1_021.0",
+          "1_021.5",
+          "1_022.0",
+          "1_022.5",
+          "59_000.0",
+          "66_003.5",
+          "66_004.0",
+          "66_005.5",
+          "71_006.5",
+          "71_007.0",
+          "83_000.0",
+          "83_000.5",
+          "83_001.0",
+          "83_001.5"
+        ],
+        "tie_out": [
+          "29_004.0",
+          "35_000.0",
+          "37_003.0",
+          "37_004.5",
+          "37_005.0",
+          "37_005.5",
+          "37_006.0",
+          "37_006.5",
+          "43_000.0",
+          "43_000.5",
+          "43_001.0",
+          "43_002.0",
+          "47_007.5",
+          "47_008.0",
+          "47_008.5",
+          "53_000.0",
+          "59_000.5",
+          "59_001.0",
+          "59_002.0",
+          "59_002.5",
+          "59_004.0",
+          "59_004.5",
+          "60_001.5",
+          "60_005.0",
+          "60_005.5",
+          "60_006.0",
+          "60_006.5",
+          "60_007.0",
+          "60_007.5",
+          "66_003.0",
+          "71_005.5",
+          "72_003.5",
+          "83_005.5",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 8
+        },
+        "id": "buffer_hi",
+        "jaccard": 0.230769,
+        "n_tie_headline": 46,
+        "n_tie_in": 19,
+        "n_tie_out": 31,
+        "n_tie_row": 34,
+        "tie_churn_frac": 0.673913,
+        "tie_in": [
+          "29A_000.0",
+          "29_000.0",
+          "35_000.5",
+          "35_001.0",
+          "35_001.5",
+          "47_009.5",
+          "53_000.5",
+          "55_008.0",
+          "60_008.5",
+          "66_000.5",
+          "66_001.0",
+          "66_003.5",
+          "66_004.0",
+          "71_000.0",
+          "83_011.5",
+          "83_012.0",
+          "83_012.5",
+          "86_000.0",
+          "86_003.0"
+        ],
+        "tie_out": [
+          "29_003.0",
+          "29_004.0",
+          "33_002.0",
+          "33_002.5",
+          "37_003.0",
+          "37_004.5",
+          "37_005.5",
+          "37_006.0",
+          "37_006.5",
+          "43_000.0",
+          "43_000.5",
+          "43_001.0",
+          "43_002.0",
+          "47_007.5",
+          "59_000.5",
+          "59_001.0",
+          "59_002.0",
+          "59_002.5",
+          "59_004.0",
+          "59_004.5",
+          "60_001.5",
+          "60_005.0",
+          "60_005.5",
+          "60_006.5",
+          "71_005.5",
+          "71_007.5",
+          "72_003.5",
+          "83_004.5",
+          "83_005.0",
+          "83_005.5",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "host_shape",
+          "value": 4
+        },
+        "id": "window_10",
+        "jaccard": 0.333333,
+        "n_tie_headline": 14,
+        "n_tie_in": 4,
+        "n_tie_out": 8,
+        "n_tie_row": 27,
+        "note": "window sets differ across lengths; the tie sets are compared in HOST-SHAPE units",
+        "tie_churn_frac": 0.571429,
+        "tie_in": [
+          "150",
+          "543",
+          "560",
+          "64"
+        ],
+        "tie_out": [
+          "29",
+          "35",
+          "37",
+          "47",
+          "66",
+          "71",
+          "83",
+          "86"
+        ],
+        "unit": "host_shape"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "host_shape",
+          "value": 1
+        },
+        "id": "window_15",
+        "jaccard": 0.666667,
+        "n_tie_headline": 14,
+        "n_tie_in": 1,
+        "n_tie_out": 4,
+        "n_tie_row": 45,
+        "note": "window sets differ across lengths; the tie sets are compared in HOST-SHAPE units",
+        "tie_churn_frac": 0.285714,
+        "tie_in": [
+          "57"
+        ],
+        "tie_out": [
+          "29",
+          "35",
+          "53",
+          "72"
+        ],
+        "unit": "host_shape"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 1
+        },
+        "id": "drop_fy2020",
+        "jaccard": 0.957447,
+        "n_tie_headline": 46,
+        "n_tie_in": 1,
+        "n_tie_out": 1,
+        "n_tie_row": 46,
+        "tie_churn_frac": 0.021739,
+        "tie_in": [
+          "29_003.5"
+        ],
+        "tie_out": [
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 4
+        },
+        "id": "drop_rh",
+        "jaccard": 0.351852,
+        "n_tie_headline": 46,
+        "n_tie_in": 8,
+        "n_tie_out": 27,
+        "n_tie_row": 27,
+        "tie_churn_frac": 0.586957,
+        "tie_in": [
+          "29A_000.0",
+          "29_000.0",
+          "43_001.5",
+          "43_002.5",
+          "47_009.5",
+          "60_008.5",
+          "79_000.5",
+          "79_001.0"
+        ],
+        "tie_out": [
+          "29_003.0",
+          "29_004.0",
+          "33_000.0",
+          "33_000.5",
+          "33_001.0",
+          "33_001.5",
+          "33_002.0",
+          "33_002.5",
+          "35_000.0",
+          "37_003.0",
+          "37_004.5",
+          "37_005.0",
+          "37_005.5",
+          "37_006.0",
+          "37_006.5",
+          "59_000.5",
+          "59_001.0",
+          "60_001.5",
+          "66_003.0",
+          "66_004.5",
+          "66_005.0",
+          "71_005.5",
+          "71_007.5",
+          "72_003.5",
+          "83_004.5",
+          "83_005.0",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 8
+        },
+        "id": "e016_swap",
+        "jaccard": 0.109375,
+        "n_tie_headline": 46,
+        "n_tie_in": 18,
+        "n_tie_out": 39,
+        "n_tie_row": 25,
+        "note": "no E016 MOE is loaded, so the tie-set bootstrap perturbs nothing within replicates (the z draw still spends the CRN stream)",
+        "tie_churn_frac": 0.847826,
+        "tie_in": [
+          "37_000.0",
+          "37_000.5",
+          "37_001.0",
+          "37_002.5",
+          "47_009.5",
+          "57_005.0",
+          "57_005.5",
+          "57_006.0",
+          "57_006.5",
+          "57_007.0",
+          "66_001.5",
+          "66_003.5",
+          "66_004.0",
+          "66_005.5",
+          "70_001.0",
+          "70_001.5",
+          "70_002.0",
+          "70_005.0"
+        ],
+        "tie_out": [
+          "29_003.0",
+          "29_004.0",
+          "33_000.0",
+          "33_000.5",
+          "33_001.0",
+          "33_001.5",
+          "33_002.0",
+          "33_002.5",
+          "35_000.0",
+          "37_003.0",
+          "37_004.5",
+          "37_005.0",
+          "37_005.5",
+          "37_006.0",
+          "37_006.5",
+          "43_001.0",
+          "47_007.5",
+          "47_008.0",
+          "59_000.5",
+          "59_001.0",
+          "59_002.0",
+          "59_002.5",
+          "59_004.0",
+          "59_004.5",
+          "60_001.5",
+          "60_005.0",
+          "60_005.5",
+          "60_006.0",
+          "60_006.5",
+          "60_007.0",
+          "60_007.5",
+          "66_003.0",
+          "71_005.5",
+          "71_007.5",
+          "72_003.5",
+          "83_004.5",
+          "83_005.0",
+          "83_005.5",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 4
+        },
+        "id": "b4_off",
+        "jaccard": 0.431373,
+        "n_tie_headline": 46,
+        "n_tie_in": 5,
+        "n_tie_out": 24,
+        "n_tie_row": 27,
+        "tie_churn_frac": 0.521739,
+        "tie_in": [
+          "29A_000.0",
+          "60_008.5",
+          "72_001.5",
+          "72_002.0",
+          "72_002.5"
+        ],
+        "tie_out": [
+          "29_003.0",
+          "29_004.0",
+          "33_000.5",
+          "33_001.0",
+          "33_001.5",
+          "33_002.0",
+          "33_002.5",
+          "35_000.0",
+          "37_003.0",
+          "37_004.5",
+          "37_006.0",
+          "37_006.5",
+          "59_000.5",
+          "59_001.0",
+          "60_001.5",
+          "66_003.0",
+          "66_004.5",
+          "66_005.0",
+          "71_005.5",
+          "71_007.5",
+          "72_003.5",
+          "83_004.5",
+          "83_005.0",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "by_class": {
+          "college": {
+            "jaccard": 0.425926,
+            "n_tie_in": 8,
+            "n_tie_out": 23,
+            "n_tie_row": 31,
+            "tie_churn_frac": 0.5,
+            "tie_in": [
+              "29A_000.0",
+              "57_000.0",
+              "59_000.0",
+              "60_008.5",
+              "72_001.0",
+              "72_001.5",
+              "72_002.0",
+              "72_002.5"
+            ],
+            "tie_out": [
+              "29_003.0",
+              "29_004.0",
+              "33_000.5",
+              "33_001.0",
+              "33_001.5",
+              "33_002.0",
+              "33_002.5",
+              "35_000.0",
+              "37_003.0",
+              "37_004.5",
+              "37_006.0",
+              "37_006.5",
+              "59_001.0",
+              "60_001.5",
+              "66_003.0",
+              "66_004.5",
+              "66_005.0",
+              "71_005.5",
+              "71_007.5",
+              "72_003.5",
+              "83_004.5",
+              "83_005.0",
+              "86_003.5"
+            ]
+          },
+          "medical": {
+            "jaccard": 0.372881,
+            "n_tie_in": 13,
+            "n_tie_out": 24,
+            "n_tie_row": 35,
+            "tie_churn_frac": 0.521739,
+            "tie_in": [
+              "29A_000.0",
+              "59_001.5",
+              "60_008.5",
+              "71_000.0",
+              "72_001.0",
+              "72_001.5",
+              "72_002.0",
+              "72_002.5",
+              "79_000.5",
+              "79_001.0",
+              "83_006.5",
+              "83_007.0",
+              "83_008.5"
+            ],
+            "tie_out": [
+              "29_003.0",
+              "29_004.0",
+              "33_000.5",
+              "33_001.0",
+              "33_001.5",
+              "33_002.0",
+              "33_002.5",
+              "35_000.0",
+              "37_003.0",
+              "37_004.5",
+              "37_005.0",
+              "37_005.5",
+              "37_006.0",
+              "37_006.5",
+              "60_001.5",
+              "66_003.0",
+              "66_004.5",
+              "66_005.0",
+              "71_005.5",
+              "71_007.5",
+              "72_003.5",
+              "83_004.5",
+              "83_005.0",
+              "86_003.5"
+            ]
+          },
+          "resort": {
+            "jaccard": 0.52,
+            "n_tie_in": 4,
+            "n_tie_out": 20,
+            "n_tie_row": 30,
+            "tie_churn_frac": 0.434783,
+            "tie_in": [
+              "29_000.0",
+              "43_001.5",
+              "43_002.5",
+              "43_003.0"
+            ],
+            "tie_out": [
+              "29_003.0",
+              "29_004.0",
+              "33_001.0",
+              "33_002.5",
+              "35_000.0",
+              "37_003.0",
+              "37_004.5",
+              "37_006.0",
+              "37_006.5",
+              "47_008.0",
+              "60_001.5",
+              "60_007.5",
+              "66_003.0",
+              "66_004.5",
+              "66_005.0",
+              "71_005.5",
+              "71_007.5",
+              "83_004.5",
+              "83_005.0",
+              "83_005.5"
+            ]
+          }
+        },
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 8
+        },
+        "id": "gen_leave_class_out",
+        "jaccard": 0.372881,
+        "n_tie_headline": 46,
+        "n_tie_in": 13,
+        "n_tie_out": 24,
+        "n_tie_row": 35,
+        "tie_churn_frac": 0.521739,
+        "tie_in": [
+          "29A_000.0",
+          "59_001.5",
+          "60_008.5",
+          "71_000.0",
+          "72_001.0",
+          "72_001.5",
+          "72_002.0",
+          "72_002.5",
+          "79_000.5",
+          "79_001.0",
+          "83_006.5",
+          "83_007.0",
+          "83_008.5"
+        ],
+        "tie_out": [
+          "29_003.0",
+          "29_004.0",
+          "33_000.5",
+          "33_001.0",
+          "33_001.5",
+          "33_002.0",
+          "33_002.5",
+          "35_000.0",
+          "37_003.0",
+          "37_004.5",
+          "37_005.0",
+          "37_005.5",
+          "37_006.0",
+          "37_006.5",
+          "60_001.5",
+          "66_003.0",
+          "66_004.5",
+          "66_005.0",
+          "71_005.5",
+          "71_007.5",
+          "72_003.5",
+          "83_004.5",
+          "83_005.0",
+          "86_003.5"
+        ],
+        "unit": "window_id",
+        "worst_class": "medical"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 1
+        },
+        "id": "nb_estimator",
+        "jaccard": 0.956522,
+        "n_tie_headline": 46,
+        "n_tie_in": 0,
+        "n_tie_out": 2,
+        "n_tie_row": 44,
+        "note": "per-replicate NB2 refit at FIXED headline alpha (screen_fit.nb2_beta_fixed_alpha -- stated approximation; test D7 pins it to the statsmodels fit)",
+        "tie_churn_frac": 0.043478,
+        "tie_in": [],
+        "tie_out": [
+          "37_006.0",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 0
+        },
+        "id": "svc_p25",
+        "jaccard": 1.0,
+        "n_tie_headline": 46,
+        "n_tie_in": 0,
+        "n_tie_out": 0,
+        "n_tie_row": 46,
+        "note": "rank-inert by construction; under the CRN seed rule the tie set reproduces the headline exactly",
+        "tie_churn_frac": 0.0,
+        "tie_in": [],
+        "tie_out": [],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 0
+        },
+        "id": "svc_p75",
+        "jaccard": 1.0,
+        "n_tie_headline": 46,
+        "n_tie_in": 0,
+        "n_tie_out": 0,
+        "n_tie_row": 46,
+        "note": "rank-inert by construction; under the CRN seed rule the tie set reproduces the headline exactly",
+        "tie_churn_frac": 0.0,
+        "tie_in": [],
+        "tie_out": [],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 8
+        },
+        "id": "offset_variant",
+        "jaccard": 0.12987,
+        "n_tie_headline": 46,
+        "n_tie_in": 31,
+        "n_tie_out": 36,
+        "n_tie_row": 41,
+        "tie_churn_frac": 0.782609,
+        "tie_in": [
+          "123_001.5",
+          "123_002.0",
+          "123_003.5",
+          "123_006.5",
+          "123_007.0",
+          "123_007.5",
+          "1_000.0",
+          "1_020.5",
+          "1_021.0",
+          "1_021.5",
+          "1_022.0",
+          "1_022.5",
+          "1_023.0",
+          "1_023.5",
+          "29A_000.0",
+          "37_000.0",
+          "37_001.0",
+          "37_001.5",
+          "37_002.0",
+          "37_002.5",
+          "70_000.0",
+          "70_000.5",
+          "70_001.0",
+          "70_002.0",
+          "79_000.5",
+          "79_001.0",
+          "79_001.5",
+          "79_002.0",
+          "79_002.5",
+          "79_004.0",
+          "79_004.5"
+        ],
+        "tie_out": [
+          "29_003.0",
+          "29_004.0",
+          "33_002.0",
+          "35_000.0",
+          "37_005.5",
+          "37_006.0",
+          "37_006.5",
+          "43_001.0",
+          "43_002.0",
+          "47_007.5",
+          "47_008.0",
+          "47_008.5",
+          "53_000.0",
+          "59_000.5",
+          "59_001.0",
+          "59_002.0",
+          "59_002.5",
+          "59_004.0",
+          "59_004.5",
+          "60_001.5",
+          "60_005.0",
+          "60_005.5",
+          "60_006.0",
+          "60_006.5",
+          "60_007.0",
+          "60_007.5",
+          "66_003.0",
+          "66_004.5",
+          "66_005.0",
+          "71_005.5",
+          "71_007.5",
+          "72_003.5",
+          "83_004.5",
+          "83_005.0",
+          "83_005.5",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 0
+        },
+        "id": "overlap_lo",
+        "jaccard": 1.0,
+        "n_tie_headline": 46,
+        "n_tie_in": 0,
+        "n_tie_out": 0,
+        "n_tie_row": 46,
+        "note": "grouping-only row: the model is the headline model, so under the CRN seed rule the tie set reproduces the headline exactly",
+        "tie_churn_frac": 0.0,
+        "tie_in": [],
+        "tie_out": [],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 0
+        },
+        "id": "overlap_hi",
+        "jaccard": 1.0,
+        "n_tie_headline": 46,
+        "n_tie_in": 0,
+        "n_tie_out": 0,
+        "n_tie_row": 46,
+        "note": "grouping-only row: the model is the headline model, so under the CRN seed rule the tie set reproduces the headline exactly",
+        "tie_churn_frac": 0.0,
+        "tie_in": [],
+        "tie_out": [],
+        "unit": "window_id"
+      },
+      {
+        "hard_top8_churn": {
+          "unit": "window_id",
+          "value": 0
+        },
+        "id": "year_fe_vs_pooled",
+        "jaccard": 0.956522,
+        "n_tie_headline": 46,
+        "n_tie_in": 0,
+        "n_tie_out": 2,
+        "n_tie_row": 44,
+        "tie_churn_frac": 0.043478,
+        "tie_in": [],
+        "tie_out": [
+          "37_006.0",
+          "86_003.5"
+        ],
+        "unit": "window_id"
+      }
+    ]
+  },
   "universe": {
     "n_eligible_shapes": 40,
     "n_weekday_shapes": 53,

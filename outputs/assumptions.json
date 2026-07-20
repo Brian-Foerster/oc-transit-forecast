@@ -1,7 +1,7 @@
 {
   "basis_census": {
-    "definitional": 25,
-    "judgment": 66,
+    "definitional": 26,
+    "judgment": 67,
     "literature": 10,
     "locally-calibrated": 2,
     "measured": 40
@@ -409,12 +409,22 @@
     },
     {
       "accepted": [
-        "pending owner ratification (SC batch external-critique tripwire)",
-        "2026-07-19"
+        "statistic owner-ratified 2026-07-20; VALUE provisional pending owner post-report",
+        "2026-07-20"
       ],
       "basis": "judgment",
       "id": "screen_battery_rho_min",
       "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-directed battery freeze (criteria 2/3 statistics rebuild)",
+        "2026-07-20"
+      ],
+      "basis": "definitional",
+      "id": "screen_battery_rows",
+      "no_row_reason": "definitional",
       "tier": "constant"
     },
     {
@@ -449,6 +459,16 @@
     },
     {
       "accepted": [
+        "owner-ratified (revised criterion 1: signed bootstrap-fraction)",
+        "2026-07-20"
+      ],
+      "basis": "judgment",
+      "id": "screen_pos_frac_min",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "spec01 panel adjudication 2026-07-18",
         "2026-07-18"
       ],
@@ -469,8 +489,8 @@
     },
     {
       "accepted": [
-        "pending owner ratification (SC batch external-critique tripwire)",
-        "2026-07-19"
+        "superseded by owner review (revised criterion 1: signed bootstrap-fraction)",
+        "2026-07-20"
       ],
       "basis": "judgment",
       "id": "screen_t_min",
@@ -479,8 +499,8 @@
     },
     {
       "accepted": [
-        "pending owner ratification (SC batch external-critique tripwire)",
-        "2026-07-19"
+        "superseded by owner review (criterion-3 statistic rebuild; value deferred)",
+        "2026-07-20"
       ],
       "basis": "judgment",
       "id": "screen_top8_churn_max",
@@ -1642,7 +1662,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 143,
+  "n_entries": 145,
   "priors": [
     {
       "basis": "judgment",
@@ -1808,7 +1828,7 @@
   ],
   "tier_census": {
     "config": 14,
-    "constant": 77,
+    "constant": 79,
     "data": 15,
     "prior": 19,
     "structural": 18
@@ -1947,6 +1967,23 @@
     {
       "history": [
         [
+          "2026-07-19",
+          0.7,
+          "judgment",
+          "SC batch -- external critique 2026-07-19: tripwire criterion (ii)"
+        ],
+        [
+          "2026-07-20",
+          0.7,
+          "judgment",
+          "owner review 2026-07-20: statistic KEPT (battery min Spearman rho, LOYO excluded); the 0.7 value is PROVISIONAL pending the owner's decision on the shortlist-stability report. RETRACTION recorded: any e016-anchored calibration story for 0.7 is RETRACTED -- it tuned the bar to an observed value (e016_swap's measured rho 0.746) and that example fails criterion 3 anyway (top-8 churn 8); no such story may be cited as this entry's basis"
+        ]
+      ],
+      "id": "screen_battery_rho_min"
+    },
+    {
+      "history": [
+        [
           "2026-07-18",
           1577.65,
           "measured",
@@ -1960,6 +1997,40 @@
         ]
       ],
       "id": "screen_svc_std"
+    },
+    {
+      "history": [
+        [
+          "2026-07-19",
+          1.0,
+          "judgment",
+          "SC batch -- external critique 2026-07-19: the screen's primary gate was thresholdless (no pre-registered pass/fail); tripwire criterion (i)"
+        ],
+        [
+          "2026-07-20",
+          1.0,
+          "judgment",
+          "owner review 2026-07-20: NOT ratified as written -- criterion 1 REVISED to the signed bootstrap-fraction form (successor: screen_pos_frac_min = 0.841 = Phi(1)). Cluster-robust analytic SEs are downward-biased at ~41 clusters (the bias runs toward pass), so the analytic |t| is demoted to a reported diagnostic (decision_output.diagnostics.min_abs_t_demand) and this entry is SUPERSEDED"
+        ]
+      ],
+      "id": "screen_t_min"
+    },
+    {
+      "history": [
+        [
+          "2026-07-19",
+          2,
+          "judgment",
+          "SC batch -- external critique 2026-07-19: tripwire criterion (iii)"
+        ],
+        [
+          "2026-07-20",
+          2,
+          "judgment",
+          "owner review 2026-07-20: criterion 3's statistic REBUILT as margin-defined tie-set churn (max tie_churn_frac across battery rows, artifact shortlist_stability block); hard-top-8 churn is demoted to a per-row diagnostic column with an explicit unit field ('window_id'; 'host_shape' for window_10/window_15). NO successor threshold value yet -- the owner sets it after the shortlist-stability report; until then decision_output.criteria.tie_churn carries threshold null / pass null (an unset threshold cannot pass -- fail-safe)"
+        ]
+      ],
+      "id": "screen_top8_churn_max"
     },
     {
       "history": [

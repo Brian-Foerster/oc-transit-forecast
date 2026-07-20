@@ -10,7 +10,9 @@ Schema (one dict per assumption, keyed by a stable machine id):
               A1 OWNS prior + constant (they carry a `value`); config/
               structural/data are NOT owned here (A2 harvests them, no value
               field -- they point at configs / name toggles / record vintages).
-    status    active | superseded-kept-as-row | retired
+    status    active | superseded | superseded-kept-as-row | retired
+              (plain `superseded`: replaced by a successor entry named in
+              the final history element; kept for the append-only record)
     value     the exact Python literal the code imports (OWNED tiers only).
               LITERAL TYPING IS LOAD-BEARING: floats stay floats (70.0 not 70)
               because auto sensitivity-row labels derive from float repr; an
@@ -1635,73 +1637,201 @@ ASSUMPTIONS = {
         "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
         "logged": None, "upgrade": "post-records-request panel extension",
     },
-    # -- pre-registered decision tripwire (SC batch 2026-07-19; external
-    # critique verified claim-by-claim and accepted). The screen emits a
-    # decision-grade ORDINAL ranking only if all three criteria pass
-    # (spec 01 §5); otherwise the decision output is the THRESHOLD SHORTLIST
-    # and the ordinal index is diagnostic-only. Mechanized in screen_scan.py's
-    # decision_output block; consumed via val() (the check_assumptions screen
-    # scan verifies the consumption declaration). Acceptance-threshold knobs,
-    # not swept model quantities -> rowless quality-knob dispositions.
+    # -- decision tripwire v2 (owner review 2026-07-20 of the SC-batch
+    # pre-registration). Criterion 1 REVISED AND RATIFIED as a signed
+    # bootstrap fraction (screen_pos_frac_min; screen_t_min superseded);
+    # criterion 2 keeps its statistic with a PROVISIONAL value pending the
+    # owner's decision on the shortlist-stability report; criterion 3's
+    # statistic is REBUILT as margin-defined tie-set churn with NO value
+    # yet (screen_top8_churn_max superseded; the successor threshold entry
+    # lands when the owner sets it). ordinal_ok requires all criteria to
+    # pass and an unset threshold cannot pass -> false-by-construction
+    # until the owner sets 2/3 (the intended fail-safe). Mechanized in
+    # screen_scan.py's decision_output block; live ids consumed via val()
+    # (the check_assumptions screen scan verifies the consumption
+    # declaration). Acceptance-threshold knobs -> rowless quality-knob.
     "screen_t_min": {
         "title": "screen tripwire: per-demand-coefficient minimum |t| "
-                 "(cluster-robust)",
-        "tier": "constant", "status": "active",
+                 "(cluster-robust) -- SUPERSEDED by screen_pos_frac_min",
+        "tier": "constant", "status": "superseded",
         "value": 1.0, "units": "|t|", "band": None, "basis": "judgment",
         "history": [("2026-07-19", 1.0, "judgment",
                      "SC batch -- external critique 2026-07-19: the screen's "
                      "primary gate was thresholdless (no pre-registered "
-                     "pass/fail); tripwire criterion (i)")],
-        "provenance": "criterion (i) of the pre-registered tripwire (spec 01 "
-                      "§5): every demand-block coefficient (b1, b2) must have "
-                      "cluster-robust |t| >= this for the ordinal ranking to "
-                      "be decision-grade. Measured at landing: min |t| = 0.81 "
-                      "(b2_e002) -> FAILS; the screen emits the threshold "
-                      "shortlist (decision_output.decision_format)",
+                     "pass/fail); tripwire criterion (i)"),
+                    ("2026-07-20", 1.0, "judgment",
+                     "owner review 2026-07-20: NOT ratified as written -- "
+                     "criterion 1 REVISED to the signed bootstrap-fraction "
+                     "form (successor: screen_pos_frac_min = 0.841 = "
+                     "Phi(1)). Cluster-robust analytic SEs are "
+                     "downward-biased at ~41 clusters (the bias runs toward "
+                     "pass), so the analytic |t| is demoted to a reported "
+                     "diagnostic (decision_output.diagnostics"
+                     ".min_abs_t_demand) and this entry is SUPERSEDED")],
+        "provenance": "SUPERSEDED (owner review 2026-07-20) by "
+                      "screen_pos_frac_min -- the signed bootstrap-fraction "
+                      "form of criterion 1; the analytic cluster-robust |t| "
+                      "survives only as a decision_output diagnostic. "
+                      "Original: criterion (i) of the pre-registered "
+                      "tripwire (spec 01 §5): every demand-block coefficient "
+                      "(b1, b2) must have cluster-robust |t| >= this for "
+                      "the ordinal ranking to be decision-grade. Measured "
+                      "at landing: min |t| = 0.81 (b2_e002) -> FAILS",
         "rows": {}, "no_row_reason": "quality-knob",
-        "accepted": ("pending owner ratification (SC batch external-critique "
-                     "tripwire)", "2026-07-19"),
-        "logged": "README known-issue 35",
-        "upgrade": "owner ratification; post-records-request refit",
+        "accepted": ("superseded by owner review (revised criterion 1: "
+                     "signed bootstrap-fraction)", "2026-07-20"),
+        "logged": "README known-issue 38 (opened as 35)",
+        "upgrade": None,
+    },
+    "screen_pos_frac_min": {
+        "title": "screen tripwire criterion 1 (revised, ratified): minimum "
+                 "demand-coefficient bootstrap positive-sign fraction",
+        "tier": "constant", "status": "active",
+        "value": 0.841, "units": "fraction of replicates", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-20", 0.841, "judgment",
+                     "owner review 2026-07-20 -- REVISED criterion 1, "
+                     "ratified: replaces screen_t_min's analytic "
+                     "cluster-robust |t| >= 1.0 (superseded entry points "
+                     "forward here)")],
+        "provenance": "criterion 1 of the decision tripwire (spec 01 §5, "
+                      "revised and RATIFIED 2026-07-20): for EACH "
+                      "demand-block coefficient -- the demand block is "
+                      "{b1_lodes, b2_e002}; b4 is OUTSIDE it per the "
+                      "artifact's own grouped decomposition (its wrong-sign "
+                      "risk is priced by the b4_off battery row and v2.1 "
+                      "replaces the dummy with measured WAC generator jobs; "
+                      "b4's per-replicate sign IS still reported as a "
+                      "diagnostic) -- the fraction of the B=2000 "
+                      "route-cluster bootstrap replicates with a STRICTLY "
+                      "POSITIVE coefficient must be >= this. Basis: 0.841 = "
+                      "Phi(1), the one-sided translation of |t| >= 1 with "
+                      "the sign requirement added; t = 1 is the threshold "
+                      "at which a regressor improves adjusted R-squared and "
+                      "out-of-sample prediction error -- the "
+                      "decision-theoretic minimum for carrying a variable "
+                      "at all. The bootstrap-fraction form replaces the "
+                      "analytic cluster-SE t because cluster-robust SEs are "
+                      "downward-biased at ~41 clusters (bias toward pass); "
+                      "the analytic |t| values stay as reported "
+                      "diagnostics. Signs are recorded in the EXISTING "
+                      "headline bootstrap (no new compute); pos_frac "
+                      "recomputable from the artifact's replicate_signs "
+                      "strings (test_screen.py D6). Measured at "
+                      "ratification (v2.0 build): b1_pos_frac 0.8115, "
+                      "b2_pos_frac 0.7435 -> FAILS",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-ratified (revised criterion 1: signed "
+                     "bootstrap-fraction)", "2026-07-20"),
+        "logged": "README known-issue 38",
+        "upgrade": "v2.1 rebuilt fit (spec 01 §9)",
     },
     "screen_battery_rho_min": {
-        "title": "screen tripwire: battery minimum Spearman rho",
+        "title": "screen tripwire criterion 2: battery minimum Spearman rho "
+                 "(value provisional)",
         "tier": "constant", "status": "active",
         "value": 0.7, "units": "Spearman rho", "band": None,
         "basis": "judgment",
         "history": [("2026-07-19", 0.7, "judgment",
                      "SC batch -- external critique 2026-07-19: tripwire "
-                     "criterion (ii)")],
-        "provenance": "criterion (ii) of the pre-registered tripwire (spec 01 "
-                      "§5): the minimum Spearman rho over the pre-registered "
-                      "battery perturbations (the screen artifact's "
-                      "sensitivity rows; the leave-one-year-out consistency "
-                      "check is EXCLUDED -- mechanically near-1 with "
-                      "time-invariant X) must be >= this. Measured at "
+                     "criterion (ii)"),
+                    ("2026-07-20", 0.7, "judgment",
+                     "owner review 2026-07-20: statistic KEPT (battery min "
+                     "Spearman rho, LOYO excluded); the 0.7 value is "
+                     "PROVISIONAL pending the owner's decision on the "
+                     "shortlist-stability report. RETRACTION recorded: any "
+                     "e016-anchored calibration story for 0.7 is RETRACTED "
+                     "-- it tuned the bar to an observed value (e016_swap's "
+                     "measured rho 0.746) and that example fails criterion "
+                     "3 anyway (top-8 churn 8); no such story may be cited "
+                     "as this entry's basis")],
+        "provenance": "criterion 2 of the decision tripwire (spec 01 §5): "
+                      "the minimum Spearman rho over the pre-registered "
+                      "battery perturbations (the FROZEN screen_battery_rows "
+                      "list; the leave-one-year-out consistency check is "
+                      "EXCLUDED -- mechanically near-1 with time-invariant "
+                      "X) must be >= this. Value PROVISIONAL (owner sets it "
+                      "after the shortlist-stability report). Measured at "
                       "landing: min rho = 0.39 (buffer_lo) -> FAILS",
         "rows": {}, "no_row_reason": "quality-knob",
-        "accepted": ("pending owner ratification (SC batch external-critique "
-                     "tripwire)", "2026-07-19"),
-        "logged": "README known-issue 35",
-        "upgrade": "owner ratification; post-records-request refit",
+        "accepted": ("statistic owner-ratified 2026-07-20; VALUE provisional "
+                     "pending owner post-report", "2026-07-20"),
+        "logged": "README known-issue 38 (opened as 35)",
+        "upgrade": "owner post-report value decision; v2.1 rebuilt fit",
     },
     "screen_top8_churn_max": {
         "title": "screen tripwire: max top-8 membership changes per "
-                 "perturbation",
-        "tier": "constant", "status": "active",
+                 "perturbation -- SUPERSEDED (statistic rebuilt as "
+                 "margin-defined tie-set churn)",
+        "tier": "constant", "status": "superseded",
         "value": 2, "units": "windows", "band": None, "basis": "judgment",
         "history": [("2026-07-19", 2, "judgment",
                      "SC batch -- external critique 2026-07-19: tripwire "
-                     "criterion (iii)")],
-        "provenance": "criterion (iii) of the pre-registered tripwire (spec "
-                      "01 §5): top-8 membership changes under every battery "
-                      "perturbation must be <= this. Measured at landing: "
-                      "max churn = 8 (buffer_lo) -> FAILS",
+                     "criterion (iii)"),
+                    ("2026-07-20", 2, "judgment",
+                     "owner review 2026-07-20: criterion 3's statistic "
+                     "REBUILT as margin-defined tie-set churn (max "
+                     "tie_churn_frac across battery rows, artifact "
+                     "shortlist_stability block); hard-top-8 churn is "
+                     "demoted to a per-row diagnostic column with an "
+                     "explicit unit field ('window_id'; 'host_shape' for "
+                     "window_10/window_15). NO successor threshold value "
+                     "yet -- the owner sets it after the "
+                     "shortlist-stability report; until then "
+                     "decision_output.criteria.tie_churn carries threshold "
+                     "null / pass null (an unset threshold cannot pass -- "
+                     "fail-safe)")],
+        "provenance": "SUPERSEDED (owner review 2026-07-20): the hard "
+                      "rank-8 cut measured churn against an arbitrary "
+                      "boundary while the decision object is the "
+                      "MARGIN-DEFINED tie set; the rebuilt criterion-3 "
+                      "statistic is max tie-set churn across battery rows "
+                      "(shortlist_stability.aggregate.max_tie_churn_frac) "
+                      "and its threshold entry lands when the owner sets "
+                      "it. Original: criterion (iii) -- top-8 membership "
+                      "changes under every battery perturbation <= this. "
+                      "Measured at landing: max churn = 8 (buffer_lo) -> "
+                      "FAILS",
         "rows": {}, "no_row_reason": "quality-knob",
-        "accepted": ("pending owner ratification (SC batch external-critique "
-                     "tripwire)", "2026-07-19"),
-        "logged": "README known-issue 35",
-        "upgrade": "owner ratification; post-records-request refit",
+        "accepted": ("superseded by owner review (criterion-3 statistic "
+                     "rebuild; value deferred)", "2026-07-20"),
+        "logged": "README known-issue 38 (opened as 35)",
+        "upgrade": None,
+    },
+    "screen_battery_rows": {
+        "title": "screen battery: FROZEN perturbation row list (structural "
+                 "governance)",
+        "tier": "constant", "status": "active",
+        "value": ["buffer_lo", "buffer_hi", "window_10", "window_15",
+                  "drop_fy2020", "drop_rh", "e016_swap", "b4_off",
+                  "gen_leave_class_out", "nb_estimator", "svc_p25",
+                  "svc_p75", "offset_variant", "overlap_lo", "overlap_hi",
+                  "year_fe_vs_pooled"],
+        "units": "battery row ids", "band": None, "basis": "definitional",
+        "history": [("2026-07-20", "16 frozen battery row ids",
+                     "definitional",
+                     "owner review 2026-07-20 -- battery FROZEN: the "
+                     "battery criterion is a MIN, so adding a row can only "
+                     "lower it and deleting a row can only raise it; "
+                     "adding or dropping a row is therefore an "
+                     "owner-approved spec amendment (spec 01 §5/§9), never "
+                     "a build patch")],
+        "provenance": "the exact sensitivity row ids constituting the §5 "
+                      "battery (LOYO excluded as a consistency check). "
+                      "STRUCTURAL-GOVERNANCE entry carried at constant "
+                      "tier: the registry's structural tier is "
+                      "machine-checked to own enumerated-alternative rows "
+                      "(check 5) and this entry instead freezes a LIST, "
+                      "consumed via val() by screen_scan.py (battery order "
+                      "+ shortlist_stability) and asserted row-for-row "
+                      "against the artifact by test_screen.py. Declared in "
+                      "the screen artifact's assumptions_manifest (check-2 "
+                      "consumption declaration, tripwire pattern)",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner-directed battery freeze (criteria 2/3 "
+                     "statistics rebuild)", "2026-07-20"),
+        "logged": "README known-issue 38",
+        "upgrade": None,
     },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {

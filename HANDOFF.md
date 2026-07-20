@@ -334,12 +334,18 @@ numpy/pandas/matplotlib (requirements.txt); model runs take seconds
    column filled by acquisition reports, provenance sidecars under
    data/raw/); (b) rebuild — block-centroid catchments, per-year X
    vintages, generator-jobs b4 replacing the hand-coded dummy, swaps
-   only from the §9.1 pre-registered list; (c) verdict — the SAME §5
-   tripwire; if the demand block still fails, the threshold shortlist
-   becomes the screen's PERMANENT decision output and stage-1 ordinal
-   ranking is declared out of reach for OC data (§9.5 — no v2.2, no
-   predictor shopping). Registry entries for the new knobs are OWED to
-   the consolidation pass that owns scripts/assumptions.py (list in
+   only from the §9.1 pre-registered list; (c) verdict — the §5
+   tripwire v2 (criterion 1 ratified 2026-07-20 as the signed
+   bootstrap fraction; criteria 2/3 values pending the owner's
+   post-report decision); if the demand block still fails, the
+   decision output REMAINS the threshold shortlist (or the narrower
+   stable core per §4b) UNTIL a documented, owner-approved change of
+   method — §9.5's "no v2.2, permanent" clause was SOFTENED by the
+   owner review 2026-07-20 (README known issue 38); the frozen object
+   is the §9 rebuild spec itself: same-spec re-runs are barred and
+   predictor shopping beyond the §9.1 pre-registered swaps stays
+   out. Registry entries for the new knobs are OWED to the
+   consolidation pass that owns scripts/assumptions.py (list in
    spec 01 §9.7).
 
 (Closed 2026-07: knife-edge smoothing — rider-position quadrature;

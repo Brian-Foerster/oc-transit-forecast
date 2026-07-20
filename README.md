@@ -585,7 +585,10 @@ of the tripwire entries and the normalization entry respectively.
     standing test recomputes the pass booleans). Measured outcome at
     landing: ordinal_ok = FALSE (min |t| 0.81 on b2; min rho 0.39 at
     buffer_lo; max churn 8) — the screen currently delivers a shortlist,
-    not a ranking.
+    not a ranking. (Tripwire as written NOT ratified — superseded by the
+    2026-07-20 owner review, issue 38: criterion 1 revised to the signed
+    bootstrap fraction; criteria 2/3 statistics rebuilt, values
+    deferred.)
 36. **The old index ceiling ~72 was a mechanical length artifact** (spec
     01 §3.2). The superseded baseline normalized every 12.5-mi window by
     the median fitted route's prediction AT ITS OWN LENGTH (~18 mi); with
@@ -603,3 +606,43 @@ of the tripwire entries and the normalization entry respectively.
     be noise attribution; collinearity is mild and was never the real
     rationale. Spec §3.1 and the artifact's decomposition note now cite
     the measured values (corrected 2026-07-19).
+38. **Owner review of the stage-1 tripwire (2026-07-20): criterion 1
+    revised and ratified; criteria 2/3 statistics rebuilt, values
+    deferred; §9.5 permanence clause softened.** The SC-batch tripwire
+    (issue 35) was NOT ratified as written. (a) Criterion 1 is now the
+    SIGNED BOOTSTRAP FRACTION (registry `screen_pos_frac_min` = 0.841,
+    owner-ratified): each demand-block coefficient — the block is
+    {b1_lodes, b2_e002}; b4 sits outside it per the grouped
+    decomposition, its wrong-sign risk priced by the `b4_off` row, its
+    per-replicate sign kept as a diagnostic — must be strictly positive
+    in ≥ 0.841 = Φ(1) of the B=2000 bootstrap replicates (the one-sided
+    |t| ≥ 1 translation with the sign requirement added; t = 1 is where
+    a regressor starts improving adjusted R² and out-of-sample error).
+    The analytic cluster-robust |t| (`screen_t_min`, superseded) is
+    demoted to a diagnostic: cluster SEs are downward-biased at ~41
+    clusters and the bias runs toward pass. Measured: b1_pos_frac
+    0.8115, b2_pos_frac 0.7435 → criterion 1 FAILS on the v2.0 build.
+    (b) Criterion 2 keeps its statistic (battery min Spearman ρ); the
+    0.7 value is PROVISIONAL pending the owner's decision on the new
+    `shortlist_stability` report (every frozen battery row's own
+    bootstrap tie set vs the margin-defined headline tie set; CRN
+    per-row seed rule); any e016-anchored calibration story for 0.7 is
+    RETRACTED — it tuned the bar to an observed row (e016_swap ρ 0.746)
+    whose own example fails criterion 3 anyway (recorded in the registry
+    entry's history). (c) Criterion 3's statistic is REBUILT as
+    margin-defined tie-set churn (max `tie_churn_frac` across battery
+    rows; `screen_top8_churn_max` superseded, hard-top-8 churn demoted
+    to a unit-tagged per-row diagnostic); its threshold is UNSET until
+    the owner reads the report — and since an unset threshold cannot
+    pass, `ordinal_ok` is FALSE BY CONSTRUCTION until then (the intended
+    fail-safe). Measured stability: min Jaccard 0.109 (e016_swap), max
+    tie churn 0.848 (e016_swap), STABLE CORE EMPTY (0 of 46 headline tie
+    windows survive every battery row) — the gate-1 memo must say the
+    honest stage-1 output is narrower than the shortlist. (d) The
+    battery row list is FROZEN (registry `screen_battery_rows`; the
+    battery is a MIN, so list edits are owner-approved spec amendments).
+    (e) Spec §9.5's "no v2.2, permanent, no re-tuning" clause is
+    SOFTENED: failure ⇒ threshold-shortlist (or narrower) output UNTIL a
+    documented, owner-approved change of method; the frozen object is
+    the §9 rebuild spec itself — same-spec re-runs are barred, method
+    changes are governed, not banned.

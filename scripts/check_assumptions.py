@@ -397,14 +397,19 @@ def check_coverage(present, arts):
             if rid not in present[art]:
                 fails.append(f"{aid}: claims {art}:{rid} but it is not present "
                              f"in the {art} artifact")
-    # spec 01 §5 decision tripwire (SC batch 2026-07-19): the three
-    # pre-registered tripwire ids are rowless quality-knobs, so their
-    # coverage obligation is a CONSUMPTION declaration, not a sensitivity
-    # row -- screen_scan.py must consume them via val() and declare them in
-    # the artifact's assumptions_manifest (network-manifest precedent,
-    # spec 07 §9 N4). Absent artifact -> pending warning, like any claim.
-    tripwires = ("screen_battery_rho_min", "screen_t_min",
-                 "screen_top8_churn_max")
+    # spec 01 §5 decision tripwire v2 (owner review 2026-07-20): the LIVE
+    # tripwire ids are rowless quality-knobs, so their coverage obligation
+    # is a CONSUMPTION declaration, not a sensitivity row -- screen_scan.py
+    # must consume them via val() and declare them in the artifact's
+    # assumptions_manifest (network-manifest precedent, spec 07 §9 N4).
+    # screen_t_min / screen_top8_churn_max are SUPERSEDED (criterion 1
+    # revised to screen_pos_frac_min; criterion 3's statistic rebuilt, its
+    # threshold entry pending the owner's post-report decision) and are no
+    # longer consumed. screen_battery_rows is the frozen battery list
+    # (same consumption-declaration obligation). Absent artifact ->
+    # pending warning, like any claim.
+    tripwires = ("screen_battery_rho_min", "screen_battery_rows",
+                 "screen_pos_frac_min")
     SC = arts.get("screen")
     if SC is None:
         warns.append("[check2] screen tripwires: artifact absent -- "
