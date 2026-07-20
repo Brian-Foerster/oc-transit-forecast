@@ -50,10 +50,11 @@ def f32(a):
     return np.asarray(a, dtype=np.float32).tolist()
 
 
-def scenario_block(d):
+def scenario_block(d, p):
     """One scenario's per-draw streams, PRE-BLEND and WORK-SHAPED (the wrapper
     applies the D8 ws/kappa blend). cm_seg / cm_seg_fullod are (n,3) split into
-    three lists in car_frac order 0/1/2+-veh (spec 06 §3)."""
+    three lists in car_frac order 0/1/2+-veh (spec 06 §3). `p` is the shared
+    params dict (draw_params) -- source of the vot_behav stream below."""
     def seg(k):
         arr = np.asarray(d[k])                       # (n, 3)
         return [f32(arr[:, j]) for j in range(3)]
@@ -77,6 +78,15 @@ def scenario_block(d):
         "cm_seg": seg("cm_seg"),                     # diverted trip-mi, pre-pcar
         "cm_visitor": f32(d["cm_visitor"]),
         "cm_seg_fullod": seg("cm_seg_fullod"),       # transfer legs at full O-D
+        # FB batch (external review 2026-07-17): per-draw behavioral-VOT prior
+        # draws ($/hr, the vot_behav prior). Scenario-INVARIANT by construction
+        # (a prior draw, not an accumulated quantity), duplicated verbatim into
+        # both scenario blocks the way um_roh_infra aliases um_infra -- so the
+        # wrapper reads every priced stream from one place. Un-blocks the tbc
+        # vot_wedge tornado row: re-price the exported minute streams by the
+        # draw-level behavioral VOT instead of the engine's welfare VOT (the
+        # roh / fare_sweep W1R precedent).
+        "vot_behav": f32(p["vot_behav"]),
     }
 
 
@@ -119,7 +129,7 @@ def build_export(name, res, seed, weights, design, routes_removed, base_service,
         "n": n if n is not None else len(res["anchor"]),
         "seed": seed,
         "eq_days": EQ_DAYS,
-        "scenarios": {scen: scenario_block(res["uncapped"][scen])
+        "scenarios": {scen: scenario_block(res["uncapped"][scen], res["params"])
                       for scen in ("fold", "retain")},
         "params": {k: f32(v) for k, v in res["params"].items()},
     }

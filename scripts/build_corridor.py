@@ -20,6 +20,11 @@ usage: python build_corridor.py config/harbor.json
           committed -- that the model's intra_tract_alt sensitivity row runs
           against. Everything else rebuilds byte-identically, so the row isolates
           the intra-tract imputation effect.)
+       python build_corridor.py config/harbor.json --variant buffer_0p5
+         (same mechanism, different axis: rebuilds with the tract-membership
+          buffer at 0.5 mi -- likewise buffer_0p75 at 0.75 mi -- for the
+          stage-2 buffer_mi corridor-membership rows, external review
+          2026-07-17.)
 """
 import json, math, os, sys
 import numpy as np
@@ -140,11 +145,14 @@ def bin_flows(dists, weights, extra=None):
     return w, centers, counts, ecenters
 
 
-def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None,
+def main(cfg_path, intra_divisor=INTRA_DIVISOR, buffer_mi=BUFFER_MI, dest=None,
          injected_lines=None, excluded_fold_routes=None, feeder_headway_map=None):
-    """Build a corridor derived file. intra_divisor / dest default to the
-    committed pipeline (byte-identical); the spec 08 §4 rebuilt-variant passes
-    intra_divisor_alt + a scratch dest to isolate the intra-tract rule effect.
+    """Build a corridor derived file. intra_divisor / buffer_mi / dest default
+    to the committed pipeline (byte-identical); a spec 08 §4 rebuilt-variant
+    passes ONE override + a scratch dest to isolate that rule's effect
+    (intra_divisor_alt for intra_tract_alt; buffer_mi 0.5 / 0.75 for the
+    buffer_0p5 / buffer_0p75 corridor-membership rows, external review
+    2026-07-17).
 
     spec 07 §4.2 networked rebuild (N1a). Both network args default empty, so a
     plain build is bytewise identical (the empty-network verbatim rule -- gate
@@ -193,7 +201,7 @@ def main(cfg_path, intra_divisor=INTRA_DIVISOR, dest=None,
     for i, r in enumerate(tr.itertuples()):
         off[i], pos[i] = line.project(r.lon * MI_LON, r.lat * MI_LAT)
     tr["off"], tr["pos"] = off, pos
-    corr = tr[(np.abs(tr["off"]) <= BUFFER_MI) & tr["pos"].between(w0, w1)]
+    corr = tr[(np.abs(tr["off"]) <= buffer_mi) & tr["pos"].between(w0, w1)]
     posmap = dict(zip(corr["GEOID"], corr["pos"]))
     cset = set(posmap)
     print(f"  corridor tracts: {len(cset)}")
@@ -392,9 +400,19 @@ def networked_path(name, fingerprint):
     return os.path.join(RUN_DIR, f"corridor_{name}_{fingerprint}.json")
 
 
-# spec 08 §4 rebuilt variants: {id: intra_divisor override}. Adding the §4.8
+# spec 08 §4 rebuilt variants: {id: main() kwarg override}. Adding the §4.8
 # LODES-2019 row later extends this mapping (a different override axis).
-VARIANTS = {"intra_tract_alt": {"intra_divisor": val("intra_divisor_alt")}}
+# buffer_0p5 / buffer_0p75 (FB batch, external review 2026-07-17 / panel D13):
+# corridor tract-membership buffer probe points -- 0.5 is the buffer_mi band
+# lo edge, 0.75 the midpoint probe; probe-point literals (the model.py
+# sens-row convention, cf. spacing_05 / asc_untrimmed), central 0.9 stays
+# val("buffer_mi"). These land the stage-2 rows the buffer_mi registry entry
+# queued ("the 0.9-mi tail is doing real work" challenge).
+VARIANTS = {
+    "intra_tract_alt": {"intra_divisor": val("intra_divisor_alt")},
+    "buffer_0p5": {"buffer_mi": 0.5},
+    "buffer_0p75": {"buffer_mi": 0.75},
+}
 
 
 if __name__ == "__main__":
@@ -405,8 +423,8 @@ if __name__ == "__main__":
         assert variant in VARIANTS, f"unknown variant {variant!r}"
         name = json.load(open(cfg_path, encoding="utf-8"))["name"]
         main(cfg_path, dest=variant_path(name, variant), **VARIANTS[variant])
-        print(f"  (rebuilt-variant {variant}: intra-tract distance rule "
-              f"sqrt(ALAND)/{VARIANTS[variant]['intra_divisor']}, clip unchanged)")
+        print(f"  (rebuilt-variant {variant}: overrides {VARIANTS[variant]}; "
+              f"everything else rebuilds byte-identically)")
     else:
         main(args[0])
 

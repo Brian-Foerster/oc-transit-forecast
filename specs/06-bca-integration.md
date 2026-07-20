@@ -537,7 +537,12 @@ writes the §3 schema (+ `--seed-check` companion at seed+1 for G4). Gates:
   car-fleet gCO₂/mi lo/hi (`gco2_lo`/`gco2_hi` — the E2 emissions-rate row,
   wrapper-artifact rows; this line closes the latent G5 gap where §7 listed
   SCC/carbon but not the gCO₂/mi rate the carbon term multiplies),
-  carbon_growth 2%, traction-carbon 0/grid, rebound 0.5/0.8,
+  carbon_growth 2%, traction-carbon 0/grid, rebound 0/0.8 (central 0.4,
+  amended 2026-07-19 from the 0-central/0.5-0.8-rows original: the external
+  review 2026-07-17 pressed the Duranton–Turner fundamental-law evidence
+  that freed road capacity substantially refills, so a zero-rebound central
+  overstates congestion relief — tbc-side RANGES change lands in the sibling
+  repo this same batch),
   externality-rate lo/hi (each), pcar set lo/hi, transfer-full-OD, κ→1,
   no-ASC CS, ROH-instead-of-logsum, reliability-restored bound,
   mohring 0.09, labor +5%, discount 2/3/7% + declining schedule,

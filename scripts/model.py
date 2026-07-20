@@ -788,20 +788,21 @@ def wpct(x, w, q):
     return float(np.interp(q / 100.0, cw / cw[-1], x[i]))
 
 
-def _intra_tract_alt_corridor(cor):
-    """Build (fresh) and load the intra-tract rebuilt-variant corridor for the
-    intra_tract_alt sensitivity row (spec 08 §4). build_corridor rebuilds a
-    SCRATCH derived file with the alternative intra-tract distance rule
-    (sqrt(ALAND)/intra_divisor_alt); everything else rebuilds byte-identically so
-    the row isolates the imputation effect. The scratch file is gitignored, never
-    committed. build_corridor is imported LAZILY here (it pulls in pandas and is
-    a build-stage module) so importing model stays lightweight and the
-    dependency graph stays acyclic (build_corridor imports no pipeline module)."""
+def _variant_corridor(cor, variant):
+    """Build (fresh) and load a rebuilt-variant corridor for a spec 08 §4
+    rebuilt-variant sensitivity row (intra_tract_alt; the FB-batch buffer_0p5 /
+    buffer_0p75 corridor-membership rows). build_corridor rebuilds a SCRATCH
+    derived file with exactly ONE rule overridden (build_corridor.VARIANTS);
+    everything else rebuilds byte-identically so the row isolates that rule's
+    effect. The scratch file is gitignored, never committed. build_corridor is
+    imported LAZILY here (it pulls in pandas and is a build-stage module) so
+    importing model stays lightweight and the dependency graph stays acyclic
+    (build_corridor imports no pipeline module)."""
     import build_corridor as bc
     here = os.path.dirname(os.path.abspath(__file__))
     cfg_path = os.path.join(here, "..", "config", f"{cor.name}.json")
-    dest = bc.variant_path(cor.name, "intra_tract_alt")
-    bc.main(cfg_path, dest=dest, **bc.VARIANTS["intra_tract_alt"])
+    dest = bc.variant_path(cor.name, variant)
+    bc.main(cfg_path, dest=dest, **bc.VARIANTS[variant])
     return Corridor(dest)
 
 
@@ -987,7 +988,19 @@ def main(path):
     # params against it. The "(rebuilt inputs)" label makes the different-input
     # semantics visible (spec 08 §4/§7).
     sens("intra-tract dist rule alt (rebuilt inputs)", "intra_tract_alt",
-         _cor=_intra_tract_alt_corridor(cor))
+         _cor=_variant_corridor(cor, "intra_tract_alt"))
+    # FB batch (external review 2026-07-17, "the 0.9-mi tail is doing real
+    # work"): the buffer_mi STAGE-2 corridor-membership rows, same rebuilt-
+    # variant mechanism -- the tract-inclusion buffer tightens to 0.5 / 0.75 mi
+    # (vs the 0.9 central), the corridor rebuilds from scratch (membership,
+    # ACS segments, walk/transfer bins all move together), and central params
+    # run against it. Claimed by the buffer_mi registry entry in BOTH corridor
+    # results; closes that entry's 'queued stage-2 rebuilt-variant rows'
+    # promise.
+    sens("corridor buffer 0.5 mi (rebuilt inputs)", "buffer_0p5",
+         _cor=_variant_corridor(cor, "buffer_0p5"))
+    sens("corridor buffer 0.75 mi (rebuilt inputs)", "buffer_0p75",
+         _cor=_variant_corridor(cor, "buffer_0p75"))
 
     print(f"\n--- one-at-a-time sensitivity (central={base:,.0f}, "
           f"uncapped expected blend) ---")

@@ -197,7 +197,11 @@ ASSUMPTIONS = {
                      "spec08 A1 harvest -- introduced spec02")],
         "provenance": "peak share for the time-of-day utility blend (spec 02)",
         "rows": "auto", "no_row_reason": None, "accepted": None,
-        "logged": None, "upgrade": "APC time-of-day boardings",
+        "logged": None,
+        "upgrade": "APC time-of-day boardings -- records-request item 2 "
+                   "time-of-day APC is the evidence gate for any band change "
+                   "(post-2020 flattening challenge, external review "
+                   "2026-07-17)",
     },
     "vot_behav": {
         "title": "behavioral value of time (fare response)",
@@ -205,13 +209,28 @@ ASSUMPTIONS = {
         "value": (10.0, 22.0, "tri"), "order": 12, "units": "$/hr",
         "basis": "literature",
         "history": [("2026-07-11", (10.0, 22.0, "tri"), "literature",
-                     "spec08 A1 harvest -- introduced spec06 D3")],
+                     "spec08 A1 harvest -- introduced spec06 D3"),
+                    ("2026-07-19", (10.0, 22.0, "tri"), "literature",
+                     "FB batch: per-draw vot_behav draws now EXPORTED as the "
+                     "15th bca_export stream, un-blocking the wrapper's "
+                     "vot_wedge row (pre-registered engine-owned in the "
+                     "check_assumptions wrapper scan, the roh/fare_sweep "
+                     "precedent); band unchanged")],
         "provenance": "behavioral VOT band for the fare-response utility term "
                       "(spec 06 D3); money is never monetized through it. Baked "
                       "into the exported utility, so its wrapper rows "
                       "(vot_behav_lo/vot_behav_hi) read 0.0% at flat fare and need "
                       "a stage-2 re-export to sweep -- exposed regardless (spec 06 "
-                      "W1 / rule 2)",
+                      "W1 / rule 2). FB batch 2026-07-19: the per-draw draws "
+                      "ship as the bca_export vot_behav stream ($/hr), feeding "
+                      "the tbc vot_wedge tornado row (minutes re-priced by THIS "
+                      "prior instead of the engine welfare VOT) -- vot_wedge is "
+                      "ENGINE-OWNED per the spec 08 s9 Q7 tie-break as written: "
+                      "the swept knob is the wrapper's PRICING RULE, not this "
+                      "band (the roh/fare_sweep/no_asc_cs precedent -- engine-"
+                      "side re-pricings of oc streams stay engine-owned even "
+                      "when the price is an oc prior); this entry keeps the "
+                      "band-edge claims and this pointer",
         "rows": "auto",
         "extras": {"wrapper": ["vot_behav_lo", "vot_behav_hi"]},
         "no_row_reason": None, "accepted": None,
@@ -306,7 +325,13 @@ ASSUMPTIONS = {
         "history": [("2026-07-11", (20.0, 30.0, "uni"), "literature",
                      "spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca")],
         "provenance": "REM-class automated-light-metro station dwell; derived "
-                      "average speed (spec 02 s4.9 R6)",
+                      "average speed (spec 02 s4.9 R6). Anchor-station "
+                      "asymmetric tail (external review 2026-07-17): the "
+                      "20-30 s range is achievable with PSDs/level boarding "
+                      "at the light stations but OPTIMISTIC at the "
+                      "Disneyland-area anchor, where surge boardings push the "
+                      "tail right; station-level dwell is stage-3 territory "
+                      "-- the corridor-uniform draw stands until then",
         "rows": "auto", "no_row_reason": None, "accepted": None,
         "logged": None, "upgrade": "vehicle procurement spec / observed REM telemetry",
     },
@@ -772,7 +797,14 @@ ASSUMPTIONS = {
                      "defensible 0.5 alternative is a judgment, not a "
                      "definition); band (0.5, 1.25); the rowless quality-knob "
                      "disposition is superseded by screen rows "
-                     "buffer_lo/buffer_hi (panel D13)")],
+                     "buffer_lo/buffer_hi (panel D13)"),
+                    ("2026-07-19", 0.9, "judgment",
+                     "FB batch: the QUEUED stage-2 rebuilt-variant rows "
+                     "LANDED -- buffer_0p5/buffer_0p75 in BOTH corridor "
+                     "results (build_corridor --variant buffer_0p5/buffer_"
+                     "0p75, the intra_tract_alt mechanism on the buffer "
+                     "axis); closes the 2026-07-18 'queued, not landed' "
+                     "promise; value unchanged")],
         "provenance": "centroid-within distance for corridor tract membership; "
                       "ONE entry, TWO consumers (the corr_share precedent, "
                       "spec 08 §2): build_corridor.py's stage-2 corridors AND "
@@ -783,15 +815,21 @@ ASSUMPTIONS = {
                       "lowers -- the bar for its stage-1 reuse: the screen "
                       "sweeps BOTH band edges as full-rescan rows (buffer_lo "
                       "= 0.5 / buffer_hi = 1.25); the stage-2 corridor-"
-                      "membership rebuilt-variant rows (0.5 / 0.75, "
-                      "build_corridor --variant mechanism) remain QUEUED, not "
-                      "landed. Challenge + unification logged (README "
+                      "membership rebuilt-variant rows LANDED 2026-07-19 (FB "
+                      "batch): buffer_0p5 / buffer_0p75 in BOTH corridor "
+                      "results (build_corridor --variant, the intra_tract_alt "
+                      "mechanism on the buffer axis) -- the empirical answer "
+                      "to the reviewer's '0.9-mi tail is doing real work' "
+                      "challenge. Challenge + unification logged (README "
                       "known-issue 30)",
-        "rows": {"screen": ["buffer_lo", "buffer_hi"]},
+        "rows": {"screen": ["buffer_lo", "buffer_hi"],
+                 "harbor": ["buffer_0p5", "buffer_0p75"],
+                 "streetcar": ["buffer_0p5", "buffer_0p75"]},
         "no_row_reason": None,
         "accepted": None,
         "logged": "README known-issue 30",
-        "upgrade": "stage-2 corridor-membership rebuilt-variant rows (0.5/0.75)",
+        "upgrade": "post-launch observed access-distance distribution "
+                   "(on-board survey / APC stop-level boardings)",
     },
     "xfer_buffer_mi": {
         "title": "transfer feeder-access buffer",

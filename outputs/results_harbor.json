@@ -562,6 +562,18 @@
       "label": "intra-tract dist rule alt (rebuilt inputs)",
       "value": 12162.790411980783,
       "pct": 0.06614711511230735
+    },
+    {
+      "id": "buffer_0p5",
+      "label": "corridor buffer 0.5 mi (rebuilt inputs)",
+      "value": 11845.639881565505,
+      "pct": -2.5431251455450807
+    },
+    {
+      "id": "buffer_0p75",
+      "label": "corridor buffer 0.75 mi (rebuilt inputs)",
+      "value": 12040.731814148305,
+      "pct": -0.9380577748558622
     }
   ],
   "sweep": {

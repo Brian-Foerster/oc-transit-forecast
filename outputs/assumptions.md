@@ -14,7 +14,7 @@ UNITS CAVEAT: effects sourced from `screen:*` rows are stage-1 RANK-CHURN percen
 
 | effect | id | tier | basis | rows / note |
 |---:|---|---|---|---|
-| 61.4% | buffer_mi | constant | judgment | screen:buffer_lo, screen:buffer_hi |
+| 61.4% | buffer_mi | constant | judgment | screen:buffer_lo, screen:buffer_hi, harbor:buffer_0p5, harbor:buffer_0p75, streetcar:buffer_0p5, streetcar:buffer_0p75 |
 | 57.8% | screen_scale_term | structural | judgment | screen:offset_variant |
 | 53.8% | streetcar_service_new | config | judgment | streetcar:grid_phase_half, streetcar:headway_10_20, streetcar:headway_flat5, streetcar:spacing_05, streetcar:spacing_15 |
 | 53.6% | backtest_service_new | config | measured | backtest:bt_flat15, backtest:bt_20min, backtest:bt_13mph |
@@ -181,6 +181,7 @@ What changed (entries whose append-only history records a transition):
 - **buffer_mi**
     - 2026-07-11: value `0.9`, basis definitional (spec08 A1 harvest -- introduced spec01/spec02)
     - 2026-07-18: value `0.9`, basis judgment (spec01 Q1 + external challenge 2026-07-17 -- basis definitional->judgment (a catchment radius with a defensible 0.5 alternative is a judgment, not a definition); band (0.5, 1.25); the rowless quality-knob disposition is superseded by screen rows buffer_lo/buffer_hi (panel D13))
+    - 2026-07-19: value `0.9`, basis judgment (FB batch: the QUEUED stage-2 rebuilt-variant rows LANDED -- buffer_0p5/buffer_0p75 in BOTH corridor results (build_corridor --variant buffer_0p5/buffer_0p75, the intra_tract_alt mechanism on the buffer axis); closes the 2026-07-18 'queued, not landed' promise; value unchanged)
 - **dirichlet_strength**
     - 2026-07-11: value `dirichlet_strength`, basis judgment (spec08 A2 harvest -- introduced spec02, structural)
     - 2026-07-14: value `(300, 300, 100, 400)`, basis judgment (spec08 A2b addendum 0c -- tier structural->constant; four concentrations single-sourced into run())
@@ -197,6 +198,9 @@ What changed (entries whose append-only history records a transition):
     - 2026-07-11: value `(70.0, 90.0, 'uni')`, basis literature (spec08 A1 harvest -- introduced spec02 s4.9 R6, 23c6cca)
     - 2026-07-17: value `(90.0, 103.2, 'uni')`, basis judgment (owner decision: design top speed 60 mph; band = delivery/degraded-ops uncertainty around the design value)
     - 2026-07-18: value `(96.56064, 96.56064, uni) — pinned at 60.000 mph exactly`, basis judgment (owner decision 2026-07-18: no cruise-speed variability; degenerate uniform preserves rng streams + prior fingerprint; supersedes the 90-103.2 band from the 2026-07-17 60-mph design change)
+- **vot_behav**
+    - 2026-07-11: value `(10.0, 22.0, 'tri')`, basis literature (spec08 A1 harvest -- introduced spec06 D3)
+    - 2026-07-19: value `(10.0, 22.0, 'tri')`, basis literature (FB batch: per-draw vot_behav draws now EXPORTED as the 15th bca_export stream, un-blocking the wrapper's vot_wedge row (pre-registered engine-owned in the check_assumptions wrapper scan, the roh/fare_sweep precedent); band unchanged)
 
 Spec-pending warnings (counted, not failures):
 

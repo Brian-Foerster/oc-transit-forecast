@@ -122,16 +122,16 @@
             "LOW": {
               "best_continuation": "streetcar",
               "continuation_p50": 0.0,
-              "cv_p50": -2374.640927,
+              "cv_p50": -2379.220295,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -2374.640927
+              "own_dNPV_p50": -2379.220295
             },
             "US_TYPICAL": {
               "best_continuation": "streetcar",
               "continuation_p50": 0.0,
-              "cv_p50": -3818.026557,
+              "cv_p50": -3822.605924,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -3818.026557
+              "own_dNPV_p50": -3822.605924
             }
           },
           "dependencies": [],
@@ -141,49 +141,49 @@
           "fold": {
             "LOW": {
               "bcr_abc": [
-                0.105181,
-                0.127635,
-                0.153328
+                0.103977,
+                0.126014,
+                0.15127
               ],
               "bcr_uncapped": [
-                0.090361,
-                0.13202,
-                0.181731
+                0.089098,
+                0.130372,
+                0.17961
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2454.57,
-                -2387.49,
-                -2310.87
+                -2458.1,
+                -2391.8,
+                -2316.23
               ],
               "npv_uncapped": [
-                -2497.34,
-                -2374.64,
-                -2230.52
+                -2500.58,
+                -2379.22,
+                -2236.18
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.068923,
-                0.083553,
-                0.100267
+                0.068125,
+                0.082485,
+                0.098966
               ],
               "bcr_uncapped": [
-                0.059207,
-                0.086424,
-                0.118816
+                0.058398,
+                0.085334,
+                0.117448
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -3897.95,
-                -3830.88,
-                -3754.25
+                -3901.48,
+                -3835.19,
+                -3759.62
               ],
               "npv_uncapped": [
-                -3940.73,
-                -3818.03,
-                -3673.91
+                -3943.97,
+                -3822.61,
+                -3679.57
               ],
               "p_npv_pos": 0
             }
@@ -198,21 +198,21 @@
           },
           "premium_bracket_rows": {
             "band": "US_TYPICAL",
-            "marginal_bcr_central": 0.083553,
+            "marginal_bcr_central": 0.082485,
             "rows": [
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.083553,
+                "marginal_bcr_first_order": 0.082485,
                 "premium": 1.0
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.125329,
+                "marginal_bcr_first_order": 0.123728,
                 "premium": 1.5
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.167106,
+                "marginal_bcr_first_order": 0.16497,
                 "premium": 2.0
               }
             ],
@@ -221,62 +221,62 @@
           "retain": {
             "LOW": {
               "bcr_abc": [
-                0.104868,
-                0.12571,
-                0.149748
+                0.103639,
+                0.124247,
+                0.14788
               ],
               "bcr_uncapped": [
-                0.093171,
-                0.129629,
-                0.175177
+                0.091961,
+                0.128024,
+                0.173156
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2567.24,
-                -2501.26,
-                -2426.07
+                -2570.52,
+                -2505.79,
+                -2431.61
               ],
               "npv_uncapped": [
-                -2602.13,
-                -2489.78,
-                -2351.38
+                -2605.53,
+                -2494.24,
+                -2356.94
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.069763,
-                0.083559,
-                0.099455
+                0.068939,
+                0.082586,
+                0.098216
               ],
               "bcr_uncapped": [
-                0.061979,
-                0.086149,
-                0.116291
+                0.061176,
+                0.085099,
+                0.114931
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -4010.63,
-                -3944.65,
-                -3869.45
+                -4013.91,
+                -3949.17,
+                -3874.99
               ],
               "npv_uncapped": [
-                -4045.51,
-                -3933.17,
-                -3794.77
+                -4048.91,
+                -3937.63,
+                -3800.32
               ],
               "p_npv_pos": 0
             }
           },
           "sigma_struct": {
-            "band_widening_p90_p10_SECONDARY": 1.237,
+            "band_widening_p90_p10_SECONDARY": 1.3171,
             "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
-            "p90_p10_base": 266.8186,
-            "p90_p10_sigma_struct": 268.0556,
-            "sd_npv_per_line": 11.5864,
-            "std_base": 102.4696,
-            "std_sigma_struct": 103.1,
-            "std_widening_PRIMARY": 0.6304
+            "p90_p10_base": 264.3983,
+            "p90_p10_sigma_struct": 265.7154,
+            "sd_npv_per_line": 11.4416,
+            "std_base": 101.5651,
+            "std_sigma_struct": 102.1852,
+            "std_widening_PRIMARY": 0.6201
           }
         },
         {
@@ -292,16 +292,16 @@
             "LOW": {
               "best_continuation": "harbor",
               "continuation_p50": 0.0,
-              "cv_p50": -1537.398523,
+              "cv_p50": -1537.775471,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -1537.398523
+              "own_dNPV_p50": -1537.775471
             },
             "US_TYPICAL": {
               "best_continuation": "harbor",
               "continuation_p50": 0.0,
-              "cv_p50": -2261.419791,
+              "cv_p50": -2261.796739,
               "delta_timing_note": "continuation \u03b4-timed at +1 cycle_gap on the profile 4% clock (spec 07 \u00a73); own \u0394NPV at cycle-0 timing (the common cycle-k deferral cancels in ranking, enters the frontier)",
-              "own_dNPV_p50": -2261.419791
+              "own_dNPV_p50": -2261.796739
             }
           },
           "dependencies": [],
@@ -311,49 +311,49 @@
           "fold": {
             "LOW": {
               "bcr_abc": [
-                0.044576,
-                0.058305,
-                0.075491
+                0.044402,
+                0.058094,
+                0.075228
               ],
               "bcr_uncapped": [
-                0.033083,
-                0.061707,
-                0.09866
+                0.032952,
+                0.061483,
+                0.09835
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -1569.3,
-                -1543.02,
-                -1510.72
+                -1569.57,
+                -1543.39,
+                -1511.14
               ],
               "npv_uncapped": [
-                -1588.46,
-                -1537.4,
-                -1471.41
+                -1588.65,
+                -1537.78,
+                -1471.95
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.030939,
-                0.040438,
-                0.052317
+                0.030817,
+                0.040292,
+                0.052139
               ],
               "bcr_uncapped": [
-                0.022969,
-                0.042797,
-                0.06838
+                0.022876,
+                0.042642,
+                0.068135
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2293.32,
-                -2267.04,
-                -2234.74
+                -2293.6,
+                -2267.41,
+                -2235.16
               ],
               "npv_uncapped": [
-                -2312.48,
-                -2261.42,
-                -2195.43
+                -2312.68,
+                -2261.8,
+                -2195.97
               ],
               "p_npv_pos": 0
             }
@@ -368,21 +368,21 @@
           },
           "premium_bracket_rows": {
             "band": "US_TYPICAL",
-            "marginal_bcr_central": 0.040438,
+            "marginal_bcr_central": 0.040292,
             "rows": [
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.040438,
+                "marginal_bcr_first_order": 0.040292,
                 "premium": 1.0
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.060657,
+                "marginal_bcr_first_order": 0.060439,
                 "premium": 1.5
               },
               {
                 "clears_bcr1": false,
-                "marginal_bcr_first_order": 0.080877,
+                "marginal_bcr_first_order": 0.080585,
                 "premium": 2.0
               }
             ],
@@ -391,62 +391,62 @@
           "retain": {
             "LOW": {
               "bcr_abc": [
-                0.045157,
-                0.05875,
-                0.07588
+                0.044981,
+                0.058527,
+                0.075603
               ],
               "bcr_uncapped": [
-                0.034919,
-                0.062043,
-                0.098698
+                0.034782,
+                0.06181,
+                0.098368
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -1568.25,
-                -1542.23,
-                -1510.03
+                -1568.5,
+                -1542.59,
+                -1510.48
               ],
               "npv_uncapped": [
-                -1585.37,
-                -1536.69,
-                -1471.32
+                -1585.59,
+                -1537.05,
+                -1471.87
               ],
               "p_npv_pos": 0
             },
             "US_TYPICAL": {
               "bcr_abc": [
-                0.031335,
-                0.040738,
-                0.052572
+                0.03122,
+                0.040587,
+                0.052392
               ],
               "bcr_uncapped": [
-                0.024225,
-                0.043033,
-                0.068396
+                0.024129,
+                0.042878,
+                0.068162
               ],
               "ess": 15090.4,
               "npv_abc": [
-                -2292.27,
-                -2266.25,
-                -2234.06
+                -2292.52,
+                -2266.62,
+                -2234.5
               ],
               "npv_uncapped": [
-                -2309.39,
-                -2260.71,
-                -2195.34
+                -2309.61,
+                -2261.07,
+                -2195.89
               ],
               "p_npv_pos": 0
             }
           },
           "sigma_struct": {
-            "band_widening_p90_p10_SECONDARY": 1.4364,
+            "band_widening_p90_p10_SECONDARY": 1.4195,
             "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
-            "p90_p10_base": 117.0521,
-            "p90_p10_sigma_struct": 118.4885,
-            "sd_npv_per_line": 7.1049,
-            "std_base": 45.332,
-            "std_sigma_struct": 45.907,
-            "std_widening_PRIMARY": 0.575
+            "p90_p10_base": 116.7088,
+            "p90_p10_sigma_struct": 118.1284,
+            "sd_npv_per_line": 7.0787,
+            "std_base": 45.1981,
+            "std_sigma_struct": 45.7706,
+            "std_widening_PRIMARY": 0.5725
           }
         }
       ],
@@ -457,12 +457,12 @@
       },
       "interaction_matrix": [
         {
-          "I_p10": 4.733015,
-          "I_p50": 16.007491,
-          "I_p90": 34.359861,
-          "approximation_component_p50": 16.007491,
-          "leg_a_given_b_p50": 14.954705,
-          "leg_b_given_a_p50": 17.023126,
+          "I_p10": 4.688322,
+          "I_p50": 15.899183,
+          "I_p90": 34.133902,
+          "approximation_component_p50": 15.899183,
+          "leg_a_given_b_p50": 14.79127,
+          "leg_b_given_a_p50": 16.969807,
           "pair": [
             "harbor",
             "streetcar"
@@ -484,8 +484,8 @@
           "harbor"
         ],
         "winner": "streetcar",
-        "winner_cv_p50": -2261.419791,
-        "winner_own_dNPV_p50": -2261.419791
+        "winner_cv_p50": -2261.796739,
+        "winner_own_dNPV_p50": -2261.796739
       },
       "remaining_budget_ut": null
     }
@@ -510,37 +510,37 @@
         "depth_label": "decision-grade",
         "kind": "candidate_standalone",
         "line": "harbor",
-        "marginal_bcr_US_TYPICAL": 0.083553,
+        "marginal_bcr_US_TYPICAL": 0.082485,
         "npv_abc_LOW": [
-          -2454.57,
-          -2387.49,
-          -2310.87
+          -2458.1,
+          -2391.8,
+          -2316.23
         ],
         "npv_abc_US_TYPICAL": [
-          -3897.95,
-          -3830.88,
-          -3754.25
+          -3901.48,
+          -3835.19,
+          -3759.62
         ],
         "npv_uncapped_LOW": [
-          -2497.34,
-          -2374.64,
-          -2230.52
+          -2500.58,
+          -2379.22,
+          -2236.18
         ],
         "npv_uncapped_US_TYPICAL": [
-          -3940.73,
-          -3818.03,
-          -3673.91
+          -3943.97,
+          -3822.61,
+          -3679.57
         ],
         "scenario": "fold",
         "sigma_struct": {
-          "band_widening_p90_p10_SECONDARY": 1.237,
+          "band_widening_p90_p10_SECONDARY": 1.3171,
           "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
-          "p90_p10_base": 266.8186,
-          "p90_p10_sigma_struct": 268.0556,
-          "sd_npv_per_line": 11.5864,
-          "std_base": 102.4696,
-          "std_sigma_struct": 103.1,
-          "std_widening_PRIMARY": 0.6304
+          "p90_p10_base": 264.3983,
+          "p90_p10_sigma_struct": 265.7154,
+          "sd_npv_per_line": 11.4416,
+          "std_base": 101.5651,
+          "std_sigma_struct": 102.1852,
+          "std_widening_PRIMARY": 0.6201
         },
         "step": 0
       },
@@ -558,37 +558,37 @@
         "depth_label": "decision-grade",
         "kind": "candidate_standalone",
         "line": "streetcar",
-        "marginal_bcr_US_TYPICAL": 0.040438,
+        "marginal_bcr_US_TYPICAL": 0.040292,
         "npv_abc_LOW": [
-          -1569.3,
-          -1543.02,
-          -1510.72
+          -1569.57,
+          -1543.39,
+          -1511.14
         ],
         "npv_abc_US_TYPICAL": [
-          -2293.32,
-          -2267.04,
-          -2234.74
+          -2293.6,
+          -2267.41,
+          -2235.16
         ],
         "npv_uncapped_LOW": [
-          -1588.46,
-          -1537.4,
-          -1471.41
+          -1588.65,
+          -1537.78,
+          -1471.95
         ],
         "npv_uncapped_US_TYPICAL": [
-          -2312.48,
-          -2261.42,
-          -2195.43
+          -2312.68,
+          -2261.8,
+          -2195.97
         ],
         "scenario": "fold",
         "sigma_struct": {
-          "band_widening_p90_p10_SECONDARY": 1.4364,
+          "band_widening_p90_p10_SECONDARY": 1.4195,
           "note": "std-based widening is the PRIMARY \u03c3_struct measure (spec 07 N5 follow-up: an all-draws average, robust where the P90-P10 tail statistic can flip sign at finite n); P90-P10 kept as SECONDARY. Mean-zero noise leaves the P50 ~unchanged; the spread widens.",
-          "p90_p10_base": 117.0521,
-          "p90_p10_sigma_struct": 118.4885,
-          "sd_npv_per_line": 7.1049,
-          "std_base": 45.332,
-          "std_sigma_struct": 45.907,
-          "std_widening_PRIMARY": 0.575
+          "p90_p10_base": 116.7088,
+          "p90_p10_sigma_struct": 118.1284,
+          "sd_npv_per_line": 7.0787,
+          "std_base": 45.1981,
+          "std_sigma_struct": 45.7706,
+          "std_widening_PRIMARY": 0.5725
         },
         "step": 1
       }
@@ -628,18 +628,18 @@
     "best_single_feasible": {
       "line": "streetcar",
       "note": "least-negative standalone \u0394NPV; still below BCR=1",
-      "npv_abc_p50_US_TYPICAL": -2267.04
+      "npv_abc_p50_US_TYPICAL": -2267.41
     },
     "candidate_standalone_npv": [
       {
-        "bcr_abc_p50_US_TYPICAL": 0.083553,
+        "bcr_abc_p50_US_TYPICAL": 0.082485,
         "line": "harbor",
-        "npv_abc_p50_US_TYPICAL": -3830.88
+        "npv_abc_p50_US_TYPICAL": -3835.19
       },
       {
-        "bcr_abc_p50_US_TYPICAL": 0.040438,
+        "bcr_abc_p50_US_TYPICAL": 0.040292,
         "line": "streetcar",
-        "npv_abc_p50_US_TYPICAL": -2267.04
+        "npv_abc_p50_US_TYPICAL": -2267.41
       }
     ],
     "greedy_portfolio": [],
@@ -659,17 +659,17 @@
         "rows": [
           {
             "clears_bcr1": false,
-            "marginal_bcr_first_order": 0.040438,
+            "marginal_bcr_first_order": 0.040292,
             "premium": 1.0
           },
           {
             "clears_bcr1": false,
-            "marginal_bcr_first_order": 0.060657,
+            "marginal_bcr_first_order": 0.060439,
             "premium": 1.5
           },
           {
             "clears_bcr1": false,
-            "marginal_bcr_first_order": 0.080877,
+            "marginal_bcr_first_order": 0.080585,
             "premium": 2.0
           }
         ],
@@ -718,25 +718,25 @@
   },
   "stopping_record": {
     "best_bcr_candidate": {
-      "bcr_LOW_p50": 0.127635,
-      "bcr_US_TYPICAL_p50": 0.083553,
+      "bcr_LOW_p50": 0.126014,
+      "bcr_US_TYPICAL_p50": 0.082485,
       "line": "harbor",
       "note": "the highest marginal BCR any candidate reaches -- the closest OC comes to clearing BCR=1; still FAR below it."
     },
     "cycle": 1,
     "cycle_gap_delta": 0.790315,
     "cycle_numbering": "1-based: cycle 1 is the first evaluation, against the empty network-before (N5 review fix -- matches spec 07's own \u00a77/\u00a79 prose).",
-    "economic_margin_note": "the \u00a77 marginal stop fires at cycle 1: the best candidate by NPV level ('streetcar') has CV <= 0 (marginal welfare BCR 0.040 US_TYPICAL / 0.058 LOW, ABC). The best BCR ANY OC ALM corridor reaches is 'harbor' at 0.084 (US_TYPICAL) / 0.128 (LOW) -- still FAR below the BCR=1 hurdle. No continuation is positive, so the decision-grade recommended portfolio is EMPTY: at the welfare-BCA central profile NO Orange County ALM corridor clears BCR=1. This is the ECONOMIC MARGIN at which the sequence stopped -- not 'candidates ran out' (spec 07 \u00a77). The premium-bracket rows show the stop is robust to a 2x ASC premium.",
+    "economic_margin_note": "the \u00a77 marginal stop fires at cycle 1: the best candidate by NPV level ('streetcar') has CV <= 0 (marginal welfare BCR 0.040 US_TYPICAL / 0.058 LOW, ABC). The best BCR ANY OC ALM corridor reaches is 'harbor' at 0.082 (US_TYPICAL) / 0.126 (LOW) -- still FAR below the BCR=1 hurdle. No continuation is positive, so the decision-grade recommended portfolio is EMPTY: at the welfare-BCA central profile NO Orange County ALM corridor clears BCR=1. This is the ECONOMIC MARGIN at which the sequence stopped -- not 'candidates ran out' (spec 07 \u00a77). The premium-bracket rows show the stop is robust to a 2x ASC premium.",
     "marginal_bcr_both_bands": {
       "LOW": {
-        "bcr_abc_p50": 0.058305,
-        "bcr_uncapped_p50": 0.061707,
-        "npv_abc_p50": -1543.02
+        "bcr_abc_p50": 0.058094,
+        "bcr_uncapped_p50": 0.061483,
+        "npv_abc_p50": -1543.39
       },
       "US_TYPICAL": {
-        "bcr_abc_p50": 0.040438,
-        "bcr_uncapped_p50": 0.042797,
-        "npv_abc_p50": -2267.04
+        "bcr_abc_p50": 0.040292,
+        "bcr_uncapped_p50": 0.042642,
+        "npv_abc_p50": -2267.41
       }
     },
     "marginal_candidate": "streetcar",
@@ -744,21 +744,21 @@
     "mode": "npv (welfare-BCA central profile, spec 06)",
     "premium_bracket_rows": {
       "band": "US_TYPICAL",
-      "marginal_bcr_central": 0.040438,
+      "marginal_bcr_central": 0.040292,
       "rows": [
         {
           "clears_bcr1": false,
-          "marginal_bcr_first_order": 0.040438,
+          "marginal_bcr_first_order": 0.040292,
           "premium": 1.0
         },
         {
           "clears_bcr1": false,
-          "marginal_bcr_first_order": 0.060657,
+          "marginal_bcr_first_order": 0.060439,
           "premium": 1.5
         },
         {
           "clears_bcr1": false,
-          "marginal_bcr_first_order": 0.080877,
+          "marginal_bcr_first_order": 0.080585,
           "premium": 2.0
         }
       ],

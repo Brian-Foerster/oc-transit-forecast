@@ -95,13 +95,24 @@ ENGINE_OWNED_WRAPPER = frozenset({
     "no_asc_cs", "labor_05", "disc_2", "disc_3", "disc_7", "disc_declining",
     "ramp_start_1", "ramp_start_lo", "ramp_years_lo", "ramp_years_hi",
     "build_years_4", "build_years_7", "om_lo", "om_hi", "traction_0",
-    "rebound_05", "rebound_08", "ext_cong_lo", "ext_cong_hi", "ext_acc_lo",
+    # rebound rows renamed from rebound_05/rebound_08 (FB batch 2026-07-19: central 0->0.4, rows {0, 0.8})
+    "rebound_0", "rebound_hi", "ext_cong_lo", "ext_cong_hi", "ext_acc_lo",
     "ext_acc_hi", "ext_local_lo", "ext_local_hi", "transfer_fullod",
     "mohring_009", "growth_1", "avg_fare_lo", "avg_fare_hi", "crowding_haircut",
     "peak_hour_share_lo", "peak_hour_share_hi",
     # pre-registered: un-blocked by the W1R um_roh_*/fare_receipts_* streams;
     # engine-side re-pricings of oc streams (no_asc_cs precedent)
     "roh", "fare_sweep",
+    # pre-registered (FB batch 2026-07-19): un-blocked by the vot_behav export
+    # stream landing in this same batch. Q7 tie-break adjudication, as written:
+    # vot_wedge re-prices the exported MINUTE streams by the oc-owned vot_behav
+    # prior draws instead of the engine welfare VOT -- the swept knob is the
+    # wrapper's PRICING RULE (a tbc-side methodological toggle), so the row is
+    # engine-owned "even if it re-prices oc-exported quantities" (the
+    # no_asc_cs/roh/fare_sweep clause); the vot_behav BAND stays oc-claimed via
+    # its vot_behav_lo/vot_behav_hi extras, and the registry entry's provenance
+    # carries the pointer.
+    "vot_wedge",
 })
 
 # spec 07 §9 N4: the network-sequence primary artifact (the greedy portfolio

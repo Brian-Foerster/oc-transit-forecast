@@ -11,7 +11,9 @@ round-trip checks read the generated gz, so run the exports first:
   - test_schema_shape(name): every §3 key is present with the right array
     lengths (N) and float dtype; abc_weights present iff a calibration target
     exists (harbor yes -> all five kernel labels from reweight_abc, streetcar
-    no -> absence reason instead).
+    no -> absence reason instead). The 15 streams include the FB-batch
+    vot_behav per-draw behavioral-VOT stream, checked finite + inside the
+    registry prior band (val('vot_behav')) + scenario-invariant.
   - test_round_trip(name): reuses bca_export.roundtrip_check -- harbor's
     weighted ABC central-kernel retain P50 vs abc_harbor.json["kernels"][central],
     streetcar's unweighted retain P50 vs results_streetcar.json, to 4 sig figs.
@@ -22,6 +24,7 @@ import gzip, hashlib, json, os, sys
 import numpy as np
 from model import N, PRIORS
 from reweight_abc import abc_weights, get_kernels, central_label
+from assumptions import val
 import bca_export as bx
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -29,8 +32,15 @@ if hasattr(sys.stdout, "reconfigure"):
 
 SCALAR_KEYS = ("newline", "total", "um_infra", "um_margin", "um0_infra",
                "um0_margin", "um_roh_infra", "um_roh_margin", "fare_burden",
-               "fare_receipts_infra", "fare_receipts_margin", "cm_visitor")
+               "fare_receipts_infra", "fare_receipts_margin", "cm_visitor",
+               "vot_behav")
 SEG_KEYS = ("cm_seg", "cm_seg_fullod")
+# FB batch (external review 2026-07-17): stream count 14 -> 15 with the
+# vot_behav per-draw behavioral-VOT stream ($/hr; un-blocks the tbc vot_wedge
+# tornado row). Updating this pinned count is the explicit act of adding a
+# stream, like N_PRIORS for priors.
+N_STREAMS = 15
+assert len(SCALAR_KEYS) + len(SEG_KEYS) == N_STREAMS
 N_PRIORS = 19   # update when appending priors (append-last discipline, see model.py PRIORS)
 
 # Committed ORDER FINGERPRINT: sha256 of the ordered prior-name tuple (spec 08
@@ -100,6 +110,17 @@ def test_schema_shape(name):
         for k in SEG_KEYS:
             assert len(s[k]) == 3, f"{scen}.{k} not 3 segments"
             assert all(len(seg) == N for seg in s[k]), f"{scen}.{k} bad seg len"
+        # FB batch: the vot_behav stream is the prior draws themselves --
+        # finite and inside the registry prior band (float32 rounding slack)
+        vlo, vhi, _ = val("vot_behav")
+        vb = np.asarray(s["vot_behav"])
+        assert np.isfinite(vb).all(), f"{scen}.vot_behav has non-finite draws"
+        assert vb.min() >= vlo - 1e-3 and vb.max() <= vhi + 1e-3, \
+            f"{scen}.vot_behav outside prior band [{vlo}, {vhi}]: " \
+            f"[{vb.min()}, {vb.max()}]"
+    # the stream is scenario-invariant by construction (a prior draw)
+    assert e["scenarios"]["fold"]["vot_behav"] == \
+        e["scenarios"]["retain"]["vot_behav"], "vot_behav differs by scenario"
     assert len(e["params"]) == N_PRIORS + 1, len(e["params"])   # 19 + anchor
     assert len(e["params"]["anchor"]) == N
     if name == "harbor":

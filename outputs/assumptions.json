@@ -551,6 +551,22 @@
         [
           "screen",
           "buffer_hi"
+        ],
+        [
+          "harbor",
+          "buffer_0p5"
+        ],
+        [
+          "harbor",
+          "buffer_0p75"
+        ],
+        [
+          "streetcar",
+          "buffer_0p5"
+        ],
+        [
+          "streetcar",
+          "buffer_0p75"
         ]
       ],
       "tier": "constant"
@@ -1573,6 +1589,12 @@
           0.9,
           "judgment",
           "spec01 Q1 + external challenge 2026-07-17 -- basis definitional->judgment (a catchment radius with a defensible 0.5 alternative is a judgment, not a definition); band (0.5, 1.25); the rowless quality-knob disposition is superseded by screen rows buffer_lo/buffer_hi (panel D13)"
+        ],
+        [
+          "2026-07-19",
+          0.9,
+          "judgment",
+          "FB batch: the QUEUED stage-2 rebuilt-variant rows LANDED -- buffer_0p5/buffer_0p75 in BOTH corridor results (build_corridor --variant buffer_0p5/buffer_0p75, the intra_tract_alt mechanism on the buffer axis); closes the 2026-07-18 'queued, not landed' promise; value unchanged"
         ]
       ],
       "id": "buffer_mi"
@@ -1680,6 +1702,31 @@
         ]
       ],
       "id": "v_cruise"
+    },
+    {
+      "history": [
+        [
+          "2026-07-11",
+          [
+            10.0,
+            22.0,
+            "tri"
+          ],
+          "literature",
+          "spec08 A1 harvest -- introduced spec06 D3"
+        ],
+        [
+          "2026-07-19",
+          [
+            10.0,
+            22.0,
+            "tri"
+          ],
+          "literature",
+          "FB batch: per-draw vot_behav draws now EXPORTED as the 15th bca_export stream, un-blocking the wrapper's vot_wedge row (pre-registered engine-owned in the check_assumptions wrapper scan, the roh/fare_sweep precedent); band unchanged"
+        ]
+      ],
+      "id": "vot_behav"
     }
   ],
   "width_sensitivities": [
