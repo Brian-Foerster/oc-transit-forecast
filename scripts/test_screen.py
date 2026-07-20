@@ -21,6 +21,13 @@ generated artifact is absent):
   D3  ordinal guardrails: no boardings-denominated field anywhere in the
       artifact; predictions at exactly TWO service levels (D10)
   D4  in-process double-run determinism of the scan pipeline (reduced B)
+  D5  same-exposure index rebase (SC batch 2026-07-19) is a positive scalar
+      multiple of the superseded own-length-route baseline -- rank vector
+      identical (monotone rescale)
+  D6  decision_output tripwire block (spec 01 §5): internally consistent
+      (pass booleans recomputed from the stored numbers), thresholds from
+      the registry, shortlist == tie_with_cutoff windows grouped by host;
+      measured outcome on current data = ordinal_ok FALSE failing (i)+(ii)
 
     python test_screen.py
 """
@@ -240,7 +247,7 @@ def test_d2_artifact_schema():
     for k in ("run_id", "schema", "seed", "n_boot", "universe", "vintages",
               "disclaimer", "assumptions_manifest", "windows",
               "overlap_diagnostics", "fit_diagnostics", "sensitivity",
-              "notes"):
+              "decision_output", "notes"):
         assert k in a, f"missing top-level key {k}"
     assert a["schema"] == "01-S1"
     assert a["seed"] == val("screen_seed")
@@ -302,6 +309,133 @@ def test_d3_ordinal_guardrails():
     print("  D3 OK  ordinal guardrails (no boardings fields; two service levels)")
 
 
+def test_d5_rebase_rank_invariance():
+    """SC batch 2026-07-19 item 1: the same-exposure baseline (median fitted
+    host route's own BEST 12.5-mi-window prediction) is a POSITIVE SCALAR
+    MULTIPLE of the superseded own-length-route baseline, so the rank vector
+    is identical (monotone rescale)."""
+    if not HAVE_DATA:
+        print("  D5 SKIP  (data/raw absent)")
+        return
+    import screen_fit as sf
+    import screen_scan as ss
+    inputs = sf.load_screen_inputs()
+    projs = sf.gtfs_universe(inputs)
+    asm = ss.assemble(inputs, projs, {}, val("buffer_mi"),
+                      val("screen_window_mi"), val("screen_step_mi"))
+    head = ss.score(asm, sf.BASE_CFG, val("screen_svc_std"))
+    # superseded baseline: lower-median fitted route AT ITS OWN LENGTH
+    rp = np.asarray(head["route_pred"])
+    old_base = float(np.sort(rp)[(len(rp) - 1) // 2])
+    old_idx = 100.0 * np.exp(head["win_pred"] - old_base)
+    new_idx = np.asarray(head["index"])
+    ratio = new_idx / old_idx
+    assert ratio.min() > 0.0
+    assert np.allclose(ratio, ratio[0], rtol=1e-12, atol=0.0), \
+        "rebase is not a common positive scalar multiple"
+    wids = asm["W"]["window_id"]
+    r_old, _ = ss._ranking(old_idx, wids)
+    r_new, _ = ss._ranking(new_idx, wids)
+    assert (r_old == r_new).all(), "rank vector changed under the rebase"
+    # baseline really is the lower-median of per-fitted-route best windows
+    best = [float(head["win_pred"][g].max()) for g in head["host_groups"]]
+    assert abs(head["base_logpred"]
+               - sorted(best)[(len(best) - 1) // 2]) < 1e-12
+    print(f"  D5 OK  same-exposure rebase = x{ratio[0]:.6f} common rescale; "
+          f"rank vector identical over {len(wids)} windows "
+          f"({len(best)} fitted host routes in the baseline median)")
+
+
+def _churn_of(row):
+    d = row["detail"]
+    if "by_class" in d:
+        return max(max(len(v["entered"]), len(v["exited"]))
+                   for v in d["by_class"].values())
+    if "entered" in d:
+        return max(len(d["entered"]), len(d["exited"]))
+    return 0
+
+
+def test_d6_decision_output():
+    """SC batch 2026-07-19 item 5: the pre-registered tripwire block --
+    present, thresholds registry-sourced, pass booleans recomputable from
+    the stored numbers, shortlist == tie_with_cutoff windows grouped by
+    host; measured outcome on current data: ordinal_ok FALSE, failing
+    (i) demand |t| and (ii) battery min rho."""
+    if not os.path.exists(ARTIFACT):
+        print("  D6 SKIP  (outputs/screen_results.json absent)")
+        return
+    a = json.load(open(ARTIFACT, encoding="utf-8"))
+    do = a["decision_output"]
+    assert set(do) == {"ordinal_ok", "criteria", "decision_format",
+                       "shortlist", "note"}, set(do)
+    c = do["criteria"]
+    assert set(c) == {"t_demand", "battery", "churn"}
+    assert set(c["t_demand"]) == {"min_abs_t", "threshold", "pass"}
+    assert set(c["battery"]) == {"min_rho", "worst_row_id", "threshold",
+                                 "pass"}
+    assert set(c["churn"]) == {"max_churn", "worst_row_id", "threshold",
+                               "pass"}
+    # thresholds are the registry tripwire values
+    assert c["t_demand"]["threshold"] == val("screen_t_min")
+    assert c["battery"]["threshold"] == val("screen_battery_rho_min")
+    assert c["churn"]["threshold"] == val("screen_top8_churn_max")
+    # internal consistency: recompute the pass booleans + ordinal_ok
+    assert c["t_demand"]["pass"] == (c["t_demand"]["min_abs_t"]
+                                     >= c["t_demand"]["threshold"])
+    assert c["battery"]["pass"] == (c["battery"]["min_rho"]
+                                    >= c["battery"]["threshold"])
+    assert c["churn"]["pass"] == (c["churn"]["max_churn"]
+                                  <= c["churn"]["threshold"])
+    ok = (c["t_demand"]["pass"] and c["battery"]["pass"]
+          and c["churn"]["pass"])
+    assert do["ordinal_ok"] == ok
+    assert do["decision_format"] == ("ordinal" if ok
+                                     else "threshold_shortlist")
+    # cross-checks against the stored fit + sensitivity blocks
+    coef = a["fit_diagnostics"]["coefficients"]
+    min_t = min(abs(v["est"]) / v["se_cluster"] for k, v in coef.items()
+                if k.startswith(("b1_", "b2_")))
+    assert abs(min_t - c["t_demand"]["min_abs_t"]) < 1e-4, \
+        (min_t, c["t_demand"]["min_abs_t"])
+    rhos = {r["id"]: r["detail"]["rho"] for r in a["sensitivity"]}
+    assert abs(min(rhos.values()) - c["battery"]["min_rho"]) < 5e-6
+    assert c["battery"]["worst_row_id"] in rhos
+    assert max(_churn_of(r) for r in a["sensitivity"]) \
+        == c["churn"]["max_churn"]
+    assert c["churn"]["worst_row_id"] in rhos
+    # shortlist: exactly the tie_with_cutoff windows, indicators intact,
+    # grouped by host shape (each host's entries contiguous)
+    ties = {w["window_id"]: w for w in a["windows"] if w["tie_with_cutoff"]}
+    assert {s["window_id"] for s in do["shortlist"]} == set(ties)
+    for s in do["shortlist"]:
+        assert set(s) == {"route_id", "window_id", "screen_index_p50",
+                          "underservice_flag"}
+        w = ties[s["window_id"]]
+        assert s["route_id"] == w["route_id"]
+        assert s["screen_index_p50"] == w["screen_index_p50"]
+        assert s["underservice_flag"] == w["underservice_flag"]
+    seen, prev = set(), None
+    for s in do["shortlist"]:
+        h = s["route_id"]
+        if h != prev:
+            assert h not in seen, "shortlist not grouped by host shape"
+            seen.add(h)
+            prev = h
+    # measured outcome on current data (SC batch verification): the
+    # tripwire FAILS -- criteria (i) demand |t| and (ii) battery min rho
+    assert do["ordinal_ok"] is False
+    assert c["t_demand"]["pass"] is False
+    assert c["battery"]["pass"] is False
+    print(f"  D6 OK  decision_output consistent; format "
+          f"{do['decision_format']}; min|t| {c['t_demand']['min_abs_t']:.3f}, "
+          f"min rho {c['battery']['min_rho']:.3f} "
+          f"({c['battery']['worst_row_id']}), max churn "
+          f"{c['churn']['max_churn']} ({c['churn']['worst_row_id']}); "
+          f"shortlist {len(do['shortlist'])} windows / "
+          f"{len(seen)} host shapes")
+
+
 def test_d4_double_run_determinism():
     if not HAVE_DATA:
         print("  D4 SKIP  (data/raw absent)")
@@ -330,4 +464,6 @@ if __name__ == "__main__":
     test_d2_artifact_schema()
     test_d3_ordinal_guardrails()
     test_d4_double_run_determinism()
+    test_d5_rebase_rank_invariance()
+    test_d6_decision_output()
     print("ALL SCREEN TESTS PASS")

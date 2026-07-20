@@ -386,6 +386,28 @@ def check_coverage(present, arts):
             if rid not in present[art]:
                 fails.append(f"{aid}: claims {art}:{rid} but it is not present "
                              f"in the {art} artifact")
+    # spec 01 §5 decision tripwire (SC batch 2026-07-19): the three
+    # pre-registered tripwire ids are rowless quality-knobs, so their
+    # coverage obligation is a CONSUMPTION declaration, not a sensitivity
+    # row -- screen_scan.py must consume them via val() and declare them in
+    # the artifact's assumptions_manifest (network-manifest precedent,
+    # spec 07 §9 N4). Absent artifact -> pending warning, like any claim.
+    tripwires = ("screen_battery_rho_min", "screen_t_min",
+                 "screen_top8_churn_max")
+    SC = arts.get("screen")
+    if SC is None:
+        warns.append("[check2] screen tripwires: artifact absent -- "
+                     "consumption declarations pending")
+    else:
+        consumed = {c["id"] for c in
+                    SC.get("assumptions_manifest", {}).get("consumed", [])}
+        for tid in tripwires:
+            n += 1
+            if tid not in consumed:
+                fails.append(f"{tid}: tripwire id not consumed in the screen "
+                             "artifact's assumptions_manifest (spec 01 §5 "
+                             "decision tripwire must run on val(), not a "
+                             "literal)")
     return fails, warns, n
 
 

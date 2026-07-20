@@ -96,10 +96,16 @@ fitted on 3.3-46.9-mi whole-route catchments are incomparable with
 fixed-length windows.
 
 VIFs are a required fit diagnostic (b1/b2 are collinear catchment
-aggregates). The decomposition output is GROUPED — demand block
-(b1+b2) / service (b3) / generator (b4) / scale (b5) — never
-per-coefficient: with VIF>10 at n_eff≈41, per-coefficient attribution
-is arbitrary and can flip sign under one-route deletion. Windows whose
+aggregates). Measured collinearity is MILD — VIF max 3.8 (b1_lodes
+3.81, b2_e002 3.30; artifact `fit_diagnostics.vif`) — and is NOT the
+rationale for grouping. The decomposition output is GROUPED — demand
+block (b1+b2) / service (b3) / generator (b4) / scale (b5) — never
+per-coefficient, because the demand coefficients are individually
+WEAK (cluster-robust |t| < 1: b1 ≈ 0.93, b2 ≈ 0.81 measured), so
+per-coefficient attribution is noise attribution. (An earlier
+revision justified grouping with "VIF>10 at n_eff≈41" — a
+misstatement corrected against the measured artifact, SC batch
+2026-07-19; README known issue 37.) Windows whose
 b1/b2 covariates fall outside the fitted routes' covariate bounding
 box get a `leverage_flag` (a conservative hull proxy — the implemented
 test; the full convex-hull test is not implemented).
@@ -144,9 +150,19 @@ rows — expected rank-inert because a single additive b3 term shifts
 all windows by a constant; the rows PROVE it rather than asserting
 it).
 
-**Published score.** screen_index = 100 * (predicted at svc_std) /
-(median fitted-route prediction at svc_std). Ordinal only; no field
-anywhere in the artifact is denominated in boardings (§4).
+**Published score (same-exposure baseline; rebased 2026-07-19, SC
+batch).** screen_index = 100 * (predicted at svc_std) / (median over
+fitted host routes of that route's own BEST 12.5-mi-window prediction
+at svc_std — the same best-window-per-shape objects the scan already
+computes, restricted to fitted routes; lower-median, deterministic).
+The superseded baseline — the median fitted route's prediction AT ITS
+OWN LENGTH — was a length artifact: with b3+b5 = +0.917 per log-mile
+and 12.5-mi windows against an ~18-mi median fitted route, no window
+could mechanically exceed ~72. The rebase is a positive scalar
+multiple of the old index, so RANKS ARE UNCHANGED (a standing test
+asserts the monotone rescale — test_screen.py D5; README known issue
+36). Ordinal only; no field anywhere in the artifact is denominated
+in boardings (§4).
 
 **Underservice (redefined).** The old actual-minus-fitted formula was
 the model's own in-sample residual — mean-zero, orthogonal to the
@@ -214,7 +230,13 @@ new run), `schema` '01-S1', `seed`, `n_boot`, universe rule + counts
 values_hash}, `windows[]`, `overlap_diagnostics{}` (n_groups +
 degeneracy note + best window per host shape + per-pair overlap
 shares, §3.3 caveat — this also delivers the §3.2 best-window-per-
-host-shape report), `fit_diagnostics{}`, `sensitivity[]`.
+host-shape report), `fit_diagnostics{}`, `sensitivity[]`,
+`decision_output{}` (the §5 pre-registered tripwire, mechanized:
+{ordinal_ok, criteria {t_demand, battery, churn — each with the
+measured number, the registry threshold, and a pass boolean},
+decision_format 'ordinal'|'threshold_shortlist', shortlist [all
+tie_with_cutoff windows grouped by host shape with
+screen_index_p50 + underservice_flag]}).
 
 Per window: `window_id` (route_id + w0, deterministic), `route_id`,
 `w0`, `w1`, `window_mi`, `screen_index_p50/p10/p90`, `rank`,
@@ -255,7 +277,8 @@ and (b); the endogeneity guard is machine-checked, not aspirational.
 with P10-P90 whiskers, overlap-group coloring (falls back to
 host-shape coloring while the grouping is degenerate — one component
 makes group coloring vacuous, §3.3), axis label "ordinal screening
-index (median fitted route = 100) — not a ridership forecast". House
+index (median fitted route's best same-length window = 100) — not a
+ridership forecast". House
 matplotlib conventions (make_charts.py `screen` mode or a standalone
 helper in screen_scan.py).
 
@@ -274,7 +297,13 @@ protocol:
    `overlap_group`, whose connected components are measured-degenerate,
    §3.3) + every `tie_with_cutoff` window + every `underservice_flag`
    window, with the §3.2 underservice caveat quoted and
-   leverage-flagged windows annotated;
+   leverage-flagged windows annotated. **Tripwire binding (SC batch
+   2026-07-19):** while `decision_output.ordinal_ok` is false, the memo
+   consumes `decision_output.shortlist` plus the measured indicator
+   columns (rank_ci, tie_with_cutoff, underservice_flag,
+   leverage_flag), NEVER a top-N by rank — the ordinal index is
+   diagnostic-only until the §5 pre-registered tripwire passes;
+   `decision_output.decision_format` states which mode applies;
 3. **Owner authors** per-finalist corridor configs and crossings
    counts under the spec 04 §3.3 category discipline (per-crossing
    geometry, not defaults);
@@ -290,6 +319,30 @@ owner (spec 00 §3).
 
 ## 5. Validation gates (must pass before first use)
 
+**PRE-REGISTERED DECISION TRIPWIRE (SC batch 2026-07-19; external
+critique's central governance fix — pending owner ratification).**
+The screen emits a decision-grade ORDINAL ranking only if ALL of:
+
+(i)   every demand-block coefficient (b1, b2) has cluster-robust
+      |t| >= 1.0 [screen_t_min];
+(ii)  the battery's minimum Spearman rho over the pre-registered
+      perturbations — EXCLUDING the leave-one-year-out consistency
+      check (see demotion below) — is >= 0.7 [screen_battery_rho_min];
+(iii) top-8 membership changes are <= 2 [screen_top8_churn_max] under
+      every perturbation.
+
+Otherwise the decision output is the THRESHOLD SHORTLIST — all
+`tie_with_cutoff` windows grouped by host shape, presented beside the
+measured indicators — and the ordinal index is diagnostic-only. The
+rule is MECHANIZED: `screen_scan.py` writes the artifact's
+`decision_output` block (§4) with the measured numbers, the registry
+thresholds, per-criterion pass booleans, `decision_format`, and the
+shortlist; a standing test recomputes the booleans from the stored
+numbers (test_screen.py D6). Measured outcome at landing: ordinal_ok
+= FALSE, failing (i) (min |t| = 0.81, b2) and (ii) (min rho = 0.39,
+buffer_lo; max churn 8 also fails (iii)) — the screen currently
+delivers the shortlist, not a ranking. README known issue 35.
+
 **PRIMARY — rank-stability battery** (panel 2026-07-18: for a screen
 that passes ties onward, ranking robustness under *specification
 choices* matters most; single-observation deletion barely moves a
@@ -299,8 +352,15 @@ choices* matters most; single-observation deletion barely moves a
 (b) cross-spec Spearman rho + top-8 set churn across the
     pre-registered perturbations: buffer 0.5/1.25, window 10/15,
     drop_fy2020, drop-RH, drop-generator (b4_off), E016-swap, NB
-    estimator, svc p25/p75, offset-variant;
-(c) leave-one-YEAR-out rank stability.
+    estimator, svc p25/p75, offset-variant.
+
+Leave-one-YEAR-out rank stability — battery item (c) until the SC
+batch — is DEMOTED to a *consistency check (mechanically near-1 with
+time-invariant X)*: under a single time-invariant X snapshot, dropping
+a year perturbs the coefficients only through the y side, so its
+~0.99 rho is a property of the design, not evidence. It is reported
+in `fit_diagnostics.leave_one_year_out` under that label and is
+excluded from tripwire criterion (ii).
 
 The gate report enumerates every shortlist (top-8) membership change
 across the battery explicitly — windows that enter or exit are named
@@ -311,7 +371,12 @@ and dispositioned in the gate-1 memo, never averaged away.
 - LOO-route Spearman rho >= 0.9 [screen_loo_rho] — retained as a
   *leverage screen* only (LOO = leave-one-ROUTE-out, all years of the
   held-out route removed; leave-row-out would leak route identity
-  through the other years and pass trivially).
+  through the other years and pass trivially). Note also (SC batch
+  2026-07-19): leave-route-out ACCURACY is dominated by b3 —
+  regressing log boardings on log revenue hours is near-tautological
+  at the route level — and b3 is held constant at scoring, so a
+  passing LOO gate is approximately ZERO evidence about the ranking;
+  it remains a leverage screen only.
 - LOO median absolute log error <= 0.35 [screen_male] — secondary
   diagnostic (~±40% on a held-out route); worst 5 routes named.
 - 13-arterial prototype reproduction — smoke test, near-circular (the
@@ -359,6 +424,9 @@ window rows — and checks 2/3/5 coverage for screen-claiming entries.
 | `x_vintage_mismatch` | 2022 LODES / 2023 ACS X vs FY2017-20 y | structural | judgment | — | `drop_fy2020` (shared), `year_fe_vs_pooled` |
 | `screen_loo_rho` | 0.9 | constant | judgment | quality-knob | — |
 | `screen_male` | 0.35 | constant | judgment | quality-knob | — |
+| `screen_t_min` | 1.0 | constant | judgment (tripwire (i); pending owner ratification 2026-07-19) | quality-knob (consumption verified by the `screen` scan) | — |
+| `screen_battery_rho_min` | 0.7 | constant | judgment (tripwire (ii); pending owner ratification 2026-07-19) | quality-knob (consumption verified by the `screen` scan) | — |
+| `screen_top8_churn_max` | 2 | constant | judgment (tripwire (iii); pending owner ratification 2026-07-19) | quality-knob (consumption verified by the `screen` scan) | — |
 
 The predictor-set perturbation rows are claimed by two structural
 entries created at S2: the endogenous-controls choice (rows `drop_rh`,

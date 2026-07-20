@@ -1,7 +1,7 @@
 {
   "basis_census": {
     "definitional": 25,
-    "judgment": 58,
+    "judgment": 61,
     "literature": 9,
     "locally-calibrated": 1,
     "measured": 30
@@ -299,6 +299,16 @@
     },
     {
       "accepted": [
+        "pending owner ratification (SC batch external-critique tripwire)",
+        "2026-07-19"
+      ],
+      "basis": "judgment",
+      "id": "screen_battery_rho_min",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "spec01 panel adjudication 2026-07-18",
         "2026-07-18"
       ],
@@ -344,6 +354,26 @@
       ],
       "basis": "judgment",
       "id": "screen_step_mi",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "pending owner ratification (SC batch external-critique tripwire)",
+        "2026-07-19"
+      ],
+      "basis": "judgment",
+      "id": "screen_t_min",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "pending owner ratification (SC batch external-critique tripwire)",
+        "2026-07-19"
+      ],
+      "basis": "judgment",
+      "id": "screen_top8_churn_max",
       "no_row_reason": "quality-knob",
       "tier": "constant"
     },
@@ -1342,7 +1372,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 123,
+  "n_entries": 126,
   "priors": [
     {
       "basis": "judgment",
@@ -1480,7 +1510,7 @@
   ],
   "tier_census": {
     "config": 14,
-    "constant": 70,
+    "constant": 73,
     "data": 5,
     "prior": 19,
     "structural": 15
@@ -1585,6 +1615,23 @@
         ]
       ],
       "id": "s0_se_width"
+    },
+    {
+      "history": [
+        [
+          "2026-07-18",
+          1577.65,
+          "measured",
+          "spec01 S2 -- panel D8: computed from route_boardings.csv rvh_fy2019 / GTFS main-shape miles over the 41 fitted routes (S2 derivation)"
+        ],
+        [
+          "2026-07-19",
+          1577.65,
+          "measured",
+          "SC batch (external critique): value unchanged; the index NORMALIZATION built on this entry is REBASED to same-exposure -- baseline 100 = median over fitted host routes of each route's own BEST 12.5-mi-window prediction at svc_std, replacing the median fitted route AT ITS OWN LENGTH (a length artifact: with b3+b5 = +0.917 per log-mile and 12.5-mi windows vs an ~18-mi median route, no window could mechanically exceed ~72). Positive scalar multiple -- ranks unchanged, asserted by a standing test (README known-issue 36)"
+        ]
+      ],
+      "id": "screen_svc_std"
     },
     {
       "history": [

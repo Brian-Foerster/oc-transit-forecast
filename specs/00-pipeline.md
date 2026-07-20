@@ -44,7 +44,11 @@ final ridership; stage 3 is the number of record.
   standardized service exceeds actual beyond the leave-route-out P90
   log error; spec 01 §3.2). Promotion of gate-1 finalists into
   `config/candidates.json` follows the owner-mediated protocol in
-  spec 01 §4b.
+  spec 01 §4b. Whether the memo may use a top-N by rank at all is
+  governed by the screen artifact's `decision_output.decision_format`
+  (spec 01 §5 pre-registered tripwire): while it reads
+  `threshold_shortlist`, gate 1 consumes the shortlist plus the
+  measured indicators, never a rank ordering.
 - **Gate 2 -> 3**: highest ABC-calibrated P50 among finalists, unless
   bands overlap so much that secondary criteria (cost proxy, overlap
   conflicts, equity) decide — in which case the overlap is stated in the

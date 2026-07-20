@@ -8,10 +8,23 @@ exactly. Every window's predictors come from the SAME shared
 screen_common.compute_predictors as the fit side (panel D6).
 
 Published score (ordinal ONLY, spec 00 §1): screen_index = 100 * predicted
-at standardized service / (median fitted-route prediction at standardized
-service). svc_std = 1577.65 [screen_svc_std] FY2019 RVH per route-mile x
-window length. NO field in the artifact is denominated in boardings; a
-standing test (test_screen.py D3) enforces it.
+at standardized service / (SAME-EXPOSURE baseline, rebase 2026-07-19: the
+median over fitted host routes of that route's own BEST 12.5-mi-window
+prediction at standardized service -- the superseded own-length route
+baseline capped every window at ~72 mechanically, b3+b5 length artifact;
+the rebase is a positive scalar multiple, ranks unchanged, test D5).
+svc_std = 1577.65 [screen_svc_std] FY2019 RVH per route-mile x window
+length. NO field in the artifact is denominated in boardings; a standing
+test (test_screen.py D3) enforces it.
+
+Decision tripwire (spec 01 §5, SC batch 2026-07-19, pending owner
+ratification): the artifact carries a top-level decision_output block --
+the ordinal ranking is decision-grade only if (i) every demand-block
+coefficient has cluster-robust |t| >= screen_t_min, (ii) battery min
+Spearman rho >= screen_battery_rho_min (LOYO consistency check excluded),
+(iii) top-8 churn <= screen_top8_churn_max per perturbation; otherwise
+decision_format = 'threshold_shortlist' (tie_with_cutoff windows grouped
+by host shape) and the ordinal index is diagnostic-only.
 
 Uncertainty: route-cluster bootstrap, B = 2000 [screen_n_boot], seeded
 default_rng(7 [screen_seed]) -- resample ROUTES with replacement, refit,
@@ -75,6 +88,9 @@ CONSUMED = (
     ("screen_seed", "bootstrap RNG seed"),
     ("screen_loo_rho", "LOO leverage-screen floor"),
     ("screen_male", "LOO MALE ceiling"),
+    ("screen_t_min", "tripwire (i): per-demand-coefficient min |t|"),
+    ("screen_battery_rho_min", "tripwire (ii): battery min Spearman rho"),
+    ("screen_top8_churn_max", "tripwire (iii): max top-8 membership changes"),
     ("moe_z", "ACS 90% MOE -> SE conversion"),
     ("mi_lat", "mi per degree latitude"),
     ("mi_per_deg_lon", "mi per degree longitude at equator"),
@@ -188,12 +204,35 @@ def _route_cols(fit, routes, cfg):
                              for r in routes], float)}
 
 
-def _index_from_preds(win_pred, route_pred):
-    """screen_index = 100 * exp(window pred - BASELINE route pred); baseline
-    = the lower-median fitted route (deterministic; exact median at odd n).
-    Any common additive term (year FE, a svc level shift) cancels here --
-    which is exactly why the svc_p25/p75 rows are rank-inert."""
-    base = np.sort(route_pred)[(len(route_pred) - 1) // 2]
+def _host_groups(asm, routes):
+    """Window-index arrays per FITTED host route (sorted route order,
+    deterministic) -- the same-exposure baseline objects: each group's max
+    prediction is that route's own BEST window (the scan-side
+    best-window-per-shape), and the median over fitted routes is restricted
+    here by construction. Fitted routes whose shape is shorter than the
+    window host no windows and cannot contribute."""
+    fitted = set(routes)
+    groups = {}
+    for i, r in enumerate(asm["W"]["route_id"]):
+        if r in fitted:
+            groups.setdefault(r, []).append(i)
+    return [np.asarray(groups[r], int)
+            for r in sorted(groups, key=sf._route_sort_key)]
+
+
+def _index_from_preds(win_pred, host_groups):
+    """screen_index = 100 * exp(window pred - BASELINE); baseline
+    (SAME-EXPOSURE rebase 2026-07-19) = lower-median over fitted host routes
+    of each route's own BEST window prediction (deterministic; exact median
+    at odd count). The superseded baseline -- the lower-median fitted route
+    AT ITS OWN LENGTH -- was a length artifact: with b3+b5 = +0.917 per
+    log-mile and 12.5-mi windows against an ~18-mi median route, no window
+    could mechanically exceed ~72. The swap is a positive scalar multiple of
+    the old index, so ranks are unchanged (test_screen.py D5). Any common
+    additive term (year FE, a svc level shift) still cancels here -- which
+    is exactly why the svc_p25/p75 rows are rank-inert."""
+    best = np.array([win_pred[g].max() for g in host_groups])
+    base = np.sort(best)[(len(best) - 1) // 2]
     return 100.0 * np.exp(win_pred - base), float(base)
 
 
@@ -213,11 +252,12 @@ def score(asm, cfg, svc, beta=None):
     if cfg["offset"]:
         win_pred = win_pred + math.log(asm["window_mi"])
         route_pred = route_pred + np.log(Lr)
-    index, base = _index_from_preds(win_pred, route_pred)
+    hg = _host_groups(asm, routes)
+    index, base = _index_from_preds(win_pred, hg)
     return {"beta": beta, "names": names, "y": y, "X": X, "groups": groups,
             "df": df, "routes": routes, "index": index, "win_pred": win_pred,
             "route_pred": route_pred, "base_logpred": base, "Xw": Xw,
-            "Xr": Xr, "Lr": Lr}
+            "Xr": Xr, "Lr": Lr, "host_groups": hg}
 
 
 def _ranking(index, window_ids):
@@ -266,7 +306,6 @@ def bootstrap(asm, cfg, svc, inputs, n_boot, seed, quiet=False):
     route_rows = [np.flatnonzero(row_route == i) for i in range(nR)]
     y, X = head["y"], head["X"].copy()
     Xw = head["Xw"].copy()
-    Xr = head["Xr"].copy()
     e002, se = inputs["e002"], inputs["se_e002"]
     rng = np.random.default_rng(seed)
     idx_mat = np.empty((n_boot, nW))
@@ -282,10 +321,11 @@ def bootstrap(asm, cfg, svc, inputs, n_boot, seed, quiet=False):
         rows_sel = np.concatenate([route_rows[i] for i in sample])
         beta = sf.ols_beta(y[rows_sel], X[rows_sel])
         Xw[:, b2col] = we
-        Xr[:, b2col] = re
         wp = Xw @ beta
-        rp = Xr @ beta
-        idx, _ = _index_from_preds(wp, rp)
+        # per-replicate SAME-EXPOSURE baseline: within a replicate the swap
+        # is a positive scalar multiple, so the joint rank distribution
+        # (rank_mat, rank_ci, tie_with_cutoff) is invariant to the rebase
+        idx, _ = _index_from_preds(wp, head["host_groups"])
         idx_mat[b] = idx
         order = np.argsort(-idx, kind="stable")
         rank_mat[b, order] = np.arange(1, nW + 1)
@@ -319,8 +359,7 @@ def loo_battery(asm, cfg, svc, head):
         errs.extend(np.abs(e).tolist())
         route_err[r] = float(np.mean(np.abs(e)))
         wp = head["Xw"] @ beta
-        rp = head["Xr"] @ beta
-        idx, _ = _index_from_preds(wp, rp)
+        idx, _ = _index_from_preds(wp, head["host_groups"])
         rho = _spearman(idx, head["index"])
         if rho < rho_min:
             rho_min, rho_min_route = rho, r
@@ -334,14 +373,18 @@ def loo_battery(asm, cfg, svc, head):
 
 
 def loy_battery(asm, cfg, svc, head):
-    """Leave-one-YEAR-out window-rank stability (gate battery c)."""
+    """Leave-one-YEAR-out window-rank stability -- a CONSISTENCY CHECK, not
+    battery evidence (demoted, SC batch 2026-07-19): under a single
+    time-invariant X snapshot, dropping a year only perturbs the
+    coefficients through the y side, so the rank correlation is
+    mechanically ~0.99. Excluded from the decision tripwire's battery
+    criterion (spec 01 §5)."""
     out = {}
     for fy in sf.FYS:
         m = (head["df"]["fy"] != fy).to_numpy()
         beta = sf.ols_beta(head["y"][m], head["X"][m])
         wp = head["Xw"] @ beta
-        rp = head["Xr"] @ beta
-        idx, _ = _index_from_preds(wp, rp)
+        idx, _ = _index_from_preds(wp, head["host_groups"])
         out[fy] = _spearman(idx, head["index"])
     return out
 
@@ -507,6 +550,87 @@ def sensitivity_block(inputs, projs, views, asm, head, svc, tract_sets,
 
 
 # ---------------------------------------------------------------------------
+# decision tripwire (spec 01 §5, SC batch 2026-07-19 -- pre-registered,
+# pending owner ratification)
+# ---------------------------------------------------------------------------
+def _row_churn(r):
+    """Top-8 membership changes for one battery row: max(#entered, #exited).
+    gen_leave_class_out reports per-class; worst class counts. Grouping-only
+    rows (overlap_lo/hi) leave the ranking unchanged by construction -> 0."""
+    d = r["detail"]
+    if "by_class" in d:
+        return max(max(len(v["entered"]), len(v["exited"]))
+                   for v in d["by_class"].values())
+    if "entered" in d:
+        return max(len(d["entered"]), len(d["exited"]))
+    return 0
+
+
+def decision_block(pri, names, sens, windows):
+    """The pre-registered tripwire, mechanized: ordinal ranking is
+    decision-grade ONLY if (i) every demand-block coefficient (b1, b2) has
+    cluster-robust |t| >= screen_t_min, (ii) battery min Spearman rho >=
+    screen_battery_rho_min over the pre-registered perturbations (the
+    sensitivity rows; the LOYO consistency check lives in fit_diagnostics
+    and is excluded by construction -- mechanically near-1 with
+    time-invariant X), (iii) top-8 churn <= screen_top8_churn_max under
+    every perturbation. Otherwise decision_format = 'threshold_shortlist':
+    gate 1 consumes all tie_with_cutoff windows grouped by host shape
+    beside the measured indicators, and the ordinal index is
+    diagnostic-only (spec 01 §4b)."""
+    t_thr = float(val("screen_t_min"))
+    rho_thr = float(val("screen_battery_rho_min"))
+    churn_thr = int(val("screen_top8_churn_max"))
+    min_t = min(abs(b) / s for n, b, s in
+                zip(names, pri["params"], pri["se_cluster"])
+                if n.startswith(("b1_", "b2_")))
+    min_rho, rho_row = None, None
+    max_churn, churn_row = None, None
+    for r in sens:                      # artifact row order -> deterministic
+        rho = r["detail"]["rho"]
+        if min_rho is None or rho < min_rho:
+            min_rho, rho_row = rho, r["id"]
+        ch = _row_churn(r)
+        if max_churn is None or ch > max_churn:
+            max_churn, churn_row = ch, r["id"]
+    criteria = {
+        "t_demand": {"min_abs_t": float(min_t), "threshold": t_thr,
+                     "pass": bool(min_t >= t_thr)},
+        "battery": {"min_rho": float(min_rho), "worst_row_id": rho_row,
+                    "threshold": rho_thr, "pass": bool(min_rho >= rho_thr)},
+        "churn": {"max_churn": int(max_churn), "worst_row_id": churn_row,
+                  "threshold": churn_thr,
+                  "pass": bool(max_churn <= churn_thr)},
+    }
+    ok = all(c["pass"] for c in criteria.values())
+    ties = sorted((w for w in windows if w["tie_with_cutoff"]),
+                  key=lambda w: (sf._route_sort_key(w["route_id"]),
+                                 w["rank"]))
+    shortlist = [{"route_id": w["route_id"], "window_id": w["window_id"],
+                  "screen_index_p50": w["screen_index_p50"],
+                  "underservice_flag": w["underservice_flag"]}
+                 for w in ties]
+    return {
+        "ordinal_ok": ok,
+        "criteria": criteria,
+        "decision_format": "ordinal" if ok else "threshold_shortlist",
+        "shortlist": shortlist,
+        "note": "pre-registered tripwire (spec 01 §5, SC batch 2026-07-19, "
+                "pending owner ratification): the ordinal ranking is "
+                "decision-grade only if every demand-block coefficient's "
+                "cluster-robust |t| >= screen_t_min, battery min Spearman "
+                "rho >= screen_battery_rho_min over the pre-registered "
+                "perturbations (EXCLUDING the leave-one-year-out consistency "
+                "check, mechanically near-1 with time-invariant X), and "
+                "top-8 churn <= screen_top8_churn_max under every "
+                "perturbation. While ordinal_ok is false the gate-1 memo "
+                "consumes this shortlist (tie_with_cutoff windows grouped "
+                "by host shape) plus the measured indicator columns, NEVER "
+                "a top-N by rank (spec 01 §4b)",
+    }
+
+
+# ---------------------------------------------------------------------------
 # artifact assembly
 # ---------------------------------------------------------------------------
 def _incumbents(asm, views, projs, buffer_mi, threshold, inputs):
@@ -607,8 +731,9 @@ def make_chart(artifact, path):
     labels = [f"#{w['rank']}  rt {w['route_id']}  "
               f"{w['w0']:.1f}-{w['w1']:.1f} mi" for w in wins]
     ax.set_yticks(ys); ax.set_yticklabels(labels, fontsize=8, color=INK)
-    ax.set_xlabel("ordinal screening index (median fitted route = 100) — "
-                  "not a ridership forecast", fontsize=9, color=INK)
+    ax.set_xlabel("ordinal screening index (median fitted route's best "
+                  "same-length window = 100) — not a ridership forecast",
+                  fontsize=9, color=INK)
     ax.axvline(100, color=MUTED, lw=0.8, ls="--", zorder=1)
     ax.grid(axis="x", color=GRID, lw=0.7); ax.set_axisbelow(True)
     for s in ("top", "right", "left"):
@@ -669,7 +794,12 @@ def build_artifact(n_boot=None, quiet=False):
     lo2, hi2 = head["X"][:, 2].min(), head["X"][:, 2].max()
     lev = ((wcols["l_lodes"] < lo1) | (wcols["l_lodes"] > hi1)
            | (wcols["l_e002"] < lo2) | (wcols["l_e002"] > hi2))
-    # grouped decomposition vs the baseline (lower-median) route
+    # grouped decomposition vs a REFERENCE route (lower-median fitted route
+    # by own-length prediction). NOTE: since the 2026-07-19 same-exposure
+    # rebase this reference is NOT the index baseline (that is the median
+    # best-window prediction, _index_from_preds); the decomposition remains
+    # a relative contribution split between window and reference route,
+    # invariant to the rebase.
     beta = dict(zip(names, head["beta"]))
     rcols = _route_cols(asm["fit"], head["routes"], sf.BASE_CFG)
     base_i = int(np.argsort(head["route_pred"], kind="stable")[
@@ -705,6 +835,10 @@ def build_artifact(n_boot=None, quiet=False):
             "incumbent_routes": incumbents[i],
         })
     windows.sort(key=lambda w: (sf._route_sort_key(w["route_id"]), w["w0"]))
+
+    # decision tripwire (spec 01 §5): mechanized pass/fail + the threshold
+    # shortlist gate 1 consumes while ordinal_ok is false
+    decision = decision_block(pri, names, sens, windows)
 
     # overlap diagnostics (review 2026-07-19): the §3.3 connected components
     # are MEASURED-DEGENERATE on the real universe -- single-linkage
@@ -783,7 +917,15 @@ def build_artifact(n_boot=None, quiet=False):
                       "male_ceiling": val("screen_male"),
                       "p90_abs_log_err": loo["p90_abs_err"],
                       "worst5": loo["worst5"]},
-        "leave_one_year_out_rho": loy,
+        "leave_one_year_out": {
+            "rho": loy,
+            "label": "consistency check (mechanically near-1 with "
+                     "time-invariant X)",
+            "note": "a single time-invariant X snapshot makes "
+                    "leave-one-year-out rank stability ~0.99 by "
+                    "construction -- demoted from battery evidence "
+                    "(spec 01 §5, SC batch 2026-07-19); excluded from the "
+                    "decision_output battery criterion"},
         "dfbetas_b4_flagged_routes": sf.gen_dfbetas(
             y, X, names, groups, flagged_routes),
         "harbor_windows_b4": harbor,
@@ -791,9 +933,14 @@ def build_artifact(n_boot=None, quiet=False):
         "grouped_decomposition_note": "per-window decomposition is GROUPED "
                                       "(demand b1+b2 / service b3 / "
                                       "generator b4 / scale b5) vs the "
-                                      "baseline route -- per-coefficient "
-                                      "attribution is arbitrary at these "
-                                      "VIFs (spec 01 §3.1)",
+                                      "reference route because the demand "
+                                      "coefficients are individually WEAK "
+                                      "(cluster-robust |t| < 1), so "
+                                      "per-coefficient attribution is noise "
+                                      "attribution; collinearity is mild "
+                                      "(measured VIF max 3.8, see vif) and "
+                                      "is NOT the rationale (spec 01 §3.1, "
+                                      "corrected 2026-07-19)",
         "service_levels": ["standardized (svc_std x length; all published "
                            "scores)",
                            "incumbent-actual (diagnostic: LOO errors + "
@@ -841,11 +988,19 @@ def build_artifact(n_boot=None, quiet=False):
         "overlap_diagnostics": overlap_diag,
         "fit_diagnostics": fit_diag,
         "sensitivity": sens,
+        "decision_output": decision,
         "notes": {
             "index": "screen_index = 100 * exp(window log-prediction at "
-                     "standardized service - baseline fitted-route "
-                     "log-prediction); baseline = lower-median fitted route "
-                     "(deterministic; exact median at odd route count)",
+                     "standardized service - baseline); baseline "
+                     "(SAME-EXPOSURE rebase 2026-07-19) = lower-median over "
+                     "fitted host routes of each route's own BEST "
+                     "12.5-mi-window log-prediction at svc_std "
+                     "(deterministic; exact median at odd count). The "
+                     "superseded baseline -- the median fitted route AT ITS "
+                     "OWN LENGTH -- capped every window at ~72 mechanically "
+                     "(b3+b5 = +0.917 per log-mile, 12.5-mi windows vs an "
+                     "~18-mi median route); the rebase is a positive scalar "
+                     "multiple, ranks unchanged (test_screen.py D5)",
             "zero_handling": "b1/b2 consume catchment sums through log1p "
                              "(log1p(0)=0; indistinguishable from log at "
                              "catchment magnitudes)",
@@ -910,6 +1065,19 @@ def main(argv):
     print("\nsensitivity (pct = 100*(1-Spearman rho) vs headline):")
     for r in artifact["sensitivity"]:
         print(f"  {r['id']:20s} {r['pct']:8.3f}  {r['label']}")
+    do = artifact["decision_output"]
+    c = do["criteria"]
+    print(f"\ndecision_output: {do['decision_format']} "
+          f"(ordinal_ok {do['ordinal_ok']}); "
+          f"min|t| {c['t_demand']['min_abs_t']:.3f} vs {c['t_demand']['threshold']} "
+          f"-> {'PASS' if c['t_demand']['pass'] else 'FAIL'}; "
+          f"min rho {c['battery']['min_rho']:.3f} ({c['battery']['worst_row_id']}) "
+          f"vs {c['battery']['threshold']} "
+          f"-> {'PASS' if c['battery']['pass'] else 'FAIL'}; "
+          f"max churn {c['churn']['max_churn']} ({c['churn']['worst_row_id']}) "
+          f"vs {c['churn']['threshold']} "
+          f"-> {'PASS' if c['churn']['pass'] else 'FAIL'}; "
+          f"shortlist {len(do['shortlist'])} windows")
     d = artifact["fit_diagnostics"]
     print(f"\nLOO leverage screen: rho_min {d['loo_route']['rho_min']:.4f} "
           f"(floor {d['loo_route']['rho_floor']}) route "

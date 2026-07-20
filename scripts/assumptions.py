@@ -1375,7 +1375,19 @@ ASSUMPTIONS = {
         "history": [("2026-07-18", 1577.65, "measured",
                      "spec01 S2 -- panel D8: computed from route_boardings.csv "
                      "rvh_fy2019 / GTFS main-shape miles over the 41 fitted "
-                     "routes (S2 derivation)")],
+                     "routes (S2 derivation)"),
+                    ("2026-07-19", 1577.65, "measured",
+                     "SC batch (external critique): value unchanged; the "
+                     "index NORMALIZATION built on this entry is REBASED to "
+                     "same-exposure -- baseline 100 = median over fitted "
+                     "host routes of each route's own BEST 12.5-mi-window "
+                     "prediction at svc_std, replacing the median fitted "
+                     "route AT ITS OWN LENGTH (a length artifact: with "
+                     "b3+b5 = +0.917 per log-mile and 12.5-mi windows vs an "
+                     "~18-mi median route, no window could mechanically "
+                     "exceed ~72). Positive scalar multiple -- ranks "
+                     "unchanged, asserted by a standing test (README "
+                     "known-issue 36)")],
         "provenance": "svc_std = median over the 41 fitted routes (the "
                       "route_boardings.csv x 2026-07 GTFS weekday-shape "
                       "intersection; the 6 discontinued routes 24/53X/57X/"
@@ -1392,10 +1404,14 @@ ASSUMPTIONS = {
                       "every window's log-score by the same constant, so the "
                       "probes are expected rank-inert; the rows PROVE that "
                       "rather than asserting it. The index-normalization "
-                      "choice built on top is logged (README known-issue 33)",
+                      "choice built on top is logged (README known-issue 33); "
+                      "its 2026-07-19 same-exposure rebase (best "
+                      "12.5-mi-window-per-fitted-route baseline; old ceiling "
+                      "~72 was mechanical) is known-issue 36",
         "rows": {"screen": ["svc_p25", "svc_p75"]},
         "no_row_reason": None, "accepted": None,
-        "logged": "README known-issue 33",
+        "logged": "README known-issue 36 (same-exposure rebase; the "
+                  "normalization choice itself = known-issue 33)",
         "upgrade": "records request items 1a/1b (post-FY2021 RVH refresh)",
     },
     "screen_n_boot": {
@@ -1461,6 +1477,74 @@ ASSUMPTIONS = {
         "rows": {}, "no_row_reason": "quality-knob",
         "accepted": ("spec01 panel adjudication 2026-07-18", "2026-07-18"),
         "logged": None, "upgrade": "post-records-request panel extension",
+    },
+    # -- pre-registered decision tripwire (SC batch 2026-07-19; external
+    # critique verified claim-by-claim and accepted). The screen emits a
+    # decision-grade ORDINAL ranking only if all three criteria pass
+    # (spec 01 §5); otherwise the decision output is the THRESHOLD SHORTLIST
+    # and the ordinal index is diagnostic-only. Mechanized in screen_scan.py's
+    # decision_output block; consumed via val() (the check_assumptions screen
+    # scan verifies the consumption declaration). Acceptance-threshold knobs,
+    # not swept model quantities -> rowless quality-knob dispositions.
+    "screen_t_min": {
+        "title": "screen tripwire: per-demand-coefficient minimum |t| "
+                 "(cluster-robust)",
+        "tier": "constant", "status": "active",
+        "value": 1.0, "units": "|t|", "band": None, "basis": "judgment",
+        "history": [("2026-07-19", 1.0, "judgment",
+                     "SC batch -- external critique 2026-07-19: the screen's "
+                     "primary gate was thresholdless (no pre-registered "
+                     "pass/fail); tripwire criterion (i)")],
+        "provenance": "criterion (i) of the pre-registered tripwire (spec 01 "
+                      "§5): every demand-block coefficient (b1, b2) must have "
+                      "cluster-robust |t| >= this for the ordinal ranking to "
+                      "be decision-grade. Measured at landing: min |t| = 0.81 "
+                      "(b2_e002) -> FAILS; the screen emits the threshold "
+                      "shortlist (decision_output.decision_format)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("pending owner ratification (SC batch external-critique "
+                     "tripwire)", "2026-07-19"),
+        "logged": "README known-issue 35",
+        "upgrade": "owner ratification; post-records-request refit",
+    },
+    "screen_battery_rho_min": {
+        "title": "screen tripwire: battery minimum Spearman rho",
+        "tier": "constant", "status": "active",
+        "value": 0.7, "units": "Spearman rho", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-19", 0.7, "judgment",
+                     "SC batch -- external critique 2026-07-19: tripwire "
+                     "criterion (ii)")],
+        "provenance": "criterion (ii) of the pre-registered tripwire (spec 01 "
+                      "§5): the minimum Spearman rho over the pre-registered "
+                      "battery perturbations (the screen artifact's "
+                      "sensitivity rows; the leave-one-year-out consistency "
+                      "check is EXCLUDED -- mechanically near-1 with "
+                      "time-invariant X) must be >= this. Measured at "
+                      "landing: min rho = 0.39 (buffer_lo) -> FAILS",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("pending owner ratification (SC batch external-critique "
+                     "tripwire)", "2026-07-19"),
+        "logged": "README known-issue 35",
+        "upgrade": "owner ratification; post-records-request refit",
+    },
+    "screen_top8_churn_max": {
+        "title": "screen tripwire: max top-8 membership changes per "
+                 "perturbation",
+        "tier": "constant", "status": "active",
+        "value": 2, "units": "windows", "band": None, "basis": "judgment",
+        "history": [("2026-07-19", 2, "judgment",
+                     "SC batch -- external critique 2026-07-19: tripwire "
+                     "criterion (iii)")],
+        "provenance": "criterion (iii) of the pre-registered tripwire (spec "
+                      "01 §5): top-8 membership changes under every battery "
+                      "perturbation must be <= this. Measured at landing: "
+                      "max churn = 8 (buffer_lo) -> FAILS",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("pending owner ratification (SC batch external-critique "
+                     "tripwire)", "2026-07-19"),
+        "logged": "README known-issue 35",
+        "upgrade": "owner ratification; post-records-request refit",
     },
 
     # ===== structural tier (governance toggles; NOT owned) ==================

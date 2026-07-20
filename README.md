@@ -531,13 +531,14 @@ rows land with the S34 build (`outputs/screen_results.json`).
     with/without-b4 diagnostics keep the exposure visible. Upgrade: measured
     magnitudes (enrollment/attendance/LEHD workplace counts).
 33. **The screen index normalization is a choice** (spec 01 §3.2/§4):
-    `screen_index` = 100 × predicted-at-standardized-service / median
-    fitted-route prediction, with standardized service = median fitted-route
+    `screen_index` = 100 × predicted-at-standardized-service / a baseline
+    prediction, with standardized service = median fitted-route
     FY2019 revenue hours per route-mile × window length (`screen_svc_std`,
     measured 1577.65 rev-hr/route-mi/yr; p25/p75 probe rows expected
     rank-inert). Chosen so no field in `screen_results.json` is denominated
     in boardings — an ordinal screening index, never a ridership forecast
-    (spec 00 §1); standing tests assert the guardrail.
+    (spec 00 §1); standing tests assert the guardrail. **Rebased
+    2026-07-19** to the same-exposure baseline — see issue 36.
 34. **Overlap grouping is measured-degenerate at county scale** (spec 01
     §3.3, review 2026-07-19). The connected components over >0.30
     shared-catchment windows collapse to ONE county-wide group on the real
@@ -549,3 +550,44 @@ rows land with the S34 build (`outputs/screen_results.json`).
     host shape + per-pair overlap shares, no transitive closure) is what
     gate 1 uses. Replacing the grouping with a non-chaining rule
     (complete-linkage or host-shape-scoped) is an open owner decision.
+
+Items 35-37 were opened by the **external critique of the stage-1 screen
+(2026-07-19; verified claim-by-claim, accepted, and implemented as the SC
+mechanical-correction batch)**. Items 35 and 36 are the `logged` pointers
+of the tripwire entries and the normalization entry respectively.
+
+35. **The screen's primary gate was thresholdless** — the rank-stability
+    battery reported rho and churn but pre-registered no pass/fail rule,
+    so any measured instability could be narrated past. Fixed by the
+    pre-registered tripwire (registry `screen_t_min` = 1.0,
+    `screen_battery_rho_min` = 0.7, `screen_top8_churn_max` = 2 — all
+    pending owner ratification, 2026-07-19): the screen emits a
+    decision-grade ORDINAL ranking only if every demand-block
+    coefficient's cluster-robust |t| ≥ 1, the battery's minimum Spearman
+    rho ≥ 0.7 (the leave-one-year-out consistency check excluded — it is
+    mechanically ~0.99 under a single time-invariant X snapshot), and
+    top-8 churn ≤ 2 under every perturbation; otherwise gate 1 consumes
+    the THRESHOLD SHORTLIST (all `tie_with_cutoff` windows grouped by
+    host shape) and the ordinal index is diagnostic-only. Mechanized as
+    the artifact's `decision_output` block (spec 01 §5, screen_scan.py;
+    standing test recomputes the pass booleans). Measured outcome at
+    landing: ordinal_ok = FALSE (min |t| 0.81 on b2; min rho 0.39 at
+    buffer_lo; max churn 8) — the screen currently delivers a shortlist,
+    not a ranking.
+36. **The old index ceiling ~72 was a mechanical length artifact** (spec
+    01 §3.2). The superseded baseline normalized every 12.5-mi window by
+    the median fitted route's prediction AT ITS OWN LENGTH (~18 mi); with
+    b3+b5 = +0.917 per log-mile, no window of any quality could exceed
+    ~72 by construction. Rebased 2026-07-19 to the SAME-EXPOSURE
+    baseline: 100 = median over fitted host routes of that route's own
+    best 12.5-mi-window prediction at standardized service. The rebase
+    is a positive scalar multiple of the old index — ranks unchanged,
+    asserted by a standing test (test_screen.py D5).
+37. **Spec 01 justified grouped decomposition with "VIF>10" — the
+    measured VIFs are all < 4** (max 3.81, b1_lodes; artifact
+    `fit_diagnostics.vif`). The grouping itself survives on the correct
+    ground: the demand coefficients are individually WEAK (cluster-robust
+    |t| < 1: b1 ≈ 0.93, b2 ≈ 0.81), so per-coefficient attribution would
+    be noise attribution; collinearity is mild and was never the real
+    rationale. Spec §3.1 and the artifact's decomposition note now cite
+    the measured values (corrected 2026-07-19).
