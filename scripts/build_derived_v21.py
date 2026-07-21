@@ -7,12 +7,14 @@ predictor machinery (screen_common_v21.py) reads:
   oc_blocks.csv               OC 2020 tabulation blocks: GEOID20, internal
                               point (INTPTLAT20/INTPTLON20, raw TIGER strings),
                               ALAND20 (m^2), pop2020 (PL 94-171 P1/P0010001)
-  oc_block_od_{2017,2019,2022}.csv.gz
+  oc_block_od_{2017,2019,2021,2022}.csv.gz
                               LODES8 OC-to-OC block-pair job counts (h, w, n
                               = S000); ALL LODES8 years are enumerated on 2020
                               blocks (LODESTechDoc8.3 'Geography Vintage'), so
-                              the three vintages share one block frame
-  oc_block_wac_{2017,2019,2022}.csv
+                              all vintages share one block frame. Extra staged
+                              vintages (2013/2015/2023 raws) build on demand:
+                              `python -X utf8 scripts/build_derived_v21.py 2013`
+  oc_block_wac_{2017,2019,2021,2022}.csv
                               LODES8 WAC for OC blocks: GEOID20, C000, CNS15
                               (NAICS 61 edu), CNS16 (62 health), CNS17 (71
                               arts/rec), CNS18 (72 accommodation/food) -- the
@@ -53,13 +55,17 @@ TIGER_ZIP = os.path.join(RAW, "tiger2020", "tl_2020_06059_tabblock20.zip")
 BLOCK_POP = os.path.join(RAW, "census2020", "oc_2020_p1_block_pop.csv")
 CROSSWALK = os.path.join(RAW, "acs", "tab20_tract20_tract10_natl.txt")
 LODES8 = os.path.join(RAW, "lodes8")
-OD_FILES = {  # 2022 OD was acquired earlier at the data/raw root (v2.0 build)
-    "2017": os.path.join(LODES8, "ca_od_main_JT00_2017.csv.gz"),
-    "2019": os.path.join(LODES8, "ca_od_main_JT00_2019.csv.gz"),
-    "2022": os.path.join(RAW, "ca_od_main_JT00_2022.csv.gz"),
-}
+# Panel-extension vintages (2013/2015/2021/2023) live in data/raw/lodes8 like
+# 2017/2019; only the 2022 OD sits at the data/raw root (v2.0 acquisition).
+LODES_YEARS = ("2013", "2015", "2017", "2019", "2021", "2022", "2023")
+OD_FILES = {y: os.path.join(LODES8, f"ca_od_main_JT00_{y}.csv.gz")
+            for y in LODES_YEARS}
+OD_FILES["2022"] = os.path.join(RAW, "ca_od_main_JT00_2022.csv.gz")
 WAC_FILES = {y: os.path.join(LODES8, f"ca_wac_S000_JT00_{y}.csv.gz")
-             for y in ("2017", "2019", "2022")}
+             for y in LODES_YEARS}
+# Default build set = the committed §9 design vintages. 2013/2015/2023 raws
+# are staged on disk but only built when named explicitly on the CLI.
+DEFAULT_YEARS = ("2017", "2019", "2021", "2022")
 WAC_COLS = ["C000", "CNS15", "CNS16", "CNS17", "CNS18"]
 
 
@@ -238,9 +244,14 @@ def build_tract_bridge(tract20_pop):
 
 
 if __name__ == "__main__":
-    _b2t, t20pop = build_blocks()
-    build_tract_bridge(t20pop)
-    for y in ("2017", "2019", "2022"):
+    import sys
+    years = tuple(sys.argv[1:]) or DEFAULT_YEARS
+    unknown = [y for y in years if y not in OD_FILES]
+    assert not unknown, f"no LODES8 vintage on disk map for {unknown}"
+    if not sys.argv[1:]:            # full rebuild only when no year filter
+        _b2t, t20pop = build_blocks()
+        build_tract_bridge(t20pop)
+    for y in years:
         build_wac(y, WAC_FILES[y])
-    for y in ("2017", "2019", "2022"):
+    for y in years:
         build_od(y, OD_FILES[y])

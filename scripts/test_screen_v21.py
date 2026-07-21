@@ -120,12 +120,22 @@ def test_v1_vintage_table():
     assert sv.resolve_vintage("fy2020q3") == sv.resolve_vintage("fy2019")
     assert sv.resolve_vintage("scan") == {"od": "2022", "wac": "2022",
                                           "acs": "2023"}
+    # §9.9.2 panel-extension rows (owner directive 2026-07-20): fy2020
+    # full-year carries the fy2020q3 rule; fy2021 is vintage-matched to the
+    # 2021 tables; fy2022/fy2023 read the committed scan-side vintages
+    # (fy2023 FROZEN on LODES 2022 by the stated decision)
+    assert sv.resolve_vintage("fy2020") == sv.resolve_vintage("fy2019")
+    assert sv.resolve_vintage("fy2021") == {"od": "2021", "wac": "2021",
+                                            "acs": "2021"}
+    assert sv.resolve_vintage("fy2022") == sv.resolve_vintage("scan")
+    assert sv.resolve_vintage("fy2023") == sv.resolve_vintage("scan")
     try:
-        sv.resolve_vintage("fy2021")
+        sv.resolve_vintage("fy2099")     # never a landed FY
         raise AssertionError("unknown vintage did not raise")
     except KeyError:
         pass
-    print("  V1 OK  vintage dispatch table (§9.3), unknown label raises")
+    print("  V1 OK  vintage dispatch table (§9.3 + §9.9.2 extension), "
+          "unknown label raises")
 
 
 def test_v2_apportionment():

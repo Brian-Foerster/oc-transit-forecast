@@ -39,9 +39,20 @@
           "CNS17",
           "CNS18"
         ]
+      },
+      {
+        "id": "screen_panel_ext_fys",
+        "value": [
+          "fy2017",
+          "fy2019",
+          "fy2020",
+          "fy2021",
+          "fy2022",
+          "fy2023"
+        ]
       }
     ],
-    "values_hash": "95e4f4c2dab713ba0be8449862ccef4be146778f485a75ba3feda6e06a052a99"
+    "values_hash": "a2781e30753304cccb13cd74a7378c885ec2e22013a882496b5b1e9b1ffb6cc4"
   },
   "beta_grid": [
     0.0,
@@ -283,6 +294,364 @@
   "n_boot_check": 2000,
   "n_sims": 200,
   "no_contamination": "v2.1 predictor matrices built input-side only; outcomes are synthetic (injected beta_true); the v2.1 fit stays unrun; no real boardings value enters this module (standing tests test_screen_power.py G1/G2)",
+  "panel_ext": {
+    "before_after": {
+      "note": "BEFORE = the committed 3-year-panel designs, regenerated in-run on the identical seed stream (drawn first); AFTER = the \u00a79.9 extended panel",
+      "required_at_80pct": {
+        "b1": {
+          "after_ext_current_shape": 0.239655,
+          "after_ext_with_replicas": 0.219048,
+          "before_clusters_41": 0.308333,
+          "before_clusters_47": 0.320833
+        },
+        "b2": {
+          "after_ext_current_shape": 0.15,
+          "after_ext_with_replicas": 0.126316,
+          "before_clusters_41": 0.1875,
+          "before_clusters_47": 0.186765
+        },
+        "joint": {
+          "after_ext_current_shape": 0.246053,
+          "after_ext_with_replicas": 0.224,
+          "before_clusters_41": 0.319048,
+          "before_clusters_47": 0.333333
+        }
+      }
+    },
+    "designs": {
+      "ext_current_shape": {
+        "boot_sd_b1": 0.180621,
+        "boot_sd_b2": 0.114941,
+        "n_clusters": 50,
+        "n_rows": 269,
+        "power": {
+          "b1": [
+            0.12,
+            0.215,
+            0.39,
+            0.56,
+            0.685,
+            0.83,
+            0.89,
+            0.94,
+            0.985,
+            0.99,
+            0.995,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "b2": [
+            0.155,
+            0.3,
+            0.625,
+            0.8,
+            0.935,
+            0.985,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "joint": [
+            0.0,
+            0.025,
+            0.185,
+            0.4,
+            0.625,
+            0.815,
+            0.89,
+            0.94,
+            0.985,
+            0.99,
+            0.995,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "required_at_power_target": {
+          "b1": 0.239655,
+          "b2": 0.15,
+          "joint": 0.246053
+        },
+        "small_b_check": {
+          "abs_diff": {
+            "b1": 0.005,
+            "b2": 0.0,
+            "joint": 0.005
+          },
+          "beta_true": 0.4,
+          "note": "the B=2000 replicates are a superset draw of the B=500 replicates (nested common random numbers); the stated small-B correction is: none applied -- the check bounds the sign-fraction Monte Carlo error's effect on power at one grid point instead",
+          "pass": true,
+          "power_b2000": {
+            "b1": 0.98,
+            "b2": 1.0,
+            "joint": 0.98
+          },
+          "power_b500": {
+            "b1": 0.985,
+            "b2": 1.0,
+            "joint": 0.985
+          },
+          "tolerance": 0.05
+        }
+      },
+      "ext_with_replicas": {
+        "boot_sd_b1": 0.164518,
+        "boot_sd_b2": 0.096625,
+        "n_clusters": 63,
+        "n_rows": 333,
+        "power": {
+          "b1": [
+            0.185,
+            0.28,
+            0.41,
+            0.59,
+            0.76,
+            0.865,
+            0.95,
+            0.975,
+            0.985,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "b2": [
+            0.215,
+            0.42,
+            0.7,
+            0.89,
+            0.98,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "joint": [
+            0.01,
+            0.095,
+            0.22,
+            0.5,
+            0.74,
+            0.865,
+            0.95,
+            0.975,
+            0.985,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "required_at_power_target": {
+          "b1": 0.219048,
+          "b2": 0.126316,
+          "joint": 0.224
+        },
+        "small_b_check": {
+          "abs_diff": {
+            "b1": 0.0,
+            "b2": 0.0,
+            "joint": 0.0
+          },
+          "beta_true": 0.4,
+          "note": "the B=2000 replicates are a superset draw of the B=500 replicates (nested common random numbers); the stated small-B correction is: none applied -- the check bounds the sign-fraction Monte Carlo error's effect on power at one grid point instead",
+          "pass": true,
+          "power_b2000": {
+            "b1": 0.985,
+            "b2": 1.0,
+            "joint": 0.985
+          },
+          "power_b500": {
+            "b1": 0.985,
+            "b2": 1.0,
+            "joint": 0.985
+          },
+          "tolerance": 0.05
+        }
+      }
+    },
+    "directive": "owner directive 2026-07-20: 'extend the panel' (spec 01 \u00a79.9 -- pre-fit, made on the committed 3-year power arithmetic; governed design change under the softened \u00a79.5, README known issue 39)",
+    "frozen_year_set": [
+      "fy2017",
+      "fy2019",
+      "fy2020",
+      "fy2021",
+      "fy2022",
+      "fy2023"
+    ],
+    "fy2020q3_superseded": "fy2020 full-year replaces the committed 9-month fy2020q3 cell (one FY, one row per route; \u00a79.9.1 -- every fy2020q3-fittable route has an ext fy2020 row, so no cluster drops)",
+    "new_fys": [
+      "fy2020",
+      "fy2021",
+      "fy2022",
+      "fy2023"
+    ],
+    "replica_stylization": {
+      "donors": {
+        "153": "480",
+        "206": "85",
+        "213": "472",
+        "24": "453",
+        "463": "129",
+        "53X": "26",
+        "57X": "143",
+        "64X": "89",
+        "701": "529",
+        "721": "178",
+        "794": "33",
+        "82": "473",
+        "87": "862"
+      },
+      "note": "no-current-shape union routes enter as X-replicas of the lowest-l_flows fitted routes (fy2019 vintage, input-side ranking); each replica duplicates the DONOR's fittable route-years across the extended panel under a new cluster label (donor presence pattern, not the missing route's -- the committed mechanics carried over), so the cluster-count gain is a precision gain without covariate support",
+      "replicas": [
+        "24",
+        "82",
+        "87",
+        "153",
+        "206",
+        "213",
+        "463",
+        "53X",
+        "57X",
+        "64X",
+        "701",
+        "721",
+        "794"
+      ]
+    },
+    "row_source": "route x FY PRESENCE from route_boardings.csv UNION route_boardings_ext.csv + validated RVH (the b3 passthrough); boardings values never leave the guarded loaders (standing tests G1/G2/G2e); fittable = boardings present AND validated RVH present -- the 560/fy2022 KNOWN_DUP_RVH_EXT blank drops by that rule; NO boardings floor on the new FYs (\u00a79.9.1)",
+    "stylizations": [
+      "all baseline stylizations apply (current shapes for all years; no ACS-MOE perturbation -- power OPTIMISTIC, required elasticities a FLOOR; Gram-sum refits; common random numbers)",
+      "fy2023 X frozen on LODES 2022 (\u00a79.9.2 stated decision; LODES8 2023 raws staged, no derived tables)",
+      "13 donor-replicated clusters (vs 6 in the baseline design) -- a heavier replication load, stated"
+    ],
+    "verdict": {
+      "overall": "marginal",
+      "rule": "the pre-stated registry rule (screen_power_check) recomputed on the extended design: compare the WITH-REPLICAS marginal required-at-80% elasticities (\u00a79.9.6 -- the extended analogue of the 47-cluster design) against the committed v2.0 point estimates: adequately-powered if required <= est; marginal if <= est + verdict_se_mult * cluster SE; else underpowered; overall = worst coefficient",
+      "terms": {
+        "b1": {
+          "arithmetic": "required 0.2190 vs est 0.098652 / est+2se 0.311556",
+          "call": "marginal",
+          "design": "ext_with_replicas",
+          "required_at_80pct": 0.219048,
+          "upper_ref_est_plus_2se": 0.311556,
+          "v20_cluster_se": 0.106452,
+          "v20_committed_est": 0.098652
+        },
+        "b2": {
+          "arithmetic": "required 0.1263 vs est 0.087092 / est+2se 0.301814",
+          "call": "marginal",
+          "design": "ext_with_replicas",
+          "required_at_80pct": 0.126316,
+          "upper_ref_est_plus_2se": 0.301814,
+          "v20_cluster_se": 0.107361,
+          "v20_committed_est": 0.087092
+        }
+      }
+    },
+    "vintage_map": {
+      "fy2017": {
+        "acs": "2017",
+        "od": "2017",
+        "wac": "2017"
+      },
+      "fy2019": {
+        "acs": "2019",
+        "od": "2019",
+        "wac": "2019"
+      },
+      "fy2020": {
+        "acs": "2019",
+        "od": "2019",
+        "wac": "2019"
+      },
+      "fy2021": {
+        "acs": "2021",
+        "od": "2021",
+        "wac": "2021"
+      },
+      "fy2022": {
+        "acs": "2023",
+        "od": "2022",
+        "wac": "2022"
+      },
+      "fy2023": {
+        "acs": "2023",
+        "od": "2022",
+        "wac": "2022"
+      }
+    },
+    "x_variation": {
+      "l_flows": {
+        "max_within_std": 0.100723,
+        "mean_within_std": 0.042271,
+        "median_within_std": 0.033033,
+        "n_routes": 50,
+        "share_routes_varying": 1.0
+      },
+      "l_genjobs": {
+        "max_within_std": 0.203182,
+        "mean_within_std": 0.063394,
+        "median_within_std": 0.046317,
+        "n_routes": 50,
+        "share_routes_varying": 1.0
+      },
+      "l_len": {
+        "max_within_std": 0.0,
+        "mean_within_std": 0.0,
+        "median_within_std": 0.0,
+        "n_routes": 50,
+        "share_routes_varying": 0.0
+      },
+      "l_rvh": {
+        "max_within_std": 0.787953,
+        "mean_within_std": 0.152729,
+        "median_within_std": 0.13007,
+        "n_routes": 49,
+        "share_routes_varying": 1.0
+      },
+      "l_zveh_hh": {
+        "max_within_std": 0.305043,
+        "mean_within_std": 0.075792,
+        "median_within_std": 0.063966,
+        "n_routes": 50,
+        "share_routes_varying": 1.0
+      }
+    },
+    "x_variation_note": "INFORMATIONAL on the extended panel (6 vintage labels, 50 routes); battery membership incl. loyo stays FROZEN on the committed 3-year resolution (screen_battery_rows_v21, \u00a79.8)"
+  },
   "reentrant_stylization": {
     "donors": {
       "153": "26",
@@ -294,8 +663,8 @@
     },
     "note": "re-entering routes are X-replicas of the 6 lowest-l_flows fitted routes (fy2019 vintage, input-side ranking) with independent route effects -- adds clusters, not covariate support; real archived shapes (\u00a79.4) would differ"
   },
-  "run_id": "6d7933735638e57561c82b1f4c2b7f81f7a4369219e2300692b76352a1685c66",
-  "schema": "01-P1",
+  "run_id": "d658c644d6c349755c160d35c7e30875fd354bde256b367b76ef2b4cea73488c",
+  "schema": "01-P2",
   "seed": 11,
   "stylizations": [
     "current-shape geometry for all years (archived per-year shapes pending; l_len time-invariant here)",
@@ -315,7 +684,8 @@
       "b1": {
         "arithmetic": "required 0.3208 vs est 0.098652 / est+2se 0.311556",
         "call": "underpowered",
-        "required_at_80pct_47cl": 0.320833,
+        "design": "clusters_47",
+        "required_at_80pct": 0.320833,
         "upper_ref_est_plus_2se": 0.311556,
         "v20_cluster_se": 0.106452,
         "v20_committed_est": 0.098652
@@ -323,7 +693,8 @@
       "b2": {
         "arithmetic": "required 0.1868 vs est 0.087092 / est+2se 0.301814",
         "call": "marginal",
-        "required_at_80pct_47cl": 0.186765,
+        "design": "clusters_47",
+        "required_at_80pct": 0.186765,
         "upper_ref_est_plus_2se": 0.301814,
         "v20_cluster_se": 0.107361,
         "v20_committed_est": 0.087092

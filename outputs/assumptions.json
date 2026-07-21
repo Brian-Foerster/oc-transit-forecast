@@ -1,10 +1,10 @@
 {
   "basis_census": {
-    "definitional": 27,
+    "definitional": 28,
     "judgment": 68,
     "literature": 10,
     "locally-calibrated": 2,
-    "measured": 41
+    "measured": 44
   },
   "dispositions": [
     {
@@ -29,6 +29,16 @@
     },
     {
       "accepted": [
+        "owner directive 2026-07-20 'extend the panel'",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "acs_2021_5yr",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
+    },
+    {
+      "accepted": [
         "owner-directive 2026-07-11",
         "2026-07-14"
       ],
@@ -46,6 +56,16 @@
       "id": "anchor_trend",
       "no_row_reason": "covered-elsewhere:anchor_lo",
       "tier": "config"
+    },
+    {
+      "accepted": [
+        "owner directive 2026-07-20 'extend the panel'",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "apc_ext_fy20_23",
+      "no_row_reason": "covered-elsewhere:drop_fy2020",
+      "tier": "data"
     },
     {
       "accepted": [
@@ -279,6 +299,16 @@
     },
     {
       "accepted": [
+        "owner directive 2026-07-20 'extend the panel'",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "lodes_od_2021",
+      "no_row_reason": "spec-pending:01§9",
+      "tier": "data"
+    },
+    {
+      "accepted": [
         "spec01 §9 pre-registration 2026-07-20",
         "2026-07-20"
       ],
@@ -465,6 +495,16 @@
       "basis": "judgment",
       "id": "screen_n_boot",
       "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner directive 2026-07-20 'extend the panel' (pre-fit freeze on availability facts)",
+        "2026-07-20"
+      ],
+      "basis": "definitional",
+      "id": "screen_panel_ext_fys",
+      "no_row_reason": "definitional",
       "tier": "constant"
     },
     {
@@ -1692,7 +1732,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 148,
+  "n_entries": 152,
   "priors": [
     {
       "basis": "judgment",
@@ -1820,6 +1860,10 @@
       "no_row_reason": "spec-pending:01§9"
     },
     {
+      "id": "acs_2021_5yr",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
     },
@@ -1829,6 +1873,10 @@
     },
     {
       "id": "lodes_od_2019",
+      "no_row_reason": "spec-pending:01§9"
+    },
+    {
+      "id": "lodes_od_2021",
       "no_row_reason": "spec-pending:01§9"
     },
     {
@@ -1858,8 +1906,8 @@
   ],
   "tier_census": {
     "config": 14,
-    "constant": 82,
-    "data": 15,
+    "constant": 83,
+    "data": 18,
     "prior": 19,
     "structural": 18
   },
@@ -1909,6 +1957,23 @@
     }
   },
   "what_changed": [
+    {
+      "history": [
+        [
+          "2026-07-18",
+          "OCTA Bus Operations Performance Measurements FY2017/FY2019/FY2020-Q3 PDFs",
+          "measured",
+          "spec01 S2 -- panel D16; extract_apc.py full-row parse (S0), boardings/RVH validated against the printed b/RVH column to 2dp for every row"
+        ],
+        [
+          "2026-07-20",
+          "FY2017/FY2019/FY2020-Q3 (committed) -- UNCHANGED; panel extended in a NEW entry",
+          "measured",
+          "spec01 §9.9 panel extension (owner directive 'extend the panel'): this committed table is untouched; the four new FYs (FY2020 full / FY2021-23) land in apc_ext_fy20_23 as data/derived/route_boardings_ext.csv, and the extended fit-panel year set is frozen in screen_panel_ext_fys. The LEGACY_MIN_BOARDINGS floor this entry owns stays on the FY2017/FY2019 universe; the new FYs carry NO floor (§9.9.1) -- the asymmetry is stated, and widening THIS entry's committed-year universe remains a separate governed edit here, not an extraction default"
+        ]
+      ],
+      "id": "apc_fy17_19_20"
+    },
     {
       "history": [
         [
@@ -1973,9 +2038,32 @@
           "LODES8 ca_od_main_JT00_2022",
           "measured",
           "phase 2a (spec01 §9) consolidation -- geography fact recorded: ALL LODES8 years are enumerated on 2020 tabulation blocks (LODESTechDoc8.3 'Geography Vintage'), so the 2017/2019/2022 OD vintages share one block frame; the §9.6 manifest's LODES7/2010-block plan was superseded at acquisition. Same raw now also feeds the v2.1 SCAN-side block table data/derived/oc_block_od_2022.csv.gz (858,534 pairs; jobs total 945,997 == the tract table exactly)"
+        ],
+        [
+          "2026-07-20",
+          "LODES8 ca_od_main_JT00_2022",
+          "measured",
+          "spec01 §9.9 panel extension (owner directive 'extend the panel') -- this 2022 vintage now ALSO backs the FY2022 and FY2023 fit-panel rows (§9.9.2 nearest-vintage). STALE-PREMISE CORRECTION: the earlier '2022 is the latest LODES8 release' claim is stale -- LODES8 now ships 2023 (CA od+wac 2023 raws STAGED with sidecars in data/raw/lodes8, no derived tables built). STATED §9.9.2 DECISION: FY2023 rows are FROZEN on the 2022 vintage for this design; re-vintaging FY2023 to LODES 2023 is a governed later amendment, not a silent swap"
         ]
       ],
       "id": "lodes_2022"
+    },
+    {
+      "history": [
+        [
+          "2026-07-20",
+          "LODES8 ca_wac_S000_JT00_{2017,2019,2022}",
+          "measured",
+          "spec01 §9.6 acquisition (phase 1) + phase 2a derived tables oc_block_wac_{2017,2019,2022}.csv"
+        ],
+        [
+          "2026-07-20",
+          "LODES8 ca_wac_S000_JT00_{2017,2019,2021,2022}",
+          "measured",
+          "spec01 §9.9 panel extension (owner directive 'extend the panel') -- 2021 vintage ADDED for the FY2021 panel rows: derived table oc_block_wac_2021.csv (16,015 blocks, C000 1,579,269, CNS15-18 477,808, == independent raw recount). The 2021 C000 (2019 1,685,277 -> 2021 1,579,269 -> 2022 1,697,325) is the coherent COVID trough"
+        ]
+      ],
+      "id": "lodes_wac"
     },
     {
       "history": [
@@ -2010,6 +2098,23 @@
         ]
       ],
       "id": "screen_battery_rho_min"
+    },
+    {
+      "history": [
+        [
+          "2026-07-20",
+          "grid [0,0.8] step 0.05; S=200; B=500 (checked vs 2000); seed 11; 80% power target",
+          "judgment",
+          "owner review 2026-07-20 item 3 -- DESIGN-STAGE power check for tripwire criterion 1 under the v2.1 rebuild, run BEFORE the v2.1 fit (which stays unrun)"
+        ],
+        [
+          "2026-07-20",
+          "grid [0,0.8] step 0.05; S=200; B=500 (checked vs 2000); seed 11; 80% power target",
+          "judgment",
+          "spec01 §9.9 panel extension (owner directive 'extend the panel') -- SAME design knobs re-run on the EXTENDED panel: the artifact gains a panel_ext block (schema 01-P1 -> 01-P2) with the union-presence extended designs (current-shape 41->50; with-replicas 47->63), vintage-matched X per §9.9.2 across the 6-FY set screen_panel_ext_fys, the SAME committed v2.0 variance decomposition (screen_v20_resid_decomp; no variance re-estimated from new data), a BEFORE/AFTER required-elasticity table, and the verdict recomputed under this same pre-stated rule. The committed 3-year clusters_41/clusters_47 blocks are regenerated bit-identically (same seed stream, drawn first)"
+        ]
+      ],
+      "id": "screen_power_check"
     },
     {
       "history": [
@@ -2171,6 +2276,12 @@
           "pooled years with year FE",
           "judgment",
           "spec01 §9.3 pre-registration (phase 2a) -- SUPERSESSION QUEUED: the v2.1 rebuild vintage-matches X (FY2017 rows read 2017 LODES / 2013-17 ACS; FY2019 + FY2020-Q3 read 2019 / 2015-19; the scan keeps 2022/2023), removing the single-cross-section mismatch this entry registers. The supersession LANDS with the phase-2b rebuilt artifact; until then the v2.0 claim stands unchanged"
+        ],
+        [
+          "2026-07-20",
+          "pooled years with year FE",
+          "judgment",
+          "spec01 §9.9 panel extension (owner directive 'extend the panel') -- the vintage-match dispatch now also covers the four new fit-panel years: FY2020 (full) reads 2019 LODES / 2015-19 ACS; FY2021 reads 2021 LODES / 2017-21 ACS (both acquired this batch, lodes_od_2021 / lodes_wac / acs_2021_5yr); FY2022 and FY2023 read 2022 LODES / 2019-23 ACS (§9.9.2). Every extended route-year is vintage-matched, so the single-cross-section mismatch this entry registers still resolves at the phase-2b rebuild -- now over the extended panel"
         ]
       ],
       "id": "x_vintage_mismatch"

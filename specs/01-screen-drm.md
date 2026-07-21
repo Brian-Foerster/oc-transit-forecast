@@ -921,3 +921,143 @@ Freezing before the rebuilt fit exists is the entire point: the
 battery criterion is a MIN, so membership edits after seeing v2.1
 numbers would be a tunable bar. Row changes from here are
 owner-approved spec amendments (§5 freeze discipline, unchanged).
+
+### 9.9 PANEL-EXTENSION ADDENDUM (owner directive 2026-07-20; governed design change under the softened §9.5)
+
+**Owner directive, verbatim: "extend the panel" (2026-07-20).** The
+directive was made on the power arithmetic alone — the design-stage
+power check read criterion 1 as UNDERPOWERED at the committed v2.0
+effect sizes (required-at-80% ~ 0.32/0.19 vs estimates 0.099/0.087,
+outputs/screen_power_check.json) — and BEFORE any v2.1 fit exists.
+This addendum is the governance-rule-3 record of that design change
+(README known issue 39): a method change that is owner-approved,
+spec-amended, and logged, exactly the governed path §9.5 reserves.
+Everything §9 froze stays frozen: predictor set (§9.1), catchment
+rule (§9.2), estimator/tripwire/decision rule (§9.5), battery
+membership (§9.8 — the 20-row [screen_battery_rows_v21] list is
+UNCHANGED by this addendum).
+
+**9.9.1 Frozen extended year set (availability facts only).** The
+extraction (scripts/extract_apc_ext.py, Legistar board-record Q4
+detailed reports) landed, with passing validation, EXACTLY four new
+fiscal years: **fy2020 (full year, 61 routes), fy2021 (50), fy2022
+(53), fy2023 (54)** — 218 route-year rows,
+data/derived/route_boardings_ext.csv. The extended year set is frozen
+on those availability facts and nothing else:
+
+- Landed set: {fy2020, fy2021, fy2022, fy2023}. NOT landed, with the
+  reason on record: FY2013-FY2016 (the older Transit Division report
+  format has no route-level table at all), FY2018 (both known copies
+  embed the tables as raster image strips — unextractable without
+  OCR), FY2024+ (the quarterly report family ends at Q4 FY2022-23;
+  the successor bimonthly deck carries no route-level statistics).
+  The §9.9.2 pre-2017 vintage clause is therefore MOOT — no pre-2017
+  FY landed (the 2013/2015 LODES raws stay staged-only contingency,
+  no derived tables built).
+- The extended fit panel year set is {fy2017, fy2019, fy2020,
+  fy2021, fy2022, fy2023}: **fy2020 full-year SUPERSEDES fy2020q3**
+  (the committed cell is its 9-month subset; the two never co-enter
+  a fit — one FY, one row per route). Availability fact: every
+  committed fy2020q3-fittable route has an ext fy2020 row, so the
+  supersession drops no cluster.
+- Row universe, frozen as landed: fittable = boardings present AND
+  validated RVH present, from route_boardings.csv (fy2017/fy2019)
+  UNION route_boardings_ext.csv (the four new FYs). The single
+  blank-RVH cell (route 560, fy2022, KNOWN_DUP_RVH_EXT) drops by
+  that rule. NO boardings floor is applied to the new FYs — the ext
+  table enters the phase-2b fit exactly as landed (the committed
+  FY2017/FY2019 universe keeps its LEGACY_MIN_BOARDINGS floor; that
+  asymmetry is an availability fact of the two landed tables, and
+  widening the committed years' universe remains a separate governed
+  edit recorded at the apc_fy17_19_20 registry entry). Pre-stating
+  the no-floor rule NOW closes it as a post-fit tuning knob.
+
+**9.9.2 Vintage map for the new rows (extends the §9.3 table; the
+resolve_vintage dispatch is the single mechanical source).**
+
+| boardings year | LODES (OD + WAC) | ACS 5-year | note |
+|---|---|---|---|
+| fy2020 (full) | 2019 vintage | 2015-2019 | carries the committed fy2020q3 rule: 2019 is the last pre-shock enumeration; LODES 2020 embeds the shock, not the fundamentals the screen ranks |
+| fy2021 | 2021 vintage | 2017-2021 | both acquired this batch; ACS 2017-21 is the FIRST 5-yr vintage published on 2020 tracts — no tract10-to-tract20 bridge for these rows (registry acs_2021_5yr, lodes_od_2021, lodes_wac) |
+| fy2022 | 2022 vintage | 2019-2023 | the committed scan-side tables (nearest acquired vintages) |
+| fy2023 | 2022 vintage | 2019-2023 | DECISION, stated: LODES8 now ships 2023 (the acquisition batch's premise correction; CA od+wac 2023 raws are STAGED with sidecars) — but FY2023 rows are FROZEN on the 2022 vintage for this design: the nearest-vintage disposition as registered at lodes_2022, no 2023 derived tables built. Re-vintaging FY2023 to LODES 2023 is a governed later amendment, not a silent swap |
+| pre-2017 FYs | — | — | none landed; clause moot (nearest-LODES + stated-ACS rule would have applied) |
+
+**9.9.3 Shape-vintage policy.** UNCHANGED from §9.4: fit-side
+catchments for ALL years — the original three AND the four new FYs —
+remain gated on the archived-GTFS acquisition (the owner's Mobility
+Database token; no archived-GTFS data-tier entries exist until it
+lands). The design-stage POWER CHECK may use the current-shape
+(2026-07 GTFS) stylization for every year, stated as such in its
+artifact: l_len is time-invariant under it, and routes with no
+2026-07 shape enter only as X-replica clusters. Consequence of the
+extension, on availability facts: 9 ext routes DO have 2026-07
+weekday shapes (76, 123, 177, 453, 472, 473, 480, 553, 862), so the
+current-shape fit universe grows 41 -> 50; 13 union routes have
+fittable rows but no current shape (the §9.4 six — 24, 82, 153, 53X,
+57X, 64X — plus 87, 206, 213, 463, 701, 721, 794), so the
+with-replicas design grows 47 -> 63. The §9.4 fit/scan asymmetry and
+the archived-GTFS re-entry plan are unchanged.
+
+**9.9.4 Validation protocol for route_boardings_ext.csv (all gates
+standing in scripts/test_extract_apc_ext.py + the extractor).**
+
+1. Per-row 2dp interval gate: every emitted row reproduces the
+   printed Board/VSH column to 2dp (the house protocol, imported
+   from extract_apc.py — same code path as the committed table).
+2. Anchor cross-validation (G3): the same parser on the Legistar
+   FY2017/FY2019 Q4 copies reproduces EVERY committed
+   route_boardings.csv cell exactly — all boardings, all RVH,
+   including the three KNOWN_BAD_RVH blanks failing 2dp identically.
+3. Within-FY2020 coherence (G4): full-year boardings >= the
+   committed 9-month fy2020q3 for every shared cell; the six RVH
+   cells printed BELOW the 9-month YTD (150/529/53X/560/57X/64X) are
+   recorded as COVID Express-suspension source revisions in the Q4
+   print, both prints passing their own 2dp checks.
+4. FYTD bound (G5): the two Q2 fiscal-year-to-date reports are
+   cross-checks only (their annual-looking headers sit over YTD
+   data — the extraction's source correction); FYTD <= annual for
+   every route in both, and no route appears in a Q2 file but not
+   the annual.
+5. Known defect, frozen: ONE blank RVH cell (560, fy2022,
+   KNOWN_DUP_RVH_EXT — the source's two sort-order tables print RVH
+   variants 22,387/22,382 with boardings agreeing; neither is
+   forensically preferable, so boardings kept, RVH blank; the
+   KNOWN_BAD_RVH precedent).
+6. Schema, uniqueness, new-FY-only labels (T8); deterministic
+   byte-identical rebuild (sha256 e39f74f3...aed5c); per-FY
+   provenance sidecars (URL, bytes, sha256, Legistar matter id)
+   under data/raw/apc_ext/.
+
+**9.9.5 Contamination guard (restated, extended).** The new
+route-year boardings are OUTCOME data. Their EXISTENCE (which
+route-years) informs this design; their VALUES are never regressed
+on or joined to any predictor matrix until phase 2b. The power
+check's re-run reads route_boardings_ext.csv through a guarded
+loader for (i) the presence mask and (ii) the validated RVH values
+ONLY (RVH is the b3 predictor passthrough, exactly the committed
+table's load_rvh treatment); boardings values are dropped inside the
+loader and never leave it (test_screen_power.py G1/G2, extended).
+The blanket module ban in test_extract_apc_ext.py T7 carries the
+single corresponding carve-out for scripts/screen_power.py — every
+other predictor/fit module stays banned. The power machinery keeps
+consuming ONLY the committed v2.0 variance decomposition
+(screen_v20_resid_decomp); no variance is re-estimated from any new
+data.
+
+**9.9.6 Power-check re-run (this batch).** scripts/screen_power.py
+gains a panel_ext block in outputs/screen_power_check.json: same
+grid/S/B/seed/criterion knobs [screen_power_check], same v2.0
+variance decomposition, vintage-matched X per §9.9.2 for every
+route-year, extended-panel year FE (5 FE + intercept + 5 slopes),
+BOTH designs (50 current-shape clusters; 63 with X-replicas — the
+donor-replication stylization carried over, donors = the N
+lowest-l_flows fitted routes at the fy2019 vintage), an explicit
+BEFORE/AFTER required-elasticity table against the committed 3-year
+numbers, and the verdict recomputed under the pre-stated registry
+rule (with-replicas design vs the committed v2.0 estimates +/-
+verdict_se_mult cluster SEs). The extended panel's frozen year list
+is the registry constant [screen_panel_ext_fys], consumed via
+val(). The baseline 3-year blocks are regenerated bit-identically
+(same seed stream, drawn first); the artifact remains deterministic
+(dual fresh-process byte-identity, a standing gate).

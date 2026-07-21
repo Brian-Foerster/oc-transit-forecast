@@ -669,3 +669,45 @@ of the tripwire entries and the normalization entry respectively.
     elasticities ≈ 0.32 (b1) / 0.19 (b2) at 47 clusters vs committed
     v2.0 estimates 0.099 / 0.087 — on synthetic outcomes with the
     v2.1 predictor design; the v2.1 fit itself stays unrun.
+39. **Owner directive (2026-07-20): "extend the panel" — a governed
+    §9.5 design change (rule-3 log), made on the power arithmetic and
+    BEFORE any v2.1 fit exists (issue 38).** The design-stage power
+    check read criterion 1 as underpowered at the committed effect
+    sizes, so the owner directed extending the fit panel with more
+    route-years. Recorded in spec 01 §9.9 (the pre-fit governance
+    record): the extended year set is FROZEN on availability facts
+    alone — the OCTA Legistar board record yields, with passing 2dp
+    validation, exactly four new fiscal years (registry
+    `screen_panel_ext_fys` = FY2017/FY2019/FY2020/FY2021/FY2022/FY2023;
+    the four NEW are FY2020 full-year, FY2021, FY2022, FY2023 in
+    `data/derived/route_boardings_ext.csv`, 218 route-years,
+    `apc_ext_fy20_23`). FY2020 full-year SUPERSEDES the committed
+    9-month FY2020-Q3; FY2013–16 (no route-level table in the older
+    format), FY2018 (raster-strip tables, no text layer) and FY2024+
+    (successor bimonthly deck has no route-level statistics) did NOT
+    land, so no year set is tuned to fit results. Vintages are
+    matched per §9.9.2 (FY2021 → LODES 2021 / ACS 2017-21, the first
+    5-yr vintage on 2020 tracts so no bridge — `lodes_od_2021`,
+    `acs_2021_5yr`; FY2022-23 → LODES 2022 / ACS 2019-23 with FY2023
+    frozen on 2022 by the stated decision, `lodes_2022`). The
+    CONTAMINATION GUARD holds: the new boardings are outcome data,
+    barred from any predictor matrix until phase 2b — the power check
+    reads them through a guarded loader for the route-year PRESENCE
+    mask and the validated b3 RVH ONLY (values dropped inside the
+    loader; test `G1/G2e`), and keeps using ONLY the committed v2.0
+    variance decomposition. The power check re-ran on the extended
+    design (`outputs/screen_power_check.json` `panel_ext` block, schema
+    01-P2): current-shape clusters 41→50, with-replicas 47→63, rows
+    130→333, same grid/S/B/seed knobs, six vintage-matched years vs
+    three. Required-at-80% elasticities drop about a third (with-
+    replicas: b1 0.321→0.219, b2 0.187→0.126, joint 0.333→0.224;
+    current-shape: b1 0.308→0.240, b2 0.188→0.150) — the extra
+    route-years add clusters, rows and within-route covariate spread.
+    The verdict MOVES from UNDERPOWERED to **MARGINAL**: the required
+    true elasticities now sit within 2 cluster-SEs of the committed
+    v2.0 estimates (b1 est 0.099 / est+2se 0.312 vs required 0.219;
+    b2 est 0.087 / est+2se 0.302 vs required 0.126) but still ABOVE the
+    point estimates, so not adequately powered. The baseline 3-year
+    blocks regenerate bit-identically (BEFORE numbers unchanged;
+    committed-run `underpowered`). The v2.1 fit itself still stays
+    unrun — this remains a design-stage read on synthetic outcomes.

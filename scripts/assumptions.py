@@ -1959,7 +1959,24 @@ ASSUMPTIONS = {
                      "owner review 2026-07-20 item 3 -- DESIGN-STAGE power "
                      "check for tripwire criterion 1 under the v2.1 "
                      "rebuild, run BEFORE the v2.1 fit (which stays "
-                     "unrun)")],
+                     "unrun)"),
+                    ("2026-07-20",
+                     "grid [0,0.8] step 0.05; S=200; B=500 (checked vs "
+                     "2000); seed 11; 80% power target", "judgment",
+                     "spec01 §9.9 panel extension (owner directive 'extend "
+                     "the panel') -- SAME design knobs re-run on the "
+                     "EXTENDED panel: the artifact gains a panel_ext block "
+                     "(schema 01-P1 -> 01-P2) with the union-presence "
+                     "extended designs (current-shape 41->50; with-replicas "
+                     "47->63), vintage-matched X per §9.9.2 across the "
+                     "6-FY set screen_panel_ext_fys, the SAME committed "
+                     "v2.0 variance decomposition (screen_v20_resid_decomp; "
+                     "no variance re-estimated from new data), a BEFORE/"
+                     "AFTER required-elasticity table, and the verdict "
+                     "recomputed under this same pre-stated rule. The "
+                     "committed 3-year clusters_41/clusters_47 blocks are "
+                     "regenerated bit-identically (same seed stream, drawn "
+                     "first)")],
         "provenance": "scripts/screen_power.py consumes this dict via "
                       "val(): what true demand elasticities (b1, b2) would "
                       "clear criterion 1's bootstrap sign fraction >= "
@@ -2026,6 +2043,65 @@ ASSUMPTIONS = {
         "logged": "README known-issue 38",
         "upgrade": "phase 2b rebuilt fit (v2.1's own decomposition "
                    "supersedes this matching)",
+    },
+    "screen_panel_ext_fys": {
+        "title": "v2.1 EXTENDED fit-panel fiscal-year set (owner directive "
+                 "2026-07-20 'extend the panel'; frozen on availability "
+                 "facts, pre-fit)",
+        "tier": "constant", "status": "active",
+        "value": ["fy2017", "fy2019", "fy2020", "fy2021", "fy2022",
+                  "fy2023"],
+        "units": "boardings fiscal-year labels", "band": None,
+        "basis": "definitional",
+        "history": [("2026-07-20",
+                     ["fy2017", "fy2019", "fy2020", "fy2021", "fy2022",
+                      "fy2023"], "definitional",
+                     "owner directive 2026-07-20 'extend the panel' "
+                     "(spec 01 §9.9 addendum) -- FROZEN on availability "
+                     "facts ALONE, before any v2.1 fit exists: the "
+                     "extraction (scripts/extract_apc_ext.py, Legistar "
+                     "board-record Q4 detailed reports) landed EXACTLY "
+                     "four new FYs with passing validation -- fy2020 "
+                     "(full year, 61 routes), fy2021 (50), fy2022 (53), "
+                     "fy2023 (54), 218 route-year rows in "
+                     "data/derived/route_boardings_ext.csv (apc_ext_fy20_23) "
+                     "-- UNION the two surviving committed years fy2017/"
+                     "fy2019. fy2020 full-year SUPERSEDES the committed "
+                     "9-month fy2020q3 (the two never co-enter a fit; "
+                     "§9.9.1). NOT landed, on record: FY2013-16 (older "
+                     "Transit Division format, no route-level table), "
+                     "FY2018 (raster image strips, no text layer), FY2024+ "
+                     "(successor bimonthly deck carries no route-level "
+                     "statistics) -- so the §9.9.2 pre-2017 vintage clause "
+                     "is MOOT")],
+        "provenance": "the CLOSED fiscal-year set for the spec 01 §9.9 "
+                      "extended panel, consumed via val() by "
+                      "scripts/screen_power.py (load_rvh_ext + the panel_ext "
+                      "block; NO literal in code). Ordered fy2017 first so "
+                      "fys[1:] are the year-FE dummies (base year fy2017; "
+                      "5 FE + intercept + 5 §9.1 slopes = 11 columns). "
+                      "Freezing the year set NOW -- before the rebuilt fit "
+                      "exists -- is the governance point (screen_battery_"
+                      "rows_v21 precedent): the extension is a MIN-changing "
+                      "design edit, so year-set edits after seeing v2.1 "
+                      "numbers would be a tunable bar. Adding a FY here is "
+                      "an owner-approved §9.5 spec amendment, never a "
+                      "data-file side effect -- load_rvh_ext RAISES if "
+                      "route_boardings_ext.csv carries any FY label outside "
+                      "this set. CONTAMINATION GUARD (§9.9.5): the boardings "
+                      "VALUES behind these FYs are outcome data barred from "
+                      "any predictor matrix until phase 2b; only the "
+                      "route-year PRESENCE mask and the validated b3 RVH "
+                      "passthrough leave the guarded loader (test_screen_"
+                      "power.py G1/G2e)",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner directive 2026-07-20 'extend the panel' "
+                     "(pre-fit freeze on availability facts)", "2026-07-20"),
+        "logged": "README known-issue 39",
+        "upgrade": "phase 2b rebuilt fit on the extended panel (the year "
+                   "set goes live as the fit's row universe; a landed "
+                   "archived-GTFS token would also unlock fit-side "
+                   "per-year shapes, §9.9.3)",
     },
 
     # ===== structural tier (governance toggles; NOT owned) ==================
@@ -2251,7 +2327,19 @@ ASSUMPTIONS = {
                      "2022/2023), removing the single-cross-section "
                      "mismatch this entry registers. The supersession "
                      "LANDS with the phase-2b rebuilt artifact; until then "
-                     "the v2.0 claim stands unchanged")],
+                     "the v2.0 claim stands unchanged"),
+                    ("2026-07-20", "pooled years with year FE", "judgment",
+                     "spec01 §9.9 panel extension (owner directive 'extend "
+                     "the panel') -- the vintage-match dispatch now also "
+                     "covers the four new fit-panel years: FY2020 (full) "
+                     "reads 2019 LODES / 2015-19 ACS; FY2021 reads 2021 "
+                     "LODES / 2017-21 ACS (both acquired this batch, "
+                     "lodes_od_2021 / lodes_wac / acs_2021_5yr); FY2022 and "
+                     "FY2023 read 2022 LODES / 2019-23 ACS (§9.9.2). Every "
+                     "extended route-year is vintage-matched, so the "
+                     "single-cross-section mismatch this entry registers "
+                     "still resolves at the phase-2b rebuild -- now over "
+                     "the extended panel")],
         "provenance": "the screen regresses FY2017/FY2019/FY2020-Q3 boardings "
                       "on 2022 LODES / 2019-2023 ACS predictors -- a "
                       "post-COVID, WFH-reshaped commute shape explaining "
@@ -2686,7 +2774,19 @@ ASSUMPTIONS = {
                      "block plan was superseded at acquisition. Same raw "
                      "now also feeds the v2.1 SCAN-side block table "
                      "data/derived/oc_block_od_2022.csv.gz (858,534 pairs; "
-                     "jobs total 945,997 == the tract table exactly)")],
+                     "jobs total 945,997 == the tract table exactly)"),
+                    ("2026-07-20", "LODES8 ca_od_main_JT00_2022", "measured",
+                     "spec01 §9.9 panel extension (owner directive 'extend "
+                     "the panel') -- this 2022 vintage now ALSO backs the "
+                     "FY2022 and FY2023 fit-panel rows (§9.9.2 nearest-"
+                     "vintage). STALE-PREMISE CORRECTION: the earlier "
+                     "'2022 is the latest LODES8 release' claim is stale -- "
+                     "LODES8 now ships 2023 (CA od+wac 2023 raws STAGED "
+                     "with sidecars in data/raw/lodes8, no derived tables "
+                     "built). STATED §9.9.2 DECISION: FY2023 rows are "
+                     "FROZEN on the 2022 vintage for this design; "
+                     "re-vintaging FY2023 to LODES 2023 is a governed "
+                     "later amendment, not a silent swap")],
         "provenance": "US Census LEHD LODES8 CA commute O-D, block level, "
                       "aggregated to OC tract pairs (scripts/build_derived.py "
                       "reads ca_od_main_JT00_2022.csv.gz; scripts/download_data.py "
@@ -2829,7 +2929,21 @@ ASSUMPTIONS = {
                      "measured",
                      "spec01 S2 -- panel D16; extract_apc.py full-row parse "
                      "(S0), boardings/RVH validated against the printed "
-                     "b/RVH column to 2dp for every row")],
+                     "b/RVH column to 2dp for every row"),
+                    ("2026-07-20",
+                     "FY2017/FY2019/FY2020-Q3 (committed) -- UNCHANGED; "
+                     "panel extended in a NEW entry", "measured",
+                     "spec01 §9.9 panel extension (owner directive 'extend "
+                     "the panel'): this committed table is untouched; the "
+                     "four new FYs (FY2020 full / FY2021-23) land in "
+                     "apc_ext_fy20_23 as data/derived/route_boardings_ext"
+                     ".csv, and the extended fit-panel year set is frozen "
+                     "in screen_panel_ext_fys. The LEGACY_MIN_BOARDINGS "
+                     "floor this entry owns stays on the FY2017/FY2019 "
+                     "universe; the new FYs carry NO floor (§9.9.1) -- the "
+                     "asymmetry is stated, and widening THIS entry's "
+                     "committed-year universe remains a separate governed "
+                     "edit here, not an extraction default")],
         "provenance": "the y-side vintage of the stage-1 screen: route-level "
                       "annual boardings + revenue hours extracted from the "
                       "on-disk OCTA quarterly performance PDFs (data/raw/apc "
@@ -2857,6 +2971,68 @@ ASSUMPTIONS = {
         "logged": None,
         "upgrade": "records request items 1a/1b (FY2014-16 + post-FY2021 "
                    "route-level; widened item 2 = systemwide stop-level APC)",
+    },
+    "apc_ext_fy20_23": {
+        "title": "APC route-level boardings+RVH panel EXTENSION "
+                 "(FY2020 full / FY2021 / FY2022 / FY2023)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20",
+                     "OCTA Q4 detailed reports FY2020/FY2021/FY2022/FY2023 "
+                     "(Legistar board-record PDFs)", "measured",
+                     "spec01 §9.9 panel extension (owner directive 'extend "
+                     "the panel') -- scripts/extract_apc_ext.py -> "
+                     "data/derived/route_boardings_ext.csv, 218 route-year "
+                     "rows, every row's boardings/RVH validated against the "
+                     "printed Board/VSH column to 2dp (the extract_apc.py "
+                     "house protocol)")],
+        "provenance": "the EXTENDED y-side vintage of the stage-1 screen: "
+                      "route-level annual boardings + revenue hours "
+                      "extracted from the OCTA quarterly performance 'Q4 "
+                      "detailed report' family, located via the Legistar "
+                      "web API (webapi.legistar.com/v1/octa; per-FY matter "
+                      "ids 8978/9063/10055/10647; provenance sidecars -- "
+                      "URL, bytes, sha256, matter id -- under "
+                      "data/raw/apc_ext/, gitignored like data/raw/apc). "
+                      "SOURCE CORRECTION on record: the two Q2 reports the "
+                      "recon cited carry fiscal-year-TO-DATE data under "
+                      "annual-looking headers, NOT annual tables; the "
+                      "annual 'Operating Statistics By Route' tables live "
+                      "in the Q4 reports (exactly how committed FY2017/"
+                      "FY2019 were sourced) and the Q2 files are kept as "
+                      "FYTD<=annual cross-checks (gate G5). The dataset is "
+                      "measured; the ASSUMPTION is the §9.9.1 FROZEN "
+                      "YEAR-SET CHOICE (screen_panel_ext_fys): exactly the "
+                      "four FYs that landed with passing validation -- "
+                      "fy2020 (61 routes, 30,617,349 boardings; full-year "
+                      "SUPERSEDES the committed 9-month fy2020q3), fy2021 "
+                      "(50; deepest-COVID year), fy2022 (53), fy2023 (54; "
+                      "strongest post-COVID). CROSS-VALIDATION: the same "
+                      "parser on the Legistar FY2017/FY2019 Q4 copies "
+                      "reproduces EVERY committed route_boardings.csv cell "
+                      "exactly (all boardings, all RVH, incl. the three "
+                      "KNOWN_BAD_RVH blanks). ONE new defect, frozen: route "
+                      "560/fy2022 RVH blanked (KNOWN_DUP_RVH_EXT -- two "
+                      "sort-order tables print RVH 22,387/22,382 with "
+                      "boardings agreeing; neither forensically preferable; "
+                      "the KNOWN_BAD_RVH precedent). NO boardings floor is "
+                      "applied to the new FYs (§9.9.1) -- unlike the "
+                      "committed years' LEGACY_MIN_BOARDINGS floor "
+                      "(apc_fy17_19_20); the asymmetry is an availability "
+                      "fact of the two tables, pre-stated to close it as a "
+                      "post-fit tuning knob. CONTAMINATION GUARD (§9.9.5): "
+                      "these boardings are outcome data barred from any "
+                      "predictor matrix until phase 2b; test_extract_apc_"
+                      "ext.py T7 blanket-bans every predictor/fit module "
+                      "from route_boardings_ext with the single "
+                      "screen_power.py presence+RVH carve-out",
+        "rows": {}, "no_row_reason": "covered-elsewhere:drop_fy2020",
+        "accepted": ("owner directive 2026-07-20 'extend the panel'",
+                     "2026-07-20"),
+        "logged": "README known-issue 39",
+        "upgrade": "phase 2b rebuilt fit on the extended panel; a landed "
+                   "OCR pass would recover FY2018 (raster-strip tables); "
+                   "no route-level FY2013-16 / FY2024+ source exists in "
+                   "OCTA's public board record",
     },
 
     # ---- v2.1 acquisition vintages (spec 01 §9.6; phase 2a consolidation) --
@@ -2910,25 +3086,66 @@ ASSUMPTIONS = {
         "logged": None,
         "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
     },
+    "lodes_od_2021": {
+        "title": "LODES8 commute O-D 2021 vintage (v2.1 fit-side b1, FY2021; "
+                 "panel extension)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20", "LODES8 ca_od_main_JT00_2021", "measured",
+                     "spec01 §9.9 panel-extension acquisition (owner "
+                     "directive 'extend the panel') + derived table "
+                     "oc_block_od_2021.csv.gz")],
+        "provenance": "US Census LEHD LODES8 CA O-D main JT00 2021, block "
+                      "level (data/raw/lodes8/ca_od_main_JT00_2021.csv.gz + "
+                      "sidecar; OC-to-OC block pairs -> data/derived/"
+                      "oc_block_od_2021.csv.gz, 813,561 pairs / 888,980 "
+                      "jobs, scripts/build_derived_v21.py). The ASSUMPTION "
+                      "is the §9.9.2 VINTAGE MATCH: FY2021 boardings rows "
+                      "read THIS vintage for b1 both-ends-in flows (the "
+                      "newly extracted panel year, apc_ext_fy20_23). "
+                      "Enumerated on 2020 tabulation blocks like every "
+                      "LODES8 year (LODESTechDoc8.3 'Geography Vintage'), "
+                      "one block frame with 2017/2019/2022. The 2021 dip "
+                      "(od jobs 964,854 in 2019 -> 888,980 in 2021 -> "
+                      "945,997 in 2022) is the coherent COVID trough, an "
+                      "availability fact recorded, not smoothed",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("owner directive 2026-07-20 'extend the panel'",
+                     "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
+    },
     "lodes_wac": {
-        "title": "LODES8 WAC vintages 2017/2019/2022 (v2.1 b4 generator "
-                 "jobs, CNS15-18)",
+        "title": "LODES8 WAC vintages 2017/2019/2021/2022 (v2.1 b4 "
+                 "generator jobs, CNS15-18)",
         "tier": "data", "status": "active", "basis": "measured",
         "history": [("2026-07-20",
                      "LODES8 ca_wac_S000_JT00_{2017,2019,2022}", "measured",
                      "spec01 §9.6 acquisition (phase 1) + phase 2a derived "
-                     "tables oc_block_wac_{2017,2019,2022}.csv")],
+                     "tables oc_block_wac_{2017,2019,2022}.csv"),
+                    ("2026-07-20",
+                     "LODES8 ca_wac_S000_JT00_{2017,2019,2021,2022}",
+                     "measured",
+                     "spec01 §9.9 panel extension (owner directive 'extend "
+                     "the panel') -- 2021 vintage ADDED for the FY2021 "
+                     "panel rows: derived table oc_block_wac_2021.csv "
+                     "(16,015 blocks, C000 1,579,269, CNS15-18 477,808, == "
+                     "independent raw recount). The 2021 C000 (2019 "
+                     "1,685,277 -> 2021 1,579,269 -> 2022 1,697,325) is the "
+                     "coherent COVID trough")],
         "provenance": "US Census LEHD LODES8 CA WAC S000 JT00, block level, "
-                      "three vintages (data/raw/lodes8 sidecars; OC blocks "
-                      "-> data/derived/oc_block_wac_{2017,2019,2022}.csv). "
-                      "Feeds the §9.1 b4 generator-jobs predictor as the "
-                      "sum of the gen_jobs_naics columns -- CNS15 = NAICS "
-                      "61 edu, CNS16 = 62 health, CNS17 = 71 arts/rec, "
-                      "CNS18 = 72 accommodation/food (LODESTechDoc8.3 "
-                      "column map, recorded in each sidecar). §9.3 vintage "
-                      "match: 2017 -> FY2017 rows, 2019 -> FY2019/FY2020-Q3 "
-                      "rows, 2022 -> the scan side. 2020-block geography "
-                      "for all years (TechDoc8.3)",
+                      "FOUR vintages (data/raw/lodes8 sidecars; OC blocks "
+                      "-> data/derived/oc_block_wac_{2017,2019,2021,2022}"
+                      ".csv). Feeds the §9.1 b4 generator-jobs predictor as "
+                      "the sum of the gen_jobs_naics columns -- CNS15 = "
+                      "NAICS 61 edu, CNS16 = 62 health, CNS17 = 71 "
+                      "arts/rec, CNS18 = 72 accommodation/food "
+                      "(LODESTechDoc8.3 column map, recorded in each "
+                      "sidecar). Vintage match: 2017 -> FY2017 rows, 2019 "
+                      "-> FY2019/FY2020-Q3/FY2020 rows (§9.3 + §9.9.2 -- "
+                      "2019 is the last pre-shock enumeration), 2021 -> "
+                      "FY2021 rows (§9.9.2), 2022 -> FY2022/FY2023 rows + "
+                      "the scan side. 2020-block geography for all years "
+                      "(TechDoc8.3)",
         "rows": {}, "no_row_reason": "spec-pending:01§9",
         "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
         "logged": None,
@@ -3031,6 +3248,42 @@ ASSUMPTIONS = {
                       "the phase-1 oc_{b25044,b01003}_2023.csv tidies",
         "rows": {}, "no_row_reason": "spec-pending:01§9",
         "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
+        "logged": None,
+        "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
+    },
+    "acs_2021_5yr": {
+        "title": "ACS 2017-2021 5-yr vintage (v2.1 FY2021 X: B25044 / "
+                 "B01003 / B08141; panel extension)",
+        "tier": "data", "status": "active", "basis": "measured",
+        "history": [("2026-07-20",
+                     "ACS 2017-2021 5-yr table-based summary file "
+                     "(B25044 / B01003 / B08141)", "measured",
+                     "spec01 §9.9 panel-extension acquisition (owner "
+                     "directive 'extend the panel') -> tidy tables in "
+                     "data/derived (committed)")],
+        "provenance": "Census ACS 2017-2021 5-yr TABLE-BASED summary file, "
+                      "CA tract (data/raw/acs/acsdt5y2021-{b01003,b08141,"
+                      "b25044}.dat + sidecars; the table-based-SF/data/"
+                      "5YRData path -- the prototype/ and sequence-based "
+                      "paths 404 for 2021, probed and recorded in "
+                      "scripts/acs_vintage_build.py; -> data/derived/"
+                      "oc_{b01003,b08141,b25044}_2021.csv, 614 tracts each, "
+                      "tract-sum == county TRUE for all three: E001 "
+                      "1,555,720 / zveh 1,057,592 / pop 3,182,923). §9.9.2 "
+                      "vintage match: FY2021 boardings rows read these for "
+                      "b2 zero-vehicle households (B25044 E003+E010), "
+                      "popden_swap (B01003/ALAND) and the e002/e016 swap "
+                      "inputs. DISTINGUISHING GEOGRAPHY FACT: 2017-2021 is "
+                      "the FIRST 5-yr vintage published on 2020 TRACTS -- "
+                      "same frame as acs_2023, so NO oc_tract10_to_tract20 "
+                      "bridge is applied for FY2021 rows (unlike "
+                      "acs_2017_5yr / acs_2019_5yr, which are 2010-tract "
+                      "and bridged); screen_common_v21._ACS_FILES tags the "
+                      "2021 vintage 't20', pop-weight apportioned to blocks "
+                      "directly",
+        "rows": {}, "no_row_reason": "spec-pending:01§9",
+        "accepted": ("owner directive 2026-07-20 'extend the panel'",
+                     "2026-07-20"),
         "logged": None,
         "upgrade": "phase 2b rebuilt fit (vintage-matched battery rows)",
     },

@@ -5,7 +5,15 @@ Phase 2a (spec 01 §9): the tidy oc_* outputs are DERIVED tables, so they are
 written to data/derived (committed) rather than the gitignored data/raw/acs
 where the phase-1 acquisition first left them; the raw summary-file inputs
 stay in data/raw/acs with their provenance sidecars."""
-import csv, hashlib, io, os, time, zipfile
+import csv, hashlib, io, os, sys, time, zipfile
+
+# Optional vintage filter: `python -X utf8 scripts/acs_vintage_build.py 2021`
+# rebuilds only that vintage's tidies (so extending the panel does not touch
+# the provenance sidecars of already-committed vintages). No args = full
+# rebuild including the 2017 sequence tidies and the crosswalk analysis.
+ONLY = set(sys.argv[1:])
+def want(v):
+    return not ONLY or str(v) in ONLY
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAW = os.path.join(HERE, "..", "data", "raw", "acs")
@@ -66,23 +74,34 @@ B08141_IDS = ["001", "002", "003", "004", "005", "016", "017", "018", "019", "02
 B25044_IDS = ["001", "003", "010"]
 B01003_IDS = ["001"]
 
-tidy_dat(2019, "B08141", B08141_IDS, "oc_b08141_2019.csv")
-tidy_dat(2019, "B25044", B25044_IDS, "oc_b25044_2019.csv")
-tidy_dat(2019, "B01003", B01003_IDS, "oc_b01003_2019.csv")
-tidy_dat(2023, "B25044", B25044_IDS, "oc_b25044_2023.csv")
-tidy_dat(2023, "B01003", B01003_IDS, "oc_b01003_2023.csv")
+if want(2019):
+    tidy_dat(2019, "B08141", B08141_IDS, "oc_b08141_2019.csv")
+    tidy_dat(2019, "B25044", B25044_IDS, "oc_b25044_2019.csv")
+    tidy_dat(2019, "B01003", B01003_IDS, "oc_b01003_2019.csv")
+if want(2021):
+    # 2017-2021 5-yr (FY2021 panel rows): table-based summary file, 2020-tract
+    # geography (first 5-yr vintage on 2020 tracts -- same frame as 2023, no
+    # tract10 bridge needed). Lives in table-based-SF/data/5YRData (the
+    # prototype dir was probed and 404s for 2021).
+    tidy_dat(2021, "B08141", B08141_IDS, "oc_b08141_2021.csv")
+    tidy_dat(2021, "B25044", B25044_IDS, "oc_b25044_2021.csv")
+    tidy_dat(2021, "B01003", B01003_IDS, "oc_b01003_2021.csv")
+if want(2023):
+    tidy_dat(2023, "B25044", B25044_IDS, "oc_b25044_2023.csv")
+    tidy_dat(2023, "B01003", B01003_IDS, "oc_b01003_2023.csv")
 
 # ---------- 2017 sequence-based files ----------
 # geography: g20175ca.csv -> LOGRECNO for OC tracts (sumlevel 140, county 059)
 logrec = {}
-with open(os.path.join(RAW, "g20175ca.csv"), encoding="latin-1") as f:
-    for row in csv.reader(f):
-        # FILEID,STUSAB,SUMLEVEL,COMPONENT,LOGRECNO,...; GEOID field starts '1400000US'
-        if row[2] == "140" and row[3] == "00":
-            geoid_full = next((x for x in row if x.startswith("14000US")), None)
-            if geoid_full and geoid_full.startswith("14000US06059"):
-                logrec[row[4]] = geoid_full[-11:]
-print(f"g20175ca: {len(logrec)} OC tract logrecnos")
+if want(2017):
+    with open(os.path.join(RAW, "g20175ca.csv"), encoding="latin-1") as f:
+        for row in csv.reader(f):
+            # FILEID,STUSAB,SUMLEVEL,COMPONENT,LOGRECNO,...; GEOID field starts '1400000US'
+            if row[2] == "140" and row[3] == "00":
+                geoid_full = next((x for x in row if x.startswith("14000US")), None)
+                if geoid_full and geoid_full.startswith("14000US06059"):
+                    logrec[row[4]] = geoid_full[-11:]
+    print(f"g20175ca: {len(logrec)} OC tract logrecnos")
 
 def tidy_seq(seq, table, start, cell_offsets, fname):
     """start = 1-based field position of table cell 1; cell_offsets = 0-based offsets of wanted cells."""
@@ -109,17 +128,20 @@ def tidy_seq(seq, table, start, cell_offsets, fname):
     tract_sum = sum(int(r[1]) for r in rows if r[1] not in ("", "."))
     print(f"  sanity 2017 {table}: tracts={len(rows)} tract_sum_E001={tract_sum}")
 
-# B08141 seq 0028, start 40, cells 1-5 and 16-20
-cell_ids = B08141_IDS
-tidy_seq("0028", "B08141", 40, [0, 1, 2, 3, 4, 15, 16, 17, 18, 19], "oc_b08141_2017.csv")
-# B25044 seq 0105, start 114, cells 1 (total), 3 (owner 0veh), 10 (renter 0veh)
-cell_ids = B25044_IDS
-tidy_seq("0105", "B25044", 114, [0, 2, 9], "oc_b25044_2017.csv")
-# B01003 seq 0003, start 130, cell 1
-cell_ids = B01003_IDS
-tidy_seq("0003", "B01003", 130, [0], "oc_b01003_2017.csv")
+if want(2017):
+    # B08141 seq 0028, start 40, cells 1-5 and 16-20
+    cell_ids = B08141_IDS
+    tidy_seq("0028", "B08141", 40, [0, 1, 2, 3, 4, 15, 16, 17, 18, 19], "oc_b08141_2017.csv")
+    # B25044 seq 0105, start 114, cells 1 (total), 3 (owner 0veh), 10 (renter 0veh)
+    cell_ids = B25044_IDS
+    tidy_seq("0105", "B25044", 114, [0, 2, 9], "oc_b25044_2017.csv")
+    # B01003 seq 0003, start 130, cell 1
+    cell_ids = B01003_IDS
+    tidy_seq("0003", "B01003", 130, [0], "oc_b01003_2017.csv")
 
 # ---------- crosswalk analysis ----------
+if ONLY:
+    sys.exit(0)   # vintage-filtered run: skip the (print-only) crosswalk analysis
 pairs = []
 with open(os.path.join(RAW, "tab20_tract20_tract10_natl.txt"), encoding="utf-8-sig") as f:
     r = csv.reader(f, delimiter="|")

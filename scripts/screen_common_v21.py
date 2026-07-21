@@ -29,7 +29,10 @@ LODES flows are BOTH-ends-in; intra-block rows (h == w) included.
 Vintage plumbing (§9.3): each boardings year gets its own predictor vintage
 -- fy2017 -> LODES 2017 / ACS 2013-17; fy2019 and fy2020q3 -> LODES 2019 /
 ACS 2015-19; the scan -> LODES 2022 / ACS 2019-23. resolve_vintage() is the
-single dispatch table.
+single dispatch table. Panel extension (§9.9.2, owner directive 2026-07-20):
+fy2020 (full year) -> LODES 2019 / ACS 2015-19; fy2021 -> LODES 2021 /
+ACS 2017-21 (2020-tract geography, no bridge); fy2022 and fy2023 -> LODES
+2022 / ACS 2019-23 (fy2023 frozen on 2022 by the stated §9.9.2 decision).
 
 Tract -> block apportionment (documented honestly): ACS tables are published
 at TRACT level; per-block values are tract totals apportioned by 2020
@@ -71,10 +74,20 @@ __all__ = ["VINTAGES", "resolve_vintage", "apportion_to_blocks",
 SQM_PER_SQMI = 1609.344 ** 2                 # ALAND20 m^2 -> sq mi
 
 # §9.3 vintage-match table: boardings-year label -> table vintages.
+# §9.9.2 panel-extension rows (owner directive 2026-07-20): fy2020 full-year
+# carries the fy2020q3 rule (2019 = last pre-shock enumeration); fy2021 is
+# vintage-matched to the newly acquired 2021 tables; fy2022/fy2023 read the
+# committed scan-side vintages -- fy2023 FROZEN on LODES 2022 by the stated
+# §9.9.2 decision (LODES8 2023 raws staged, no derived tables; re-vintaging
+# is a governed later amendment).
 VINTAGES = {
     "fy2017":   {"od": "2017", "wac": "2017", "acs": "2017"},
     "fy2019":   {"od": "2019", "wac": "2019", "acs": "2019"},
     "fy2020q3": {"od": "2019", "wac": "2019", "acs": "2019"},
+    "fy2020":   {"od": "2019", "wac": "2019", "acs": "2019"},
+    "fy2021":   {"od": "2021", "wac": "2021", "acs": "2021"},
+    "fy2022":   {"od": "2022", "wac": "2022", "acs": "2023"},
+    "fy2023":   {"od": "2022", "wac": "2022", "acs": "2023"},
     "scan":     {"od": "2022", "wac": "2022", "acs": "2023"},
 }
 
@@ -289,6 +302,9 @@ _ACS_FILES = {          # acs_vintage -> (b25044, b01003, b08141, geography)
              "oc_b08141_2017.csv", "t10"),
     "2019": ("oc_b25044_2019.csv", "oc_b01003_2019.csv",
              "oc_b08141_2019.csv", "t10"),
+    "2021": ("oc_b25044_2021.csv", "oc_b01003_2021.csv",
+             "oc_b08141_2021.csv", "t20"),  # 2017-21: FIRST 5-yr vintage on
+                                            # 2020 tracts -- no t10 bridge
     "2023": ("oc_b25044_2023.csv", "oc_b01003_2023.csv",
              "oc_b08141.csv", "t20"),      # b08141 2023 = the v2.0 table
 }

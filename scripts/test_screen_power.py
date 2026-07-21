@@ -7,10 +7,13 @@ regress real boardings on v2.1 predictors -- no estimator in
 screen_power.py may see a real outcome value.
 
   G1  source guard (pure): screen_power.py imports no fit module and no
-      estimator package; the boardings CSV is referenced ONLY in/above
-      load_rvh (mask + RVH extraction); the guard marker is present
+      estimator package; NO CSV is opened below the two loaders (mask +
+      RVH extraction); the guard marker is present
   G2  load_rvh returns route/fy/rvh ONLY -- no boardings-shaped column
       leaves the loader (data-gated)
+  G2e load_rvh_ext (the §9.9.5 EXTENDED guarded loader) returns
+      route/fy/rvh ONLY -- boardings values dropped inside; FY labels
+      confined to the frozen screen_panel_ext_fys set (data-gated)
   G3  simulation exactness (pure): the Gram-sum bootstrap delta equals the
       OLS refit on the concatenated resampled rows (the reduction is the
       EXACT criterion-1 refit, not an approximation); same-seed
@@ -54,15 +57,20 @@ def test_g1_source_guard():
         assert banned not in src, \
             f"screen_power.py contains {banned!r} -- the contamination " \
             "guard bars every path to a real-boardings regression"
-    # the boardings CSV appears only in the module docstring + load_rvh
-    # (both precede fit_universe); nothing downstream may re-open it
+    # boardings CSVs are OPENED only inside the two loaders (load_rvh +
+    # load_rvh_ext, both precede fit_universe). The artifact prose below
+    # may NAME the tables, but nothing downstream may re-open one -- so no
+    # CSV read may appear past fit_universe (§9.9.5 guard extension).
     head, tail = src.split("def fit_universe", 1)
+    assert "def load_rvh(" in head and "def load_rvh_ext(" in head, \
+        "a loader moved past fit_universe -- update this guard"
     assert "route_boardings" in head, "load_rvh moved -- update this guard"
-    assert "route_boardings" not in tail, \
-        "route_boardings referenced beyond load_rvh -- guard violation"
+    assert "read_csv" not in tail, \
+        "a CSV is opened below the loaders -- contamination guard " \
+        "violation (only load_rvh/load_rvh_ext may read boardings tables)"
     assert "CONTAMINATION GUARD" in src, "guard statement missing"
-    print("  G1 OK  source guard (no fit imports; boardings CSV confined "
-          "to load_rvh)")
+    print("  G1 OK  source guard (no fit imports; no CSV read below the "
+          "two loaders)")
 
 
 def test_g2_load_rvh_boardings_free():
@@ -76,6 +84,32 @@ def test_g2_load_rvh_boardings_free():
     assert set(rvh["fy"]) <= set(sp.FYS)
     print(f"  G2 OK  load_rvh boardings-free ({len(rvh)} fittable "
           "route-years; columns route/fy/rvh only)")
+
+
+def test_g2e_load_rvh_ext_boardings_free():
+    ext_csv = os.path.join(HERE, "..", "data", "derived",
+                           "route_boardings_ext.csv")
+    if not os.path.exists(ext_csv):
+        print("  G2e SKIP  (route_boardings_ext.csv absent)")
+        return
+    rvh = sp.load_rvh_ext()
+    # the §9.9.5 guard: boardings values are dropped INSIDE the loader
+    assert list(rvh.columns) == ["route", "fy", "rvh"], list(rvh.columns)
+    assert not any("board" in c.lower() for c in rvh.columns)
+    assert (rvh["rvh"] > 0).all()
+    # FY labels confined to the FROZEN extended set (load_rvh_ext RAISES on
+    # any out-of-set label, so a passing csv already satisfies this)
+    fys = set(val("screen_panel_ext_fys"))
+    assert set(rvh["fy"]) <= fys, (set(rvh["fy"]) - fys)
+    # committed survivors AND the four frozen new FYs are all represented
+    assert {"fy2017", "fy2019"} <= set(rvh["fy"]), "committed years missing"
+    assert {"fy2020", "fy2021", "fy2022", "fy2023"} <= set(rvh["fy"]), \
+        "a frozen new FY is missing from the extended fittable table"
+    # fy2020q3 is SUPERSEDED and must never enter the extended loader
+    assert "fy2020q3" not in set(rvh["fy"]), \
+        "fy2020q3 leaked into the extended panel (should be superseded)"
+    print(f"  G2e OK  load_rvh_ext boardings-free ({len(rvh)} fittable "
+          "route-years; route/fy/rvh only; FYs within frozen set)")
 
 
 def _toy_design(rng):
@@ -174,10 +208,10 @@ def test_w3_artifact_and_determinism():
                   "n_boot_check", "disclaimer", "assumptions_manifest",
                   "criterion", "beta_grid", "x_variation",
                   "loyo_resolution", "variance_matching", "designs",
-                  "reentrant_stylization", "stylizations",
+                  "reentrant_stylization", "panel_ext", "stylizations",
                   "literature_comparison", "verdict", "no_contamination"):
             assert k in a, f"missing top-level key {k}"
-        assert a["schema"] == "01-P1"
+        assert a["schema"] == "01-P2"
         cfg = val("screen_power_check")
         assert a["seed"] == cfg["seed"] and a["n_boot"] == cfg["n_boot"]
         assert a["criterion"]["pos_frac_min"] == val("screen_pos_frac_min")
@@ -200,7 +234,38 @@ def test_w3_artifact_and_determinism():
             a["designs"]["clusters_41"]["n_clusters"] + 6
         assert a["verdict"]["overall"] in ("adequately-powered", "marginal",
                                            "underpowered")
+        # --- panel_ext block (spec 01 §9.9) --------------------------------
+        pe = a["panel_ext"]
+        assert pe["frozen_year_set"] == list(val("screen_panel_ext_fys"))
+        assert set(pe["new_fys"]) == {"fy2020", "fy2021", "fy2022", "fy2023"}
+        for lbl in ("ext_current_shape", "ext_with_replicas"):
+            d = pe["designs"][lbl]
+            chk = d["small_b_check"]
+            assert chk["pass"] is True, (lbl, chk)
+            for k in ("b1", "b2", "joint"):
+                assert len(d["power"][k]) == len(a["beta_grid"])
+                assert all(0.0 <= p <= 1.0 for p in d["power"][k])
+        # the extended designs GROW the committed cluster counts, aligned to
+        # the verdict mapping (41 -> current-shape; 47 -> with-replicas)
+        assert pe["designs"]["ext_current_shape"]["n_clusters"] == 50
+        assert pe["designs"]["ext_with_replicas"]["n_clusters"] == 63
+        assert pe["designs"]["ext_with_replicas"]["n_clusters"] == \
+            pe["designs"]["ext_current_shape"]["n_clusters"] \
+            + len(pe["replica_stylization"]["replicas"])
+        # BEFORE/AFTER table wires the committed baselines to the ext designs
+        ba = pe["before_after"]["required_at_80pct"]
+        for k in ("b1", "b2", "joint"):
+            assert ba[k]["before_clusters_41"] == \
+                a["designs"]["clusters_41"]["required_at_power_target"][k]
+            assert ba[k]["before_clusters_47"] == \
+                a["designs"]["clusters_47"]["required_at_power_target"][k]
+            assert ba[k]["after_ext_with_replicas"] == \
+                pe["designs"]["ext_with_replicas"][
+                    "required_at_power_target"][k]
+        assert pe["verdict"]["overall"] in ("adequately-powered",
+                                            "marginal", "underpowered")
         print(f"  W3a OK  artifact schema (verdict {a['verdict']['overall']}; "
+              f"panel_ext verdict {pe['verdict']['overall']}; "
               f"loyo_in {lo['loyo_in_battery']})")
     else:
         print("  W3a SKIP  (outputs/screen_power_check.json absent)")
@@ -217,6 +282,7 @@ def test_w3_artifact_and_determinism():
 if __name__ == "__main__":
     test_g1_source_guard()
     test_g2_load_rvh_boardings_free()
+    test_g2e_load_rvh_ext_boardings_free()
     test_g3_simulation_exactness()
     test_g4_power_arithmetic()
     test_w2_registry_decomposition_pin()

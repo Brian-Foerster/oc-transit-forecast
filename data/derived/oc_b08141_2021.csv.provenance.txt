@@ -1,0 +1,5 @@
+filename: oc_b08141_2021.csv
+derived_from: data/raw/acs/acsdt5y2021-b08141.dat (see its .provenance.txt there for URL/sha256); filtered to GEO_ID prefix 1400000US06059
+bytes: 48869
+sha256: 2b21ebe0ff884f14d92edf1c6c5896908bd2cec0a35a818b175a58caedfa9ff7
+created: 2026-07-21T08:19:14-0700
