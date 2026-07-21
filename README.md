@@ -771,3 +771,52 @@ of the tripwire entries and the normalization entry respectively.
     shapeless rule it must be KEPT. Corrected total is 4, not 5. These
     are availability/measured facts recorded now, not fitted quantities;
     the phase-2b fit stays unrun.
+42. **Phase 2b LANDED (2026-07-21): the pre-registered v2.1 rebuilt fit ran
+    ONCE and the screen still FAILS the decision tripwire — OC data does not
+    support a decision-grade ordinal corridor screen (`outputs/
+    screen_results_v21.json`, `scripts/screen_fit_v21.py` +
+    `scripts/screen_scan_v21.py`).** Fit universe: 300 route-years / 63
+    route clusters (the six discontinued routes re-entered on their
+    contemporaneous archived shapes, §9.4); dropped exactly the pre-registered
+    4 shapeless route-years (53X/57X/64X FY2017, 529/FY2022) plus 4 no-RVH
+    cells (35/70/150 FY2017 KNOWN_BAD_RVH, 560/FY2022 KNOWN_DUP_RVH_EXT).
+    Headline coefficients (cluster-robust SE): b1_flows +0.121 (0.151),
+    b2_zveh +0.142 (0.119), b3_rvh +1.340 (0.060), b4_genjobs **−0.094**
+    (0.114), b5_len −0.340 (0.137). **VERDICT `ordinal_ok = FALSE`,
+    `decision_format = threshold_shortlist`.** All three criteria fail:
+    criterion 1 (b1 bootstrap pos_frac 0.766 < 0.841; b2 0.879 ≥ 0.841 but
+    both required); criterion 2 (battery min Spearman rho −0.486 at
+    `offset_variant`, far below 0.7); criterion 3 DUAL (window-unit tie-churn
+    0.941 at `offset_variant` > 0.20; host-shape 0.750 at `window_10` > 2/14).
+    Stable core is EMPTY (0/34 tie windows survive the whole battery), so per
+    §4b the honest stage-1 output is narrower than even the 34-window
+    threshold shortlist: no window survives every battery row. REGIME SPLIT
+    (§9.10): the **pre-2020 period PASSES criterion 1** (b1 pos_frac 0.958,
+    b2 0.932 on fy2017+fy2019) while the pooled 6-FY panel FAILS, and the
+    post2020 interaction slopes are negative (i_flows_post −0.005, i_zveh_post
+    −0.109) — the remote-work-era pooling artifact §9.10 was written to catch;
+    the `regime_split_downgrade` flag is correctly FALSE only because the
+    pooled block already fails criterion 1 directly (the downgrade fires when
+    pooled passes but pre-2020 does not, the reverse of what happened).
+    **b4_wrong_sign obligation (§9.1, this entry is the required
+    governance-rule-3 log):** the measured `l_genjobs` coefficient came back
+    NEGATIVE (−0.094), so the pre-registered `b4_wrong_sign` flag is SET in
+    the artifact's `fit_diagnostics`. It does NOT trip the demand-block
+    criterion (b4 is outside the {b1, b2} block by construction) but it is a
+    specification signal that b3 (allocation control, +1.34) and/or b5 (scale,
+    −0.34) are absorbing generator-attraction effects; the measured WAC
+    generator-jobs magnitude did not resolve into a positive attraction term
+    on this panel. BOOTSTRAP NOTE: the §3.4 within-replicate ACS-MOE
+    perturbation is NOT applied in v2.1 — the committed §9.2 block-
+    apportionment input machinery (`screen_common_v21`, frozen phase-2a under
+    its no-fit hold) carries no ACS MOE, and the design-stage power check
+    pre-registered the omission as a stated stylization; it removes one noise
+    source, so criterion 1 is marginally MORE lenient (an availability fact,
+    not a tuning choice, recorded in the artifact `bootstrap` block). The once-
+    only fit discipline held: no predictor, threshold, or spec choice was
+    changed in response to the coefficients. Registry: the `screen_v21`
+    swap-row claims (`popden_swap`/`e002_swap`/`gen_dummy_swap`) and the nine
+    §9 fit-side data entries flipped from `spec-pending:01§9` to landed
+    `covered-elsewhere` dispositions; `check_assumptions.py` gained a scoped
+    `screen_v21` artifact scan (the 01§9 pending warnings cleared, 16 → 4; no
+    new priors, fingerprint `f0bb42f69644` unchanged).

@@ -14,7 +14,7 @@
       ],
       "basis": "measured",
       "id": "acs_2017_5yr",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:e002_swap",
       "tier": "data"
     },
     {
@@ -24,7 +24,7 @@
       ],
       "basis": "measured",
       "id": "acs_2019_5yr",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:e002_swap",
       "tier": "data"
     },
     {
@@ -34,7 +34,7 @@
       ],
       "basis": "measured",
       "id": "acs_2021_5yr",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:e002_swap",
       "tier": "data"
     },
     {
@@ -284,7 +284,7 @@
       ],
       "basis": "measured",
       "id": "lodes_od_2017",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:popden_swap",
       "tier": "data"
     },
     {
@@ -294,7 +294,7 @@
       ],
       "basis": "measured",
       "id": "lodes_od_2019",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:popden_swap",
       "tier": "data"
     },
     {
@@ -304,7 +304,7 @@
       ],
       "basis": "measured",
       "id": "lodes_od_2021",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:popden_swap",
       "tier": "data"
     },
     {
@@ -314,7 +314,7 @@
       ],
       "basis": "measured",
       "id": "lodes_wac",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:gen_dummy_swap",
       "tier": "data"
     },
     {
@@ -424,7 +424,7 @@
       ],
       "basis": "measured",
       "id": "pl94171_block_pop",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:buffer_lo",
       "tier": "data"
     },
     {
@@ -704,7 +704,7 @@
       ],
       "basis": "measured",
       "id": "tiger2020pl_blocks",
-      "no_row_reason": "spec-pending:01§9",
+      "no_row_reason": "covered-elsewhere:buffer_lo",
       "tier": "data"
     },
     {
@@ -1084,6 +1084,26 @@
         ]
       ],
       "tier": "config"
+    },
+    {
+      "basis": "judgment",
+      "effect_pct": 10.5,
+      "id": "screen_v21_swap_rows",
+      "rows": [
+        [
+          "screen_v21",
+          "popden_swap"
+        ],
+        [
+          "screen_v21",
+          "e002_swap"
+        ],
+        [
+          "screen_v21",
+          "gen_dummy_swap"
+        ]
+      ],
+      "tier": "structural"
     },
     {
       "basis": "judgment",
@@ -1718,26 +1738,6 @@
       "tier": "constant"
     },
     {
-      "basis": "judgment",
-      "effect_pct": null,
-      "id": "screen_v21_swap_rows",
-      "rows": [
-        [
-          "screen_v21",
-          "popden_swap"
-        ],
-        [
-          "screen_v21",
-          "e002_swap"
-        ],
-        [
-          "screen_v21",
-          "gen_dummy_swap"
-        ]
-      ],
-      "tier": "structural"
-    },
-    {
       "basis": "measured",
       "effect_pct": null,
       "id": "upt_fy2013_mb",
@@ -1882,40 +1882,8 @@
   "schema_version": "08-A3.3",
   "spec_pending_warnings": [
     {
-      "id": "acs_2017_5yr",
-      "no_row_reason": "spec-pending:01§9"
-    },
-    {
-      "id": "acs_2019_5yr",
-      "no_row_reason": "spec-pending:01§9"
-    },
-    {
-      "id": "acs_2021_5yr",
-      "no_row_reason": "spec-pending:01§9"
-    },
-    {
       "id": "lodes_2022",
       "no_row_reason": "spec-pending:02§4.8"
-    },
-    {
-      "id": "lodes_od_2017",
-      "no_row_reason": "spec-pending:01§9"
-    },
-    {
-      "id": "lodes_od_2019",
-      "no_row_reason": "spec-pending:01§9"
-    },
-    {
-      "id": "lodes_od_2021",
-      "no_row_reason": "spec-pending:01§9"
-    },
-    {
-      "id": "lodes_wac",
-      "no_row_reason": "spec-pending:01§9"
-    },
-    {
-      "id": "pl94171_block_pop",
-      "no_row_reason": "spec-pending:01§9"
     },
     {
       "id": "street_cal_local",
@@ -1924,10 +1892,6 @@
     {
       "id": "street_cal_rapid",
       "no_row_reason": "spec-pending:02§4.9"
-    },
-    {
-      "id": "tiger2020pl_blocks",
-      "no_row_reason": "spec-pending:01§9"
     },
     {
       "id": "tsp_speedup",

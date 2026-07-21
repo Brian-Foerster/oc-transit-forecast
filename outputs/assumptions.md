@@ -28,6 +28,7 @@ UNITS CAVEAT: effects sourced from `screen:*` rows are stage-1 RANK-CHURN percen
 | 16.2% | gamma_t | structural | judgment | harbor:gamma_07, harbor:gamma_08, harbor:gamma_09, streetcar:gamma_07, streetcar:gamma_08, streetcar:gamma_09 |
 | 11.8% | no_transfer | structural | judgment | harbor:no_transfer, streetcar:no_transfer |
 | 11.7% | harbor_anchor | config | measured | harbor:anchor_lo, harbor:anchor_hi |
+| 10.5% | screen_v21_swap_rows | structural | judgment | screen_v21:popden_swap, screen_v21:e002_swap, screen_v21:gen_dummy_swap |
 | 9.0% | special_generators | config | judgment | screen:b4_off, screen:gen_leave_class_out |
 | 8.1% | softmax_theta | structural | judgment | harbor:theta_01, harbor:theta_02, streetcar:theta_01, streetcar:theta_02 |
 | 6.7% | screen_window_mi | constant | judgment | screen:window_10, screen:window_15 |
@@ -71,7 +72,6 @@ UNITS CAVEAT: effects sourced from `screen:*` rows are stage-1 RANK-CHURN percen
 | -- | network_budget | constant | judgment | off-corridor row (network:network_budget) |
 | -- | omega_allocation | constant | judgment | off-corridor row (network:omega_allocation) |
 | -- | omega_stop_materialization | constant | judgment | off-corridor row (network:omega_stop_materialization) |
-| -- | screen_v21_swap_rows | structural | judgment | off-corridor row (screen_v21:popden_swap, screen_v21:e002_swap, screen_v21:gen_dummy_swap) |
 | -- | upt_fy2013_mb | constant | measured | off-corridor row (abc:543_launch_bt_s507) |
 | -- | upt_fy2014_mb | constant | measured | off-corridor row (abc:543_launch14_s500) |
 
@@ -120,9 +120,9 @@ Every escape hatch in one place, for the owner to veto at review (spec 08 §9 Q1
 
 | id | tier | basis | no_row_reason | accepted |
 |---|---|---|---|---|
-| acs_2017_5yr | data | measured | spec-pending:01§9 | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
-| acs_2019_5yr | data | measured | spec-pending:01§9 | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
-| acs_2021_5yr | data | measured | spec-pending:01§9 | owner directive 2026-07-20 'extend the panel' / 2026-07-20 |
+| acs_2017_5yr | data | measured | covered-elsewhere:e002_swap | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
+| acs_2019_5yr | data | measured | covered-elsewhere:e002_swap | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
+| acs_2021_5yr | data | measured | covered-elsewhere:e002_swap | owner directive 2026-07-20 'extend the panel' / 2026-07-20 |
 | acs_2023 | data | measured | covered-elsewhere:anchor_lo | owner-directive 2026-07-11 / 2026-07-14 |
 | anchor_trend | config | measured | covered-elsewhere:anchor_lo | owner-directive 2026-07-11 / 2026-07-11 |
 | apc_ext_fy20_23 | data | measured | covered-elsewhere:drop_fy2020 | owner directive 2026-07-20 'extend the panel' / 2026-07-20 |
@@ -147,10 +147,10 @@ Every escape hatch in one place, for the owner to veto at review (spec 08 §9 Q1
 | ipeds_fall2023 | data | measured | non-binding:context-only (spec01 §9.7 -- never a predictor) | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
 | kmh_per_mph | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | lodes_2022 | data | measured | spec-pending:02§4.8 | owner-directive 2026-07-11 / 2026-07-14 |
-| lodes_od_2017 | data | measured | spec-pending:01§9 | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
-| lodes_od_2019 | data | measured | spec-pending:01§9 | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
-| lodes_od_2021 | data | measured | spec-pending:01§9 | owner directive 2026-07-20 'extend the panel' / 2026-07-20 |
-| lodes_wac | data | measured | spec-pending:01§9 | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
+| lodes_od_2017 | data | measured | covered-elsewhere:popden_swap | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
+| lodes_od_2019 | data | measured | covered-elsewhere:popden_swap | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
+| lodes_od_2021 | data | measured | covered-elsewhere:popden_swap | owner directive 2026-07-20 'extend the panel' / 2026-07-20 |
+| lodes_wac | data | measured | covered-elsewhere:gen_dummy_swap | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
 | mi_lat | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | mi_per_deg_lon | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | min_feeder_mi | constant | definitional | quality-knob | owner-directive 2026-07-11 / 2026-07-11 |
@@ -161,7 +161,7 @@ Every escape hatch in one place, for the owner to veto at review (spec 08 §9 Q1
 | obs_543 | constant | measured | covered-elsewhere:543_matured_s500 | owner-directive 2026-07-11 / 2026-07-11 |
 | obs_543_fy2017 | constant | measured | covered-elsewhere:543_launch14_s500 | owner-directive 2026-07-11 / 2026-07-11 |
 | oc_ref_lat | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
-| pl94171_block_pop | data | measured | spec-pending:01§9 | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
+| pl94171_block_pop | data | measured | covered-elsewhere:buffer_lo | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
 | s0_pivot_clip | constant | judgment | non-binding:db4af97 | owner-directive 2026-07-11 / 2026-07-11 |
 | screen_battery_rho_min | constant | judgment | quality-knob | owner-ratified 2026-07-20 -- kept as the ordinal product own gate; uncalibrated floor expected to be slack / 2026-07-20 |
 | screen_battery_rows | constant | definitional | definitional | owner-directed battery freeze (criteria 2/3 statistics rebuild) / 2026-07-20 |
@@ -189,7 +189,7 @@ Every escape hatch in one place, for the owner to veto at review (spec 08 §9 Q1
 | subcell_merge_decimals | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | subk | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
 | tie_epsilon | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
-| tiger2020pl_blocks | data | measured | spec-pending:01§9 | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
+| tiger2020pl_blocks | data | measured | covered-elsewhere:buffer_lo | spec01 §9 pre-registration 2026-07-20 / 2026-07-20 |
 | tsp_speedup | constant | literature | spec-pending:02§4.9 | owner-directive 2026-07-11 / 2026-07-11 |
 | upt_fy2017_mb | constant | measured | covered-elsewhere:543_launch14_s500 | owner-directive 2026-07-11 / 2026-07-11 |
 | visitor_alpha_floor | constant | definitional | definitional | owner-directive 2026-07-11 / 2026-07-11 |
@@ -269,17 +269,8 @@ What changed (entries whose append-only history records a transition):
 
 Spec-pending warnings (counted, not failures):
 
-- acs_2017_5yr: spec-pending:01§9
-- acs_2019_5yr: spec-pending:01§9
-- acs_2021_5yr: spec-pending:01§9
 - lodes_2022: spec-pending:02§4.8
-- lodes_od_2017: spec-pending:01§9
-- lodes_od_2019: spec-pending:01§9
-- lodes_od_2021: spec-pending:01§9
-- lodes_wac: spec-pending:01§9
-- pl94171_block_pop: spec-pending:01§9
 - street_cal_local: spec-pending:02§4.9
 - street_cal_rapid: spec-pending:02§4.9
-- tiger2020pl_blocks: spec-pending:01§9
 - tsp_speedup: spec-pending:02§4.9
 

@@ -157,6 +157,12 @@ ENGINE_OWNED_NETWORK = frozenset({
 SCREEN_ARTIFACT = os.environ.get(
     "SCREEN_RESULTS_ARTIFACT",
     os.path.join(OUT, "screen_results.json"))
+# spec 01 §9 phase-2b: the v2.1 rebuilt screen artifact (a SEPARATE file --
+# the v2.0 screen_results.json is untouched). The scan harvests only the
+# registry-claimed §9.1 swap rows from its sensitivity block (see load_artifacts).
+SCREEN_V21_ARTIFACT = os.environ.get(
+    "SCREEN_RESULTS_V21_ARTIFACT",
+    os.path.join(OUT, "screen_results_v21.json"))
 
 
 def _load(path):
@@ -235,6 +241,25 @@ def load_artifacts():
         present["screen"] = {r["id"] for r in SC.get("sensitivity", [])}
         for r in SC.get("sensitivity", []):
             pct[("screen", r["id"])] = r["pct"]
+    # spec 01 §9 phase-2b: the v2.1 rebuilt screen artifact. The v2.1 scan is
+    # SCOPED to the rows the registry CLAIMS on the 'screen_v21' artifact --
+    # the §9.1 swaps popden_swap / e002_swap / gen_dummy_swap
+    # (screen_v21_swap_rows). The v2.0 battery rows (buffer_lo, window_10,
+    # drop_rh, ...) stay covered by the 'screen' artifact above, per spec 01
+    # §9.7 ('entries land with the build branch'); the v2.1 artifact carries
+    # the full frozen 20-row battery but this scan only harvests the newly
+    # claimed swap rows, so the other 17 are not orphans here. Absent file ->
+    # the swap claims degrade to check-2 'pending' warnings.
+    if os.path.exists(SCREEN_V21_ARTIFACT):
+        SV = _load(SCREEN_V21_ARTIFACT)
+        arts["screen_v21"] = SV
+        claimed_v21 = {rid for aid, e in ASSUMPTIONS.items()
+                       for a, rid in claimed_rows(aid, e) if a == "screen_v21"}
+        present["screen_v21"] = {r["id"] for r in SV.get("sensitivity", [])
+                                 if r["id"] in claimed_v21}
+        for r in SV.get("sensitivity", []):
+            if r["id"] in claimed_v21:
+                pct[("screen_v21", r["id"])] = r["pct"]
     return present, pct, arts
 
 

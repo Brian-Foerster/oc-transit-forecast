@@ -92,15 +92,20 @@ def test_t6_interval_gate():
 
 
 def test_t7_guard_no_predictor_contact():
-    """STANDING GUARD (phase-2b hold, task charter 2026-07-20; extended by
-    spec 01 §9.9.5): the newly extracted route-year boardings are outcome
-    data. No predictor/fit module may read route_boardings_ext, with the
-    SINGLE authorized carve-out for scripts/screen_power.py -- the
-    design-stage power check reads the ext table through a guarded loader
-    for the PRESENCE mask + validated b3 RVH only (boardings values dropped
-    inside load_rvh_ext; enforced by test_screen_power.py G1/G2e). The
-    extraction module itself must carry no estimator and never touch
-    predictor machinery."""
+    """STANDING GUARD (spec 01 §9.9.5): the extended route-year boardings are
+    outcome data. The phase-2b HOLD was RELEASED 2026-07-21 when the
+    pre-registered v2.1 fit landed -- the AUTHORIZED extended-panel consumers
+    are the phase-2b fit modules scripts/screen_fit_v21.py +
+    scripts/screen_scan_v21.py (they read route_boardings_ext.csv for the fit,
+    exactly as screen_fit.py reads the committed route_boardings.csv). This
+    guard now enforces the PERMANENT invariant instead: the INPUT-SIDE
+    predictor machinery and every non-v21 fit module below must STILL never
+    read the ext table (screen_common_v21.py keeps its no-fit hold; the v2.0
+    3-year fit never uses the extended panel), with the SINGLE design-stage
+    carve-out for scripts/screen_power.py (guarded loader load_rvh_ext,
+    presence + validated b3 RVH only; test_screen_power.py G1/G2e). The
+    extraction module itself must carry no estimator and never touch predictor
+    machinery."""
     # blanket ban -- every predictor/fit module EXCEPT the one §9.9.5 carve-out
     fit_side = ["screen_common.py", "screen_common_v21.py", "screen_fit.py",
                 "screen_scan.py", "build_derived.py",
