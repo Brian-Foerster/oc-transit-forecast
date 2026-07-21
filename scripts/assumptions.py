@@ -1780,7 +1780,23 @@ ASSUMPTIONS = {
                      "shortlist-stability report; until then "
                      "decision_output.criteria.tie_churn carries threshold "
                      "null / pass null (an unset threshold cannot pass -- "
-                     "fail-safe)")],
+                     "fail-safe)"),
+                    ("2026-07-20", 2, "judgment",
+                     "criterion-3 UNIT FIX (owner blocking item, same-day "
+                     "follow-up): the successor statistic's max scans "
+                     "WINDOW-UNIT rows ONLY -- window_10/window_15 change "
+                     "the window UNIVERSE, so their churn is measured in "
+                     "host-shape units (denominator 14 vs 46 at the "
+                     "review build; one flip reads 7.1% vs 2.2%), a "
+                     "3.3x-coarser lossy proxy, and cross-universe "
+                     "membership churn is a category mismatch a scalar "
+                     "threshold cannot compare. The two rows remain fully "
+                     "in criterion 2's min-rho (best-per-shape rankings, "
+                     "unit-consistent) and in the shortlist_stability "
+                     "report; the aggregate names them in "
+                     "criterion3_excluded_rows. IMPLEMENTED, PENDING "
+                     "OWNER RATIFICATION with the criterion-2/3 threshold "
+                     "values (spec 01 §5)")],
         "provenance": "SUPERSEDED (owner review 2026-07-20): the hard "
                       "rank-8 cut measured churn against an arbitrary "
                       "boundary while the decision object is the "
@@ -1833,6 +1849,71 @@ ASSUMPTIONS = {
         "logged": "README known-issue 38",
         "upgrade": None,
     },
+    "screen_battery_rows_v21": {
+        "title": "v2.1 screen battery: CLOSED perturbation row list for "
+                 "the phase-2b verdict (frozen pre-fit)",
+        "tier": "constant", "status": "active",
+        "value": ["buffer_lo", "buffer_hi", "window_10", "window_15",
+                  "drop_fy2020", "drop_rh", "e016_swap", "e002_swap",
+                  "popden_swap", "genjobs_off", "genjobs_leave_class_out",
+                  "gen_dummy_swap", "nb_estimator", "svc_p25", "svc_p75",
+                  "offset_variant", "overlap_lo", "overlap_hi",
+                  "year_fe_vs_pooled", "loyo"],
+        "units": "battery row ids", "band": None, "basis": "definitional",
+        "history": [("2026-07-20", "20 frozen v2.1 battery row ids",
+                     "definitional",
+                     "owner item 2 2026-07-20 -- v2.1 battery FROZEN NOW, "
+                     "on ACQUISITION FACTS ONLY (before any v2.1 input is "
+                     "fitted; the owner's criterion-2/3 threshold values "
+                     "attach to THIS list for the phase-2b verdict). "
+                     "Composition: the 14 v2.0 window-unit rows carried "
+                     "over WITH the two generator rows REDEFINED against "
+                     "§9.1's continuous WAC term (b4_off -> genjobs_off = "
+                     "drop l_genjobs; gen_leave_class_out -> "
+                     "genjobs_leave_class_out = drop ONE NAICS sector "
+                     "from the CNS15-18 sum, class-max aggregation "
+                     "carried over); PLUS the §9.1 swaps popden_swap / "
+                     "e002_swap / gen_dummy_swap; PLUS window_10/"
+                     "window_15 (CRITERION-2-ONLY, flagged -- the §5 "
+                     "criterion-3 unit fix excludes their host-shape-unit "
+                     "churn from the tie-churn max); MINUS sld_swap, "
+                     "EXCLUDED because the EPA SLD was NOT acquired in "
+                     "phase 1 (§9.1 made the row conditional on "
+                     "acquisition -- decided on that acquisition fact, "
+                     "never on fit results); PLUS loyo, RETURNED per the "
+                     "§9.3 condition resolved IN THIS BATCH on the "
+                     "measured input-side fact (screen_power_check "
+                     "artifact x_variation: every vintage-matched "
+                     "predictor -- l_flows / l_zveh_hh / l_genjobs -- has "
+                     "nonzero within-route across-year variance for "
+                     "share 1.0 of the 41 fitted routes)")],
+        "provenance": "the CLOSED battery for the spec 01 §9.5 phase-2b "
+                      "verdict: criterion 2's min-rho runs over ALL 20 "
+                      "rows; criterion 3's tie-churn max runs over the "
+                      "WINDOW-UNIT rows only (window_10/window_15 "
+                      "excluded per the §5 unit fix). Freezing NOW -- "
+                      "before the rebuilt fit exists -- is the point: the "
+                      "battery criterion is a MIN, so membership edits "
+                      "after seeing v2.1 numbers would be a tunable bar "
+                      "(screen_battery_rows precedent). loyo = leave-one-"
+                      "year-out rank stability, min Spearman rho over the "
+                      "three year-dropped refits vs the v2.1 headline "
+                      "ranking (restored from its v2.0 demotion because "
+                      "vintage-matched X varies within route across "
+                      "years; note the fy2017 drop leaves a single-"
+                      "vintage X pair -- stated, not hidden). The v2.0 "
+                      "16-row battery (screen_battery_rows) remains the "
+                      "PUBLISHED current-artifact report; this list is "
+                      "consumed via val() by the phase-2b rebuild when it "
+                      "runs (test D2 pattern extends to the v2.1 "
+                      "artifact)",
+        "rows": {}, "no_row_reason": "definitional",
+        "accepted": ("owner item 2 2026-07-20 (pre-fit freeze on "
+                     "acquisition facts)", "2026-07-20"),
+        "logged": "README known-issue 38",
+        "upgrade": "phase 2b rebuilt artifact (rows go live; test asserts "
+                   "artifact == this list, order included)",
+    },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {
         "title": "v2.1 generator-jobs NAICS column set (LODES WAC CNS15-18)",
@@ -1862,6 +1943,89 @@ ASSUMPTIONS = {
         "accepted": ("spec01 §9 pre-registration 2026-07-20", "2026-07-20"),
         "logged": None,
         "upgrade": "phase 2b rebuilt fit (the swap row goes live)",
+    },
+    "screen_power_check": {
+        "title": "v2.1 design-stage power check: simulation design knobs "
+                 "(owner item 3, 2026-07-20)",
+        "tier": "constant", "status": "active",
+        "value": {"beta_grid_max": 0.8, "beta_grid_step": 0.05,
+                  "n_sims": 200, "n_boot": 500, "n_boot_check": 2000,
+                  "check_beta": 0.4, "seed": 11, "power_target": 0.8,
+                  "tol_small_b": 0.05, "verdict_se_mult": 2.0},
+        "units": "simulation design dict", "band": None, "basis": "judgment",
+        "history": [("2026-07-20",
+                     "grid [0,0.8] step 0.05; S=200; B=500 (checked vs "
+                     "2000); seed 11; 80% power target", "judgment",
+                     "owner review 2026-07-20 item 3 -- DESIGN-STAGE power "
+                     "check for tripwire criterion 1 under the v2.1 "
+                     "rebuild, run BEFORE the v2.1 fit (which stays "
+                     "unrun)")],
+        "provenance": "scripts/screen_power.py consumes this dict via "
+                      "val(): what true demand elasticities (b1, b2) would "
+                      "clear criterion 1's bootstrap sign fraction >= "
+                      "screen_pos_frac_min with ~41/47 route clusters? "
+                      "Synthetic log-boardings = X_v21 * beta_true + route "
+                      "effect + noise (variances from "
+                      "screen_v20_resid_decomp); the EXACT criterion-1 "
+                      "statistic (route-cluster bootstrap sign fraction) "
+                      "per simulated dataset. NO-CONTAMINATION NOTE "
+                      "(binding, spec 01 §9 pre-registration hold): the "
+                      "module builds v2.1 predictor matrices INPUT-SIDE "
+                      "only (screen_common_v21), never joins them to real "
+                      "boardings, and never runs the v2.1 fit -- standing "
+                      "guard test test_screen_power.py G1/G2. Artifact: "
+                      "outputs/screen_power_check.json (+ .png), "
+                      "deterministic (seeded, dual-run byte-identical)",
+        "rows": {}, "no_row_reason": "non-binding: design-stage power "
+                                     "analysis informing the owner's "
+                                     "criterion-2/3 threshold decision; "
+                                     "binds no pipeline output and feeds "
+                                     "no artifact the registry scans",
+        "accepted": ("owner review 2026-07-20 item 3 (design-stage, "
+                     "pre-fit)", "2026-07-20"),
+        "logged": "README known-issue 38",
+        "upgrade": "phase 2b rebuilt fit (the measured pos_frac supersedes "
+                   "the simulated power read)",
+    },
+    "screen_v20_resid_decomp": {
+        "title": "committed v2.0 screen fit: route-effect / residual "
+                 "variance decomposition (power-check variance matching)",
+        "tier": "constant", "status": "active",
+        "value": {"sig2_route": 0.025261, "sig2_resid": 0.003352},
+        "units": "log-boardings variance components", "band": None,
+        "basis": "measured",
+        "history": [("2026-07-20",
+                     "sig2_route 0.025261 / sig2_resid 0.003352 "
+                     "(41 routes, 115 route-years)", "measured",
+                     "owner item 3 2026-07-20 -- extracted from the "
+                     "COMMITTED v2.0 headline fit by "
+                     "screen_fit.resid_decomposition (method of moments "
+                     "on the log-OLS residuals grouped by route)")],
+        "provenance": "the cluster variance decomposition the design-stage "
+                      "power check injects into synthetic log-boardings "
+                      "(spec 01 §9 owner item 3): pooled within-route "
+                      "residual variance sig2_resid = sum_r sum_y (e_ry - "
+                      "ebar_r)^2 / sum_r (n_r - 1); between-route "
+                      "sig2_route = var_b(ebar_r) - sig2_resid * "
+                      "mean_r(1/n_r) floored at 0 -- method of moments on "
+                      "the committed v2.0 log-OLS (BASE_CFG) residuals, "
+                      "screen_fit.resid_decomposition. Pinned HERE so "
+                      "scripts/screen_power.py consumes val() and never "
+                      "reads a boardings value (contamination guard); "
+                      "test_screen_power.py W2 asserts these values equal "
+                      "the recompute from the committed fit (5e-7 "
+                      "tolerance, values stored at the artifact's 6-dp "
+                      "canon)",
+        "rows": {}, "no_row_reason": "non-binding: variance-matching input "
+                                     "to the design-stage power check "
+                                     "only; the v2.0 fit it summarizes is "
+                                     "already the committed public "
+                                     "artifact",
+        "accepted": ("owner review 2026-07-20 item 3 (design-stage, "
+                     "pre-fit)", "2026-07-20"),
+        "logged": "README known-issue 38",
+        "upgrade": "phase 2b rebuilt fit (v2.1's own decomposition "
+                   "supersedes this matching)",
     },
 
     # ===== structural tier (governance toggles; NOT owned) ==================

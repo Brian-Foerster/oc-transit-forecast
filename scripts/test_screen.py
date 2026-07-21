@@ -333,8 +333,8 @@ def test_d2_artifact_schema():
             assert k in r, (r["id"], k)
     assert set(ss["aggregate"]) == {
         "min_jaccard", "worst_row", "max_tie_churn_frac",
-        "max_tie_churn_row", "n_tie_headline", "stable_core",
-        "n_stable_core"}
+        "max_tie_churn_row", "criterion3_excluded_rows", "n_tie_headline",
+        "stable_core", "n_stable_core"}
     for w in a["windows"]:
         assert set(w) == WINDOW_KEYS, (w["window_id"], set(w) ^ WINDOW_KEYS)
         assert w["window_id"].startswith(w["route_id"] + "_")
@@ -493,14 +493,22 @@ def test_d6_decision_output():
         return ([v["tie_churn_frac"] for v in bc.values()] if bc
                 else [r["tie_churn_frac"]])
 
-    fracs = [max(_fracs(r)) for r in ss["per_row"]]
+    # CRITERION-3 UNIT FIX (owner item 2026-07-20): the churn max scans
+    # WINDOW-UNIT rows only -- window_10/window_15 churn is host-shape-
+    # unit (cross-universe category mismatch) and is excluded from the
+    # criterion, named in criterion3_excluded_rows; min_jaccard stays an
+    # all-rows report aggregate (feeds no criterion)
+    win_rows = [r for r in ss["per_row"] if r["unit"] == "window_id"]
+    fracs = [max(_fracs(r)) for r in win_rows]
     jacs = [min(_jacs(r)) for r in ss["per_row"]]
     assert abs(max(fracs) - agg["max_tie_churn_frac"]) < 5e-6
     assert abs(min(jacs) - agg["min_jaccard"]) < 5e-6
     worst = ss["per_row"][jacs.index(min(jacs))]["id"]
     assert agg["worst_row"] == worst
-    frac_worst = ss["per_row"][fracs.index(max(fracs))]["id"]
+    frac_worst = win_rows[fracs.index(max(fracs))]["id"]
     assert agg["max_tie_churn_row"] == frac_worst
+    assert agg["criterion3_excluded_rows"] == [
+        r["id"] for r in ss["per_row"] if r["unit"] != "window_id"]
     # the by_class entry tuple is the min-Jaccard class (published rule)
     for r in ss["per_row"]:
         if "by_class" in r:

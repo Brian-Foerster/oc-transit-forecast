@@ -1,0 +1,370 @@
+{
+  "assumptions_manifest": {
+    "consumed": [
+      {
+        "id": "screen_power_check",
+        "value": {
+          "beta_grid_max": 0.8,
+          "beta_grid_step": 0.05,
+          "check_beta": 0.4,
+          "n_boot": 500,
+          "n_boot_check": 2000,
+          "n_sims": 200,
+          "power_target": 0.8,
+          "seed": 11,
+          "tol_small_b": 0.05,
+          "verdict_se_mult": 2.0
+        }
+      },
+      {
+        "id": "screen_v20_resid_decomp",
+        "value": {
+          "sig2_resid": 0.003352,
+          "sig2_route": 0.025261
+        }
+      },
+      {
+        "id": "screen_pos_frac_min",
+        "value": 0.841
+      },
+      {
+        "id": "buffer_mi",
+        "value": 0.9
+      },
+      {
+        "id": "gen_jobs_naics",
+        "value": [
+          "CNS15",
+          "CNS16",
+          "CNS17",
+          "CNS18"
+        ]
+      }
+    ],
+    "values_hash": "95e4f4c2dab713ba0be8449862ccef4be146778f485a75ba3feda6e06a052a99"
+  },
+  "beta_grid": [
+    0.0,
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8
+  ],
+  "criterion": {
+    "pos_frac_min": 0.841,
+    "power_target": 0.8,
+    "statistic": "per-coefficient route-cluster bootstrap strictly-positive sign fraction (the EXACT criterion-1 statistic, spec 01 \u00a75)"
+  },
+  "designs": {
+    "clusters_41": {
+      "boot_sd_b1": 0.23081,
+      "boot_sd_b2": 0.152832,
+      "n_clusters": 41,
+      "n_rows": 115,
+      "power": {
+        "b1": [
+          0.15,
+          0.22,
+          0.35,
+          0.455,
+          0.555,
+          0.66,
+          0.785,
+          0.875,
+          0.925,
+          0.975,
+          0.975,
+          0.99,
+          0.995,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "b2": [
+          0.205,
+          0.355,
+          0.525,
+          0.71,
+          0.83,
+          0.925,
+          0.975,
+          0.99,
+          0.995,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "joint": [
+          0.005,
+          0.035,
+          0.12,
+          0.255,
+          0.41,
+          0.595,
+          0.76,
+          0.865,
+          0.92,
+          0.975,
+          0.975,
+          0.99,
+          0.995,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "required_at_power_target": {
+        "b1": 0.308333,
+        "b2": 0.1875,
+        "joint": 0.319048
+      },
+      "small_b_check": {
+        "abs_diff": {
+          "b1": 0.005,
+          "b2": 0.0,
+          "joint": 0.005
+        },
+        "beta_true": 0.4,
+        "note": "the B=2000 replicates are a superset draw of the B=500 replicates (nested common random numbers); the stated small-B correction is: none applied -- the check bounds the sign-fraction Monte Carlo error's effect on power at one grid point instead",
+        "pass": true,
+        "power_b2000": {
+          "b1": 0.93,
+          "b2": 0.995,
+          "joint": 0.925
+        },
+        "power_b500": {
+          "b1": 0.925,
+          "b2": 0.995,
+          "joint": 0.92
+        },
+        "tolerance": 0.05
+      }
+    },
+    "clusters_47": {
+      "boot_sd_b1": 0.229283,
+      "boot_sd_b2": 0.143767,
+      "n_clusters": 47,
+      "n_rows": 130,
+      "power": {
+        "b1": [
+          0.165,
+          0.26,
+          0.345,
+          0.455,
+          0.61,
+          0.735,
+          0.775,
+          0.835,
+          0.915,
+          0.965,
+          0.98,
+          0.99,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "b2": [
+          0.145,
+          0.265,
+          0.46,
+          0.675,
+          0.845,
+          0.93,
+          0.975,
+          0.99,
+          0.995,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "joint": [
+          0.0,
+          0.035,
+          0.095,
+          0.225,
+          0.465,
+          0.665,
+          0.75,
+          0.825,
+          0.91,
+          0.965,
+          0.98,
+          0.99,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "required_at_power_target": {
+        "b1": 0.320833,
+        "b2": 0.186765,
+        "joint": 0.333333
+      },
+      "small_b_check": {
+        "abs_diff": {
+          "b1": 0.0,
+          "b2": 0.0,
+          "joint": 0.0
+        },
+        "beta_true": 0.4,
+        "note": "the B=2000 replicates are a superset draw of the B=500 replicates (nested common random numbers); the stated small-B correction is: none applied -- the check bounds the sign-fraction Monte Carlo error's effect on power at one grid point instead",
+        "pass": true,
+        "power_b2000": {
+          "b1": 0.915,
+          "b2": 0.995,
+          "joint": 0.91
+        },
+        "power_b500": {
+          "b1": 0.915,
+          "b2": 0.995,
+          "joint": 0.91
+        },
+        "tolerance": 0.05
+      }
+    }
+  },
+  "disclaimer": "design-stage power simulation on SYNTHETIC outcomes; not a fit, not a forecast, and no statement about measured coefficients (spec 01 \u00a79 pre-registration hold)",
+  "literature_comparison": {
+    "in_repo_reference_points": {
+      "spec02_induced_demand_elasticity_prior": [
+        0.1,
+        0.3
+      ],
+      "v20_committed_b1_lodes": {
+        "est": 0.098652,
+        "se_cluster": 0.106452
+      },
+      "v20_committed_b2_e002": {
+        "est": 0.087092,
+        "se_cluster": 0.107361
+      }
+    },
+    "note": "the repo cites NO direct-demand-model literature elasticity ranges for catchment covariates; the only in-repo elasticity band is spec 02 \u00a74.5b's induced-demand U(0.1, 0.3) prior -- a DIFFERENT quantity (total-demand response to an accessibility change), listed for scale only. Literature comparison beyond these in-repo reference points is owner judgment (no invented citations)"
+  },
+  "loyo_resolution": {
+    "loyo_in_battery": true,
+    "note": "resolved in THIS design-stage batch on the measured input-side fact (owner item 2); recorded in the registry entry screen_battery_rows_v21. l_len is time-invariant here only by the current-shape stylization",
+    "rule": "LOYO returns to the v2.1 battery IFF every vintage-matched predictor (l_flows, l_zveh_hh, l_genjobs) has nonzero within-route across-year variance for > 0.5 of fitted routes (spec 01 \u00a79.3 condition, operationalized input-side)",
+    "shares": {
+      "l_flows": 1.0,
+      "l_genjobs": 1.0,
+      "l_zveh_hh": 1.0
+    }
+  },
+  "n_boot": 500,
+  "n_boot_check": 2000,
+  "n_sims": 200,
+  "no_contamination": "v2.1 predictor matrices built input-side only; outcomes are synthetic (injected beta_true); the v2.1 fit stays unrun; no real boardings value enters this module (standing tests test_screen_power.py G1/G2)",
+  "reentrant_stylization": {
+    "donors": {
+      "153": "26",
+      "24": "85",
+      "53X": "143",
+      "57X": "89",
+      "64X": "529",
+      "82": "129"
+    },
+    "note": "re-entering routes are X-replicas of the 6 lowest-l_flows fitted routes (fy2019 vintage, input-side ranking) with independent route effects -- adds clusters, not covariate support; real archived shapes (\u00a79.4) would differ"
+  },
+  "run_id": "6d7933735638e57561c82b1f4c2b7f81f7a4369219e2300692b76352a1685c66",
+  "schema": "01-P1",
+  "seed": 11,
+  "stylizations": [
+    "current-shape geometry for all years (archived per-year shapes pending; l_len time-invariant here)",
+    "no within-replicate ACS-MOE perturbation (no B25044 MOE wired input-side) -- power is OPTIMISTIC, required elasticities are a FLOOR",
+    "Gram-sum bootstrap refits (== resampled-row OLS when nonsingular; min-norm lstsq fallback)",
+    "common random numbers across grid points (exact reduction: OLS noise is invariant to beta_true)"
+  ],
+  "variance_matching": {
+    "sig2_resid": 0.003352,
+    "sig2_route": 0.025261,
+    "source": "registry screen_v20_resid_decomp -- method-of-moments decomposition of the COMMITTED v2.0 headline log-OLS residuals by route (screen_fit.resid_decomposition; pinned by test_screen_power.py W2)"
+  },
+  "verdict": {
+    "overall": "underpowered",
+    "rule": "compare the 47-cluster marginal required-at-80% elasticities against the committed v2.0 point estimates: adequately-powered if required <= est; marginal if <= est + verdict_se_mult * cluster SE; else underpowered; overall = worst coefficient (pre-stated judgment rule, registry screen_power_check)",
+    "terms": {
+      "b1": {
+        "arithmetic": "required 0.3208 vs est 0.098652 / est+2se 0.311556",
+        "call": "underpowered",
+        "required_at_80pct_47cl": 0.320833,
+        "upper_ref_est_plus_2se": 0.311556,
+        "v20_cluster_se": 0.106452,
+        "v20_committed_est": 0.098652
+      },
+      "b2": {
+        "arithmetic": "required 0.1868 vs est 0.087092 / est+2se 0.301814",
+        "call": "marginal",
+        "required_at_80pct_47cl": 0.186765,
+        "upper_ref_est_plus_2se": 0.301814,
+        "v20_cluster_se": 0.107361,
+        "v20_committed_est": 0.087092
+      }
+    }
+  },
+  "x_variation": {
+    "l_flows": {
+      "max_within_std": 0.032617,
+      "mean_within_std": 0.013009,
+      "median_within_std": 0.010494,
+      "n_routes": 41,
+      "share_routes_varying": 1.0
+    },
+    "l_genjobs": {
+      "max_within_std": 0.042898,
+      "mean_within_std": 0.021086,
+      "median_within_std": 0.022272,
+      "n_routes": 41,
+      "share_routes_varying": 1.0
+    },
+    "l_len": {
+      "max_within_std": 0.0,
+      "mean_within_std": 0.0,
+      "median_within_std": 0.0,
+      "n_routes": 41,
+      "share_routes_varying": 0.0
+    },
+    "l_rvh": {
+      "max_within_std": 0.332895,
+      "mean_within_std": 0.138363,
+      "median_within_std": 0.133077,
+      "n_routes": 39,
+      "share_routes_varying": 1.0
+    },
+    "l_zveh_hh": {
+      "max_within_std": 0.09845,
+      "mean_within_std": 0.040116,
+      "median_within_std": 0.039217,
+      "n_routes": 41,
+      "share_routes_varying": 1.0
+    }
+  }
+}

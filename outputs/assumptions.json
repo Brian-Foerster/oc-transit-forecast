@@ -1,10 +1,10 @@
 {
   "basis_census": {
-    "definitional": 26,
-    "judgment": 67,
+    "definitional": 27,
+    "judgment": 68,
     "literature": 10,
     "locally-calibrated": 2,
-    "measured": 40
+    "measured": 41
   },
   "dispositions": [
     {
@@ -429,6 +429,16 @@
     },
     {
       "accepted": [
+        "owner item 2 2026-07-20 (pre-fit freeze on acquisition facts)",
+        "2026-07-20"
+      ],
+      "basis": "definitional",
+      "id": "screen_battery_rows_v21",
+      "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "spec01 panel adjudication 2026-07-18",
         "2026-07-18"
       ],
@@ -469,6 +479,16 @@
     },
     {
       "accepted": [
+        "owner review 2026-07-20 item 3 (design-stage, pre-fit)",
+        "2026-07-20"
+      ],
+      "basis": "judgment",
+      "id": "screen_power_check",
+      "no_row_reason": "non-binding: design-stage power analysis informing the owner's criterion-2/3 threshold decision; binds no pipeline output and feeds no artifact the registry scans",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "spec01 panel adjudication 2026-07-18",
         "2026-07-18"
       ],
@@ -505,6 +525,16 @@
       "basis": "judgment",
       "id": "screen_top8_churn_max",
       "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner review 2026-07-20 item 3 (design-stage, pre-fit)",
+        "2026-07-20"
+      ],
+      "basis": "measured",
+      "id": "screen_v20_resid_decomp",
+      "no_row_reason": "non-binding: variance-matching input to the design-stage power check only; the v2.0 fit it summarizes is already the committed public artifact",
       "tier": "constant"
     },
     {
@@ -1662,7 +1692,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 145,
+  "n_entries": 148,
   "priors": [
     {
       "basis": "judgment",
@@ -1828,7 +1858,7 @@
   ],
   "tier_census": {
     "config": 14,
-    "constant": 79,
+    "constant": 82,
     "data": 15,
     "prior": 19,
     "structural": 18
@@ -2028,6 +2058,12 @@
           2,
           "judgment",
           "owner review 2026-07-20: criterion 3's statistic REBUILT as margin-defined tie-set churn (max tie_churn_frac across battery rows, artifact shortlist_stability block); hard-top-8 churn is demoted to a per-row diagnostic column with an explicit unit field ('window_id'; 'host_shape' for window_10/window_15). NO successor threshold value yet -- the owner sets it after the shortlist-stability report; until then decision_output.criteria.tie_churn carries threshold null / pass null (an unset threshold cannot pass -- fail-safe)"
+        ],
+        [
+          "2026-07-20",
+          2,
+          "judgment",
+          "criterion-3 UNIT FIX (owner blocking item, same-day follow-up): the successor statistic's max scans WINDOW-UNIT rows ONLY -- window_10/window_15 change the window UNIVERSE, so their churn is measured in host-shape units (denominator 14 vs 46 at the review build; one flip reads 7.1% vs 2.2%), a 3.3x-coarser lossy proxy, and cross-universe membership churn is a category mismatch a scalar threshold cannot compare. The two rows remain fully in criterion 2's min-rho (best-per-shape rankings, unit-consistent) and in the shortlist_stability report; the aggregate names them in criterion3_excluded_rows. IMPLEMENTED, PENDING OWNER RATIFICATION with the criterion-2/3 threshold values (spec 01 §5)"
         ]
       ],
       "id": "screen_top8_churn_max"

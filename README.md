@@ -470,7 +470,10 @@ tornado (`bca_harbor.json`).
     on the profile 4% clock, both spec 04 cost bands carried. **Headline: at the
     welfare-BCA central profile NO Orange County ALM corridor clears BCR=1 — the
     §7 marginal stop fires at CYCLE 1 and the decision-grade recommended build
-    order is EMPTY** (build nothing). Best marginal BCR ≈ 0.09 US-TYPICAL / 0.14
+    order is EMPTY** (build nothing). Scoping (rule-3 log, 2026-07-20): that
+    verdict is a statement about the hand-supplied `config/candidates.json`
+    universe — stage 1 currently supports no window-level decision product —
+    not a claim over all Orange County alignments. Best marginal BCR ≈ 0.09 US-TYPICAL / 0.14
     LOW (harbor); streetcar wins by NPV level (least-negative, −$2.2B US-TYPICAL)
     but has the lower ratio (0.042/0.060). The stopping record prints the economic
     margin (the marginal BCR + the R2 premium-bracket {1,1.5,2} rows — even a 2×
@@ -645,4 +648,24 @@ of the tripwire entries and the normalization entry respectively.
     SOFTENED: failure ⇒ threshold-shortlist (or narrower) output UNTIL a
     documented, owner-approved change of method; the frozen object is
     the §9 rebuild spec itself — same-spec re-runs are barred, method
-    changes are governed, not banned.
+    changes are governed, not banned. (f) Epistemics (owner item 4c,
+    2026-07-20): the SB reviewer's byte-match of the screen artifact is
+    recorded as IMPLEMENTATION verification — it shows no coding slip
+    and nothing more; it does not validate the route-cluster bootstrap
+    as the right uncertainty model, because reviewer and author share
+    the same author-spec-seed family (spec 01 §5c note). Follow-up
+    batch landed 2026-07-20: criterion 3's churn max now scans
+    WINDOW-UNIT rows only (window_10/window_15 excluded — host-shape
+    churn is a cross-universe category mismatch; implemented, pending
+    owner ratification with the threshold values; the sorted
+    criterion-3 column now shows a genuine gap, 0.043 → 0.522); the
+    CLOSED v2.1 battery is frozen pre-fit (registry
+    `screen_battery_rows_v21`, 20 rows: generator rows redefined
+    against the §9.1 WAC term, sld_swap excluded on acquisition facts,
+    LOYO returned on the measured input-side X-variance); and the
+    DESIGN-STAGE power check (`scripts/screen_power.py` →
+    `outputs/screen_power_check.json`) reads criterion 1 as
+    UNDERPOWERED at plausible effect sizes: required-at-80%-power true
+    elasticities ≈ 0.32 (b1) / 0.19 (b2) at 47 clusters vs committed
+    v2.0 estimates 0.099 / 0.087 — on synthetic outcomes with the
+    v2.1 predictor design; the v2.1 fit itself stays unrun.

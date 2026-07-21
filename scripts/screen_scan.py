@@ -25,8 +25,13 @@ bootstrap replicates (per-replicate signs recorded in the existing headline
 bootstrap; analytic |t| demoted to a diagnostic -- cluster SEs are
 downward-biased at ~41 clusters). Criterion 2 (battery min Spearman rho,
 LOYO excluded): statistic unchanged, 0.7 threshold PROVISIONAL pending the
-owner's decision on the shortlist_stability report. Criterion 3 (REBUILT):
-max margin-defined tie-set churn across battery rows; threshold UNSET
+owner's decision on the shortlist_stability report. Criterion 3 (REBUILT;
+UNIT FIX 2026-07-20): max margin-defined tie-set churn across WINDOW-UNIT
+battery rows only -- window_10/window_15 churn is measured in host-shape
+units (the window universe changes with the length), a category mismatch a
+scalar threshold cannot compare, so the two rows are excluded from the max
+(they stay in criterion 2 and the report; implemented, pending owner
+ratification with the threshold values); threshold UNSET
 (null) pending owner. ordinal_ok requires all three to pass and an unset
 threshold cannot pass -> false-by-construction until the owner sets 2/3
 (fail-safe); decision_format = 'threshold_shortlist' (tie_with_cutoff
@@ -809,10 +814,24 @@ def shortlist_stability(ctxs, sens, head_ties, head_tie_hosts, inputs,
         return (max(v["tie_churn_frac"] for v in bc.values()) if bc
                 else r["tie_churn_frac"])
 
+    # CRITERION-3 UNIT FIX (owner item 2026-07-20; implemented, pending
+    # owner ratification with the threshold values -- spec 01 §5, registry
+    # screen_top8_churn_max history). The two window-length rows change the
+    # window UNIVERSE, so their churn is measured in HOST-SHAPE units (a
+    # 3.3x-coarser lossy proxy; denominator 14 vs 46 at the review build --
+    # one flip is 7.1% vs 2.2%): cross-universe membership churn is a
+    # category mismatch, not a stability measurement, and a scalar
+    # threshold cannot compare the two. Criterion 3's max therefore scans
+    # WINDOW-UNIT rows only; window_10/window_15 remain FULLY in criterion
+    # 2's min-rho (best-per-shape rankings, unit-consistent) and in this
+    # report's per_row block. min_jaccard stays an all-rows REPORT
+    # aggregate (it feeds no criterion).
+    crit3_rows = [r for r in per_row if r["unit"] == "window_id"]
+    crit3_excluded = [r["id"] for r in per_row if r["unit"] != "window_id"]
     min_jac = min(_jac(r) for r in per_row)
     worst_row = next(r["id"] for r in per_row if _jac(r) == min_jac)
-    max_frac = max(_frac(r) for r in per_row)
-    max_frac_row = next(r["id"] for r in per_row if _frac(r) == max_frac)
+    max_frac = max(_frac(r) for r in crit3_rows)
+    max_frac_row = next(r["id"] for r in crit3_rows if _frac(r) == max_frac)
     return {
         "per_row": per_row,
         "aggregate": {
@@ -820,6 +839,7 @@ def shortlist_stability(ctxs, sens, head_ties, head_tie_hosts, inputs,
             "worst_row": worst_row,
             "max_tie_churn_frac": max_frac,
             "max_tie_churn_row": max_frac_row,
+            "criterion3_excluded_rows": crit3_excluded,
             "n_tie_headline": len(head_set_w),
             "stable_core": sorted(core),
             "n_stable_core": len(core),
@@ -834,7 +854,17 @@ def shortlist_stability(ctxs, sens, head_ties, head_tie_hosts, inputs,
                 "tuple (full per-class detail in by_class); the AGGREGATE "
                 "scans every generator class -- class-min jaccard, "
                 "class-max tie_churn_frac -- so criterion 3's statistic "
-                "cannot be understated by class selection. Per-row "
+                "cannot be understated by class selection. CRITERION-3 "
+                "UNIT FIX (2026-07-20, implemented pending owner "
+                "ratification with the threshold values): "
+                "max_tie_churn_frac scans WINDOW-UNIT rows only -- the "
+                "window-length rows change the window universe, so their "
+                "churn is host-shape-unit (a 3.3x-coarser lossy proxy) "
+                "and a scalar threshold cannot compare the two units; "
+                "aggregate criterion3_excluded_rows names them, and they "
+                "remain fully in criterion 2's min-rho and in per_row. "
+                "min_jaccard stays an all-rows REPORT aggregate (it feeds "
+                "no criterion). Per-row "
                 "seed rule: every row re-derives default_rng(screen_seed) "
                 "-- common random numbers, so tie-set differences are "
                 "attributable to the perturbation, not the draw. "
@@ -873,8 +903,11 @@ def decision_block(pri, names, sens, windows, signs, n_boot, stability):
       excluded); threshold value PROVISIONAL pending the owner's decision
       on the shortlist-stability report.
 
-    tie_churn (NEW statistic): max margin-defined tie-set churn fraction
-      across battery rows (shortlist_stability aggregate); NO threshold
+    tie_churn (NEW statistic; UNIT FIX 2026-07-20): max margin-defined
+      tie-set churn fraction across WINDOW-UNIT battery rows
+      (shortlist_stability aggregate; window_10/window_15 excluded --
+      their churn is host-shape-unit, a cross-universe category mismatch;
+      they remain in battery_rho and the report); NO threshold
       yet -- field present, value null, pass null, pending owner.
 
     ordinal_ok requires ALL criteria to pass; an unset threshold cannot
@@ -960,8 +993,15 @@ def decision_block(pri, names, sens, windows, signs, n_boot, stability):
                 "(the earlier calibration story for 0.7 is RETRACTED -- "
                 "registry history). tie_churn is the rebuilt criterion-3 "
                 "statistic (max margin-defined tie-set churn across "
-                "battery rows, shortlist_stability); its threshold is "
-                "UNSET (null) pending owner. ordinal_ok requires ALL "
+                "WINDOW-UNIT battery rows, shortlist_stability; the "
+                "window_10/window_15 rows are EXCLUDED from this max -- "
+                "unit fix 2026-07-20, implemented pending owner "
+                "ratification with the threshold values: length rows "
+                "change the window universe, so their churn is measured "
+                "in host-shape units, a category mismatch a scalar "
+                "threshold cannot compare; they remain fully in "
+                "battery_rho and in shortlist_stability); its threshold "
+                "is UNSET (null) pending owner. ordinal_ok requires ALL "
                 "criteria to pass and an unset threshold cannot pass, so "
                 "ordinal_ok is FALSE BY CONSTRUCTION until the owner sets "
                 "criteria 2/3 -- the intended fail-safe. While ordinal_ok "

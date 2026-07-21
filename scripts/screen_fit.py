@@ -327,6 +327,47 @@ def nb2_beta_fixed_alpha(counts, X, alpha, beta0, maxiter=40, tol=1e-10):
     return beta
 
 
+def resid_decomposition(y=None, X=None, groups=None):
+    """Route-effect / residual variance decomposition of the COMMITTED v2.0
+    headline fit (log-OLS, BASE_CFG) -- the variance-matching source for
+    the DESIGN-STAGE power check (spec 01 §9, owner item 3 2026-07-20).
+    The registry entry `screen_v20_resid_decomp` pins the measured values;
+    scripts/screen_power.py consumes THOSE via val() and never touches
+    boardings itself (contamination guard: the v2.1 fit stays unrun; this
+    decomposition re-derives the already-committed, already-public v2.0
+    fit only). Standing test: test_screen_power.py W2 asserts the registry
+    values equal this recompute.
+
+    Extraction (method of moments on the OLS residuals e_ry, grouped by
+    route r with n_r fitted years):
+      sig2_resid = pooled within-route variance
+                 = sum_r sum_y (e_ry - ebar_r)^2 / sum_r (n_r - 1)
+      sig2_route = between-route variance of ebar_r minus the within
+                   contamination of the route means:
+                   var_b(ebar_r) - sig2_resid * mean_r(1/n_r), floored at
+                   0, with var_b = sum_r (ebar_r - mean)^2 / (R - 1)."""
+    if y is None:
+        inputs = load_screen_inputs()
+        projs = gtfs_universe(inputs)
+        fit = build_fit_frame(projs, inputs, val("buffer_mi"))
+        y, X, _, groups, _ = design_matrix(fit["rows"], BASE_CFG)
+    resid = y - X @ ols_beta(y, X)
+    routes = sorted(set(groups), key=_route_sort_key)
+    ebars, inv_n, ss_within, dof_within = [], [], 0.0, 0
+    for r in routes:
+        e = resid[groups == r]
+        ebars.append(float(e.mean()))
+        inv_n.append(1.0 / len(e))
+        ss_within += float(((e - e.mean()) ** 2).sum())
+        dof_within += len(e) - 1
+    ebars = np.asarray(ebars)
+    sig2_resid = ss_within / max(dof_within, 1)
+    var_b = float(((ebars - ebars.mean()) ** 2).sum()) / max(len(ebars) - 1, 1)
+    sig2_route = max(var_b - sig2_resid * float(np.mean(inv_n)), 0.0)
+    return {"sig2_route": sig2_route, "sig2_resid": sig2_resid,
+            "n_routes": len(routes), "n_route_years": int(len(y))}
+
+
 def vifs(X, names):
     """VIF per non-intercept column (required diagnostic, panel D3)."""
     out = {}

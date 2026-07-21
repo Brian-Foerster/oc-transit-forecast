@@ -239,8 +239,10 @@ host-shape report), `fit_diagnostics{}`, `sensitivity[]`,
 n_tie_row, tie_in/tie_out vs the margin-defined headline tie set,
 jaccard, tie_churn_frac, hard_top8_churn diagnostic with unit field;
 by_class for gen_leave_class_out], aggregate {min_jaccard, worst_row,
-max_tie_churn_frac, max_tie_churn_row, n_tie_headline, stable_core,
-n_stable_core}, note), `decision_output{}` (the §5 tripwire v2,
+max_tie_churn_frac, max_tie_churn_row, criterion3_excluded_rows (the
+§5 unit fix: the churn max scans window-unit rows only),
+n_tie_headline, stable_core, n_stable_core}, note), `decision_output{}`
+(the §5 tripwire v2,
 mechanized: {ordinal_ok, criteria {sign_pos_frac (b1/b2 pos_frac,
 threshold, pass), battery_rho (min_rho, provisional threshold, pass),
 tie_churn (max_tie_churn_frac, threshold null, pass null — pending
@@ -395,6 +397,22 @@ column with an explicit per-row UNIT field — 'window_id' for most
 rows, 'host_shape' for `window_10`/`window_15` (whose window sets
 differ from the headline scan).
 
+**Criterion-3 unit fix (owner item 2026-07-20; implemented, pending
+owner ratification with the threshold values — registry
+`screen_top8_churn_max` history).** The two window-length rows
+(`window_10`/`window_15`) are DROPPED from criterion 3's max: a
+length change alters the window UNIVERSE, so those rows' churn cannot
+be measured over window ids at all and is instead measured in
+HOST-SHAPE units — a 3.3x-coarser lossy proxy (denominator 14 vs 46
+at the review build: ONE flip reads 7.1% against 2.2%). Cross-universe
+membership churn is a category mismatch, not a stability measurement,
+and a single scalar threshold cannot compare the two units. The rows
+remain FULLY in criterion 2's min-rho (the best-per-shape ranking
+comparison is unit-consistent) and in the §5c report's per_row block;
+the aggregate names them in `criterion3_excluded_rows`, and
+`min_jaccard` stays an all-rows REPORT aggregate (it feeds no
+criterion).
+
 **Fail-safe rule.** ordinal_ok requires ALL criteria to pass; an
 UNSET threshold cannot pass. ordinal_ok is therefore FALSE BY
 CONSTRUCTION until the owner sets criteria 2/3 — the intended
@@ -422,7 +440,11 @@ or dropping a row is an OWNER-APPROVED SPEC AMENDMENT, never a build
 patch, because the battery criterion is a MIN: adding a row can only
 lower it, and deleting a row can only raise it — an unfrozen list is
 a tunable bar. A standing test asserts the artifact's battery rows ==
-the registry list exactly, order included (test D2).
+the registry list exactly, order included (test D2). This v2.0
+16-row battery remains the PUBLISHED current-artifact report; the
+owner's criterion-2/3 threshold values attach to the CLOSED v2.1
+battery [screen_battery_rows_v21] for the phase-2b verdict (§9.8,
+frozen 2026-07-20 on acquisition facts only).
 
 **§5c Shortlist-stability report (owner review 2026-07-20; the
 statistics behind criteria 2/3's pending values).** For EVERY battery
@@ -442,11 +464,23 @@ headline NB2 estimate and Fisher-scores beta
 (`screen_fit.nb2_beta_fixed_alpha` — a stated approximation, pinned
 to the statsmodels fit by test D7; profiling alpha per replicate is
 outside the block's runtime budget). The aggregate carries
-min_jaccard, max_tie_churn_frac (criterion 3's statistic), and the
+min_jaccard (all rows — a report figure, feeding no criterion),
+max_tie_churn_frac (criterion 3's statistic — WINDOW-UNIT rows only
+per the §5 unit fix, the excluded length rows named in
+`criterion3_excluded_rows`), and the
 STABLE CORE: headline tie windows present in the tie set under every
 battery row (host-shape membership for the window-length rows; every
 generator class for gen_leave_class_out) — the §4b memo consumes it
 when churn is heavy.
+
+*Epistemics note (owner item 2026-07-20).* The SB reviewer's
+byte-match reproduction of this artifact is recorded as
+IMPLEMENTATION verification — it demonstrates the absence of a coding
+slip, and nothing more. It does NOT validate the route-cluster
+bootstrap as the right uncertainty model for the tie sets: reviewer
+and author execute the same spec, the same seed rule, and the same
+replicate family, so agreement between them cannot speak to whether
+that family is the right one (README known issue 38).
 
 **PRIMARY — rank-stability battery** (panel 2026-07-18: for a screen
 that passes ties onward, ranking robustness under *specification
@@ -715,6 +749,20 @@ Pre-registered SWAP rows (sensitivity battery only, NEVER headline):
 No other predictor may enter the rebuilt fit — see the 9.5
 no-shopping rule.
 
+**Pre-registered wrong-sign handling for b4 (owner item 4b,
+2026-07-20; fixed before any v2.1 input is fitted).** If the rebuilt
+fit's `l_genjobs` coefficient comes back NEGATIVE, that does NOT trip
+the demand-block criterion — b4 is outside the block by construction
+(§5 criterion 1) — but it MUST raise a logged diagnostic, never a
+silent pass: the v2.1 artifact carries a `b4_wrong_sign` flag field
+in its fit diagnostics (set when the point estimate is negative),
+and setting that flag OBLIGATES a README known-issue entry
+(governance rule 3) before the artifact is consumed by any gate
+memo. Rationale: a negative measured-generator term is a signal that
+b3 (allocation control) and/or b5 (scale) are absorbing attraction
+effects — a specification symptom the owner must see, not a
+tolerable sign to wave through.
+
 ### 9.2 Catchment v2.1: block resolution
 
 Membership rule: a census BLOCK is in the catchment iff its centroid's
@@ -747,6 +795,24 @@ source cannot be acquired at the matching vintage and X remains
 effectively time-invariant, the check keeps its demoted
 consistency-check label and stays excluded from tripwire
 criterion (ii)).
+
+**Condition RESOLVED (owner items 2/3, 2026-07-20 — input-side, this
+batch, not deferred to post-fit).** The design-stage power check
+(`scripts/screen_power.py`, artifact
+`outputs/screen_power_check.json` `x_variation`) measured the
+within-route across-year variation of the §9.1 predictors on the
+41-route current-shape universe under this section's vintage
+dispatch: every vintage-matched predictor (l_flows, l_zveh_hh,
+l_genjobs) varies within route for share 1.0 of fitted routes
+(median within-route std 0.011 / 0.039 / 0.022 respectively; l_rvh
+varies through measured annual RVH, share 1.0). X actually varies by
+year, so LOYO RETURNS to the v2.1 battery — row `loyo` in the frozen
+[screen_battery_rows_v21] list (§9.8), statistic = min Spearman rho
+over the three year-dropped refits vs the v2.1 headline ranking.
+Stated caveats: the fy2017 drop leaves a single-vintage X pair
+(fy2019/fy2020q3 share tables), and l_len is time-invariant in the
+measurement only because it used current shapes for all years (the
+archived §9.4 shapes will move it).
 
 ### 9.4 Fit-side universe: archived GTFS (explicit asymmetry)
 
@@ -820,3 +886,38 @@ the new knobs (vintage-match structure, generator-jobs NAICS set,
 block-catchment transition, archived-GTFS data vintages, swap-row
 structural claims) land with the build branch per the §5b / A3 / W1 /
 N4 pattern — a later consolidation pass owns `scripts/assumptions.py`.
+
+### 9.8 Frozen v2.1 battery (owner item 2, 2026-07-20 — closed pre-fit)
+
+The CLOSED battery for the §9.5 phase-2b verdict is the 20-row list
+in the registry entry [screen_battery_rows_v21], FROZEN NOW — before
+any v2.1 input is fitted — on ACQUISITION FACTS ONLY. The owner's
+criterion-2/3 threshold values attach to THIS list; the v2.0 16-row
+battery ([screen_battery_rows]) remains the published
+current-artifact report. Composition:
+
+- the 14 v2.0 window-unit rows carried over: `buffer_lo`,
+  `buffer_hi`, `drop_fy2020`, `drop_rh`, `e016_swap`, `nb_estimator`,
+  `svc_p25`, `svc_p75`, `offset_variant`, `overlap_lo`, `overlap_hi`,
+  `year_fe_vs_pooled`, and the two GENERATOR rows REDEFINED against
+  §9.1's continuous WAC term — `b4_off` → `genjobs_off` (drop
+  `l_genjobs`), `gen_leave_class_out` → `genjobs_leave_class_out`
+  (drop ONE NAICS sector from the CNS15-18 sum; class-max
+  aggregation carried over from §5c);
+- PLUS the §9.1 swaps `popden_swap`, `e002_swap`, `gen_dummy_swap`;
+- PLUS `window_10`/`window_15`, CRITERION-2-ONLY and flagged as such
+  (the §5 criterion-3 unit fix excludes their host-shape-unit churn
+  from the tie-churn max);
+- MINUS `sld_swap` — EXCLUDED because the EPA SLD was NOT acquired
+  in phase 1; §9.1 made the row conditional on acquisition and the
+  exclusion is decided on that acquisition fact, never on fit
+  results;
+- PLUS `loyo` — leave-one-year-out rank stability RETURNS per the
+  §9.3 condition, resolved in this batch on the measured input-side
+  X-variance (see §9.3; min Spearman rho over the three year-dropped
+  refits vs the v2.1 headline ranking).
+
+Freezing before the rebuilt fit exists is the entire point: the
+battery criterion is a MIN, so membership edits after seeing v2.1
+numbers would be a tunable bar. Row changes from here are
+owner-approved spec amendments (§5 freeze discipline, unchanged).
