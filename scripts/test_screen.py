@@ -332,9 +332,14 @@ def test_d2_artifact_schema():
                   "hard_top8_churn"):
             assert k in r, (r["id"], k)
     assert set(ss["aggregate"]) == {
-        "min_jaccard", "worst_row", "max_tie_churn_frac",
-        "max_tie_churn_row", "criterion3_excluded_rows", "n_tie_headline",
+        "min_jaccard", "worst_row", "max_tie_churn_frac_window",
+        "max_tie_churn_row_window", "max_tie_churn_frac_hostshape",
+        "max_tie_churn_row_hostshape", "n_tie_headline",
         "stable_core", "n_stable_core"}
+    # criterion-3 UNIT FIX report-only exclusion is GONE (owner review
+    # 2026-07-20 ratification batch -- dual threshold; window_10/window_15
+    # feed the host-shape sub-criterion, not an exclusion list)
+    assert "criterion3_excluded_rows" not in ss["aggregate"]
     for w in a["windows"]:
         assert set(w) == WINDOW_KEYS, (w["window_id"], set(w) ^ WINDOW_KEYS)
         assert w["window_id"].startswith(w["route_id"] + "_")
@@ -411,13 +416,17 @@ def test_d5_rebase_rank_invariance():
 
 
 def test_d6_decision_output():
-    """Decision tripwire v2 (owner review 2026-07-20): criterion 1's
-    pos_frac values recomputed from the stored replicate_signs strings;
-    pass booleans recomputed from the stored numbers; tie_churn threshold
-    null -> pass null -> ordinal_ok FALSE BY CONSTRUCTION (an unset
-    threshold cannot pass -- the intended fail-safe); shortlist ==
-    tie_with_cutoff windows grouped by host; stability aggregate
-    recomputed from the stored per-row entries."""
+    """Decision tripwire v2 (owner review 2026-07-20, ratification batch):
+    criterion 1's pos_frac recomputed from the stored replicate_signs;
+    criterion 2's 0.7 threshold LIVE (the 'provisional' marker removed);
+    criterion 3 a DUAL THRESHOLD (window-unit + host-shape-unit
+    sub-criteria, BOTH fail on v2.0; the PW-batch report-only exclusion of
+    window_10/window_15 is REVERTED and criterion3_excluded_rows is GONE --
+    the two length rows feed the host-shape sub-criterion); ordinal_ok
+    recomputed from the three criteria and FALSE on v2.0; the three
+    new/changed threshold ids are consumed in the manifest; shortlist ==
+    tie_with_cutoff windows grouped by host; stability aggregate recomputed
+    from the stored per-row entries."""
     if not os.path.exists(ARTIFACT):
         print("  D6 SKIP  (outputs/screen_results.json absent)")
         return
@@ -430,18 +439,43 @@ def test_d6_decision_output():
     assert set(c) == {"sign_pos_frac", "battery_rho", "tie_churn"}
     assert set(c["sign_pos_frac"]) == {"b1_pos_frac", "b2_pos_frac",
                                        "threshold", "pass"}
+    # criterion 2 is LIVE: no 'provisional' threshold_status marker anymore
     assert set(c["battery_rho"]) == {"min_rho", "worst_row_id", "threshold",
-                                     "threshold_status", "pass"}
-    assert set(c["tie_churn"]) == {"max_tie_churn_frac", "worst_row_id",
-                                   "threshold", "threshold_status", "pass"}
-    # thresholds: registry-sourced where live; NULL where the owner has
-    # not set a value (criterion 3)
-    assert c["sign_pos_frac"]["threshold"] == val("screen_pos_frac_min")
-    assert c["battery_rho"]["threshold"] == val("screen_battery_rho_min")
-    assert "provisional" in c["battery_rho"]["threshold_status"]
-    assert c["tie_churn"]["threshold"] is None
-    assert c["tie_churn"]["pass"] is None
-    assert "pending owner" in c["tie_churn"]["threshold_status"]
+                                     "pass"}
+    assert "threshold_status" not in c["battery_rho"]
+    # criterion 3 is a DUAL THRESHOLD: window + hostshape sub-criteria, each
+    # {max, threshold, worst_row, pass}; there is NO top-level tie_churn.pass
+    tc = c["tie_churn"]
+    assert set(tc) == {"window", "hostshape"}
+    assert "pass" not in tc
+    tw, th = tc["window"], tc["hostshape"]
+    assert set(tw) == {"max_over_window_unit_rows", "threshold", "worst_row",
+                       "pass"}
+    assert set(th) == {"max_over_window10_window15", "threshold", "worst_row",
+                       "pass"}
+    # thresholds: all registry-sourced and LIVE (criterion 3 no longer null).
+    # Artifact floats are canonically rounded to CANON_DECIMALS=6 dp on write
+    # (_canon), so the STORED threshold is the 6dp image of the registry value.
+    # screen_tie_churn_max_hostshape is now the EXACT rational 2/14 =
+    # 0.142857142857... (reviewer fix 2026-07-21 -- so the '<=' cap boundary is
+    # exact at runtime, where the comparison uses the raw val(), not this
+    # rounded display); its 6dp image is 0.142857. The other three thresholds
+    # are 6dp-exact so round() is a no-op for them.
+    import screen_scan as _ss
+    rnd = lambda x: round(x, _ss.CANON_DECIMALS)
+    assert c["sign_pos_frac"]["threshold"] == rnd(val("screen_pos_frac_min"))
+    assert c["battery_rho"]["threshold"] == rnd(val("screen_battery_rho_min"))
+    assert tw["threshold"] == rnd(val("screen_tie_churn_max_window"))
+    assert th["threshold"] == rnd(val("screen_tie_churn_max_hostshape"))
+    # the runtime cap boundary itself is exact: a phase-2b 2-shape flip of
+    # churn exactly 2/14 passes '<= val()' because val() is the exact rational
+    assert (2.0 / 14.0) <= val("screen_tie_churn_max_hostshape")
+    # the three new/changed threshold ids are CONSUMED in the manifest
+    # (check_assumptions verifies the same; a standing test pins it here)
+    consumed = {cc["id"] for cc in a["assumptions_manifest"]["consumed"]}
+    for tid in ("screen_battery_rho_min", "screen_tie_churn_max_window",
+                "screen_tie_churn_max_hostshape"):
+        assert tid in consumed, f"{tid} not consumed in the manifest"
     # criterion 1: recompute pos_frac from the stored replicate signs
     rs = do["replicate_signs"]
     n_boot = a["n_boot"]
@@ -458,10 +492,18 @@ def test_d6_decision_output():
         min(b1_pf, b2_pf) >= c["sign_pos_frac"]["threshold"])
     assert c["battery_rho"]["pass"] == (c["battery_rho"]["min_rho"]
                                         >= c["battery_rho"]["threshold"])
-    ok = all(cc["pass"] is True for cc in c.values())
+    assert tw["pass"] == (tw["max_over_window_unit_rows"] <= tw["threshold"])
+    assert th["pass"] == (th["max_over_window10_window15"] <= th["threshold"])
+    # ordinal_ok = criterion 1 AND criterion 2 AND BOTH criterion-3 subs
+    crit3_pass = tw["pass"] and th["pass"]
+    ok = (c["sign_pos_frac"]["pass"] is True
+          and c["battery_rho"]["pass"] is True
+          and crit3_pass is True)
     assert do["ordinal_ok"] == ok
-    # FALSE BY CONSTRUCTION while criterion 3's threshold is unset --
-    # regardless of how 1 and 2 measure (the fail-safe direction)
+    # measured on the current v2.0 artifact: BOTH criterion-3 sub-criteria
+    # FAIL (window-unit e016_swap churn 0.848 > 0.20; host-shape window_10
+    # churn 8/14 = 0.571 > 2/14) -> ordinal_ok FALSE
+    assert tw["pass"] is False and th["pass"] is False
     assert do["ordinal_ok"] is False
     assert do["decision_format"] == "threshold_shortlist"
     # diagnostics: analytic |t| retained, recomputable from coefficients
@@ -473,12 +515,15 @@ def test_d6_decision_output():
     rhos = {r["id"]: r["detail"]["rho"] for r in a["sensitivity"]}
     assert abs(min(rhos.values()) - c["battery_rho"]["min_rho"]) < 5e-6
     assert c["battery_rho"]["worst_row_id"] in rhos
-    # criterion 3 statistic == stability aggregate; aggregate recomputed
-    # from the stored per-row entries (tie-churn recomputation)
+    # criterion 3 == stability aggregate; aggregate recomputed from the
+    # stored per-row entries (dual-threshold tie-churn recomputation)
     ss = a["shortlist_stability"]
     agg = ss["aggregate"]
-    assert c["tie_churn"]["max_tie_churn_frac"] == agg["max_tie_churn_frac"]
-    assert c["tie_churn"]["worst_row_id"] == agg["max_tie_churn_row"]
+    assert tw["max_over_window_unit_rows"] == agg["max_tie_churn_frac_window"]
+    assert tw["worst_row"] == agg["max_tie_churn_row_window"]
+    assert (th["max_over_window10_window15"]
+            == agg["max_tie_churn_frac_hostshape"])
+    assert th["worst_row"] == agg["max_tie_churn_row_hostshape"]
     # by_class rows contribute CLASS-WISE extremes to the aggregate
     # (review 2026-07-20 major finding 2: Jaccard-min and churn-frac-max
     # need not coincide in one class; per_row-only scanning could
@@ -493,22 +538,27 @@ def test_d6_decision_output():
         return ([v["tie_churn_frac"] for v in bc.values()] if bc
                 else [r["tie_churn_frac"]])
 
-    # CRITERION-3 UNIT FIX (owner item 2026-07-20): the churn max scans
-    # WINDOW-UNIT rows only -- window_10/window_15 churn is host-shape-
-    # unit (cross-universe category mismatch) and is excluded from the
-    # criterion, named in criterion3_excluded_rows; min_jaccard stays an
-    # all-rows report aggregate (feeds no criterion)
+    # DUAL THRESHOLD (owner review 2026-07-20 ratification batch): the
+    # window-unit max scans unit=='window_id' rows; the host-shape max scans
+    # window_10/window_15 (unit=='host_shape'); the PW-batch exclusion list
+    # is GONE. min_jaccard stays an all-rows report aggregate (feeds no
+    # criterion).
     win_rows = [r for r in ss["per_row"] if r["unit"] == "window_id"]
-    fracs = [max(_fracs(r)) for r in win_rows]
+    host_rows = [r for r in ss["per_row"] if r["unit"] == "host_shape"]
+    assert {r["id"] for r in host_rows} == {"window_10", "window_15"}
+    fracs_w = [max(_fracs(r)) for r in win_rows]
+    fracs_h = [max(_fracs(r)) for r in host_rows]
     jacs = [min(_jacs(r)) for r in ss["per_row"]]
-    assert abs(max(fracs) - agg["max_tie_churn_frac"]) < 5e-6
+    assert abs(max(fracs_w) - agg["max_tie_churn_frac_window"]) < 5e-6
+    assert abs(max(fracs_h) - agg["max_tie_churn_frac_hostshape"]) < 5e-6
     assert abs(min(jacs) - agg["min_jaccard"]) < 5e-6
     worst = ss["per_row"][jacs.index(min(jacs))]["id"]
     assert agg["worst_row"] == worst
-    frac_worst = win_rows[fracs.index(max(fracs))]["id"]
-    assert agg["max_tie_churn_row"] == frac_worst
-    assert agg["criterion3_excluded_rows"] == [
-        r["id"] for r in ss["per_row"] if r["unit"] != "window_id"]
+    assert (win_rows[fracs_w.index(max(fracs_w))]["id"]
+            == agg["max_tie_churn_row_window"])
+    assert (host_rows[fracs_h.index(max(fracs_h))]["id"]
+            == agg["max_tie_churn_row_hostshape"])
+    assert "criterion3_excluded_rows" not in agg
     # the by_class entry tuple is the min-Jaccard class (published rule)
     for r in ss["per_row"]:
         if "by_class" in r:
@@ -552,17 +602,22 @@ def test_d6_decision_output():
             assert h not in seen, "shortlist not grouped by host shape"
             seen.add(h)
             prev = h
-    print(f"  D6 OK  decision_output v2 consistent; format "
+    print(f"  D6 OK  decision_output v2 dual-threshold; format "
           f"{do['decision_format']}; pos_frac b1 "
           f"{c['sign_pos_frac']['b1_pos_frac']:.4f} / b2 "
           f"{c['sign_pos_frac']['b2_pos_frac']:.4f} vs "
           f"{c['sign_pos_frac']['threshold']} "
           f"({'PASS' if c['sign_pos_frac']['pass'] else 'FAIL'}); "
           f"min rho {c['battery_rho']['min_rho']:.3f} "
-          f"({c['battery_rho']['worst_row_id']}, provisional); tie_churn "
-          f"{c['tie_churn']['max_tie_churn_frac']:.3f} "
-          f"({c['tie_churn']['worst_row_id']}, threshold UNSET); "
-          f"ordinal_ok false-by-construction; stable core "
+          f"({c['battery_rho']['worst_row_id']}) vs "
+          f"{c['battery_rho']['threshold']} live "
+          f"({'PASS' if c['battery_rho']['pass'] else 'FAIL'}); tie_churn "
+          f"window {tw['max_over_window_unit_rows']:.3f} ({tw['worst_row']}) "
+          f"vs {tw['threshold']} ({'PASS' if tw['pass'] else 'FAIL'}) / "
+          f"hostshape {th['max_over_window10_window15']:.3f} "
+          f"({th['worst_row']}) vs {th['threshold']} "
+          f"({'PASS' if th['pass'] else 'FAIL'}); ordinal_ok "
+          f"{do['ordinal_ok']}; stable core "
           f"{agg['n_stable_core']}/{agg['n_tie_headline']}; shortlist "
           f"{len(do['shortlist'])} windows / {len(seen)} host shapes")
 

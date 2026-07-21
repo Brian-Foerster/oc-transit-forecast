@@ -711,3 +711,63 @@ of the tripwire entries and the normalization entry respectively.
     blocks regenerate bit-identically (BEFORE numbers unchanged;
     committed-run `underpowered`). The v2.1 fit itself still stays
     unrun — this remains a design-stage read on synthetic outcomes.
+40. **Owner review (2026-07-20 tripwire ratification batch): a
+    pre-registered REGIME-SPLIT gate for the phase-2b v2.1 demand block —
+    one governed gate (rule-3 log), written before the fit exists,
+    reusing the exact criterion-1 statistic (no new threshold).** In
+    phase 2b the demand block is fit THREE ways — POOLED (all 6
+    fit-panel FYs), PRE-2020-ONLY (FY2017+FY2019), and a full-panel fit
+    with a post2020 × {l_flows, l_zveh_hh} interaction — and the artifact
+    reports the pre-2020 b1/b2 bootstrap sign-fractions and the
+    interaction coefficients alongside pooled. BINDING DOWNGRADE RULE
+    (registry `screen_regime_split`, spec 01 §9.10): if the pooled demand
+    block PASSES tripwire criterion 1 but the pre-2020-only block does
+    NOT independently pass it (the same `screen_pos_frac_min` = 0.841 bar
+    applied to each demand coefficient), the pooled pass is DOWNGRADED to
+    reported-only — `ordinal_ok` forced false, `decision_format` =
+    threshold_shortlist, a `regime_split_downgrade` flag set. Rationale:
+    year FE absorb LEVEL shifts, not SLOPE changes, and LODES 2021
+    measures remote-work-era workplace geography, so a pooled pass
+    uncorroborated by the pre-period cannot be distinguished from a
+    pooling artifact. It is ONE pre-registered gate reusing the exact
+    criterion-1 statistic — no new threshold beyond 0.841. Runs in phase
+    2b; the current v2.0 artifact does not consume it. (Registry entry
+    carried at constant tier in the structural-governance role — the
+    `screen_battery_rows` precedent: a rowless structural-tier entry
+    fails the check-5 enumerated-alternative rule, and the gate produces
+    phase-2b fit_diagnostics reports, not swept battery rows.)
+41. **Owner adjudication (2026-07-20) of the v2.1 fit-side UNIVERSE
+    (spec 01 §9.3 / §9.9) — three governed changes to
+    universe-determining keys, recorded as measured/availability facts
+    before the phase-2b fit (rule-3 log).** (a) ROUTE-ID CASE
+    NORMALIZATION: the fit-side APC↔GTFS join case-normalizes route ids
+    (APC 53X/57X/64X match the archived GTFS 53x/57x/64x) — a
+    post-acquisition change to a universe-determining key, disclosed; it
+    adds the three Express routes to the recoverable set on FY2019
+    shapes. (b) FY2017 EXPRESS DROP: 53X/57X/64X HAVE FY2017 boardings
+    (228,478 / 1,145,261 / 615,387) but the FY2017 archived feed has NO
+    Express shape (they are not separate GTFS routes until FY2019), so
+    per the §9.3 vintage-consistency rule those 3 FY2017 Express
+    route-years are DROPPED (never matched to a FY2019 shape); the routes
+    still contribute FY2019+ rows. (c) SHAPELESS-ROUTE RULE
+    (pre-registered general rule): a route-year whose route has NO
+    contemporaneous shape in that fiscal year's archived feed is DROPPED
+    — a catchment is uncomputable without a shape, and carrying it on a
+    wrong-year shape is REJECTED as reintroducing the vintage mismatch
+    the rebuild exists to remove. Measured on the current extended panel,
+    the shapeless feed routes are overwhelmingly branch variants
+    (150A/29A/42A/47A/79A) and suspended Express (53x/57x/64x) carrying
+    NO boardings; the only boardings-carrying route-year affected is
+    529/FY2022 (86,674 boardings) — route 529 is ABSENT from the fy2022
+    archived feed entirely (no contemporaneous shape by absence; it has
+    resolved shapes in the fy2020 and fy2023 feeds), so only its fy2022
+    row drops → 1 route-year. Total contemporaneous-shape drops from the
+    extended panel = 3 (FY2017 Express) + 1 = 4 route-years. CORRECTION
+    (governance rule 3, 2026-07-21): an earlier draft also dropped
+    553/FY2023 (266,142 boardings) and reported a total of 5; that was a
+    miscount — route 553 IS present in the fy2023 archived feed
+    (route_ids 553_merged_10882877/78, 74 weekday MTUWTF trips each,
+    shapes 5535–5538 all resolved), so under the pre-registered
+    shapeless rule it must be KEPT. Corrected total is 4, not 5. These
+    are availability/measured facts recorded now, not fitted quantities;
+    the phase-2b fit stays unrun.

@@ -1728,7 +1728,7 @@ ASSUMPTIONS = {
     },
     "screen_battery_rho_min": {
         "title": "screen tripwire criterion 2: battery minimum Spearman rho "
-                 "(value provisional)",
+                 "(owner-ratified live floor, expected slack)",
         "tier": "constant", "status": "active",
         "value": 0.7, "units": "Spearman rho", "band": None,
         "basis": "judgment",
@@ -1744,20 +1744,42 @@ ASSUMPTIONS = {
                      "-- it tuned the bar to an observed value (e016_swap's "
                      "measured rho 0.746) and that example fails criterion "
                      "3 anyway (top-8 churn 8); no such story may be cited "
-                     "as this entry's basis")],
+                     "as this entry's basis"),
+                    ("2026-07-20", 0.7, "judgment",
+                     "owner review 2026-07-20 (tripwire ratification batch) "
+                     "-- criterion 2 KEPT at 0.7 and made LIVE: the "
+                     "'provisional' marker is REMOVED from the "
+                     "decision_output. 0.7 is the ORDINAL PRODUCT's own "
+                     "gate -- an uncalibrated FLOOR EXPECTED TO BE SLACK "
+                     "guarding whole-ORDERING stability (Spearman rho over "
+                     "the frozen battery), DISTINCT from criterion 3's "
+                     "tie-set churn, which guards shortlist-MEMBERSHIP "
+                     "stability; ordinal_ok governs publication of the "
+                     "ORDINAL PRODUCT specifically. The e016-anchored "
+                     "calibration story remains RETRACTED (reaffirmed): 0.7 "
+                     "is not tuned to any observed rho, and no calibration "
+                     "claim may be cited as this entry's basis")],
         "provenance": "criterion 2 of the decision tripwire (spec 01 §5): "
                       "the minimum Spearman rho over the pre-registered "
                       "battery perturbations (the FROZEN screen_battery_rows "
                       "list; the leave-one-year-out consistency check is "
                       "EXCLUDED -- mechanically near-1 with time-invariant "
-                      "X) must be >= this. Value PROVISIONAL (owner sets it "
-                      "after the shortlist-stability report). Measured at "
-                      "landing: min rho = 0.39 (buffer_lo) -> FAILS",
+                      "X) must be >= this. LIVE and owner-ratified "
+                      "2026-07-20 (the earlier 'provisional' marker is "
+                      "removed): 0.7 is the ordinal product's own gate, an "
+                      "uncalibrated FLOOR EXPECTED TO BE SLACK on "
+                      "whole-ordering (rho) stability -- distinct from "
+                      "criterion 3, which gates shortlist-membership (tie "
+                      "churn) stability. Any e016-anchored calibration story "
+                      "for 0.7 is RETRACTED (reaffirmed): the value is not "
+                      "tuned to any measured rho. Measured at landing: min "
+                      "rho = 0.39 (buffer_lo) -> FAILS",
         "rows": {}, "no_row_reason": "quality-knob",
-        "accepted": ("statistic owner-ratified 2026-07-20; VALUE provisional "
-                     "pending owner post-report", "2026-07-20"),
+        "accepted": ("owner-ratified 2026-07-20 -- kept as the ordinal "
+                     "product own gate; uncalibrated floor expected to be "
+                     "slack", "2026-07-20"),
         "logged": "README known-issue 38 (opened as 35)",
-        "upgrade": "owner post-report value decision; v2.1 rebuilt fit",
+        "upgrade": "v2.1 rebuilt fit",
     },
     "screen_top8_churn_max": {
         "title": "screen tripwire: max top-8 membership changes per "
@@ -1796,23 +1818,153 @@ ASSUMPTIONS = {
                      "report; the aggregate names them in "
                      "criterion3_excluded_rows. IMPLEMENTED, PENDING "
                      "OWNER RATIFICATION with the criterion-2/3 threshold "
-                     "values (spec 01 §5)")],
+                     "values (spec 01 §5)"),
+                    ("2026-07-20", 2, "judgment",
+                     "owner review 2026-07-20 (tripwire ratification "
+                     "batch) -- criterion 3 RATIFIED as a DUAL THRESHOLD; "
+                     "the PW-batch report-only exclusion of window_10/"
+                     "window_15 is REVERTED. Two successor entries carry "
+                     "the values: screen_tie_churn_max_window = 0.20 "
+                     "(owner one-in-five over the 46-window tie set; "
+                     "WINDOW-UNIT rows) and screen_tie_churn_max_hostshape "
+                     "= 0.142857 = 2/14 (one-in-five over the 14-shape "
+                     "set rounds to 2.8 -> cap at 2 shapes; the "
+                     "host-shape-unit rows window_10/window_15). criterion "
+                     "3 passes IFF BOTH sub-thresholds pass. The "
+                     "window-length rows are NO LONGER exempt -- each "
+                     "comparison unit gets its own one-in-five cap because "
+                     "a single scalar cannot compare a 14-shape "
+                     "denominator to a 46-window one; the window-length "
+                     "perturbation is the most decision-relevant in the "
+                     "battery and MUST remain gated, not decorative. "
+                     "aggregate.criterion3_excluded_rows is REMOVED")],
         "provenance": "SUPERSEDED (owner review 2026-07-20): the hard "
                       "rank-8 cut measured churn against an arbitrary "
                       "boundary while the decision object is the "
-                      "MARGIN-DEFINED tie set; the rebuilt criterion-3 "
-                      "statistic is max tie-set churn across battery rows "
-                      "(shortlist_stability.aggregate.max_tie_churn_frac) "
-                      "and its threshold entry lands when the owner sets "
-                      "it. Original: criterion (iii) -- top-8 membership "
+                      "MARGIN-DEFINED tie set. Successor: criterion 3 is a "
+                      "DUAL THRESHOLD (owner-ratified 2026-07-20) over "
+                      "margin-defined tie-set churn -- "
+                      "screen_tie_churn_max_window (0.20; WINDOW-UNIT "
+                      "battery rows, shortlist_stability aggregate "
+                      "max_tie_churn_frac_window) AND "
+                      "screen_tie_churn_max_hostshape (2/14 ~= 0.142857; "
+                      "the host-shape-unit rows window_10/window_15, "
+                      "max_tie_churn_frac_hostshape); BOTH must pass. "
+                      "Original: criterion (iii) -- top-8 membership "
                       "changes under every battery perturbation <= this. "
                       "Measured at landing: max churn = 8 (buffer_lo) -> "
-                      "FAILS",
+                      "FAILS. Recomputed on the current v2.0 artifact "
+                      "under the dual threshold: window-unit max 0.848 "
+                      "(e016_swap) vs 0.20 -> FAIL; host-shape max 0.571 "
+                      "(window_10, 8/14) vs 2/14 -> FAIL (window_15 "
+                      "4/14 = 0.286 also over) -> criterion 3 FAILS",
         "rows": {}, "no_row_reason": "quality-knob",
         "accepted": ("superseded by owner review (criterion-3 statistic "
-                     "rebuild; value deferred)", "2026-07-20"),
+                     "rebuilt as a dual threshold; successors "
+                     "screen_tie_churn_max_window / "
+                     "screen_tie_churn_max_hostshape)", "2026-07-20"),
         "logged": "README known-issue 38 (opened as 35)",
         "upgrade": None,
+    },
+    "screen_tie_churn_max_window": {
+        "title": "screen tripwire criterion 3 (window-unit sub-threshold): "
+                 "max margin-defined tie-set churn over WINDOW-UNIT battery "
+                 "rows",
+        "tier": "constant", "status": "active",
+        "value": 0.20, "units": "tie-set churn fraction", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-20", 0.20, "judgment",
+                     "owner review 2026-07-20 (tripwire ratification "
+                     "batch) -- criterion 3's WINDOW-UNIT sub-threshold, "
+                     "owner-ratified: one-in-five over the 46-window "
+                     "headline tie set. Successor to screen_top8_churn_max "
+                     "(superseded); the dual-threshold form REVERTS the "
+                     "PW-batch report-only exclusion of the window-length "
+                     "rows")],
+        "provenance": "criterion 3 of the decision tripwire (spec 01 §5), "
+                      "WINDOW-UNIT sub-threshold, owner-ratified 2026-07-20: "
+                      "the maximum margin-defined tie-set churn fraction "
+                      "across the WINDOW-UNIT frozen battery rows "
+                      "(shortlist_stability.aggregate.max_tie_churn_frac_"
+                      "window, denominator = 46-window headline tie set) "
+                      "must be <= this. 0.20 = owner one-in-five over the "
+                      "46-window tie set. criterion 3 passes IFF this AND "
+                      "screen_tie_churn_max_hostshape both pass. Consumed "
+                      "via val() by screen_scan.py's decision_output; the "
+                      "check_assumptions screen scan verifies the "
+                      "consumption declaration. Recomputed on the current "
+                      "v2.0 artifact: window-unit max 0.848 (e016_swap) -> "
+                      "FAILS",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-ratified 2026-07-20 (criterion-3 window-unit "
+                     "sub-threshold)", "2026-07-20"),
+        "logged": "README known-issue 38",
+        "upgrade": "v2.1 rebuilt fit (spec 01 §9.5 governs the rebuilt "
+                   "output identically)",
+    },
+    "screen_tie_churn_max_hostshape": {
+        "title": "screen tripwire criterion 3 (host-shape-unit "
+                 "sub-threshold): max margin-defined tie-set churn over "
+                 "window_10/window_15",
+        "tier": "constant", "status": "active",
+        "value": 2.0 / 14.0, "units": "tie-set churn fraction", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-20", 0.142857, "judgment",
+                     "owner review 2026-07-20 (tripwire ratification "
+                     "batch) -- criterion 3's HOST-SHAPE-UNIT "
+                     "sub-threshold, owner-ratified: one-in-five over the "
+                     "14-shape headline tie set rounds to 2.8 -> cap at 2 "
+                     "shapes -> 2/14 = 0.142857. Governs the two "
+                     "window-length rows (window_10/window_15), whose "
+                     "churn is measured in host-shape units because a "
+                     "length change alters the window universe; a single "
+                     "scalar cannot compare a 14-shape denominator to a "
+                     "46-window one, so each unit gets its own one-in-five "
+                     "cap. This RETURNS the window-length rows to criterion "
+                     "3 (the PW-batch report-only exclusion is reverted): "
+                     "the window-length perturbation is the most "
+                     "decision-relevant in the battery and MUST remain "
+                     "gated, not decorative"),
+                    ("2026-07-21", 2.0 / 14.0, "judgment",
+                     "reviewer fix 2026-07-21 (APPROVE-WITH-FIXES minor): "
+                     "store the EXACT rational 2/14 (= 2.0/14.0 = "
+                     "0.142857142857...) instead of the 6dp-truncated "
+                     "decimal 0.142857. The truncated literal was strictly "
+                     "BELOW 2/14, so under the '<=' comparison in "
+                     "screen_scan.py decision_block a phase-2b rebuilt "
+                     "host-shape churn of EXACTLY 2/14 (a 2-shape flip -- "
+                     "the intended pass-at-cap boundary) would have "
+                     "evaluated 0.14285714... <= 0.142857 as False and "
+                     "FAILED, contradicting the pre-registered 2-shape cap "
+                     "intent. No effect on the current v2.0 verdict "
+                     "(host-shape max 0.571 fails either way); value-only "
+                     "precision correction, changes values_hash -> run_id")],
+        "provenance": "criterion 3 of the decision tripwire (spec 01 §5), "
+                      "HOST-SHAPE-UNIT sub-threshold, owner-ratified "
+                      "2026-07-20: the maximum margin-defined tie-set churn "
+                      "fraction over the host-shape-unit rows window_10/"
+                      "window_15 (shortlist_stability.aggregate."
+                      "max_tie_churn_frac_hostshape, denominator = "
+                      "headline HOST-SHAPE tie count, 14 at the review "
+                      "build) must be <= this. Value is the EXACT rational "
+                      "2/14 (= 2.0/14.0 = 0.142857142857...; stored as the "
+                      "float nearest 2/14, NOT the 6dp-truncated 0.142857, "
+                      "so a phase-2b 2-shape flip of exactly 2/14 passes the "
+                      "'<=' boundary -- reviewer fix 2026-07-21) = the "
+                      "owner one-in-five over the 14-shape set (2.8 rounded "
+                      "down to a 2-shape cap). criterion 3 passes IFF this "
+                      "AND screen_tie_churn_max_window both pass. Consumed "
+                      "via val() by screen_scan.py's decision_output; the "
+                      "check_assumptions screen scan verifies the "
+                      "consumption declaration. Recomputed on the current "
+                      "v2.0 artifact: host-shape max 0.571 (window_10, "
+                      "8/14) -> FAILS; window_15 (4/14 = 0.286) also over",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-ratified 2026-07-20 (criterion-3 host-shape "
+                     "sub-threshold)", "2026-07-20"),
+        "logged": "README known-issue 38",
+        "upgrade": "v2.1 rebuilt fit (spec 01 §9.5 governs the rebuilt "
+                   "output identically)",
     },
     "screen_battery_rows": {
         "title": "screen battery: FROZEN perturbation row list (structural "
@@ -1913,6 +2065,74 @@ ASSUMPTIONS = {
         "logged": "README known-issue 38",
         "upgrade": "phase 2b rebuilt artifact (rows go live; test asserts "
                    "artifact == this list, order included)",
+    },
+    "screen_regime_split": {
+        "title": "v2.1 pre-registered regime-split gate (spec 01 §9.10): "
+                 "pooled pass DOWNGRADED if the pre-2020 demand block does "
+                 "not independently clear criterion 1",
+        "tier": "constant", "status": "active",
+        "value": ("three-way demand-block fit (pooled all 6 FYs / "
+                  "pre-2020-only fy2017+fy2019 / full-panel with a "
+                  "post2020 x {l_flows, l_zveh_hh} interaction); DOWNGRADE "
+                  "the pooled criterion-1 pass to reported-only "
+                  "(ordinal_ok forced false, decision_format "
+                  "threshold_shortlist, regime_split_downgrade flag) IFF "
+                  "the pooled demand block PASSES criterion 1 but the "
+                  "pre-2020-only demand block does NOT independently pass "
+                  "it -- same screen_pos_frac_min = 0.841 bar, each demand "
+                  "coefficient; no new threshold"),
+        "units": "pre-registered decision gate", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-20",
+                     "pooled / pre-2020-only / post2020-interaction "
+                     "three-way fit; downgrade rule reuses "
+                     "screen_pos_frac_min = 0.841",
+                     "judgment",
+                     "owner review 2026-07-20 (tripwire ratification "
+                     "batch) -- PRE-REGISTERED the regime-split gate BEFORE "
+                     "the phase-2b fit (which stays unrun). One "
+                     "pre-registered gate, reusing the EXACT criterion-1 "
+                     "statistic (screen_pos_frac_min = 0.841); it "
+                     "introduces NO new threshold. STRUCTURAL-GOVERNANCE "
+                     "pre-registration carried at CONSTANT tier "
+                     "(screen_battery_rows precedent -- the registry's "
+                     "structural tier is machine-checked to own "
+                     "enumerated-alternative rows, check 5, and this "
+                     "decision-rule gate produces phase-2b fit_diagnostics "
+                     "reports, not swept battery rows). The frozen v2.1 "
+                     "battery screen_battery_rows_v21 is UNCHANGED by this "
+                     "gate")],
+        "provenance": "spec 01 §9.10 regime-split gate, the concrete "
+                      "pre-committed form of 'materially different slopes': "
+                      "in phase 2b the demand block is fit THREE ways -- "
+                      "POOLED (all 6 FYs), PRE-2020-ONLY (fy2017+fy2019), "
+                      "and a full-panel fit with a post2020 x {l_flows, "
+                      "l_zveh_hh} interaction; the artifact reports the "
+                      "pre-2020 b1/b2 bootstrap sign-fractions and the "
+                      "interaction coefficients alongside pooled. BINDING "
+                      "DOWNGRADE RULE: if the POOLED demand block PASSES "
+                      "criterion 1 but the PRE-2020-ONLY demand block does "
+                      "NOT independently pass criterion 1 (same "
+                      "screen_pos_frac_min = 0.841 bar, each demand "
+                      "coefficient), the pooled pass is DOWNGRADED to "
+                      "reported-only -> ordinal_ok forced false, "
+                      "decision_format = threshold_shortlist, a "
+                      "regime_split_downgrade flag set. Rationale: year FE "
+                      "absorb LEVEL shifts, not SLOPE changes; LODES 2021 "
+                      "measures remote-work-era workplace geography, so a "
+                      "pooled pass uncorroborated by the pre-period cannot "
+                      "be distinguished from a pooling artifact. Reuses the "
+                      "exact criterion-1 statistic -- no new threshold "
+                      "beyond 0.841. Consumed by the phase-2b rebuild when "
+                      "it runs; the current v2.0 artifact does NOT consume "
+                      "it (pure pre-registration)",
+        "rows": {}, "no_row_reason": "quality-knob",
+        "accepted": ("owner-ratified 2026-07-20 (pre-registered phase-2b "
+                     "regime-split gate; runs in phase 2b, not now)",
+                     "2026-07-20"),
+        "logged": "README known-issue 40",
+        "upgrade": "phase 2b rebuilt fit (the three-way regime-split fit "
+                   "runs; the downgrade rule binds decision_output)",
     },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {

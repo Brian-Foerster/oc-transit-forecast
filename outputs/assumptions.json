@@ -1,7 +1,7 @@
 {
   "basis_census": {
     "definitional": 28,
-    "judgment": 68,
+    "judgment": 71,
     "literature": 10,
     "locally-calibrated": 2,
     "measured": 44
@@ -439,7 +439,7 @@
     },
     {
       "accepted": [
-        "statistic owner-ratified 2026-07-20; VALUE provisional pending owner post-report",
+        "owner-ratified 2026-07-20 -- kept as the ordinal product own gate; uncalibrated floor expected to be slack",
         "2026-07-20"
       ],
       "basis": "judgment",
@@ -529,6 +529,16 @@
     },
     {
       "accepted": [
+        "owner-ratified 2026-07-20 (pre-registered phase-2b regime-split gate; runs in phase 2b, not now)",
+        "2026-07-20"
+      ],
+      "basis": "judgment",
+      "id": "screen_regime_split",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "spec01 panel adjudication 2026-07-18",
         "2026-07-18"
       ],
@@ -559,7 +569,27 @@
     },
     {
       "accepted": [
-        "superseded by owner review (criterion-3 statistic rebuild; value deferred)",
+        "owner-ratified 2026-07-20 (criterion-3 host-shape sub-threshold)",
+        "2026-07-20"
+      ],
+      "basis": "judgment",
+      "id": "screen_tie_churn_max_hostshape",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-ratified 2026-07-20 (criterion-3 window-unit sub-threshold)",
+        "2026-07-20"
+      ],
+      "basis": "judgment",
+      "id": "screen_tie_churn_max_window",
+      "no_row_reason": "quality-knob",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "superseded by owner review (criterion-3 statistic rebuilt as a dual threshold; successors screen_tie_churn_max_window / screen_tie_churn_max_hostshape)",
         "2026-07-20"
       ],
       "basis": "judgment",
@@ -1732,7 +1762,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 152,
+  "n_entries": 155,
   "priors": [
     {
       "basis": "judgment",
@@ -1906,7 +1936,7 @@
   ],
   "tier_census": {
     "config": 14,
-    "constant": 83,
+    "constant": 86,
     "data": 18,
     "prior": 19,
     "structural": 18
@@ -2095,6 +2125,12 @@
           0.7,
           "judgment",
           "owner review 2026-07-20: statistic KEPT (battery min Spearman rho, LOYO excluded); the 0.7 value is PROVISIONAL pending the owner's decision on the shortlist-stability report. RETRACTION recorded: any e016-anchored calibration story for 0.7 is RETRACTED -- it tuned the bar to an observed value (e016_swap's measured rho 0.746) and that example fails criterion 3 anyway (top-8 churn 8); no such story may be cited as this entry's basis"
+        ],
+        [
+          "2026-07-20",
+          0.7,
+          "judgment",
+          "owner review 2026-07-20 (tripwire ratification batch) -- criterion 2 KEPT at 0.7 and made LIVE: the 'provisional' marker is REMOVED from the decision_output. 0.7 is the ORDINAL PRODUCT's own gate -- an uncalibrated FLOOR EXPECTED TO BE SLACK guarding whole-ORDERING stability (Spearman rho over the frozen battery), DISTINCT from criterion 3's tie-set churn, which guards shortlist-MEMBERSHIP stability; ordinal_ok governs publication of the ORDINAL PRODUCT specifically. The e016-anchored calibration story remains RETRACTED (reaffirmed): 0.7 is not tuned to any observed rho, and no calibration claim may be cited as this entry's basis"
         ]
       ],
       "id": "screen_battery_rho_min"
@@ -2153,6 +2189,23 @@
     {
       "history": [
         [
+          "2026-07-20",
+          0.142857,
+          "judgment",
+          "owner review 2026-07-20 (tripwire ratification batch) -- criterion 3's HOST-SHAPE-UNIT sub-threshold, owner-ratified: one-in-five over the 14-shape headline tie set rounds to 2.8 -> cap at 2 shapes -> 2/14 = 0.142857. Governs the two window-length rows (window_10/window_15), whose churn is measured in host-shape units because a length change alters the window universe; a single scalar cannot compare a 14-shape denominator to a 46-window one, so each unit gets its own one-in-five cap. This RETURNS the window-length rows to criterion 3 (the PW-batch report-only exclusion is reverted): the window-length perturbation is the most decision-relevant in the battery and MUST remain gated, not decorative"
+        ],
+        [
+          "2026-07-21",
+          0.14285714285714285,
+          "judgment",
+          "reviewer fix 2026-07-21 (APPROVE-WITH-FIXES minor): store the EXACT rational 2/14 (= 2.0/14.0 = 0.142857142857...) instead of the 6dp-truncated decimal 0.142857. The truncated literal was strictly BELOW 2/14, so under the '<=' comparison in screen_scan.py decision_block a phase-2b rebuilt host-shape churn of EXACTLY 2/14 (a 2-shape flip -- the intended pass-at-cap boundary) would have evaluated 0.14285714... <= 0.142857 as False and FAILED, contradicting the pre-registered 2-shape cap intent. No effect on the current v2.0 verdict (host-shape max 0.571 fails either way); value-only precision correction, changes values_hash -> run_id"
+        ]
+      ],
+      "id": "screen_tie_churn_max_hostshape"
+    },
+    {
+      "history": [
+        [
           "2026-07-19",
           2,
           "judgment",
@@ -2169,6 +2222,12 @@
           2,
           "judgment",
           "criterion-3 UNIT FIX (owner blocking item, same-day follow-up): the successor statistic's max scans WINDOW-UNIT rows ONLY -- window_10/window_15 change the window UNIVERSE, so their churn is measured in host-shape units (denominator 14 vs 46 at the review build; one flip reads 7.1% vs 2.2%), a 3.3x-coarser lossy proxy, and cross-universe membership churn is a category mismatch a scalar threshold cannot compare. The two rows remain fully in criterion 2's min-rho (best-per-shape rankings, unit-consistent) and in the shortlist_stability report; the aggregate names them in criterion3_excluded_rows. IMPLEMENTED, PENDING OWNER RATIFICATION with the criterion-2/3 threshold values (spec 01 §5)"
+        ],
+        [
+          "2026-07-20",
+          2,
+          "judgment",
+          "owner review 2026-07-20 (tripwire ratification batch) -- criterion 3 RATIFIED as a DUAL THRESHOLD; the PW-batch report-only exclusion of window_10/window_15 is REVERTED. Two successor entries carry the values: screen_tie_churn_max_window = 0.20 (owner one-in-five over the 46-window tie set; WINDOW-UNIT rows) and screen_tie_churn_max_hostshape = 0.142857 = 2/14 (one-in-five over the 14-shape set rounds to 2.8 -> cap at 2 shapes; the host-shape-unit rows window_10/window_15). criterion 3 passes IFF BOTH sub-thresholds pass. The window-length rows are NO LONGER exempt -- each comparison unit gets its own one-in-five cap because a single scalar cannot compare a 14-shape denominator to a 46-window one; the window-length perturbation is the most decision-relevant in the battery and MUST remain gated, not decorative. aggregate.criterion3_excluded_rows is REMOVED"
         ]
       ],
       "id": "screen_top8_churn_max"

@@ -403,13 +403,16 @@ def check_coverage(present, arts):
     # must consume them via val() and declare them in the artifact's
     # assumptions_manifest (network-manifest precedent, spec 07 §9 N4).
     # screen_t_min / screen_top8_churn_max are SUPERSEDED (criterion 1
-    # revised to screen_pos_frac_min; criterion 3's statistic rebuilt, its
-    # threshold entry pending the owner's post-report decision) and are no
-    # longer consumed. screen_battery_rows is the frozen battery list
-    # (same consumption-declaration obligation). Absent artifact ->
+    # revised to screen_pos_frac_min; criterion 3's statistic rebuilt as a
+    # DUAL THRESHOLD -- successors screen_tie_churn_max_window /
+    # screen_tie_churn_max_hostshape, owner-ratified 2026-07-20) and are no
+    # longer consumed. screen_battery_rho_min is now LIVE (owner-ratified;
+    # provisional marker removed). screen_battery_rows is the frozen battery
+    # list (same consumption-declaration obligation). Absent artifact ->
     # pending warning, like any claim.
     tripwires = ("screen_battery_rho_min", "screen_battery_rows",
-                 "screen_pos_frac_min")
+                 "screen_pos_frac_min", "screen_tie_churn_max_window",
+                 "screen_tie_churn_max_hostshape")
     SC = arts.get("screen")
     if SC is None:
         warns.append("[check2] screen tripwires: artifact absent -- "

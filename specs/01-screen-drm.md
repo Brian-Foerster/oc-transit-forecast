@@ -4,8 +4,9 @@ Status: panel-revised 2026-07-18 (3-lens adversarial panel; 9 blocking
 findings adjudicated) · BUILD IN PROGRESS · §9 v2.1 rebuild
 PRE-REGISTERED 2026-07-20 (before any new data fitted) · §5 tripwire
 v2 per owner review 2026-07-20 (criterion 1 revised + ratified;
-criteria 2/3 statistics rebuilt, values deferred pending the
-shortlist-stability report)
+criteria 2/3 RATIFIED 2026-07-20 — criterion 2 kept LIVE at 0.7,
+criterion 3 a dual window/host-shape threshold; §9.10 regime-split
+gate + §9.3/§9.9 universe amendments pre-registered)
 (prototype: the 13-arterial screen, summarized in HANDOFF.md "Dropped
 work"; superseded draft: 2026-07-08)
 
@@ -239,14 +240,18 @@ host-shape report), `fit_diagnostics{}`, `sensitivity[]`,
 n_tie_row, tie_in/tie_out vs the margin-defined headline tie set,
 jaccard, tie_churn_frac, hard_top8_churn diagnostic with unit field;
 by_class for gen_leave_class_out], aggregate {min_jaccard, worst_row,
-max_tie_churn_frac, max_tie_churn_row, criterion3_excluded_rows (the
-§5 unit fix: the churn max scans window-unit rows only),
+max_tie_churn_frac_window, max_tie_churn_row_window,
+max_tie_churn_frac_hostshape, max_tie_churn_row_hostshape (the §5 dual
+threshold: window-unit rows vs screen_tie_churn_max_window,
+window_10/window_15 vs screen_tie_churn_max_hostshape),
 n_tie_headline, stable_core, n_stable_core}, note), `decision_output{}`
 (the §5 tripwire v2,
 mechanized: {ordinal_ok, criteria {sign_pos_frac (b1/b2 pos_frac,
-threshold, pass), battery_rho (min_rho, provisional threshold, pass),
-tie_churn (max_tie_churn_frac, threshold null, pass null — pending
-owner)}, decision_format 'ordinal'|'threshold_shortlist', shortlist
+threshold, pass), battery_rho (min_rho, threshold, pass — LIVE 0.7),
+tie_churn (window {max_over_window_unit_rows, threshold, worst_row,
+pass}, hostshape {max_over_window10_window15, threshold, worst_row,
+pass} — DUAL threshold, both must pass)}, decision_format
+'ordinal'|'threshold_shortlist', shortlist
 [all tie_with_cutoff windows grouped by host shape with
 screen_index_p50 + underservice_flag], diagnostics {min_abs_t_demand,
 b4_pos_frac}, replicate_signs {b1/b2/b4 '+'/'-' strings, replicate
@@ -368,70 +373,96 @@ EXISTING headline bootstrap (no new compute) and published as
 `decision_output.replicate_signs`; the pos_frac values recompute from
 those strings (test D6).
 
-**Criterion 2 — battery minimum Spearman rho (statistic ratified;
-VALUE provisional).** The battery's minimum Spearman rho over the
-FROZEN perturbation list [screen_battery_rows] — EXCLUDING the
+**Criterion 2 — battery minimum Spearman rho (RATIFIED LIVE
+2026-07-20).** The battery's minimum Spearman rho over the FROZEN
+perturbation list [screen_battery_rows] — EXCLUDING the
 leave-one-year-out consistency check (see demotion below) — must be
->= 0.7 [screen_battery_rho_min]. The 0.7 value is PROVISIONAL: the
-owner sets it after reading the shortlist-stability report (§5c).
-Any earlier calibration story anchoring 0.7 to an observed battery
-value is RETRACTED (recorded in the registry entry's history): it
-tuned the bar to a measured row (e016_swap's rho 0.746) and that
-example fails criterion 3's own statistic anyway.
+>= 0.7 [screen_battery_rho_min]. The owner KEEPS 0.7 and makes it
+LIVE (the earlier "provisional" marker is removed): it is the ordinal
+PRODUCT's own gate — an uncalibrated FLOOR EXPECTED TO BE SLACK
+guarding whole-ORDERING stability (Spearman rho over the frozen
+battery), DISTINCT from criterion 3's tie-set churn, which guards
+shortlist-MEMBERSHIP stability; `ordinal_ok` governs publication of
+the ordinal product specifically. Any earlier calibration story
+anchoring 0.7 to an observed battery value is RETRACTED (reaffirmed,
+recorded in the registry entry's history): it tuned the bar to a
+measured row (e016_swap's rho 0.746) and that example fails criterion
+3's own statistic anyway.
 
-**Criterion 3 — margin-defined tie-set churn (statistic REBUILT;
-value pending owner).** The statistic is the maximum tie-set churn
-fraction across battery rows —
-`shortlist_stability.aggregate.max_tie_churn_frac` (§5c); for
-`gen_leave_class_out` the aggregate scans EVERY generator class
-(class max — the row's published entry is its min-Jaccard class
-tuple, and the two extremes need not coincide in one class, so
-per-row scanning alone could understate the statistic) — replacing
-the hard top-8 membership count (`screen_top8_churn_max`, superseded:
-rank-8 is an arbitrary boundary; the decision object is the
-MARGIN-DEFINED tie set). NO threshold value exists yet:
-`decision_output.criteria.tie_churn` carries threshold null and pass
-null until the owner sets the value after the shortlist-stability
-report. The legacy hard-top-8 churn survives as a per-row DIAGNOSTIC
-column with an explicit per-row UNIT field — 'window_id' for most
-rows, 'host_shape' for `window_10`/`window_15` (whose window sets
-differ from the headline scan).
+**Criterion 3 — margin-defined tie-set churn (DUAL THRESHOLD,
+RATIFIED 2026-07-20).** The statistic is the maximum margin-defined
+tie-set churn fraction across battery rows (§5c), replacing the hard
+top-8 membership count (`screen_top8_churn_max`, superseded: rank-8 is
+an arbitrary boundary; the decision object is the MARGIN-DEFINED tie
+set). Because a window-length change alters the window UNIVERSE, the
+two window-length rows (`window_10`/`window_15`) measure churn in a
+COARSER host-shape unit (denominator 14 shapes) that a single scalar
+cannot compare to the 46-window unit of the other rows; so each
+comparison unit gets its OWN one-in-five cap:
 
-**Criterion-3 unit fix (owner item 2026-07-20; implemented, pending
-owner ratification with the threshold values — registry
-`screen_top8_churn_max` history).** The two window-length rows
-(`window_10`/`window_15`) are DROPPED from criterion 3's max: a
-length change alters the window UNIVERSE, so those rows' churn cannot
-be measured over window ids at all and is instead measured in
-HOST-SHAPE units — a 3.3x-coarser lossy proxy (denominator 14 vs 46
-at the review build: ONE flip reads 7.1% against 2.2%). Cross-universe
-membership churn is a category mismatch, not a stability measurement,
-and a single scalar threshold cannot compare the two units. The rows
-remain FULLY in criterion 2's min-rho (the best-per-shape ranking
-comparison is unit-consistent) and in the §5c report's per_row block;
-the aggregate names them in `criterion3_excluded_rows`, and
-`min_jaccard` stays an all-rows REPORT aggregate (it feeds no
-criterion).
+- WINDOW-UNIT sub-threshold `screen_tie_churn_max_window` = 0.20
+  (owner one-in-five over the 46-window tie set), applied to
+  `shortlist_stability.aggregate.max_tie_churn_frac_window` — the max
+  over the window-unit battery rows; for `gen_leave_class_out` the
+  aggregate scans EVERY generator class (class max — the row's
+  published entry is its min-Jaccard class tuple, and the two extremes
+  need not coincide in one class, so per-row scanning alone could
+  understate the statistic).
+- HOST-SHAPE-UNIT sub-threshold `screen_tie_churn_max_hostshape` =
+  0.142857 = 2/14 (one-in-five over the 14-shape set rounds to 2.8 →
+  a 2-shape cap), applied to `max_tie_churn_frac_hostshape` — the max
+  over `window_10`/`window_15`.
 
-**Fail-safe rule.** ordinal_ok requires ALL criteria to pass; an
-UNSET threshold cannot pass. ordinal_ok is therefore FALSE BY
-CONSTRUCTION until the owner sets criteria 2/3 — the intended
-direction: while thresholds are open, the screen can only deliver the
-shortlist, never a ranking. Otherwise (any criterion failing) the
-decision output is the THRESHOLD SHORTLIST — all `tie_with_cutoff`
-windows grouped by host shape, presented beside the measured
-indicators — and the ordinal index is diagnostic-only. The rule is
-MECHANIZED: `screen_scan.py` writes the artifact's `decision_output`
-block (§4) with the measured numbers, the registry thresholds,
-per-criterion pass booleans, `decision_format`, and the shortlist; a
-standing test recomputes pos_frac from the stored replicate signs and
-every boolean from the stored numbers (test_screen.py D6). Measured
-outcome at the 2026-07-20 review build: ordinal_ok = FALSE —
-criterion 1 fails (b1_pos_frac 0.8115, b2_pos_frac 0.7435 vs 0.841),
-criterion 2 fails at its provisional value (min rho = 0.39,
-buffer_lo), criterion 3 is unset (measured statistic 0.848,
-e016_swap) — the screen delivers the shortlist, not a ranking.
-README known issues 35 (opened) and 38 (owner review).
+Criterion 3 passes IFF BOTH sub-thresholds pass.
+`decision_output.criteria.tie_churn` carries `{window:
+{max_over_window_unit_rows, threshold, worst_row, pass}, hostshape:
+{max_over_window10_window15, threshold, worst_row, pass}}` — there is
+NO top-level pass; `ordinal_ok` combines the two sub-passes. The
+legacy hard-top-8 churn survives as a per-row DIAGNOSTIC column with
+an explicit per-row UNIT field — 'window_id' for most rows,
+'host_shape' for `window_10`/`window_15` (whose window sets differ
+from the headline scan).
+
+**Criterion-3 dual-threshold rationale (owner ratification 2026-07-20;
+SUPERSEDES the PW batch's report-only exclusion — registry
+`screen_top8_churn_max` history).** The two window-length rows are NOT
+exempt from criterion 3 — the PW batch's choice to drop them from the
+max is REVERTED. A length change alters the window UNIVERSE, so their
+churn cannot be measured over window ids at all and is instead
+measured in HOST-SHAPE units — a coarser 14-shape denominator (vs 46
+windows; ONE flip reads 7.1% against 2.2%). Cross-universe membership
+churn is a category mismatch, not a stability measurement, and a
+single scalar threshold cannot compare the two units — so each unit
+gets its own one-in-five cap (0.20 over 46 windows, 2/14 over 14
+shapes) and the host-shape rows feed the parallel `hostshape`
+sub-criterion above. Both rows also remain FULLY in criterion 2's
+min-rho (the best-per-shape ranking comparison is unit-consistent) and
+in the §5c report's per_row block; the aggregate no longer carries a
+`criterion3_excluded_rows` list (`min_jaccard` stays an all-rows
+REPORT aggregate — it feeds no criterion). The window-length
+perturbation is the most decision-relevant in the battery and MUST
+remain GATED, not decorative.
+
+**Fail-safe rule.** ordinal_ok requires criterion 1, criterion 2, AND
+both criterion-3 sub-thresholds to pass. With criteria 2/3 now LIVE
+and owner-ratified, ordinal_ok is no longer "false by construction" —
+it is FALSE because criteria FAIL on the measured numbers below.
+Whenever any criterion fails the decision output is the THRESHOLD
+SHORTLIST — all `tie_with_cutoff` windows grouped by host shape,
+presented beside the measured indicators — and the ordinal index is
+diagnostic-only. The rule is MECHANIZED: `screen_scan.py` writes the
+artifact's `decision_output` block (§4) with the measured numbers, the
+registry thresholds, per-criterion pass booleans, `decision_format`,
+and the shortlist; a standing test recomputes pos_frac from the stored
+replicate signs and every boolean from the stored numbers
+(test_screen.py D6). Measured outcome (2026-07-20 ratification build):
+ordinal_ok = FALSE — criterion 1 fails (b1_pos_frac 0.8115,
+b2_pos_frac 0.7435 vs 0.841), criterion 2 fails (min rho = 0.39 < 0.7,
+buffer_lo), criterion 3 fails BOTH sub-thresholds (window-unit 0.848 >
+0.20 at e016_swap; host-shape 0.571 = 8/14 > 0.142857 at window_10,
+with window_15 4/14 = 0.286 also over) — the screen delivers the
+shortlist, not a ranking. README known issues 35 (opened) and 38
+(owner review).
 
 **FROZEN BATTERY (owner review 2026-07-20).** The battery is the
 exact row list in [screen_battery_rows] (registry entry; the 16
@@ -465,9 +496,10 @@ headline NB2 estimate and Fisher-scores beta
 to the statsmodels fit by test D7; profiling alpha per replicate is
 outside the block's runtime budget). The aggregate carries
 min_jaccard (all rows — a report figure, feeding no criterion),
-max_tie_churn_frac (criterion 3's statistic — WINDOW-UNIT rows only
-per the §5 unit fix, the excluded length rows named in
-`criterion3_excluded_rows`), and the
+max_tie_churn_frac_window (criterion 3's window-unit sub-statistic,
+the max over the window-unit rows) and max_tie_churn_frac_hostshape
+(the host-shape sub-statistic, the max over window_10/window_15) — the
+§5 DUAL threshold, no rows excluded — and the
 STABLE CORE: headline tie windows present in the tie set under every
 battery row (host-shape membership for the window-length rows; every
 generator class for gen_leave_class_out) — the §4b memo consumes it
@@ -565,8 +597,10 @@ window rows — and checks 2/3/5 coverage for screen-claiming entries.
 | `screen_male` | 0.35 | constant | judgment | quality-knob | — |
 | `screen_t_min` | 1.0 | constant | judgment — SUPERSEDED 2026-07-20 (criterion 1 revised to the signed bootstrap fraction; analytic \|t\| demoted to a diagnostic) | superseded, points forward to `screen_pos_frac_min` | — |
 | `screen_pos_frac_min` | 0.841 | constant | judgment (revised criterion 1, OWNER-RATIFIED 2026-07-20; 0.841 = Phi(1), the one-sided \|t\|>=1 translation with the sign requirement) | quality-knob (consumption verified by the `screen` scan) | — |
-| `screen_battery_rho_min` | 0.7 | constant | judgment (criterion 2; statistic ratified, VALUE PROVISIONAL pending owner post-report 2026-07-20; calibration story retracted) | quality-knob (consumption verified by the `screen` scan) | — |
-| `screen_top8_churn_max` | 2 | constant | judgment — SUPERSEDED 2026-07-20 (criterion-3 statistic rebuilt as margin-defined tie-set churn; hard top-8 churn demoted to a unit-tagged diagnostic; successor threshold entry pending the owner's post-report value) | superseded | — |
+| `screen_battery_rho_min` | 0.7 | constant | judgment (criterion 2; RATIFIED LIVE 2026-07-20 — kept at 0.7, provisional marker removed; the ordinal product's own uncalibrated floor expected to be slack; calibration story retracted) | quality-knob (consumption verified by the `screen` scan) | — |
+| `screen_top8_churn_max` | 2 | constant | judgment — SUPERSEDED 2026-07-20 (criterion-3 statistic rebuilt as a DUAL THRESHOLD of margin-defined tie-set churn; successors `screen_tie_churn_max_window` / `screen_tie_churn_max_hostshape`; hard top-8 churn demoted to a unit-tagged diagnostic) | superseded | — |
+| `screen_tie_churn_max_window` | 0.20 | constant | judgment (criterion 3 window-unit sub-threshold, OWNER-RATIFIED 2026-07-20; one-in-five over the 46-window tie set) | quality-knob (consumption verified by the `screen` scan) | — |
+| `screen_tie_churn_max_hostshape` | 0.142857 | constant | judgment (criterion 3 host-shape-unit sub-threshold, OWNER-RATIFIED 2026-07-20; 2/14 = one-in-five over the 14-shape set → 2-shape cap; governs window_10/window_15) | quality-knob (consumption verified by the `screen` scan) | — |
 | `screen_battery_rows` | 16 frozen row ids | constant (structural-governance role) | definitional (owner battery freeze 2026-07-20; the battery is a MIN — row changes are owner-approved spec amendments) | definitional (consumption verified by the `screen` scan; test D2 asserts artifact == registry list) | — |
 
 The predictor-set perturbation rows are claimed by two structural
@@ -813,6 +847,27 @@ Stated caveats: the fy2017 drop leaves a single-vintage X pair
 (fy2019/fy2020q3 share tables), and l_len is time-invariant in the
 measurement only because it used current shapes for all years (the
 archived §9.4 shapes will move it).
+
+**Vintage-consistency drops (owner adjudication 2026-07-20;
+pre-registered, measured facts recorded — the fit stays unrun).** Two
+drop rules follow from vintage consistency and are fixed here before
+the phase-2b fit:
+
+- **FY2017 Express drop.** Routes 53X/57X/64X HAVE FY2017 boardings
+  (228,478 / 1,145,261 / 615,387) but the FY2017 archived feed carries
+  NO Express shape — they do not exist as separate GTFS routes until
+  FY2019. A catchment computed on a FY2019 shape for a FY2017 boardings
+  year would reintroduce the exact vintage mismatch this rebuild
+  removes, so the 3 FY2017 Express route-years are DROPPED (never
+  matched to a FY2019 shape). Those routes still contribute their
+  FY2019+ rows.
+- **Shapeless-route rule (general, pre-registered).** A route-year
+  whose route has NO contemporaneous shape in that fiscal year's
+  archived feed is DROPPED: a catchment is uncomputable without a
+  shape, and carrying it on a wrong-year shape is explicitly REJECTED
+  as reintroducing the vintage mismatch. Recorded per fiscal year; the
+  measured extended-panel accounting (which route-years, total) is in
+  §9.9.7.
 
 ### 9.4 Fit-side universe: archived GTFS (explicit asymmetry)
 
@@ -1061,3 +1116,78 @@ is the registry constant [screen_panel_ext_fys], consumed via
 val(). The baseline 3-year blocks are regenerated bit-identically
 (same seed stream, drawn first); the artifact remains deterministic
 (dual fresh-process byte-identity, a standing gate).
+
+**9.9.7 Universe-key amendments + drop accounting (owner adjudication
+2026-07-20; measured/availability facts recorded — the fit is NOT
+recomputed here).**
+
+- **Route-id case normalization (join-key amendment).** The fit-side
+  APC↔GTFS join case-normalizes route ids, so APC 53X/57X/64X match
+  the archived GTFS 53x/57x/64x. This is a post-acquisition change to
+  a universe-determining key, disclosed here (governance rule 3): it
+  adds the three Express routes to the recoverable set on FY2019
+  shapes.
+- **Contemporaneous-shape drop accounting.** Applying the §9.3
+  vintage-consistency drops to the extended panel: the shapeless feed
+  routes are overwhelmingly branch variants (150A/29A/42A/47A/79A) and
+  suspended Express (53x/57x/64x) that carry NO boardings; the only
+  boardings-carrying route-year the shapeless rule removes is
+  **529/fy2022** (86,674 boardings) — route 529 does NOT appear at all
+  in the fy2022 archived feed (octa_gtfs_fy2022_20211224.zip), i.e. it
+  has no contemporaneous shape by absence; it re-enters with resolved
+  shapes in the fy2020 and fy2023 feeds, so only its fy2022 row drops
+  → **1 route-year**. Added to the **3 FY2017 Express route-years**
+  (§9.3), the total contemporaneous-shape drop from the extended panel
+  is **4 route-years** (3 FY2017 Express + 1 shapeless
+  boardings-carrying). These are availability facts recorded now; no
+  coefficient is fitted.
+
+  **Correction (governance rule 3, 2026-07-21).** An earlier draft of
+  this accounting also dropped **553/fy2023** (266,142 boardings) as
+  shapeless, giving a total of 5. That was a MISCOUNT: route 553 IS
+  present in the fy2023 archived feed
+  (octa_gtfs_fy2023_20230210.zip, snapshot 2023-02-10) as route_ids
+  553_merged_10882877 and 553_merged_10882878, each 74 trips on
+  weekday service MTUWTF (Mon–Fri; calendars 20221010–20230211 and
+  20230212–20230513, which bracket the snapshot), carrying shape_ids
+  5535/5536/5537/5538 that ALL resolve in shapes.txt. So 553/fy2023
+  has a fully-resolved contemporaneous WEEKDAY shape and, under the
+  pre-registered shapeless-route rule (§9.3 — a route-year whose route
+  has NO contemporaneous shape is DROPPED), must be KEPT, not dropped.
+  This is also consistent with §9.9.3 (553 is among the routes that DO
+  have weekday shapes). The corrected total is 4, not 5; the fit is
+  unrun and the v2.0 artifact is uncontaminated, so this is a
+  report-only pre-registration correction that RESTORES a valid
+  266,142-boardings weekday route-year to the phase-2b fit universe.
+
+### 9.10 Regime-split gate (pre-registered; runs in phase 2b, NOT now)
+
+The concrete pre-committed form of "materially different slopes",
+fixed here before the phase-2b fit exists (registry
+`screen_regime_split`). In phase 2b the demand block is fit THREE
+ways:
+
+- **POOLED** — all 6 fit-panel FYs (`screen_panel_ext_fys`);
+- **PRE-2020-ONLY** — fy2017 + fy2019;
+- **FULL-PANEL WITH INTERACTION** — a post2020 × {l_flows, l_zveh_hh}
+  interaction added to the pooled design.
+
+The v2.1 artifact REPORTS the pre-2020 b1/b2 bootstrap sign-fractions
+and the interaction coefficients alongside the pooled fit.
+
+**BINDING DOWNGRADE RULE (pre-committed).** If the POOLED demand block
+PASSES tripwire criterion 1 but the PRE-2020-ONLY demand block does
+NOT independently pass criterion 1 (the SAME `screen_pos_frac_min` =
+0.841 bar, each demand coefficient), the pooled pass is DOWNGRADED to
+reported-only: `ordinal_ok` is forced false, `decision_format` =
+threshold_shortlist, and a `regime_split_downgrade` flag is set. This
+is ONE pre-registered gate reusing the EXACT criterion-1 statistic —
+it introduces NO new threshold beyond 0.841.
+
+**Rationale.** Year FE absorb LEVEL shifts, not SLOPE changes; LODES
+2021 measures remote-work-era workplace geography. A pooled pass that
+the pre-period does not corroborate cannot be distinguished from a
+pooling artifact — so it must not be published as a decision-grade
+ordinal ranking. The gate is a §9.5-governed pre-registration (owner
+review 2026-07-20, README known issue 40); the current v2.0 artifact
+does not consume it.
