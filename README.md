@@ -792,12 +792,7 @@ of the tripwire entries and the normalization entry respectively.
     §4b the honest stage-1 output is narrower than even the 34-window
     threshold shortlist: no window survives every battery row. REGIME SPLIT
     (§9.10): the **pre-2020 period PASSES criterion 1** (b1 pos_frac 0.958,
-    b2 0.932 on fy2017+fy2019) while the pooled 6-FY panel FAILS, and the
-    post2020 interaction slopes are negative (i_flows_post −0.005, i_zveh_post
-    −0.109) — the remote-work-era pooling artifact §9.10 was written to catch;
-    the `regime_split_downgrade` flag is correctly FALSE only because the
-    pooled block already fails criterion 1 directly (the downgrade fires when
-    pooled passes but pre-2020 does not, the reverse of what happened).
+    b2 0.932 on fy2017+fy2019) while the pooled 6-FY panel FAILS, and the direct slope-shift test is NULL: i_flows_post = -0.005 (SE 0.144), statistically indistinguishable from zero (i_zveh_post -0.109, SE 0.145, also insignificant). So this is NOT the regime slope-shift 9.10 was written to catch. (CORRECTION 2026-07-21, rule-3 log: an earlier draft of this entry and the c0d1f97 commit message mislabeled the -0.005 interaction as confirming a remote-work pooling artifact; the interaction IS the direct test of that hypothesis and it came back null -- a narrative-vs-artifact divergence caught in external review.) With no detectable slope difference, the 0.958->0.766 drop is ATTENUATION, not regime instability: the post-2020 rows carry noisier X (shapeless/COVID-era archived feeds, remote-work-era LODES 2021 workplace geography) and higher residual variance (v2.1 sig2_resid 0.017 vs pre-COVID 0.003), and measurement error in X pulls b1 toward zero without shifting the conditional-mean slope -- exactly the signature the interaction test shows. regime_split_downgrade is correctly FALSE because the pooled block fails criterion 1 directly (nothing to downgrade).
     **b4_wrong_sign obligation (§9.1, this entry is the required
     governance-rule-3 log):** the measured `l_genjobs` coefficient came back
     NEGATIVE (−0.094), so the pre-registered `b4_wrong_sign` flag is SET in
@@ -806,7 +801,7 @@ of the tripwire entries and the normalization entry respectively.
     specification signal that b3 (allocation control, +1.34) and/or b5 (scale,
     −0.34) are absorbing generator-attraction effects; the measured WAC
     generator-jobs magnitude did not resolve into a positive attraction term
-    on this panel. BOOTSTRAP NOTE: the §3.4 within-replicate ACS-MOE
+    on this panel. **BINDING CONSTRAINT (the arc's most informative result):** the rebuild fixed every v2.0 input defect -- vintage-matched X, block catchments, contemporaneous archived shapes, six recovered routes, panel tripled to 300 route-years / 63 clusters -- and b1 moved only 0.099 -> 0.121. Data quality was never the binding constraint. It is the endogeneity confessed in spec 01 §1: b3 (RVH) sits at t=22.5 while b1 sits at t=0.80; boardings are set by service allocation, service is allocated on the same fundamentals the demand block measures, and once RVH is conditioned on the fundamentals have almost nothing left to explain. **SCOPE (corrected 2026-07-21):** this verdict is for ONE estimand -- boardings LEVEL with an RVH control -- on OC-ONLY clusters; it is NOT the broader claim "OC data cannot support a screen." A productivity estimand (boardings per RVH, dropping b3, which removes the near-tautology and the b1/b3 collinearity in one step) and/or a wider regional cluster base (LA Metro, Long Beach, Foothill, OmniTrans, RTA, Big Blue Bus via NTD + archived GTFS + LODES + ACS, several hundred clusters with agency FE) are UNTESTED and are the spec §9.5 GOVERNED-METHOD-CHANGE path for a v2.2 -- a documented, owner-approved new pre-registration, never a same-spec re-run. BOOTSTRAP NOTE: the §3.4 within-replicate ACS-MOE
     perturbation is NOT applied in v2.1 — the committed §9.2 block-
     apportionment input machinery (`screen_common_v21`, frozen phase-2a under
     its no-fit hold) carries no ACS MOE, and the design-stage power check
