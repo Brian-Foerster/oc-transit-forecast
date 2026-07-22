@@ -6,7 +6,10 @@ PRE-REGISTERED 2026-07-20 (before any new data fitted) · §5 tripwire
 v2 per owner review 2026-07-20 (criterion 1 revised + ratified;
 criteria 2/3 RATIFIED 2026-07-20 — criterion 2 kept LIVE at 0.7,
 criterion 3 a dual window/host-shape threshold; §9.10 regime-split
-gate + §9.3/§9.9 universe amendments pre-registered)
+gate + §9.3/§9.9 universe amendments pre-registered) · §9 v2.1 fit
+LANDED + FAILED 2026-07-21 (ordinal_ok=FALSE; README known issue 42) ·
+§10 v2.2 productivity-estimand GOVERNED-METHOD-CHANGE PRE-REGISTERED
+2026-07-21 (owner-directed, OC-only; written before any v2.2 fit)
 (prototype: the 13-arterial screen, summarized in HANDOFF.md "Dropped
 work"; superseded draft: 2026-07-08)
 
@@ -1191,3 +1194,256 @@ pooling artifact — so it must not be published as a decision-grade
 ordinal ranking. The gate is a §9.5-governed pre-registration (owner
 review 2026-07-20, README known issue 40); the current v2.0 artifact
 does not consume it.
+
+## 10. v2.2 productivity estimand (governed-method-change, PRE-REGISTRATION 2026-07-21, written before any fit)
+
+**This section is a pre-registration document, written and committed
+2026-07-21 BEFORE any v2.2 fit has run — before a single productivity
+coefficient has been computed or peeked at. Its entire epistemic value
+is that timing: the estimand, the RHS, the criteria, the thresholds,
+the battery, the scan/index design, the regime-split gate and the
+reused universe below are all fixed while the productivity fit's
+numbers are unknown, so a later pass or fail cannot be narrated as a
+choice made after seeing the result. v2.1 (screen_results_v21.json,
+sha 83aeb032) and v2.0 (screen_results.json, sha b88f9b65) stay
+byte-identical: this is a NEW pre-registration, not an edit to a
+landed artifact.**
+
+**Owner directive (verbatim, 2026-07-21):** *"v2.1 failed
+(ordinal_ok=FALSE) and the diagnosis is the §1 ENDOGENEITY, not data
+quality: b3 (RVH) sits at t=22.5 while b1 sits at t=0.80, because
+service is allocated on the same fundamentals the demand block
+measures, so conditioning on RVH leaves the fundamentals nothing to
+explain. Pre-register a v2.2 GOVERNED-METHOD-CHANGE (spec §9.5) with a
+PRODUCTIVITY estimand, OC-only (NOT a cluster-base expansion — that is
+a separate future decision)."*
+
+**§9.5 basis (governed-method-change, not a same-spec re-run).** v2.1
+ran ONCE under its pre-registration and FAILED the §5 tripwire on the
+measured numbers (`ordinal_ok = FALSE`, README known issue 42): fit
+universe 300 route-years / 63 clusters, headline b1_flows +0.121
+(t≈0.80), b3_rvh +1.340 (t≈22.5), all three criteria fail, stable core
+empty, and — decisively — the rebuild fixed every v2.0 INPUT defect
+(vintage-matched X, block catchments, contemporaneous archived shapes,
+six recovered routes, panel tripled) and b1 still moved only 0.099 →
+0.121. Data quality was never the binding constraint; the §1
+endogeneity was. Under §9.5 (permanence clause softened, owner review
+2026-07-20) a documented, owner-approved CHANGE OF METHOD is the
+sanctioned path forward once the pre-registered spec has failed —
+GOVERNED (owner-approved, spec-amended, logged), never banned. A v2.2
+is therefore NOT barred by the §9.5 no-re-run rule: re-running the §9
+spec unchanged is barred (same inputs, same spec ⇒ same artifact by
+the determinism gate), but a new estimand pre-registered before its
+fit is exactly what §9.5 reserves. This section is the
+governance-rule-3 record (README known issue 43). The v2.2 fit is NOT
+implemented here — this batch pre-registers it; the fit is the
+phase-2b-v22 batch.
+
+The following decisions are FROZEN by this pre-registration.
+
+### D1 — ESTIMAND (frozen)
+
+The dependent variable is
+
+    log(boardings / RVH) = productivity (boardings per revenue vehicle-hour).
+
+**Pinned-coefficient identity.** log(b/RVH) = log(b) − log(RVH), so the
+productivity regression IS the v2.1 LEVEL regression with the RVH
+coefficient PINNED at +1 and MOVED to the LHS:
+
+    v2.1 level:         log(b)      = a + b1·l_flows + b2·l_zveh + b3·log(RVH) + b4·l_genjobs + b5·l_len + yearFE + e
+    v2.2 productivity:  log(b) − log(RVH) = a + b1·l_flows + b2·l_zveh +   (b3≡1)   + b4·l_genjobs + b5·l_len + yearFE + e
+
+Pinning b3 at +1 and moving log(RVH) to the DV removes, in one step,
+(i) the b1/b3 collinearity between the demand block and the allocation
+control, and (ii) the tautology by which b3 (RVH), fitted freely at
++1.340 / t≈22.5 on the same fundamentals service is allocated on, leaves
+the demand block nothing to explain. b3 no longer competes for the
+fundamentals' variance because it is no longer estimated. **This is the
+whole method change** — one degree of freedom removed by pinning, one
+regressor moved to the LHS. Nothing else in §3's estimator, clustering,
+bootstrap, output guardrails, §3.4 uncertainty machinery or §5 tripwire
+changes.
+
+### D2 — RHS (frozen)
+
+    b1  log1p(LODES both-ends-in flows)          [demand block]
+    b2  log1p(B25044 zero-vehicle HOUSEHOLDS)     [demand block]
+    b4  log1p(WAC generator jobs, CNS15-18)       [outside the block; sign a diagnostic]
+    b5  log(route length mi)                       [scale term]
+    + year fixed effects (base fy2017; 5 FE over screen_panel_ext_fys)
+
+**b3 (RVH) is GONE from the RHS** — it now lives in the DV denominator.
+**NO agency FE** (OC-only, 63 clusters; a cluster-base expansion with
+agency FE is explicitly NOT this pre-registration — owner directive).
+
+**Length honesty (pre-registered, not pre-judged).** In v2.1 the length
+loading was split b3+b5 across the free RVH control and the scale term
+(≈+0.917/log-mile in v2.0; +1.340 − 0.340 = +1.000 in v2.1). With b3
+removed and pinned into the DV, the RHS length loading is **b5 alone**
+(v2.1's b5_len came back −0.340). The length artifact is therefore
+EXPECTED to shrink — but this is a hypothesis for the fit to test, not
+a foregone conclusion: if the ranking is still length-driven the
+productivity move will not have helped. We pre-register KEEPING b5 and
+the length battery rows (`window_10`/`window_15` host-shape;
+`offset_variant` pins b5 to +1) and letting the fit show it; we do NOT
+drop b5 and do NOT pre-judge the outcome.
+
+### D3 — CRITERION 1 (carried over, reinterpreted)
+
+Unchanged statistic: the demand block is DEFINED as {b1_flows,
+b2_zveh}, and EACH must be strictly positive in ≥ `screen_pos_frac_min`
+= 0.841 of the B=2000 route-cluster bootstrap replicates (§3.4, §5
+criterion 1). **Reinterpretation under productivity:** the question is
+now *do the fundamentals predict PRODUCTIVITY once the RVH tautology is
+removed* (not *do they predict boardings conditional on RVH*, which
+v2.1 answered no because RVH absorbed the variance). b4 (l_genjobs)
+stays OUTSIDE the demand block; its per-replicate sign is a diagnostic,
+and the `b4_wrong_sign` flag (§9.1, set when the point estimate is
+negative — it WAS negative in v2.1, −0.094) carries over with its
+governance-rule-3 obligation intact.
+
+### D4 — THRESHOLDS (carried over UNCHANGED; the anti-tuning guarantee)
+
+The v2.2 fit consumes the EXACT ratified v2.1 threshold values, via the
+SAME registry ids — no new threshold entry is created:
+
+| criterion | registry id | value |
+|---|---|---|
+| 1 — demand-block bootstrap pos-frac | `screen_pos_frac_min` | 0.841 |
+| 2 — battery min Spearman rho | `screen_battery_rho_min` | 0.7 |
+| 3a — window-unit tie-churn cap | `screen_tie_churn_max_window` | 0.20 |
+| 3b — host-shape-unit tie-churn cap | `screen_tie_churn_max_hostshape` | 2/14 |
+
+A governed-method-change changes the METHOD, never the decision bar.
+Reusing the exact thresholds — the numbers set and ratified before v2.1
+ran, that v2.1 then failed — is the anti-tuning guarantee: the bar
+cannot be re-tuned to a method that might clear it, because the bar is
+frozen from before. No `screen_*` threshold id is added, edited, or
+re-tiered by this pre-registration. A standing test asserts the v2.2
+thresholds resolve to the same `val()` as v2.1 (§ Tests below).
+
+### D5 — BATTERY (frozen: `screen_battery_rows_v22`)
+
+    screen_battery_rows_v22 = screen_battery_rows_v21
+                              MINUS { drop_rh, svc_p25, svc_p75 }
+
+The three dropped rows are UNDEFINED under productivity, on estimand
+grounds decided here before the fit:
+
+- **`drop_rh`** — RVH is no longer a predictor that can be dropped from
+  the RHS; it is the DV denominator. "Fit without RVH" IS the v2.2
+  headline, so a drop-RVH perturbation is vacuous.
+- **`svc_p25` / `svc_p75`** — standardized-RVH-service scoring is
+  RETIRED (D6): productivity is already exposure-normalized, so there
+  is no svc_std service level to shift to p25/p75. Direct productivity
+  prediction replaces the standardized-service machinery.
+
+**Exact final v22 list (17 rows, order-exact):**
+
+    ["buffer_lo", "buffer_hi", "window_10", "window_15", "drop_fy2020",
+     "e016_swap", "e002_swap", "popden_swap", "genjobs_off",
+     "genjobs_leave_class_out", "gen_dummy_swap", "nb_estimator",
+     "offset_variant", "overlap_lo", "overlap_hi", "year_fe_vs_pooled",
+     "loyo"]
+
+Count = **17** ( = 20 − 3 ). All other v2.1 rows are KEPT because each
+remains well-defined under productivity: the buffer, window-length,
+overlap, year-FE and loyo rows perturb the catchment/universe/panel
+(estimand-independent); the b1/b2/b4 swap rows (`popden_swap`,
+`e016_swap`, `e002_swap`, `genjobs_off`, `genjobs_leave_class_out`,
+`gen_dummy_swap`) perturb RHS predictors that are unchanged; `drop_fy2020`
+drops rows; `offset_variant` pins b5 (length) to +1, which is orthogonal
+to the RVH move (under productivity it moves log(length) to the LHS too,
+giving log(b/(RVH·length)) with b5≡1 — well-defined).
+
+**Flag (D5 obligation — a kept row whose FORM changes, stated not
+hidden):** `nb_estimator` stays in the battery but its productivity
+FORM is the count-model analogue of the pinned identity: an NB2 fit of
+the boardings COUNT with **log(RVH) as a FIXED offset (exposure)** —
+i.e. log(E[b]) = log(RVH) + Xβ, so log(E[b]/RVH) = Xβ, the canonical
+rate model — NOT a free b3. This is the productivity translation of the
+v2.1 NB2 row (which regressed the count with a free log(RVH) term); it
+is well-defined, not ill-defined, so the row is KEPT (per the owner
+directive) with its form pre-registered here. No other v21 row is
+ill-defined under productivity; nothing is silently added or dropped
+beyond `drop_rh` + `svc_p25`/`svc_p75`.
+
+`screen_battery_rows_v22` is frozen NOW, before the v2.2 fit exists,
+for the identical reason the v21 list was: the battery criterion is a
+MIN, so membership edits after seeing v2.2 numbers would be a tunable
+bar. Row changes from here are owner-approved §9.5 spec amendments.
+
+### D6 — SCAN / INDEX (frozen design; code is the phase-2b-v22 batch)
+
+The scan predicts **PRODUCTIVITY per window directly** — there is NO
+standardized-RVH service input to the scoring design (that is the whole
+point: RVH is gone from the RHS). The published index is predicted
+productivity **relative to the median fitted route's predicted
+productivity** (a same-exposure normalization; productivity is already
+exposure-normalized, so no service level is injected). Concretely, in
+the pinned identity every window's score is Xβ (year FE cancel, no
+log(RVH) term), and index = 100·exp(win_pred − base) where base = the
+lower-median over fitted host routes of each route's own BEST
+window productivity — the §3.2/§4 same-exposure baseline stripped of
+its svc_std term. The v2.1 `screen_svc_std` standardized-service
+machinery (svc_std × window length in the `b3_rvh` scoring column) is
+RETIRED for v2.2. This design is pre-registered here; the scan CODE is
+NOT written in this batch (it is the phase-2b-v22 fit batch).
+
+### D7 — REGIME-SPLIT (carried over unchanged, applied to productivity)
+
+The §9.10 regime-split gate is unchanged: the productivity demand block
+is fit THREE ways — POOLED (all 6 fit-panel FYs), PRE-2020-ONLY
+(fy2017+fy2019), and FULL-PANEL WITH a post2020 × {l_flows, l_zveh_hh}
+interaction — and the BINDING DOWNGRADE rule (`screen_regime_split`)
+applies to the productivity fit: if the pooled block PASSES criterion 1
+but the pre-2020-only block does NOT independently pass the same
+`screen_pos_frac_min` = 0.841 bar, the pooled pass is downgraded to
+reported-only (`ordinal_ok` forced false, `decision_format` =
+threshold_shortlist, `regime_split_downgrade` set). The
+pre-period-corroboration downgrade and its rationale carry over verbatim;
+no new threshold.
+
+### D8 — REUSE (unchanged from v2.1)
+
+- **Vintage map (§9.3 + §9.9.2):** each boardings year keeps its
+  vintage-matched X dispatch; unchanged.
+- **Universe:** the SAME 300-route-year / 63-cluster panel over
+  `screen_panel_ext_fys` = {fy2017, fy2019, fy2020, fy2021, fy2022,
+  fy2023}, with the 4 contemporaneous-shape drops (53X/57X/64X fy2017 +
+  529/fy2022, §9.9.7) and the KNOWN_BAD_RVH / KNOWN_DUP_RVH_EXT no-RVH
+  drops (35/70/150 fy2017 + 560/fy2022) unchanged. **RVH is still
+  REQUIRED on every kept route-year — now as the DV denominator rather
+  than the b3 predictor**, so the DV log(b/RVH) is well-defined only
+  where RVH > 0. Input-side accounting confirms this on the frozen
+  universe (permitted §9.9.5 use — presence + RVH passthrough only, no
+  predictor join, no fit): all 304 fittable route-years have RVH > 0
+  and boardings > 0 (min RVH 981.00 rev-hr, min boardings 7,691); after
+  the 4 pre-registered shapeless drops the **300 kept route-years / 63
+  clusters are every one RVH > 0 and boardings > 0**, so log(b/RVH) is
+  finite everywhere the v2.2 fit will read it. The 4 shapeless-dropped
+  rows also carry RVH > 0 (8,857 / 35,484 / 16,135 / 5,521), so the
+  drop is a shape-availability fact, never an RVH-definedness one.
+- **Archived-shape catchments (§9.4)** and the **route_short_name /
+  case-normalized join (§9.9.7):** unchanged. Same fit/scan asymmetry
+  (fit on contemporaneous archived shapes, scan on current GTFS).
+
+### D9 — PRE-COMMITTED VERDICT (softened §9.5, no permanence hardening)
+
+The §5 tripwire (criteria 1/2/3 + the §9.10 regime-split downgrade)
+governs the v2.2 productivity output IDENTICALLY. PRE-COMMITTED: if the
+v2.2 productivity fit STILL fails the tripwire, the decision output
+REMAINS the threshold shortlist plus the measured-indicator table (or
+the narrower stable core per §4b when churn is heavy), the ordinal
+index stays diagnostic-only, and the §9.5 governed-method-change path
+stays OPEN for further documented, owner-approved changes — e.g. a
+wider REGIONAL cluster base (LA Metro, Long Beach, Foothill, OmniTrans,
+RTA, Big Blue Bus via NTD + archived GTFS + LODES + ACS, several
+hundred clusters with agency FE), which is a SEPARATE future
+pre-registration, not this one. There is NO permanence hardening: a
+v2.2 failure is not "the screen is impossible," it is one more
+governed estimand tested and recorded. Barred, as always: re-running
+THIS §10 spec unchanged hoping for a different answer, predictor
+shopping beyond D2, and threshold re-tuning after seeing the v2.2
+numbers.

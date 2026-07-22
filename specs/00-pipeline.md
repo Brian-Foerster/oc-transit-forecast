@@ -114,10 +114,15 @@ final ridership; stage 3 is the number of record.
     its own stage-3 STOPS run. The NPV objective (default) ranks candidates by
     within-draw CV in common-base-year PV dollars and stops on the §7 marginal-
     BCR rule (best CV ≤ 0), carrying the premium-bracket rows and both spec 04
-    cost bands. SCOPING (2026-07-20): the "no OC ALM corridor clears BCR=1"
-    verdict is a statement about the hand-supplied candidates.json universe
-    (stage 1 currently supports no window-level decision product), not a claim
-    over all Orange County alignments. RULE-5 note (binding): the network sequence inherits spec 02's
+    cost bands. SCOPING (2026-07-20; STRENGTHENED 2026-07-21): the "no OC ALM
+    corridor clears BCR=1" verdict is a statement about the HAND-SUPPLIED
+    candidates.json universe, NOT a claim over all Orange County alignments.
+    Stage 1 has now failed to supply an empirical corridor-selection warrant
+    TWICE — the v2.0 screen and the v2.1 rebuild both landed ordinal_ok=FALSE
+    (spec 01 §5/§9, README issues 35–42), and the v2.2 productivity estimand
+    is only PRE-REGISTERED and UNRUN (spec 01 §10, README issue 43) — so
+    candidates.json remains analyst-chosen (hand_supplied: true) and the
+    BCR verdict speaks only to that hand-supplied set. RULE-5 note (binding): the network sequence inherits spec 02's
     frozen-market / no-induced-demand firewall verbatim — network assembly is
     where the temptation to close the land-use loop is strongest, and it stays
     closed; the agglomeration/user-benefit share of the sequence's NPV and the

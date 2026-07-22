@@ -470,10 +470,18 @@ tornado (`bca_harbor.json`).
     on the profile 4% clock, both spec 04 cost bands carried. **Headline: at the
     welfare-BCA central profile NO Orange County ALM corridor clears BCR=1 — the
     §7 marginal stop fires at CYCLE 1 and the decision-grade recommended build
-    order is EMPTY** (build nothing). Scoping (rule-3 log, 2026-07-20): that
-    verdict is a statement about the hand-supplied `config/candidates.json`
-    universe — stage 1 currently supports no window-level decision product —
-    not a claim over all Orange County alignments. Best marginal BCR ≈ 0.09 US-TYPICAL / 0.14
+    order is EMPTY** (build nothing). Scoping (rule-3 log, 2026-07-20;
+    STRENGTHENED 2026-07-21): that verdict is a statement about the
+    hand-supplied `config/candidates.json` universe, **NOT a claim over all
+    Orange County alignments.** The scope note is now firmer because stage 1
+    has failed to supply an empirical corridor-selection warrant **TWICE** —
+    the v2.0 screen and the v2.1 rebuild both landed `ordinal_ok = FALSE`
+    (issues 35–42), and the v2.2 productivity estimand is only PRE-REGISTERED
+    and UNRUN (issue 43, spec 01 §10). With no decision-grade window-level
+    screen product in hand, `config/candidates.json` remains **analyst-chosen**
+    (`hand_supplied: true`), so "no OC ALM corridor clears BCR=1" is a
+    statement about the analyst's candidate set, never a screen-warranted
+    census of Orange County corridors. Best marginal BCR ≈ 0.09 US-TYPICAL / 0.14
     LOW (harbor); streetcar wins by NPV level (least-negative, −$2.2B US-TYPICAL)
     but has the lower ratio (0.042/0.060). The stopping record prints the economic
     margin (the marginal BCR + the R2 premium-bracket {1,1.5,2} rows — even a 2×
@@ -815,3 +823,63 @@ of the tripwire entries and the normalization entry respectively.
     `covered-elsewhere` dispositions; `check_assumptions.py` gained a scoped
     `screen_v21` artifact scan (the 01§9 pending warnings cleared, 16 → 4; no
     new priors, fingerprint `f0bb42f69644` unchanged).
+43. **v2.2 GOVERNED-METHOD-CHANGE PRE-REGISTERED (2026-07-21): a
+    PRODUCTIVITY estimand, OC-only, written BEFORE any v2.2 fit (spec 01
+    §10; rule-3 log).** Owner directive (verbatim): the v2.1 failure is
+    the §1 ENDOGENEITY, not data quality — b3 (RVH) sits at t=22.5 while
+    b1 sits at t=0.80, because service is allocated on the same
+    fundamentals the demand block measures, so conditioning on RVH leaves
+    the fundamentals nothing to explain — so pre-register a v2.2 governed-
+    method-change (spec §9.5) with a productivity estimand, OC-only (NOT a
+    cluster-base expansion, which is a separate future decision). §9.5
+    basis: v2.1 ran ONCE and FAILED its pre-registration (issue 42), which
+    under the softened §9.5 authorizes a documented owner-approved change
+    of METHOD — not a barred same-spec re-run. FROZEN decisions (D1–D9):
+    **D1** the DV is `log(boardings/RVH)` = productivity; by the identity
+    `log(b/RVH)=log(b)−log(RVH)` this IS the v2.1 level regression with the
+    RVH coefficient PINNED at +1 and moved to the LHS — removing the b1/b3
+    collinearity and the tautology in one step (b3 no longer competes for
+    the fundamentals' variance). **D2** RHS = b1 log1p(flows), b2
+    log1p(zero-veh HH), b4 log1p(WAC genjobs CNS15-18), b5 log(length) +
+    year FE; b3 GONE from the RHS; NO agency FE (OC-only, 63 clusters). The
+    length loading is now b5 alone (was b3+b5), so the length artifact is
+    EXPECTED to shrink — but that is left for the fit to show, not
+    pre-judged (b5 and the length rows are KEPT). **D3** criterion 1
+    unchanged (demand block {b1,b2}, each pos_frac ≥ 0.841); b4 sign a
+    diagnostic (`b4_wrong_sign` carries over). **D4** thresholds carried
+    over UNCHANGED (0.841 / 0.7 / 0.20 / 2⁄14) via the SAME registry ids —
+    a method change never moves the decision bar; reusing the frozen bar is
+    the anti-tuning guarantee; NO new threshold entry. **D5**
+    `screen_battery_rows_v22` = `screen_battery_rows_v21` MINUS {`drop_rh`,
+    `svc_p25`, `svc_p75`} = **17 rows** (the three are undefined under
+    productivity: RVH is the DV denominator, not an RHS predictor to drop,
+    and standardized-RVH service scoring is retired); `nb_estimator` is
+    KEPT with its productivity form flagged — an NB2 rate model with
+    log(RVH) as a fixed OFFSET (exposure), not ill-defined. **D6** the scan
+    predicts productivity per window directly (no svc_std input); the index
+    is predicted productivity relative to the median fitted route's
+    predicted productivity; `screen_svc_std` machinery retired for v2.2
+    (scan CODE is the phase-2b-v22 batch, not this one). **D7** the §9.10
+    regime-split gate applies to the productivity fit unchanged. **D8**
+    reuse unchanged: vintage map (§9.3/§9.9.2), the SAME 300-route-year /
+    63-cluster panel with the 4 contemporaneous-shape drops + the
+    KNOWN_BAD/DUP_RVH no-RVH drops, archived-shape catchments,
+    route_short_name join. RVH is still REQUIRED — now for the DV — so
+    input-side accounting (permitted §9.9.5 use: presence + RVH
+    passthrough, no predictor join, no fit) CONFIRMS the DV is
+    well-defined: all 304 fittable route-years have RVH>0 and boardings>0
+    (min RVH 981.0, min boardings 7,691), and the 300 kept route-years / 63
+    clusters are every one RVH>0 and boardings>0. **D9** same tripwire; if
+    v2.2 fails, the threshold shortlist remains the output and the §9.5
+    path stays open for further governed changes (e.g. a regional cluster
+    base) — NO permanence hardening. Registry: `screen_estimand_v22`
+    (`log(boardings/RVH)`, structural-governance role at constant tier per
+    the `screen_battery_rows` precedent, avoiding the check-5 trap) and
+    `screen_battery_rows_v22` (the 17-row list) added, both
+    `spec-pending:01§10` until the v2.2 fit consumes them; append-only
+    supersession-for-productivity notes on `screen_battery_rows_v21` and
+    `screen_svc_std` (both stay VALID for the v2.1/v2.0 LEVEL artifacts). NO
+    fit ran; NO coefficient computed or peeked; v2.1
+    (`screen_results_v21.json`, sha `83aeb032`) and v2.0
+    (`screen_results.json`, sha `b88f9b65`) stay byte-identical; PRIORS and
+    the prior-order fingerprint untouched.

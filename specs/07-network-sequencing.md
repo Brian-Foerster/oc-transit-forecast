@@ -8,9 +8,13 @@ full NPV objective (the DEFAULT) after R1 → R6 → W1, pricing every candidate
 given-network through the tbc v3 wrapper (`bca-pipeline.mjs`) and ranking by
 within-draw CV in common-base-year PV dollars; N6 landed the spec 00 §3 /
 spec 06 §1/§7 amendments. **Headline (NPV objective, 2026-07-17):** at the
-welfare-BCA central profile NO Orange County ALM corridor clears BCR=1 — the §7
-marginal stop fires at cycle 1 and the decision-grade recommended build order is
-EMPTY (best marginal BCR ≈ 0.09 US-TYPICAL / 0.14 LOW, harbor; streetcar lower).
+welfare-BCA central profile NO Orange County ALM corridor *in the hand-supplied
+candidate set* clears BCR=1 — the §7 marginal stop fires at cycle 1 and the
+decision-grade recommended build order is EMPTY (best marginal BCR ≈ 0.09
+US-TYPICAL / 0.14 LOW, harbor; streetcar lower). This is a statement about the
+`hand_supplied: true` candidate universe, NOT about Orange County: the stage-1
+screen has failed to warrant a candidate set TWICE (§4.3; README known issue
+28).
 The county-wide always-ALM scope and the owner decisions that shaped this spec
 are recorded in §11.
 
@@ -277,10 +281,22 @@ between real programmatic commitments (windows may enter or exit per the
 gate-1 rules, promotion owner-mediated per spec 01 §4b); it does NOT
 re-score counterfactual networks — the screen is a static cross-sectional
 fit, and network interaction is this harness's job via `anchor_add`.
-Until spec 01's first artifact lands,
-the candidate universe may be hand-supplied (`config/candidates.json`; the
-13-arterial shortlist in HANDOFF is the natural seed), with that
-substitution stated in the artifact.
+**Standing condition (STRENGTHENED 2026-07-21, rule-3 log — README known
+issue 28).** The candidate universe is `hand_supplied: true`
+(`config/candidates.json`; the 13-arterial shortlist in HANDOFF is the
+natural seed), and this is now the STANDING condition, not a temporary
+bridge "until spec 01's first artifact lands": spec 01's artifacts HAVE
+landed and the screen has FAILED to supply a decision-grade window-level
+corridor-selection product **TWICE** — the v2.0 screen and the v2.1
+rebuild both returned `ordinal_ok = FALSE` (spec 01 §5/§9, README issues
+35–42), and the v2.2 productivity estimand (spec 01 §10) is only
+pre-registered and unrun (README issue 43). CONSEQUENCE, binding on every
+downstream headline: the §7 "no OC ALM corridor clears BCR=1" verdict is a
+statement about the HAND-SUPPLIED candidate set, **not** a screen-warranted
+statement about Orange County — no empirical screen has selected or ranked
+this candidate universe, so the harness ranks the analyst's corridors and
+claims nothing about the alignments the analyst did not supply. The
+hand-supplied substitution stays stated in the artifact.
 
 ## 5. Anti-myopia guards (the load-bearing section)
 

@@ -1546,7 +1546,19 @@ ASSUMPTIONS = {
                      "~18-mi median route, no window could mechanically "
                      "exceed ~72). Positive scalar multiple -- ranks "
                      "unchanged, asserted by a standing test (README "
-                     "known-issue 36)")],
+                     "known-issue 36)"),
+                    ("2026-07-21", 1577.65, "measured",
+                     "spec 01 §10 v2.2 governed-method-change (owner-directed "
+                     "2026-07-21): value UNCHANGED and this standardized-"
+                     "service level stays VALID for the v2.0/v2.1 LEVEL "
+                     "artifacts (both byte-identical). Under the v2.2 "
+                     "PRODUCTIVITY estimand the svc_std standardized-RVH-"
+                     "service machinery is RETIRED -- productivity "
+                     "(boardings/RVH) is already exposure-normalized, so there "
+                     "is no service level to score at, and the svc_p25/svc_p75 "
+                     "probe rows are DROPPED from screen_battery_rows_v22 (D5/"
+                     "D6). Append-only supersession-FOR-PRODUCTIVITY note; "
+                     "README known issue 43")],
         "provenance": "svc_std = median over the 41 fitted routes (the "
                       "route_boardings.csv x 2026-07 GTFS weekday-shape "
                       "intersection; the 6 discontinued routes 24/53X/57X/"
@@ -2038,7 +2050,18 @@ ASSUMPTIONS = {
                      "artifact x_variation: every vintage-matched "
                      "predictor -- l_flows / l_zveh_hh / l_genjobs -- has "
                      "nonzero within-route across-year variance for "
-                     "share 1.0 of the 41 fitted routes)")],
+                     "share 1.0 of the 41 fitted routes)"),
+                    ("2026-07-21", "20 frozen v2.1 battery row ids (unchanged)",
+                     "definitional",
+                     "spec 01 §10 v2.2 governed-method-change (owner-directed "
+                     "2026-07-21): this 20-row list stays VALID for the v2.1 "
+                     "LEVEL artifact (screen_results_v21.json, sha 83aeb032, "
+                     "byte-identical) -- NO value change here. The v2.2 "
+                     "PRODUCTIVITY estimand SUPERSEDES it FOR PRODUCTIVITY "
+                     "ONLY via screen_battery_rows_v22 = this list MINUS "
+                     "{drop_rh, svc_p25, svc_p75} (17 rows) -- the three rows "
+                     "undefined once RVH becomes the DV denominator (D5). "
+                     "Append-only supersession note; README known issue 43")],
         "provenance": "the CLOSED battery for the spec 01 §9.5 phase-2b "
                       "verdict: criterion 2's min-rho runs over ALL 20 "
                       "rows; criterion 3's tie-churn max runs over the "
@@ -2133,6 +2156,140 @@ ASSUMPTIONS = {
         "logged": "README known-issue 40",
         "upgrade": "phase 2b rebuilt fit (the three-way regime-split fit "
                    "runs; the downgrade rule binds decision_output)",
+    },
+    # -- v2.2 GOVERNED-METHOD-CHANGE (spec 01 §10 pre-registration; the
+    # productivity estimand, owner-directed 2026-07-21, written BEFORE any
+    # v2.2 fit). v2.1's pre-registered FAILURE (ordinal_ok=FALSE, README
+    # known issue 42) authorizes a documented owner-approved change of METHOD
+    # under §9.5 -- NOT a same-spec re-run. The DV becomes productivity
+    # (boardings/RVH); b3 (RVH) is pinned at +1 and moved to the LHS, which
+    # removes the b1/b3 collinearity and the tautology in one step. The
+    # thresholds are the UNCHANGED ratified v2.1 values (a method change never
+    # moves the decision bar). Both entries carry the structural-governance
+    # role at CONSTANT tier (screen_battery_rows / screen_regime_split
+    # precedent -- avoids the check-5 enumerated-alternative-row trap that a
+    # structural-tier rowless entry would trip). spec-pending:01§10 until the
+    # phase-2b-v22 fit consumes them (the §9 spec-pending:01§9 -> landed flip
+    # precedent, README issue 42). v2.0/v2.1 artifacts stay byte-identical.
+    "screen_estimand_v22": {
+        "title": "v2.2 screen estimand: productivity dependent variable "
+                 "(governed-method-change, pre-registered pre-fit)",
+        "tier": "constant", "status": "active",
+        "value": "log(boardings/RVH)",
+        "units": "log boardings per revenue vehicle-hour", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-21", "log(boardings/RVH)", "judgment",
+                     "spec 01 §10 v2.2 GOVERNED-METHOD-CHANGE pre-registration "
+                     "(owner-directed 2026-07-21, OC-only) -- written BEFORE "
+                     "any v2.2 fit. The DEPENDENT VARIABLE moves from the v2.1 "
+                     "boardings LEVEL to PRODUCTIVITY = boardings per revenue "
+                     "vehicle-hour. PINNED-COEFFICIENT IDENTITY: log(b/RVH) = "
+                     "log(b) - log(RVH), so the productivity regression IS the "
+                     "v2.1 level regression with the RVH coefficient b3 PINNED "
+                     "at +1 and MOVED to the LHS -- b3 leaves the RHS entirely "
+                     "(D1/D2). This removes the b1/b3 collinearity and the "
+                     "near-tautology in one step: b3 no longer competes for "
+                     "the fundamentals' variance because it is no longer "
+                     "estimated")],
+        "provenance": "the v2.2 dependent variable, spec 01 §10 D1. RATIONALE "
+                      "(the §1 endogeneity, CONFIRMED by the v2.1 verdict -- "
+                      "README known issue 42): v2.1 rebuilt every INPUT defect "
+                      "(vintage-matched X, block catchments, contemporaneous "
+                      "archived shapes, six recovered routes, 300 route-years "
+                      "/ 63 clusters) and b1_flows still moved only 0.099 -> "
+                      "0.121, while b3_rvh sat at t=22.5 vs b1 at t=0.80 -- "
+                      "boardings are set by service allocation, service is "
+                      "allocated on the same fundamentals the demand block "
+                      "measures, so conditioning on RVH leaves the "
+                      "fundamentals nothing to explain. Data quality was never "
+                      "the binding constraint. The productivity DV pins b3 at "
+                      "+1 (the exposure-normalization identity) and drops it "
+                      "from the RHS, so the demand block {b1_flows, b2_zveh} "
+                      "is tested against PRODUCTIVITY, not against boardings-"
+                      "conditional-on-RVH. GOVERNED-METHOD-CHANGE under spec "
+                      "01 §9.5 (v2.1's pre-registered FAILURE authorizes a "
+                      "documented owner-approved method change; NOT a "
+                      "same-spec re-run). STRUCTURAL-GOVERNANCE entry carried "
+                      "at CONSTANT tier (screen_battery_rows / "
+                      "screen_regime_split precedent -- the registry's "
+                      "structural tier is machine-checked to own enumerated-"
+                      "alternative rows, check 5, and this estimand's "
+                      "enumerated alternative is the v2.1 LEVEL estimand, a "
+                      "SUPERSEDED governed spec, not a swept battery row). The "
+                      "v2.2 thresholds are the UNCHANGED ratified v2.1 values "
+                      "(screen_pos_frac_min 0.841 / screen_battery_rho_min 0.7 "
+                      "/ screen_tie_churn_max_window 0.20 / "
+                      "screen_tie_churn_max_hostshape 2/14) -- a method change "
+                      "never moves the decision bar (D4), and reusing the "
+                      "frozen bar is the anti-tuning guarantee. Consumed via "
+                      "val() by the phase-2b-v22 fit when it runs; NOT "
+                      "consumed by any current artifact (v2.0/v2.1 stay "
+                      "byte-identical)",
+        "rows": {}, "no_row_reason": "spec-pending:01§10",
+        "accepted": ("owner-ratified 2026-07-21 (v2.2 governed-method-change "
+                     "pre-registration, written pre-fit)", "2026-07-21"),
+        "logged": "README known-issue 43",
+        "upgrade": "phase-2b-v22 rebuilt fit (the productivity estimand goes "
+                   "live; the fit's measured pos_frac supersedes this "
+                   "pre-registration)",
+    },
+    "screen_battery_rows_v22": {
+        "title": "v2.2 screen battery: CLOSED perturbation row list for the "
+                 "productivity-estimand phase-2b verdict (frozen pre-fit)",
+        "tier": "constant", "status": "active",
+        "value": ["buffer_lo", "buffer_hi", "window_10", "window_15",
+                  "drop_fy2020", "e016_swap", "e002_swap", "popden_swap",
+                  "genjobs_off", "genjobs_leave_class_out", "gen_dummy_swap",
+                  "nb_estimator", "offset_variant", "overlap_lo", "overlap_hi",
+                  "year_fe_vs_pooled", "loyo"],
+        "units": "battery row ids", "band": None, "basis": "definitional",
+        "history": [("2026-07-21", "17 frozen v2.2 battery row ids",
+                     "definitional",
+                     "spec 01 §10 D5 v2.2 pre-registration (owner-directed "
+                     "2026-07-21) -- FROZEN NOW, before any v2.2 fit. "
+                     "screen_battery_rows_v22 = screen_battery_rows_v21 MINUS "
+                     "{drop_rh, svc_p25, svc_p75}, the three rows UNDEFINED "
+                     "under productivity: drop_rh (RVH is no longer an RHS "
+                     "predictor to drop -- it is the DV denominator, and 'fit "
+                     "without RVH' IS the v2.2 headline) and svc_p25/svc_p75 "
+                     "(standardized-RVH-service scoring is RETIRED -- "
+                     "productivity is already exposure-normalized, so there is "
+                     "no svc_std level to shift; D6). All 17 others are KEPT "
+                     "(each well-defined under productivity). FLAGGED, not "
+                     "silently changed: nb_estimator's productivity FORM is "
+                     "the NB2 RATE model -- boardings count with log(RVH) as a "
+                     "FIXED OFFSET (exposure), the count analogue of the "
+                     "pinned identity -- well-defined; no other v21 row is "
+                     "ill-defined")],
+        "provenance": "the CLOSED battery for the spec 01 §10 productivity "
+                      "phase-2b verdict: criterion 2's min-rho runs over ALL "
+                      "17 rows; criterion 3's tie-churn max runs over the "
+                      "WINDOW-UNIT rows only (window_10/window_15 are host-"
+                      "shape-unit, excluded from the window-unit max per the "
+                      "§5 unit fix). Order-exact: [buffer_lo, buffer_hi, "
+                      "window_10, window_15, drop_fy2020, e016_swap, "
+                      "e002_swap, popden_swap, genjobs_off, "
+                      "genjobs_leave_class_out, gen_dummy_swap, nb_estimator, "
+                      "offset_variant, overlap_lo, overlap_hi, "
+                      "year_fe_vs_pooled, loyo] (17 = 20 - 3). Freezing NOW -- "
+                      "before the v2.2 fit exists -- is the point: the battery "
+                      "criterion is a MIN, so membership edits after seeing "
+                      "v2.2 numbers would be a tunable bar (screen_battery_"
+                      "rows / screen_battery_rows_v21 precedent). Row changes "
+                      "from here are owner-approved §9.5 spec amendments. "
+                      "Consumed via val() by the phase-2b-v22 rebuild when it "
+                      "runs (test D2 pattern extends to the v2.2 artifact: "
+                      "artifact battery == this list, order included, and it "
+                      "excludes drop_rh/svc_p25/svc_p75). The v2.1 20-row "
+                      "battery (screen_battery_rows_v21) stays VALID for the "
+                      "v2.1 LEVEL artifact -- superseded FOR PRODUCTIVITY only",
+        "rows": {}, "no_row_reason": "spec-pending:01§10",
+        "accepted": ("owner item D5 2026-07-21 (pre-fit freeze on estimand "
+                     "grounds)", "2026-07-21"),
+        "logged": "README known-issue 43",
+        "upgrade": "phase-2b-v22 rebuilt artifact (rows go live; test asserts "
+                   "artifact == this list, order included, and that it "
+                   "excludes drop_rh/svc_p25/svc_p75)",
     },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {

@@ -1,7 +1,7 @@
 {
   "basis_census": {
-    "definitional": 28,
-    "judgment": 71,
+    "definitional": 29,
+    "judgment": 72,
     "literature": 10,
     "locally-calibrated": 2,
     "measured": 44
@@ -465,6 +465,26 @@
       "basis": "definitional",
       "id": "screen_battery_rows_v21",
       "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner item D5 2026-07-21 (pre-fit freeze on estimand grounds)",
+        "2026-07-21"
+      ],
+      "basis": "definitional",
+      "id": "screen_battery_rows_v22",
+      "no_row_reason": "spec-pending:01§10",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-ratified 2026-07-21 (v2.2 governed-method-change pre-registration, written pre-fit)",
+        "2026-07-21"
+      ],
+      "basis": "judgment",
+      "id": "screen_estimand_v22",
+      "no_row_reason": "spec-pending:01§10",
       "tier": "constant"
     },
     {
@@ -1762,7 +1782,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 155,
+  "n_entries": 157,
   "priors": [
     {
       "basis": "judgment",
@@ -1886,6 +1906,14 @@
       "no_row_reason": "spec-pending:02§4.8"
     },
     {
+      "id": "screen_battery_rows_v22",
+      "no_row_reason": "spec-pending:01§10"
+    },
+    {
+      "id": "screen_estimand_v22",
+      "no_row_reason": "spec-pending:01§10"
+    },
+    {
       "id": "street_cal_local",
       "no_row_reason": "spec-pending:02§4.9"
     },
@@ -1900,7 +1928,7 @@
   ],
   "tier_census": {
     "config": 14,
-    "constant": 86,
+    "constant": 88,
     "data": 18,
     "prior": 19,
     "structural": 18
@@ -2103,6 +2131,23 @@
       "history": [
         [
           "2026-07-20",
+          "20 frozen v2.1 battery row ids",
+          "definitional",
+          "owner item 2 2026-07-20 -- v2.1 battery FROZEN NOW, on ACQUISITION FACTS ONLY (before any v2.1 input is fitted; the owner's criterion-2/3 threshold values attach to THIS list for the phase-2b verdict). Composition: the 14 v2.0 window-unit rows carried over WITH the two generator rows REDEFINED against §9.1's continuous WAC term (b4_off -> genjobs_off = drop l_genjobs; gen_leave_class_out -> genjobs_leave_class_out = drop ONE NAICS sector from the CNS15-18 sum, class-max aggregation carried over); PLUS the §9.1 swaps popden_swap / e002_swap / gen_dummy_swap; PLUS window_10/window_15 (CRITERION-2-ONLY, flagged -- the §5 criterion-3 unit fix excludes their host-shape-unit churn from the tie-churn max); MINUS sld_swap, EXCLUDED because the EPA SLD was NOT acquired in phase 1 (§9.1 made the row conditional on acquisition -- decided on that acquisition fact, never on fit results); PLUS loyo, RETURNED per the §9.3 condition resolved IN THIS BATCH on the measured input-side fact (screen_power_check artifact x_variation: every vintage-matched predictor -- l_flows / l_zveh_hh / l_genjobs -- has nonzero within-route across-year variance for share 1.0 of the 41 fitted routes)"
+        ],
+        [
+          "2026-07-21",
+          "20 frozen v2.1 battery row ids (unchanged)",
+          "definitional",
+          "spec 01 §10 v2.2 governed-method-change (owner-directed 2026-07-21): this 20-row list stays VALID for the v2.1 LEVEL artifact (screen_results_v21.json, sha 83aeb032, byte-identical) -- NO value change here. The v2.2 PRODUCTIVITY estimand SUPERSEDES it FOR PRODUCTIVITY ONLY via screen_battery_rows_v22 = this list MINUS {drop_rh, svc_p25, svc_p75} (17 rows) -- the three rows undefined once RVH becomes the DV denominator (D5). Append-only supersession note; README known issue 43"
+        ]
+      ],
+      "id": "screen_battery_rows_v21"
+    },
+    {
+      "history": [
+        [
+          "2026-07-20",
           "grid [0,0.8] step 0.05; S=200; B=500 (checked vs 2000); seed 11; 80% power target",
           "judgment",
           "owner review 2026-07-20 item 3 -- DESIGN-STAGE power check for tripwire criterion 1 under the v2.1 rebuild, run BEFORE the v2.1 fit (which stays unrun)"
@@ -2129,6 +2174,12 @@
           1577.65,
           "measured",
           "SC batch (external critique): value unchanged; the index NORMALIZATION built on this entry is REBASED to same-exposure -- baseline 100 = median over fitted host routes of each route's own BEST 12.5-mi-window prediction at svc_std, replacing the median fitted route AT ITS OWN LENGTH (a length artifact: with b3+b5 = +0.917 per log-mile and 12.5-mi windows vs an ~18-mi median route, no window could mechanically exceed ~72). Positive scalar multiple -- ranks unchanged, asserted by a standing test (README known-issue 36)"
+        ],
+        [
+          "2026-07-21",
+          1577.65,
+          "measured",
+          "spec 01 §10 v2.2 governed-method-change (owner-directed 2026-07-21): value UNCHANGED and this standardized-service level stays VALID for the v2.0/v2.1 LEVEL artifacts (both byte-identical). Under the v2.2 PRODUCTIVITY estimand the svc_std standardized-RVH-service machinery is RETIRED -- productivity (boardings/RVH) is already exposure-normalized, so there is no service level to score at, and the svc_p25/svc_p75 probe rows are DROPPED from screen_battery_rows_v22 (D5/D6). Append-only supersession-FOR-PRODUCTIVITY note; README known issue 43"
         ]
       ],
       "id": "screen_svc_std"
