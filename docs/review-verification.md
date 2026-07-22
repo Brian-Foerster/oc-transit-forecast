@@ -12,6 +12,25 @@ appearing to pass. The review schema `{verdict, findings}` is trivially
 satisfiable with a no-work object, so a budget-starved or lazy agent emits the
 minimal valid response.
 
+## Mechanism finding (arc audit, 2026-07-21)
+
+A full audit of all 25 review agents in the arc found NO unknown stubs (only the
+two already known) and resolved that neither slipped through with nothing backing
+it: stub #1 was caught by a dedicated reverify workflow; stub #2 by a controller
+anti-tuning recompute documented in the commit message. But it corrected the
+FAILURE MODEL. Both stubs are **clobbered records over genuine work**, not lazy
+no-work approvals: each agent made ~36 Bash calls and populated real reproduced
+numbers in intermediate StructuredOutput calls, then a final empty/placeholder
+StructuredOutput overwrote the good record (the journal keeps only the last
+submission). The review WORK happened; the RECORD is what is corrupt.
+
+Consequence for the rules below: **rule 4 (tool-use count) is unreliable for this
+failure mode** — these stubs had HIGH tool counts and rule 4 would misclassify
+them as genuine. The reliable catch is **rule 3 (programmatic post-check on the
+reproduced content)**, which fires on an empty/absent record regardless of how
+much work the agent did. Rule 4 only catches a genuine no-work agent (0 tool
+calls); treat it as a weak corroborating signal, not the primary gate.
+
 ## The controlling principle
 
 **Reviews are corroboration, not the gate.** The commit gate for a consequential
@@ -48,14 +67,21 @@ the controller recompute stays the real gate.
    A stub then *fails the workflow* (and re-runs on resume) instead of passing.
    The harness rejects the stub, not the human.
 
-4. **Tool-use / journal evidence (controller-side, hardest to fake).** Genuine
-   independent recomputation *requires* running Python and reading files. A
-   review claiming it recomputed the fit while making ~0 compute-tool
-   (Bash/Read) calls did no work — schema-forcing (rule 2) can be satisfied by
-   *copying* the implementer's numbers, but a fabricated tool trace cannot. After
-   the workflow, inspect the review agent's `journal.jsonl` / `agent-*.jsonl`:
-   a review agent with fewer than ~5 compute-tool calls that claims recomputation
-   is a stub. This is the check that catches a schema-satisfying copy-paste.
+4. **Tool-use / journal evidence (controller-side, WEAK signal — see mechanism
+   finding).** A review claiming recomputation while making ~0 compute-tool calls
+   did no work. BUT the audit showed the arc's actual stubs had ~36 tool calls
+   each (clobbered records over genuine work), so a low-tool-count test produces
+   FALSE NEGATIVES here and must not be the primary gate. Use it only to catch a
+   genuine no-work agent; rely on rule 3 for the clobbered-record case. A stronger
+   controller-side check when a record looks empty: inspect ALL of the agent's
+   StructuredOutput submissions in its transcript (not just the last journal
+   line) — a good intermediate submission clobbered by a final placeholder means
+   the work exists and can be recovered, which is what happened to both arc stubs.
+
+5b. **Reviewer instruction (prevents the clobber at the source).** Tell review
+   agents to submit their StructuredOutput exactly ONCE, as the final action, with
+   the complete reproduced block — never a placeholder/dry-run structured output
+   before the real one, since the harness keeps only the last submission.
 
 ## When to apply
 
