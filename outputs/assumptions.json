@@ -1,7 +1,7 @@
 {
   "basis_census": {
-    "definitional": 29,
-    "judgment": 72,
+    "definitional": 30,
+    "judgment": 73,
     "literature": 10,
     "locally-calibrated": 2,
     "measured": 44
@@ -479,6 +479,16 @@
     },
     {
       "accepted": [
+        "owner item D6 2026-07-21 (pre-fit freeze on estimand + acquisition grounds; battery is a MIN, membership frozen before the regional numbers exist)",
+        "2026-07-21"
+      ],
+      "basis": "definitional",
+      "id": "screen_battery_rows_v23",
+      "no_row_reason": "spec-pending:01§11",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
         "owner-ratified 2026-07-21 (v2.2 governed-method-change pre-registration, written pre-fit); phase-2b-v22 fit LANDED 2026-07-21 (disposition spec-pending:01§10 -> definitional)",
         "2026-07-21"
       ],
@@ -556,6 +566,16 @@
       "id": "screen_regime_split",
       "no_row_reason": "quality-knob",
       "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner directive 2026-07-21 (extend to a wider regional cluster base; panel frozen on availability facts, list filled by the acquisition scouts)",
+        "2026-07-21"
+      ],
+      "basis": "judgment",
+      "id": "screen_regional_agencies",
+      "no_row_reason": "spec-pending:01§11",
+      "tier": "config"
     },
     {
       "accepted": [
@@ -1782,7 +1802,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 157,
+  "n_entries": 159,
   "priors": [
     {
       "basis": "judgment",
@@ -1906,6 +1926,14 @@
       "no_row_reason": "spec-pending:02§4.8"
     },
     {
+      "id": "screen_battery_rows_v23",
+      "no_row_reason": "spec-pending:01§11"
+    },
+    {
+      "id": "screen_regional_agencies",
+      "no_row_reason": "spec-pending:01§11"
+    },
+    {
       "id": "street_cal_local",
       "no_row_reason": "spec-pending:02§4.9"
     },
@@ -1919,8 +1947,8 @@
     }
   ],
   "tier_census": {
-    "config": 14,
-    "constant": 88,
+    "config": 15,
+    "constant": 89,
     "data": 18,
     "prior": 19,
     "structural": 18
@@ -2166,6 +2194,12 @@
           "log(boardings/RVH) -- LANDED",
           "judgment",
           "spec 01 §10 phase-2b-v22 fit LANDED 2026-07-21 (outputs/screen_results_v22.json, run_id 00770f64, sha 3b1d5526; dual fresh-process byte-identical): the productivity estimand is CONSUMED via val() by screen_fit_v22 + screen_scan_v22 (DV = log(b/RVH); b3 pinned at +1 and moved to the LHS). Disposition FLIPS spec-pending:01§10 -> definitional. VERDICT: the productivity move RESCUED criterion 1 (b1_pos_frac 0.9075 / b2_pos_frac 0.9965 vs 0.841, both PASS -- up from v2.1's failing 0.8115 / 0.7435) but ordinal_ok stays FALSE because criterion 2 fails (min rho 0.2072 at offset_variant vs 0.7) and criterion 3 fails (window 1.4444 / hostshape 0.4000): the LENGTH ARTIFACT SHRANK (offset_variant rho rose from -0.486 in the v2.1 LEVEL fit to +0.207 here, b3+b5=+1.00 -> b5 alone -0.229) but NOT enough to clear the 0.7 floor, so it stays the binding worst row and the screen still delivers the threshold shortlist, not a decision-grade ordinal ranking. README known issue 43/44"
+        ],
+        [
+          "2026-07-21",
+          "log(boardings/RVH) -- REUSED by v2.3",
+          "judgment",
+          "spec 01 §11 v2.3 REGIONAL-CLUSTER-BASE governed-method-change (owner-directed 2026-07-21, written BEFORE any v2.3 fit): v2.3 REUSES this productivity estimand UNCHANGED (D1 KEEP productivity -- it is the method that RESCUED criterion 1 on OC-only data; reverting to the boardings LEVEL would re-inject the b1/b3 collinearity and the RVH tautology). NO new estimand entry is created for v2.3. The v2.3 change is to the PANEL (OC + regional SoCal agencies, frozen on acquisition-availability facts) and the FE structure (adds AGENCY fixed effects), NOT to the DV. Append-only reuse note; the v2.2 fit disposition is unchanged. README known issue 45"
         ]
       ],
       "id": "screen_estimand_v22"
@@ -2186,6 +2220,23 @@
         ]
       ],
       "id": "screen_power_check"
+    },
+    {
+      "history": [
+        [
+          "2026-07-21",
+          "PENDING scouts -- candidate set OCTA + {LA Metro, Long Beach Transit, Foothill Transit, OmniTrans, Riverside Transit Agency, Big Blue Bus}",
+          "judgment",
+          "spec 01 §11 D2 v2.3 pre-registration (owner-directed 2026-07-21) -- the regional fit panel is FROZEN ON ACQUISITION-AVAILABILITY FACTS ALONE (which agencies publish public route-level boardings AND RVH joinable to a GTFS shape), NEVER on fit results -- exactly as v2.1's fit-panel YEAR set was frozen on availability (§9.9.1) and v2.1's battery excluded sld_swap on an acquisition fact (§9.8). An agency enters IFF the scouts land, with passing validation, (i) route-level boardings, (ii) route-level RVH (REQUIRED -- log(b/RVH) is undefined without it), (iii) a GTFS feed whose route ids join to those rows, (iv) LODES+ACS coverage of the service-area geography at the matching vintages. Freezing the panel on availability -- not on which agencies stabilize the ranking -- is the anti-tuning guarantee for the identification set (the panel analogue of the frozen battery). The per-agency fiscal-year set is frozen on the SAME facts. List finalized before any coefficient is fitted"
+        ],
+        [
+          "2026-07-21",
+          "FROZEN to the recon-confirmed usable panel: OCTA + RTA + SunLine + Corona Cruiser + Pass Transit + PVVTA/Blythe (~125 route-clusters); LA Metro/OmniTrans/Long Beach/Foothill/Big Blue Bus EXCLUDED-with-reason",
+          "judgment",
+          "spec 01 §11 D2 acquisition-recon RESULT (this workflow) + independent review APPROVE-WITH-FIXES 2026-07-21. BINDING availability fact: only agencies publishing the RCTC/TransTrack SRTP 'Route Statistics Table 3' format expose route-level boardings AND RVH together (log(b/RVH) needs both per route-year). CORRECTS the earlier PENDING stub, which OVER-CLAIMED availability -- (major finding 1) its boardings_rvh_source='NTD route-level ...' was WRONG: NTD is an AGENCY-level source, not route-level. Confirmed-usable = OCTA (63) + RTA (~36, mdb-98) + SunLine (~14) + Corona Cruiser (~3) + Pass Transit (~5) + PVVTA/Blythe (~4) = ~125 route-clusters (~2x OC-only, NOT the several hundred originally hoped). EXCLUDED (pair not both public): LA Metro (route-RVH-missing -- LACMTA README known gap), OmniTrans (route-boardings-missing), Long Beach/Foothill/Big Blue Bus (agency-level-only), each kept as a records-request upgrade path. Frozen on availability alone, before any coefficient is fitted; NOT on fit results"
+        ]
+      ],
+      "id": "screen_regional_agencies"
     },
     {
       "history": [

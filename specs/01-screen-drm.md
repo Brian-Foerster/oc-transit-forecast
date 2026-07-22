@@ -9,7 +9,13 @@ criterion 3 a dual window/host-shape threshold; §9.10 regime-split
 gate + §9.3/§9.9 universe amendments pre-registered) · §9 v2.1 fit
 LANDED + FAILED 2026-07-21 (ordinal_ok=FALSE; README known issue 42) ·
 §10 v2.2 productivity-estimand GOVERNED-METHOD-CHANGE PRE-REGISTERED
-2026-07-21 (owner-directed, OC-only; written before any v2.2 fit)
+2026-07-21 (owner-directed, OC-only; written before any v2.2 fit) ·
+§10 v2.2 productivity fit LANDED + FAILED 2026-07-21 (ordinal_ok=FALSE;
+criterion 1 RESCUED, criteria 2/3 failed on the length artifact;
+README known issue 44) · §11 v2.3 REGIONAL-CLUSTER-BASE
+GOVERNED-METHOD-CHANGE PRE-REGISTERED 2026-07-21 (owner-directed;
+KEEP productivity DV, ADD agency FE + regional panel frozen on
+acquisition-availability facts; written before any v2.3 fit)
 (prototype: the 13-arterial screen, summarized in HANDOFF.md "Dropped
 work"; superseded draft: 2026-07-08)
 
@@ -1447,3 +1453,389 @@ governed estimand tested and recorded. Barred, as always: re-running
 THIS §10 spec unchanged hoping for a different answer, predictor
 shopping beyond D2, and threshold re-tuning after seeing the v2.2
 numbers.
+
+## 11. v2.3 regional-cluster-base estimand (governed-method-change, PRE-REGISTERED 2026-07-21, written before any fit)
+
+**This section is a pre-registration document, written and committed
+2026-07-21 BEFORE any v2.3 fit has run — before a single regional
+coefficient has been computed or peeked at, and before the regional
+inputs have been acquired. Its entire epistemic value is that timing:
+the estimand, the panel-freezing RULE, the RHS, the criteria, the
+thresholds, the battery, the scan/index design, the regime-split gate
+and the reused OC universe below are all fixed while the regional fit's
+numbers are unknown, so a later pass or fail cannot be narrated as a
+choice made after seeing the result. v2.2 (screen_results_v22.json,
+sha 3b1d5526), v2.1 (screen_results_v21.json, sha 83aeb032) and v2.0
+(screen_results.json, sha b88f9b65) stay byte-identical: this is a NEW
+pre-registration, not an edit to a landed artifact.**
+
+**Owner directive (2026-07-21):** *v2.2 (productivity, OC-only) PASSED
+criterion 1 — the endogeneity was the binding constraint on the demand
+SIGNAL and the productivity move fixed it (b1_flows pos_frac 0.9075,
+b2_zveh 0.9965 vs 0.841) — but FAILED criteria 2/3: the ranking is
+still LENGTH-DRIVEN and unstable (offset_variant Spearman rho +0.207 vs
+0.7). The remaining binding constraint is RANKING STABILITY. OC's 63
+clusters do not pin the length/fundamentals relationship stably; fit on
+a WIDER CLUSTER BASE — a regional panel of Southern California transit
+agencies, with agency fixed effects — and score the
+OC corridor windows from the regional fit. The key hypothesis: does the
+wider cluster base rescue criteria 2/3 (ranking stability) the way
+productivity rescued criterion 1?*
+
+**§9.5 basis (governed-method-change, not a same-spec re-run).** v2.2
+ran ONCE under its §10 pre-registration and FAILED the §5 tripwire on
+the measured numbers (`ordinal_ok = FALSE`, README known issue 44):
+criterion 1 PASSED (the productivity move rescued the demand signal),
+but criterion 2 failed (battery min rho 0.2072 at offset_variant vs
+0.7) and criterion 3 failed both sub-thresholds (window 1.4444 /
+host-shape 0.4000), with the stable core EMPTY. Three estimands — v2.0
+level / v2.1 rebuilt-input level / v2.2 productivity — have now failed
+the tripwire on OC-only data; the diagnosis is now RANKING STABILITY,
+not the demand signal (v2.2 fixed that) and not input quality (v2.1
+fixed that). §9.5 (permanence clause softened, owner review
+2026-07-20; D9 of §10 explicitly reserved "a wider REGIONAL cluster
+base ... a SEPARATE future pre-registration") sanctions a documented,
+owner-approved CHANGE OF METHOD once the pre-registered spec has failed
+— GOVERNED (owner-approved, spec-amended, logged), never banned.
+Re-running §10 unchanged is barred (same inputs, same spec ⇒ same
+artifact by the determinism gate); a wider-panel identification
+strategy pre-registered before its fit is exactly what §9.5 reserves.
+This section is the governance-rule-3 record (README known issue 45).
+The v2.3 fit is NOT implemented here — this batch pre-registers it and
+runs the acquisition recon; the fit is the phase-2b-v23 batch.
+
+The following decisions are FROZEN by this pre-registration.
+
+### D1 — ESTIMAND (frozen: KEEP productivity)
+
+The dependent variable is UNCHANGED from v2.2:
+
+    log(boardings / RVH) = productivity (boardings per revenue vehicle-hour).
+
+v2.3 REUSES `screen_estimand_v22` (no new estimand entry). Productivity
+is the method that RESCUED criterion 1 on OC-only data; reverting to
+the boardings LEVEL would re-inject the b1/b3 collinearity and the RVH
+tautology §10 D1 removed. The regional change is to the PANEL and the
+fixed-effect structure (agency FE), NOT to the estimand. RVH remains
+the DV denominator on every kept route-year, regional agencies
+included, so log(b/RVH) is defined only where RVH > 0 — an
+acquisition-side requirement stated in the manifest.
+
+### D2 — PANEL (frozen on ACQUISITION-AVAILABILITY FACTS, not fit results)
+
+The fit panel is OC (OCTA) PLUS regional Southern California transit
+agencies. Candidate set (pre-recon hypothesis): LA Metro, Long Beach
+Transit, Foothill Transit, OmniTrans, Riverside Transit Agency, Big Blue
+Bus (+ OCTA). The acquisition recon (this workflow) then applied the D2
+freezing rule to actual availability and FROZE the panel to exactly the
+availability-qualifying subset — see the **Acquisition-recon RESULT**
+note below. The candidate set is NOT the fitted set: most of the
+Los Angeles / San Bernardino candidates do not publish the route-level
+boardings+RVH pair and are EXCLUDED with reason.
+
+**FREEZING RULE (pre-registered, the entire point of this section's
+timing).** The FINAL agency list is frozen on ACQUISITION-AVAILABILITY
+FACTS ALONE — *which agencies publish public route-level annual
+boardings AND revenue hours (RVH) at a vintage that joins to a GTFS
+route shape* — exactly as v2.1's fit-panel YEAR set was frozen on
+availability (§9.9.1) and v2.1's battery excluded `sld_swap` on an
+acquisition fact (§9.8), NEVER on fit results. An agency enters the
+frozen panel IFF the acquisition scouts land, with passing validation:
+(i) public route-level boardings, (ii) route-level RVH (the DV
+denominator — an agency with boardings but no published RVH cannot
+enter, because log(b/RVH) is undefined without it), and (iii) a GTFS
+feed whose route ids join to those route-level rows. The scouts (this
+same workflow, acquisition-recon phase) report per-candidate
+availability into the §11 manifest below; the agency list in
+`screen_regional_agencies` is finalized to EXACTLY what they land,
+before any coefficient is fitted. Freezing the panel on availability —
+not on which agencies happen to stabilize the ranking — is the
+anti-tuning guarantee for the identification set, the panel analogue of
+the frozen battery: a panel edited after seeing v2.3 numbers would be a
+tunable identification strategy.
+
+The regional-panel YEAR set is frozen on the SAME availability facts
+(each agency contributes the fiscal years for which the scouts land
+validated route-level boardings + RVH joinable to a contemporaneous
+GTFS shape); it is recorded per-agency in the manifest and consumed
+alongside the agency list. The §9.3/§9.9.2 vintage-match dispatch
+(each boardings year gets its own LODES/ACS vintage) extends to every
+regional agency's service area — regional LODES OD+WAC and ACS B25044
+are acquired at the matching vintages, the manifest states the
+geography.
+
+**Acquisition-recon RESULT (2026-07-21, this workflow — freezes the D2
+panel on availability facts; corrects the candidate set and the cluster
+count per the independent review's APPROVE-WITH-FIXES).** The recon
+established the BINDING availability fact: only agencies publishing the
+RCTC / TransTrack SRTP "Route Statistics Table 3" format expose
+route-level annual boardings AND revenue hours TOGETHER — and the
+productivity DV log(boardings/RVH) requires BOTH per route-year.
+Applying the D2 freezing rule to exactly what the recon landed:
+
+CONFIRMED-USABLE frozen panel (public route-level boardings + RVH,
+recon-verified; source = the RCTC/TransTrack SRTP Route Statistics
+tables at rctc.org / sunline.org, OCTA via its committed APC tables):
+
+- OCTA (Orange, base agency) — 63 routes
+- Riverside Transit Agency / RTA — ~36 routes
+- SunLine Transit Agency — ~14 routes
+- Corona Cruiser — ~3 routes
+- Pass Transit / Banning + Beaumont — ~5 routes
+- PVVTA / Blythe — ~4 routes
+
+EXCLUDED — route-level boardings + RVH NOT both public (records-request
+upgrade paths, NOT in the fitted set):
+
+- **LA Metro** — route boardings public (metro.net) but NO line-level
+  RVH; the LACMTA public-data README flags line-level revenue hours as a
+  known public gap. Pair broken.
+- **OmniTrans** (San Bernardino) — route-level RVH published but
+  route-level boardings NOT published. Pair broken.
+- **Long Beach Transit**, **Foothill Transit**, **Big Blue Bus** —
+  boardings and RVH are published AGENCY-level only (NTD is an
+  AGENCY-level source, not route-level); no public route-level pair.
+
+**Corrected cluster count (minor finding).** The realistic,
+availability-confirmed base is **~125 route-clusters** (OCTA 63 + RTA 36
++ SunLine 14 + the small RCTC/TransTrack city operators ~12), NOT the
+"several hundred" originally hoped in the owner directive. That is ~2x
+the OC-only 63-cluster base — a real widening, but an order of magnitude
+short of the original aspiration. The D8 hypothesis (does the wider base
+rescue criteria 2/3) is therefore tested on ~125 clusters, not several
+hundred.
+
+**Validity caveat (honest, pre-fit — changes NO frozen threshold,
+estimand, or battery).** Every confirmed regional agency is a Riverside
+County / Coachella Valley / desert-exurban operator (RTA, SunLine,
+Corona Cruiser, Pass Transit, and PVVTA/Blythe are all Riverside County,
+FIPS 06065), geographically and demographically distinct from dense
+coastal/suburban Orange County. The agency fixed effect (D3) absorbs
+LEVEL differences between agencies, but NOT SLOPE differences: if the
+productivity-fundamentals slope differs between exurban Riverside and
+dense OC, pooling — even with agency FE — is a HETEROGENEOUS-SLOPES
+risk, directly analogous to the v2.1 regime problem (§9.10). This is
+pre-registered as a RISK TO TEST, not an assumption: the §9.10
+regime-split machinery (D7) and the `loao` leave-one-agency-out battery
+row (D6, in `screen_battery_rows_v23`) are the instruments that will
+EXPOSE the risk if it is present. This caveat changes no frozen
+decision — it is honesty about what a ~125-cluster panel drawn almost
+entirely from one neighboring exurban county can and cannot establish
+about dense-OC corridor ranking.
+
+### D3 — RHS (frozen; thresholds carried over UNCHANGED)
+
+    b1  log1p(LODES both-ends-in flows)          [demand block]
+    b2  log1p(B25044 zero-vehicle HOUSEHOLDS)     [demand block]
+    b4  log1p(WAC generator jobs, CNS15-18)       [outside the block; sign a diagnostic]
+    b5  log(route length mi)                       [scale term]
+    + year fixed effects
+    + AGENCY fixed effects (new; base = OCTA)
+
+**b3 (RVH) is GONE from the RHS** — it lives in the DV denominator
+(D1, carried from §10). The ONE structural addition versus v2.2 is
+**AGENCY fixed effects**: each agency gets its own intercept, so the
+demand and scale slopes are identified from WITHIN-agency variation and
+the fit does not confound systematic cross-agency level differences
+(fare policy, network maturity, reporting convention) with the
+fundamentals. Base agency = OCTA, so the OC intercept is the reference
+when scoring OC windows (D4).
+
+**Thresholds CARRIED OVER UNCHANGED** — the exact ratified v2.1/v2.2
+values via the SAME registry ids, NO new threshold entry:
+
+| criterion | registry id | value |
+|---|---|---|
+| 1 — demand-block bootstrap pos-frac | `screen_pos_frac_min` | 0.841 |
+| 2 — battery min Spearman rho | `screen_battery_rho_min` | 0.7 |
+| 3a — window-unit tie-churn cap | `screen_tie_churn_max_window` | 0.20 |
+| 3b — host-shape-unit tie-churn cap | `screen_tie_churn_max_hostshape` | 2/14 |
+
+A governed-method-change changes the METHOD (the cluster base and the
+FE structure), never the decision bar. Reusing the exact thresholds —
+the numbers set and ratified before v2.1 ran, that v2.0/v2.1/v2.2 then
+failed — is the anti-tuning guarantee: the bar cannot be re-tuned to a
+method that might clear it, because the bar is frozen from before. No
+`screen_*` threshold id is added, edited, or re-tiered by this
+pre-registration.
+
+### D4 — SCORING (frozen; fit regional, score OC)
+
+Fit REGIONALLY (all frozen-panel agencies jointly, one pooled
+productivity regression with year + agency FE). Apply the fitted
+demand/scale slopes to the OC corridor scan windows for the published
+index, using OCTA's agency FE (the base intercept) when scoring OC
+windows. The scan universe is UNCHANGED from every prior version: OC
+current-GTFS weekday shapes, sliding 12.5-mi windows (§3.2). Regional
+agencies ENTER THE FIT ONLY — they are cluster base for identifying the
+slopes; the ranked output is OC corridor windows, exactly as the
+screen's §1 role requires. The productivity index is per §10 D6:
+predict productivity per window DIRECTLY (year + agency FE cancel in
+the pinned identity; no svc_std service input), index =
+100·exp(win_pred − base) with base = the lower-median over fitted OC
+host routes of each OC route's own BEST window productivity. The
+regional fit changes WHERE the slopes come from, not the OC-window
+scoring arithmetic.
+
+### D5 — CRITERION 1 (unchanged)
+
+The demand block is DEFINED as {b1_flows, b2_zveh}, and EACH must be
+strictly positive in ≥ `screen_pos_frac_min` = 0.841 of the B=2000
+cluster bootstrap replicates (§3.4, §5 criterion 1; the bootstrap now
+resamples the REGIONAL route-clusters). Interpretation on the regional
+panel: *do the fundamentals predict productivity within agency, once
+the wider cluster base pins the relationship*. b4 (l_genjobs) stays
+OUTSIDE the demand block; its per-replicate sign is a diagnostic, and
+the `b4_wrong_sign` flag (§9.1, set when the point estimate is
+negative — it WAS negative in v2.1 −0.094 and v2.2 −0.041) carries over
+with its governance-rule-3 obligation intact.
+
+### D6 — BATTERY (frozen: `screen_battery_rows_v23`)
+
+    screen_battery_rows_v23 = screen_battery_rows_v22 (17 rows) PLUS loao
+
+**`loao` — leave-one-AGENCY-out — is ADDED (judged well-defined).** It
+is the regional analogue of `loyo` (leave-one-year-out): the statistic
+is the min Spearman rho, over each refit that DROPS one non-OCTA
+agency in turn, of the OC-corridor-window ranking versus the v2.3
+headline OC-window ranking. It tests whether the OC ranking depends on
+any single agency's clusters — the direct stability question the wider
+base is meant to answer. Well-definedness: OCTA is NEVER dropped (the
+OC agency FE is required to score OC windows and OCTA is the ranking
+target), so `loao` enumerates the non-OCTA agencies; the expansion
+premise guarantees ≥ 1 non-OCTA agency in the frozen panel, so the row
+is always non-vacuous. Its comparison UNIT is the OC window ranking —
+the SAME 46-window unit as `loyo` and the other window-unit rows — so
+it participates in criterion 2's min-rho and criterion 3's window-unit
+tie-churn max EXACTLY as `loyo` does. Caveat (stated, not hidden, the
+`loyo`/fy2017 precedent): dropping an agency that contributes few
+clusters barely perturbs the fit, so `loao`'s rho is expected slack for
+small-panel agencies; that is a property of the design, and the row is
+still GATED, not decorative.
+
+**Exact final v23 list (18 rows, order-exact):**
+
+    ["buffer_lo", "buffer_hi", "window_10", "window_15", "drop_fy2020",
+     "e016_swap", "e002_swap", "popden_swap", "genjobs_off",
+     "genjobs_leave_class_out", "gen_dummy_swap", "nb_estimator",
+     "offset_variant", "overlap_lo", "overlap_hi", "year_fe_vs_pooled",
+     "loyo", "loao"]
+
+Count = **18** ( = 17 + 1 ). All 17 v22 rows are KEPT because each
+remains well-defined on the regional panel: buffer/window/overlap/
+year-FE/loyo perturb the catchment/universe/panel (estimand- and
+FE-independent); `drop_fy2020` drops rows across all agencies;
+`offset_variant` pins b5 to +1 (orthogonal to the agency-FE addition);
+the b1/b2/b4 swap rows perturb RHS predictors that are unchanged in
+form; `nb_estimator` keeps its §10 D5 productivity FORM (NB2 rate model
+with log(RVH) as a fixed exposure offset), now fit on the regional
+panel with agency FE.
+
+**Flag (a kept row whose regional COVERAGE is degenerate, stated not
+hidden):** `gen_dummy_swap` replaces the measured WAC generator term
+(b4) with the legacy binary special-generator dummy from
+`config/special_generators.json`, which is a HAND-CODED OC-ONLY list —
+so on non-OCTA agency routes the dummy is identically zero. The row is
+still well-defined (it computes) and still tests OC-side sensitivity to
+the hand-coded generator list; it does NOT test regional generators
+(the measured WAC term b4, acquired region-wide, is the regional
+generator signal). This is a stated coverage property of the swap, the
+regional analogue of the §10 nb_estimator form-flag; no other v22 row's
+coverage changes on the regional panel.
+
+`screen_battery_rows_v23` is frozen NOW, before the v2.3 fit exists,
+for the identical reason the v21/v22 lists were: the battery criterion
+is a MIN, so membership edits after seeing v2.3 numbers would be a
+tunable bar. Criterion-2 min-rho and criterion-3 dual tie-churn are
+UNCHANGED (§5); row changes from here are owner-approved §9.5 spec
+amendments.
+
+### D7 — REGIME-SPLIT (carried over unchanged, applied to the regional productivity fit)
+
+The §9.10 regime-split gate is unchanged: the regional productivity
+demand block is fit THREE ways — POOLED (all fit-panel FYs),
+PRE-2020-ONLY (the regional panel restricted to pre-2020 boardings
+years), and FULL-PANEL WITH a post2020 × {l_flows, l_zveh_hh}
+interaction — and the BINDING DOWNGRADE rule (`screen_regime_split`)
+applies: if the pooled block PASSES criterion 1 but the pre-2020-only
+block does NOT independently pass the same `screen_pos_frac_min` =
+0.841 bar, the pooled pass is downgraded to reported-only (`ordinal_ok`
+forced false, `decision_format` = threshold_shortlist,
+`regime_split_downgrade` set). The pre-period-corroboration rationale
+carries over verbatim; no new threshold.
+
+### D8 — PRE-COMMITTED VERDICT (softened §9.5, no permanence hardening)
+
+The §5 tripwire (criteria 1/2/3 + the §9.10 regime-split downgrade)
+governs the v2.3 regional output IDENTICALLY. **The KEY hypothesis
+under test is whether the wider cluster base rescues criteria 2/3
+(ranking stability) the way the productivity estimand rescued criterion
+1** — nothing here pre-judges whether it will. PRE-COMMITTED: if the
+v2.3 regional fit STILL fails the tripwire, the decision output REMAINS
+the threshold shortlist plus the measured-indicator table (or the
+narrower stable core per §4b when churn is heavy), the ordinal index
+stays diagnostic-only, and — the pre-registered interpretation of a
+FAIL here — **OC corridor RANKING is not achievable even with regional
+identification, so the threshold shortlist stays the PERMANENT stage-1
+output** and `config/candidates.json` stays `hand_supplied: true`. That
+is a documented outcome, NOT a permanence HARDENING of the screen: the
+§9.5 governed-method-change path stays OPEN for further owner-approved
+changes, and a v2.3 failure is one more governed estimand tested and
+recorded, not "the screen is impossible." Barred, as always: re-running
+THIS §11 spec unchanged hoping for a different answer, panel/predictor
+shopping beyond D2/D3, and threshold re-tuning after seeing the v2.3
+numbers.
+
+### §11 acquisition manifest (FILLED by the recon; source attribution corrected)
+
+Per-file provenance sidecars under `data/raw/`; raw files stay
+untracked. An agency enters the frozen `screen_regional_agencies` list
+IFF all three of {route-level boardings, route-level RVH, joinable GTFS
+shapes} land with passing validation (D2 freezing rule). **Source
+attribution corrected (major finding 1, independent review 2026-07-21):
+the earlier manifest set the source to "NTD route-level ..." — WRONG.
+NTD is an AGENCY-level source, not route-level.** The only public source
+exposing route-level boardings AND RVH together is the RCTC/TransTrack
+SRTP "Route Statistics Table 3" format; each row below carries its TRUE
+per-agency availability status.
+
+| agency | county FIPS | route-level boardings + RVH source | GTFS feed (mdb id) | status |
+|---|---|---|---|---|
+| OCTA (Orange) | 06059 | committed APC tables (route_boardings.csv + _ext) | committed OCTA GTFS (§9.4/§9.9.3) | LANDED — CONFIRMED-USABLE (base agency, 63 routes) |
+| Riverside Transit Agency | 06065 | RCTC/TransTrack SRTP Route Statistics Table 3 (rctc.org) | mdb-98 | CONFIRMED-USABLE (~36 routes) |
+| SunLine Transit Agency | 06065 | SunLine SRTP Route Statistics (sunline.org) | per feeds recon (Mobility Database) | CONFIRMED-USABLE (~14 routes) |
+| Corona Cruiser | 06065 | RCTC/TransTrack SRTP Route Statistics Table 3 (rctc.org) | per feeds recon | CONFIRMED-USABLE (~3 routes) |
+| Pass Transit (Banning+Beaumont) | 06065 | RCTC/TransTrack SRTP Route Statistics Table 3 (rctc.org) | per feeds recon | CONFIRMED-USABLE (~5 routes) |
+| PVVTA / Blythe | 06065 | RCTC/TransTrack SRTP Route Statistics Table 3 (rctc.org) | per feeds recon | CONFIRMED-USABLE (~4 routes) |
+| LA Metro | 06037 | route boardings public (metro.net) but NO line-level RVH — LACMTA public-data README flags it as a known gap; pair broken | Metro GTFS (current + archived) | EXCLUDED (route-RVH-missing); records-request upgrade path |
+| OmniTrans (San Bernardino) | 06071 | route-level RVH published but route boardings NOT published; pair broken | OmniTrans GTFS | EXCLUDED (route-boardings-missing); records-request upgrade path |
+| Long Beach Transit | 06037 | boardings + RVH AGENCY-level only (NTD is agency-level, not route-level) | LBT GTFS | EXCLUDED (agency-level-only); records-request upgrade path |
+| Foothill Transit | 06037 | boardings + RVH AGENCY-level only (NTD is agency-level, not route-level) | Foothill GTFS | EXCLUDED (agency-level-only); records-request upgrade path |
+| Big Blue Bus (Santa Monica) | 06037 | boardings + RVH AGENCY-level only (NTD is agency-level, not route-level) | BBB GTFS | EXCLUDED (agency-level-only); records-request upgrade path |
+
+Confirmed-usable cluster estimate: OCTA 63 + RTA 36 + SunLine 14 +
+Corona Cruiser 3 + Pass Transit 5 + PVVTA/Blythe 4 = **~125
+route-clusters** (~2x OC-only). The excluded agencies stay named here as
+EXCLUDED-with-reason and as records-request upgrade paths — they are NOT
+in the fittable set.
+
+Regional predictor sources extend the §9.6/§9.9 manifests to each
+landed agency's service-area geography: LODES OD + WAC (both-ends flows
++ CNS15-18 generator jobs) and ACS B25044 zero-vehicle households (+
+B01003 for `popden_swap`), acquired at the §9.3/§9.9.2 vintages
+matching each agency's boardings years; TIGER block centroids for the
+§9.2 catchment membership. Status columns filled by the acquisition
+reports; the frozen agency list, per-agency year set, and predictor
+geographies are finalized to what the scouts land, before any fit.
+
+**What the scouts must confirm to finalize the panel (per candidate
+agency):** (1) a PUBLIC route-level ANNUAL boardings series (NTD
+route-level tables or the agency's own open-data portal), with the
+fiscal years covered; (2) a PUBLIC route-level REVENUE-HOURS series at
+the same vintage (REQUIRED — the DV denominator; an agency with
+boardings but no published route-level RVH does NOT enter); (3) a GTFS
+feed (current, and archived for pre-current boardings years) whose
+route ids join to the route-level rows; (4) LODES + ACS coverage of the
+service-area geography at the matching vintages. The agency list
+`screen_regional_agencies` is then frozen to exactly the candidates
+that clear (1)-(4).

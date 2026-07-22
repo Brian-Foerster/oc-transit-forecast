@@ -348,6 +348,52 @@ numpy/pandas/matplotlib (requirements.txt); model runs take seconds
    consolidation pass that owns scripts/assumptions.py (list in
    spec 01 §9.7).
 
+   **ARC UPDATE (2026-07-21).** The campaign has run through three
+   pre-registered estimands, each fit ONCE and each FAILING the §5
+   tripwire on OC-only data — recorded, not narrated after the fact:
+   (i) **v2.1** rebuilt-input LEVEL fit (§9) — ordinal_ok=FALSE, the §1
+   ENDOGENEITY (b3_rvh t=22.5 vs b1 t=0.80) was the binding constraint,
+   not input quality (README issue 42; screen_results_v21.json sha
+   83aeb032). (ii) **v2.2** PRODUCTIVITY estimand (§10, DV=log(b/RVH),
+   b3 pinned +1 into the LHS) — RESCUED criterion 1 (b1 pos_frac 0.9075
+   / b2 0.9965 vs 0.841) but ordinal_ok stayed FALSE because criteria
+   2/3 failed: the ranking is still LENGTH-DRIVEN and unstable
+   (offset_variant rho +0.207 vs 0.7, stable core empty; README issue
+   44; screen_results_v22.json sha 3b1d5526). (iii) **v2.3**
+   REGIONAL-CLUSTER-BASE (§11, PRE-REGISTERED 2026-07-21, this batch,
+   NO fit yet) — KEEP the productivity DV, ADD agency FE and a fit panel
+   of OC + regional SoCal agencies, FROZEN ON ACQUISITION-AVAILABILITY
+   FACTS (route-level boardings+RVH joinable to GTFS), never on fit
+   results. ACQUISITION-RECON RESULT (this workflow; review
+   APPROVE-WITH-FIXES): only agencies publishing the RCTC/TransTrack SRTP
+   "Route Statistics Table 3" expose route-level boardings AND RVH
+   together, so config/regional_agencies.json is FROZEN to CONFIRMED-
+   USABLE = OCTA (63) + RTA (~36, mdb-98) + SunLine (~14) + Corona
+   Cruiser (~3) + Pass Transit/Banning+Beaumont (~5) + PVVTA/Blythe (~4)
+   = ~125 route-clusters (~2x OC-only, NOT the several hundred originally
+   hoped). EXCLUDED-with-reason (route-level pair not both public; NTD is
+   AGENCY-level, correcting the earlier over-claim): LA Metro (no
+   line-level RVH — LACMTA README known gap), OmniTrans (route boardings
+   missing), Long Beach / Foothill / Big Blue Bus (agency-level only) —
+   records-request upgrade paths, not fitted. Validity caveat: all
+   confirmed regional agencies are Riverside County (06065), exurban —
+   agency FE absorbs level not slope, a heterogeneous-slopes RISK TO TEST
+   via loao + the §9.10 regime split. The KEY hypothesis: does the wider
+   cluster base rescue criteria 2/3 (ranking stability) the way
+   productivity rescued criterion 1. Battery
+   screen_battery_rows_v23 = v22's 17 rows + loao (leave-one-agency-out)
+   = 18 rows, frozen pre-fit. Thresholds UNCHANGED (0.841/0.7/0.20/2-14,
+   same registry ids — the anti-tuning guarantee). Pre-committed: a v2.3
+   FAIL means OC corridor ranking is not achievable even with regional
+   identification, so the threshold shortlist stays the PERMANENT stage-1
+   output (config/candidates.json hand_supplied:true) — a documented
+   outcome, NOT a permanence hardening; the §9.5 path stays open. NEXT:
+   the phase-2b-v23 fit consumes the frozen config/regional_agencies.json
+   + screen_regional_agencies and runs ONCE. Registry:
+   screen_battery_rows_v23 + screen_regional_agencies added
+   (spec-pending:01§11); screen_estimand_v22 reused. v2.0/v2.1/v2.2
+   artifacts byte-identical; prior fingerprint f0bb42f69644 untouched.
+
 (Closed 2026-07: knife-edge smoothing — rider-position quadrature;
 time-of-day — 5/10 peak/off design; sub-half-mile market — intra-tract
 LODES bin; anchor — measured from OCTA quarterly reports. Old specs kept

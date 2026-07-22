@@ -940,3 +940,85 @@ of the tripwire entries and the normalization entry respectively.
     cluster base with agency FE), a SEPARATE future pre-registration, never a
     same-§10-spec re-run. The v2.2 index remains diagnostic-only;
     `config/candidates.json` stays `hand_supplied: true`.
+
+45. **v2.3 REGIONAL-CLUSTER-BASE GOVERNED-METHOD-CHANGE PRE-REGISTERED
+    (2026-07-21): a wider cluster base — OC + regional SoCal agencies with
+    agency FE — written BEFORE any v2.3 fit (spec 01 §11; rule-3 log).** Owner
+    directive: v2.2 (productivity, OC-only) PASSED criterion 1 — the endogeneity
+    was the binding constraint on the demand SIGNAL and the productivity move
+    fixed it (b1_flows pos_frac 0.9075, b2_zveh 0.9965 vs 0.841) — but FAILED
+    criteria 2/3: the ranking is still LENGTH-DRIVEN and unstable
+    (offset_variant rho +0.207 vs 0.7, stable core empty). The remaining binding
+    constraint is RANKING STABILITY; OC's 63 clusters do not pin the
+    length/fundamentals relationship stably, so fit on a wider regional cluster
+    base of SoCal agencies with agency FE and score the OC windows from the
+    regional fit (the recon-confirmed availability set is ~125 route-clusters,
+    ~2x OC-only — NOT the several hundred originally hoped; see the
+    ACQUISITION-RECON RESULT below). §9.5 basis: v2.2 ran ONCE and FAILED its §10
+    pre-registration (issue 44), which under the softened §9.5 (and §10 D9,
+    which explicitly reserved a wider regional base as a separate future
+    pre-registration) authorizes a documented owner-approved change of METHOD —
+    not a barred same-spec re-run. FROZEN decisions (D1–D8): **D1** KEEP the
+    productivity DV `log(boardings/RVH)` from v2.2 (REUSE `screen_estimand_v22`,
+    no new estimand entry — it is the method that rescued criterion 1;
+    reverting to the LEVEL would re-inject the RVH tautology). **D2** the fit
+    PANEL is OC (OCTA) + regional agencies — pre-recon candidate set {LA Metro,
+    Long Beach Transit, Foothill Transit, OmniTrans, Riverside Transit Agency,
+    Big Blue Bus} + OCTA — FROZEN ON ACQUISITION-AVAILABILITY FACTS ALONE (which
+    agencies publish public route-level boardings AND RVH joinable to a GTFS
+    shape), NEVER on fit results, exactly as v2.1's fit-panel YEAR set was
+    frozen on availability (§9.9.1). **ACQUISITION-RECON RESULT (2026-07-21,
+    this workflow; independent review APPROVE-WITH-FIXES).** Binding
+    availability fact: only agencies publishing the RCTC/TransTrack SRTP "Route
+    Statistics Table 3" format expose route-level boardings AND RVH together.
+    Applying the freeze rule, `config/regional_agencies.json` is now the FROZEN
+    list (no longer a PENDING stub): CONFIRMED-USABLE = OCTA (63) + Riverside
+    Transit Agency (~36, mdb-98) + SunLine (~14) + Corona Cruiser (~3) + Pass
+    Transit/Banning+Beaumont (~5) + PVVTA/Blythe (~4) = **~125 route-clusters**
+    (~2x OC-only). EXCLUDED, route-level boardings+RVH NOT both public (major
+    finding 1: the earlier "NTD route-level" attribution was WRONG — NTD is
+    AGENCY-level): LA Metro (no line-level RVH — LACMTA README known gap),
+    OmniTrans (route boardings missing), Long Beach Transit / Foothill Transit /
+    Big Blue Bus (agency-level-only) — each kept as a records-request upgrade
+    path, NOT fitted. VALIDITY CAVEAT (honest, pre-fit, changes no frozen
+    decision): every confirmed regional agency is Riverside County (FIPS 06065),
+    exurban/desert, distinct from dense coastal/suburban OC; agency FE absorbs
+    LEVEL not SLOPE differences, so pooling is a heterogeneous-slopes risk
+    analogous to the v2.1 regime problem — a RISK TO TEST via `loao` + the §9.10
+    regime split, not an assumption. **D3** RHS = b1
+    log1p(flows), b2 log1p(zero-veh HH), b4 log1p(WAC genjobs CNS15-18), b5
+    log(length) + year FE + AGENCY FE (base OCTA; the one structural addition —
+    slopes identified from within-agency variation); b3 stays GONE (DV
+    denominator). Thresholds carried over UNCHANGED (0.841 / 0.7 / 0.20 / 2⁄14)
+    via the SAME registry ids — a method change never moves the decision bar; NO
+    new threshold entry. **D4** fit REGIONALLY (all agencies, one pooled
+    productivity regression), score the OC scan windows (OCTA's agency FE used
+    for OC windows); productivity index per §10 D6 (predict productivity
+    directly, no svc_std). **D5** criterion 1 unchanged (demand block {b1,b2},
+    each pos_frac ≥ 0.841); b4 sign a diagnostic (`b4_wrong_sign` carries,
+    negative in both v2.1 −0.094 and v2.2 −0.041). **D6**
+    `screen_battery_rows_v23` = `screen_battery_rows_v22` (17 rows) PLUS `loao`
+    (leave-one-AGENCY-out, the regional analogue of `loyo`: min Spearman rho over
+    each non-OCTA-agency-dropped refit vs the v2.3 headline OC-window ranking;
+    OCTA never dropped; window-unit, feeds criteria 2 and 3 as `loyo` does) =
+    **18 rows**; `gen_dummy_swap` flagged (its hand-coded OC-only special-
+    generator dummy is identically zero on non-OCTA routes — stated coverage
+    property, the measured WAC b4 is the regional generator signal); criterion-2
+    min-rho / criterion-3 dual tie-churn UNCHANGED. **D7** the §9.10 regime-split
+    gate applies to the regional productivity fit unchanged. **D8**
+    PRE-COMMITTED verdict: the KEY hypothesis is whether the wider cluster base
+    rescues criteria 2/3 (ranking stability) the way productivity rescued
+    criterion 1 — NOT pre-judged; if v2.3 still fails, the threshold shortlist
+    stays the output AND the pre-registered interpretation is that OC corridor
+    RANKING is not achievable even with regional identification, so the
+    shortlist stays the PERMANENT stage-1 output (`config/candidates.json`
+    stays `hand_supplied: true`) — a documented outcome, NOT a permanence
+    HARDENING (the §9.5 path stays open). Registry: `screen_battery_rows_v23`
+    (18-row list) and `screen_regional_agencies` (config-tier, FROZEN by the
+    recon to the ~125-cluster confirmed-usable panel; `config/regional_agencies.json`
+    is the frozen list, no longer a stub) added, both `spec-pending:01§11` until
+    the v2.3 fit consumes them; append-only
+    reuse note on `screen_estimand_v22`. NO fit ran; NO regional coefficient
+    computed or peeked; v2.2 (`3b1d5526`), v2.1 (`83aeb032`), v2.0 (`b88f9b65`)
+    stay byte-identical; PRIORS and the prior-order fingerprint (`f0bb42f69644`)
+    untouched.

@@ -2213,7 +2213,21 @@ ASSUMPTIONS = {
                      "NOT enough to clear the 0.7 floor, so it stays the "
                      "binding worst row and the screen still delivers the "
                      "threshold shortlist, not a decision-grade ordinal "
-                     "ranking. README known issue 43/44")],
+                     "ranking. README known issue 43/44"),
+                    ("2026-07-21", "log(boardings/RVH) -- REUSED by v2.3",
+                     "judgment",
+                     "spec 01 §11 v2.3 REGIONAL-CLUSTER-BASE governed-method-"
+                     "change (owner-directed 2026-07-21, written BEFORE any "
+                     "v2.3 fit): v2.3 REUSES this productivity estimand "
+                     "UNCHANGED (D1 KEEP productivity -- it is the method that "
+                     "RESCUED criterion 1 on OC-only data; reverting to the "
+                     "boardings LEVEL would re-inject the b1/b3 collinearity "
+                     "and the RVH tautology). NO new estimand entry is created "
+                     "for v2.3. The v2.3 change is to the PANEL (OC + regional "
+                     "SoCal agencies, frozen on acquisition-availability facts) "
+                     "and the FE structure (adds AGENCY fixed effects), NOT to "
+                     "the DV. Append-only reuse note; the v2.2 fit disposition "
+                     "is unchanged. README known issue 45")],
         "provenance": "the v2.2 dependent variable, spec 01 §10 D1. RATIONALE "
                       "(the §1 endogeneity, CONFIRMED by the v2.1 verdict -- "
                       "README known issue 42): v2.1 rebuilt every INPUT defect "
@@ -2329,6 +2343,206 @@ ASSUMPTIONS = {
         "logged": "README known-issue 43",
         "upgrade": "LANDED (phase-2b-v22 artifact; the artifact battery == this "
                    "list, order-exact, excludes drop_rh/svc_p25/svc_p75)",
+    },
+    # -- v2.3 REGIONAL-CLUSTER-BASE GOVERNED-METHOD-CHANGE (spec 01 §11
+    # pre-registration; owner-directed 2026-07-21, written BEFORE any v2.3 fit).
+    # v2.2's pre-registered FAILURE (ordinal_ok=FALSE; criterion 1 RESCUED by
+    # productivity, criteria 2/3 failed on the length artifact, README issue 44)
+    # authorizes a documented owner-approved change of METHOD under §9.5 -- the
+    # wider REGIONAL cluster base §10 D9 explicitly reserved as a separate future
+    # pre-registration. KEEP the productivity estimand (screen_estimand_v22,
+    # reused); ADD agency FE and a regional fit panel FROZEN on acquisition-
+    # availability facts (which agencies publish route-level boardings+RVH with
+    # joinable GTFS shapes), never on fit results. Thresholds UNCHANGED (the same
+    # ratified 0.841 / 0.7 / 0.20 / 2-14 via the same registry ids -- a method
+    # change never moves the decision bar). Both entries carry the structural-
+    # governance role (screen_battery_rows / screen_regime_split precedent --
+    # avoids the check-5 enumerated-alternative-row trap). Both are
+    # spec-pending:01§11 UNTIL the phase-2b-v23 fit consumes them (the §9/§10
+    # spec-pending -> definitional precedent). v2.0/v2.1/v2.2 artifacts stay
+    # byte-identical (b88f9b65 / 83aeb032 / 3b1d5526); NO fit runs in this batch.
+    "screen_battery_rows_v23": {
+        "title": "v2.3 screen battery: CLOSED perturbation row list for the "
+                 "regional-cluster-base productivity verdict (frozen pre-fit)",
+        "tier": "constant", "status": "active",
+        "value": ["buffer_lo", "buffer_hi", "window_10", "window_15",
+                  "drop_fy2020", "e016_swap", "e002_swap", "popden_swap",
+                  "genjobs_off", "genjobs_leave_class_out", "gen_dummy_swap",
+                  "nb_estimator", "offset_variant", "overlap_lo", "overlap_hi",
+                  "year_fe_vs_pooled", "loyo", "loao"],
+        "units": "battery row ids", "band": None, "basis": "definitional",
+        "history": [("2026-07-21", "18 frozen v2.3 battery row ids",
+                     "definitional",
+                     "spec 01 §11 D6 v2.3 pre-registration (owner-directed "
+                     "2026-07-21) -- FROZEN NOW, before any v2.3 fit. "
+                     "screen_battery_rows_v23 = screen_battery_rows_v22 (17 "
+                     "rows) PLUS loao. loao = leave-one-AGENCY-out, the "
+                     "regional analogue of loyo: min Spearman rho over each "
+                     "refit that DROPS one non-OCTA agency in turn, of the OC-"
+                     "corridor-window ranking vs the v2.3 headline ranking -- "
+                     "tests whether the OC ranking depends on any single "
+                     "agency's clusters (the direct stability question the "
+                     "wider base is meant to answer). Well-defined: OCTA is "
+                     "NEVER dropped (its FE scores OC windows and it is the "
+                     "ranking target), the expansion premise guarantees >=1 "
+                     "non-OCTA agency, and loao's comparison unit is the OC "
+                     "window ranking -- the SAME 46-window unit as loyo -- so "
+                     "it participates in criterion 2's min-rho and criterion "
+                     "3's window-unit tie-churn max EXACTLY as loyo does. All "
+                     "17 v22 rows are KEPT (each well-defined on the regional "
+                     "panel). FLAGGED, not silently changed: gen_dummy_swap's "
+                     "legacy binary special-generator dummy "
+                     "(config/special_generators.json) is a HAND-CODED OC-ONLY "
+                     "list, so on non-OCTA routes it is identically zero -- the "
+                     "row still computes and still tests OC-side sensitivity to "
+                     "the hand-coded list, but the measured WAC term b4 "
+                     "(acquired region-wide) is the regional generator signal "
+                     "(a stated coverage property, the §10 nb_estimator form-"
+                     "flag analogue)")],
+        "provenance": "the CLOSED battery for the spec 01 §11 regional-cluster-"
+                      "base phase-2b verdict: criterion 2's min-rho runs over "
+                      "ALL 18 rows; criterion 3's window-unit tie-churn max "
+                      "runs over the WINDOW-UNIT rows only (window_10/window_15 "
+                      "are host-shape-unit, excluded from the window-unit max "
+                      "per the §5 unit fix). Order-exact: [buffer_lo, "
+                      "buffer_hi, window_10, window_15, drop_fy2020, e016_swap, "
+                      "e002_swap, popden_swap, genjobs_off, "
+                      "genjobs_leave_class_out, gen_dummy_swap, nb_estimator, "
+                      "offset_variant, overlap_lo, overlap_hi, "
+                      "year_fe_vs_pooled, loyo, loao] (18 = 17 + 1). Freezing "
+                      "NOW -- before the v2.3 fit exists -- is the point: the "
+                      "battery criterion is a MIN, so membership edits after "
+                      "seeing v2.3 numbers would be a tunable bar "
+                      "(screen_battery_rows / _v21 / _v22 precedent). Row "
+                      "changes from here are owner-approved §9.5 spec "
+                      "amendments. Criterion-2 min-rho and criterion-3 dual "
+                      "tie-churn are UNCHANGED (§5). The v2.2 17-row battery "
+                      "(screen_battery_rows_v22) stays VALID for the OC-only "
+                      "productivity artifact -- superseded FOR THE REGIONAL "
+                      "PANEL only. Consumed via val() by the phase-2b-v23 "
+                      "rebuild when it runs (test D2 pattern extends to the "
+                      "v2.3 artifact: artifact battery == this list, order "
+                      "included, includes loao)",
+        "rows": {}, "no_row_reason": "spec-pending:01§11",
+        "accepted": ("owner item D6 2026-07-21 (pre-fit freeze on estimand + "
+                     "acquisition grounds; battery is a MIN, membership frozen "
+                     "before the regional numbers exist)", "2026-07-21"),
+        "logged": "README known-issue 45",
+        "upgrade": "phase-2b-v23 rebuilt fit (rows go live; test asserts "
+                   "artifact battery == this list, order-exact, includes loao)",
+    },
+    "screen_regional_agencies": {
+        "title": "v2.3 regional fit-panel agency list (OC + SoCal agencies; "
+                 "FROZEN ON ACQUISITION-AVAILABILITY FACTS to the recon-"
+                 "confirmed usable panel)",
+        "tier": "config", "status": "active", "basis": "judgment",
+        "config_key": "config/regional_agencies.json: agencies (frozen "
+                      "CONFIRMED-USABLE fit panel) + excluded (records-request "
+                      "paths); per-agency fields agency, county_fips, "
+                      "route_count_est, boardings_rvh_source, gtfs_mdb_id, "
+                      "status -- FROZEN by the acquisition recon 2026-07-21 to "
+                      "exactly the candidates that clear the D2 availability "
+                      "test",
+        "value": ("FROZEN 2026-07-21 by the acquisition recon on availability "
+                  "facts (independent review APPROVE-WITH-FIXES). CONFIRMED-"
+                  "USABLE fit panel (public route-level boardings AND RVH -- "
+                  "the RCTC/TransTrack SRTP Route Statistics Table 3 format, "
+                  "OCTA via committed APC): OCTA (base, 63 routes) + Riverside "
+                  "Transit Agency (~36) + SunLine (~14) + Corona Cruiser (~3) + "
+                  "Pass Transit/Banning+Beaumont (~5) + PVVTA/Blythe (~4) = "
+                  "~125 route-clusters (~2x OC-only). EXCLUDED (route-level "
+                  "boardings+RVH NOT both public -- records-request upgrade "
+                  "paths, NOT fitted): LA Metro (no line-level RVH -- LACMTA "
+                  "README known gap), OmniTrans (route boardings missing), Long "
+                  "Beach Transit / Foothill Transit / Big Blue Bus (agency-"
+                  "level only; NTD is agency-level, not route-level). Every "
+                  "confirmed regional agency is Riverside County (FIPS 06065) "
+                  "-- see the §11 validity caveat (heterogeneous-slopes risk, a "
+                  "RISK TO TEST via loao + the §9.10 regime split, not an "
+                  "assumption)"),
+        "units": "agency ids", "band": None,
+        "history": [("2026-07-21",
+                     "PENDING scouts -- candidate set OCTA + {LA Metro, Long "
+                     "Beach Transit, Foothill Transit, OmniTrans, Riverside "
+                     "Transit Agency, Big Blue Bus}",
+                     "judgment",
+                     "spec 01 §11 D2 v2.3 pre-registration (owner-directed "
+                     "2026-07-21) -- the regional fit panel is FROZEN ON "
+                     "ACQUISITION-AVAILABILITY FACTS ALONE (which agencies "
+                     "publish public route-level boardings AND RVH joinable to "
+                     "a GTFS shape), NEVER on fit results -- exactly as v2.1's "
+                     "fit-panel YEAR set was frozen on availability (§9.9.1) "
+                     "and v2.1's battery excluded sld_swap on an acquisition "
+                     "fact (§9.8). An agency enters IFF the scouts land, with "
+                     "passing validation, (i) route-level boardings, (ii) "
+                     "route-level RVH (REQUIRED -- log(b/RVH) is undefined "
+                     "without it), (iii) a GTFS feed whose route ids join to "
+                     "those rows, (iv) LODES+ACS coverage of the service-area "
+                     "geography at the matching vintages. Freezing the panel on "
+                     "availability -- not on which agencies stabilize the "
+                     "ranking -- is the anti-tuning guarantee for the "
+                     "identification set (the panel analogue of the frozen "
+                     "battery). The per-agency fiscal-year set is frozen on the "
+                     "SAME facts. List finalized before any coefficient is "
+                     "fitted"),
+                    ("2026-07-21",
+                     "FROZEN to the recon-confirmed usable panel: OCTA + RTA + "
+                     "SunLine + Corona Cruiser + Pass Transit + PVVTA/Blythe "
+                     "(~125 route-clusters); LA Metro/OmniTrans/Long Beach/"
+                     "Foothill/Big Blue Bus EXCLUDED-with-reason",
+                     "judgment",
+                     "spec 01 §11 D2 acquisition-recon RESULT (this workflow) + "
+                     "independent review APPROVE-WITH-FIXES 2026-07-21. BINDING "
+                     "availability fact: only agencies publishing the RCTC/"
+                     "TransTrack SRTP 'Route Statistics Table 3' format expose "
+                     "route-level boardings AND RVH together (log(b/RVH) needs "
+                     "both per route-year). CORRECTS the earlier PENDING stub, "
+                     "which OVER-CLAIMED availability -- (major finding 1) its "
+                     "boardings_rvh_source='NTD route-level ...' was WRONG: NTD "
+                     "is an AGENCY-level source, not route-level. Confirmed-"
+                     "usable = OCTA (63) + RTA (~36, mdb-98) + SunLine (~14) + "
+                     "Corona Cruiser (~3) + Pass Transit (~5) + PVVTA/Blythe "
+                     "(~4) = ~125 route-clusters (~2x OC-only, NOT the several "
+                     "hundred originally hoped). EXCLUDED (pair not both "
+                     "public): LA Metro (route-RVH-missing -- LACMTA README "
+                     "known gap), OmniTrans (route-boardings-missing), Long "
+                     "Beach/Foothill/Big Blue Bus (agency-level-only), each "
+                     "kept as a records-request upgrade path. Frozen on "
+                     "availability alone, before any coefficient is fitted; NOT "
+                     "on fit results")],
+        "provenance": "spec 01 §11 D2/D4: the fit panel is OC (OCTA) PLUS "
+                      "regional SoCal agencies, fit REGIONALLY (one pooled "
+                      "productivity regression with year + AGENCY fixed "
+                      "effects, base = OCTA); the fitted demand/scale slopes "
+                      "are applied to the OC corridor scan windows (OCTA's "
+                      "agency FE used when scoring OC windows). Regional "
+                      "agencies enter the FIT ONLY -- cluster base for "
+                      "identifying the slopes; the ranked output is OC corridor "
+                      "windows, per the §1 role. The wider cluster base is the "
+                      "§11 hypothesis: does it rescue criteria 2/3 (ranking "
+                      "stability) the way the productivity estimand rescued "
+                      "criterion 1. GOVERNED-METHOD-CHANGE under §9.5 (v2.2's "
+                      "pre-registered FAILURE authorizes it; §10 D9 reserved "
+                      "the regional base as a separate pre-registration). "
+                      "STRUCTURAL-GOVERNANCE config entry -- the config_key "
+                      "names the regional_agencies.json list the scouts author; "
+                      "no fit-side row is swept from the agency identity itself "
+                      "(the loao battery row in screen_battery_rows_v23 carries "
+                      "the leave-one-agency-out perturbation). Consumed via "
+                      "val() by the phase-2b-v23 fit when it runs; NOT consumed "
+                      "by any current artifact (v2.0/v2.1/v2.2 stay byte-"
+                      "identical)",
+        "rows": {}, "no_row_reason": "spec-pending:01§11",
+        "accepted": ("owner directive 2026-07-21 (extend to a wider regional "
+                     "cluster base; panel frozen on availability facts, list "
+                     "filled by the acquisition scouts)", "2026-07-21"),
+        "logged": "README known-issue 45",
+        "upgrade": "config/regional_agencies.json FROZEN by the recon (usable "
+                   "panel + excluded set); next the phase-2b-v23 fit consumes "
+                   "it via val(). Excluded agencies (LA Metro line-level RVH, "
+                   "OmniTrans route boardings, Long Beach/Foothill/Big Blue Bus "
+                   "route-level pair) are records-request upgrade paths that "
+                   "could later widen the panel",
     },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {

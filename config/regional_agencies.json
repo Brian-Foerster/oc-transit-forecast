@@ -1,0 +1,117 @@
+{
+  "_note": "spec 01 §11 v2.3 regional-cluster-base panel -- FROZEN 2026-07-21 by the acquisition recon (this workflow) on ACQUISITION-AVAILABILITY FACTS ALONE (D2 freezing rule), NEVER on fit results. BINDING availability fact established by the recon: only agencies publishing the RCTC/TransTrack SRTP 'Route Statistics Table 3' format expose route-level annual boardings AND revenue hours (RVH) TOGETHER, and the productivity DV log(boardings/RVH) requires BOTH per route-year. The `agencies` list below is the CONFIRMED-USABLE frozen fit panel; `excluded` records the candidate agencies dropped because the route-level boardings+RVH pair is NOT both public, each with its true availability status and a records-request upgrade path. This corrects the earlier PENDING stub, which OVER-CLAIMED availability (independent review APPROVE-WITH-FIXES, 2026-07-21): the stub's boardings_rvh_source='NTD route-level ...' was wrong -- NTD is an AGENCY-level source, not route-level. Consumed via val('screen_regional_agencies') (a config-tier pointer; the registry value is a note, this file is the frozen data); the phase-2b-v23 fit reads this list. Frozen before any coefficient is fitted.",
+  "status": "FROZEN (acquisition-availability facts; recon 2026-07-21)",
+  "base_agency": "OCTA",
+  "freeze_basis": "RCTC/TransTrack SRTP 'Route Statistics Table 3' is the only public format exposing route-level boardings AND RVH together; the confirmed-usable panel is exactly the agencies publishing it (plus OCTA's committed APC tables).",
+  "cluster_count_est": 125,
+  "cluster_count_note": "OCTA 63 + RTA 36 + SunLine 14 + small RCTC/TransTrack city operators (Corona Cruiser 3 + Pass Transit 5 + PVVTA/Blythe 4 = ~12) = ~125 route-clusters. ~2x the OC-only 63-cluster base -- NOT the several hundred originally hoped in the owner directive.",
+  "agencies": [
+    {
+      "agency": "OCTA",
+      "region": "Orange",
+      "county_fips": "06059",
+      "route_count_est": 63,
+      "boardings_rvh_source": "committed APC tables (data/derived/route_boardings.csv + route_boardings_ext.csv; spec 01 §9.4/§9.9.3)",
+      "gtfs_mdb_id": "committed OCTA GTFS (archived + current; spec 01 §9.4/§9.9.3)",
+      "fy_coverage": "fy2017, fy2019, fy2020, fy2021, fy2022, fy2023 (screen_panel_ext_fys)",
+      "status": "LANDED -- CONFIRMED-USABLE (base agency; committed)"
+    },
+    {
+      "agency": "Riverside Transit Agency",
+      "region": "Riverside",
+      "county_fips": "06065",
+      "route_count_est": 36,
+      "boardings_rvh_source": "RCTC/TransTrack SRTP Route Statistics Table 3 (route-level boardings + RVH), rctc.org",
+      "gtfs_mdb_id": "mdb-98",
+      "fy_coverage": "per manifest (SRTP fiscal years joinable to archived/current GTFS)",
+      "status": "CONFIRMED-USABLE (route-level boardings + RVH both public; recon-verified)"
+    },
+    {
+      "agency": "SunLine Transit Agency",
+      "region": "Riverside (Coachella Valley)",
+      "county_fips": "06065",
+      "route_count_est": 14,
+      "boardings_rvh_source": "SunLine SRTP Route Statistics (route-level boardings + RVH), sunline.org",
+      "gtfs_mdb_id": "per feeds recon (Mobility Database)",
+      "fy_coverage": "per manifest (SRTP fiscal years joinable to archived/current GTFS)",
+      "status": "CONFIRMED-USABLE (route-level boardings + RVH both public; recon-verified)"
+    },
+    {
+      "agency": "Corona Cruiser",
+      "region": "Riverside (Corona)",
+      "county_fips": "06065",
+      "route_count_est": 3,
+      "boardings_rvh_source": "RCTC/TransTrack SRTP Route Statistics Table 3 (route-level boardings + RVH), rctc.org",
+      "gtfs_mdb_id": "per feeds recon (Mobility Database)",
+      "fy_coverage": "per manifest (SRTP fiscal years joinable to archived/current GTFS)",
+      "status": "CONFIRMED-USABLE (route-level boardings + RVH both public; recon-verified)"
+    },
+    {
+      "agency": "Pass Transit (Banning + Beaumont)",
+      "region": "Riverside (Pass area)",
+      "county_fips": "06065",
+      "route_count_est": 5,
+      "boardings_rvh_source": "RCTC/TransTrack SRTP Route Statistics Table 3 (route-level boardings + RVH), rctc.org",
+      "gtfs_mdb_id": "per feeds recon (Mobility Database)",
+      "fy_coverage": "per manifest (SRTP fiscal years joinable to archived/current GTFS)",
+      "status": "CONFIRMED-USABLE (route-level boardings + RVH both public; recon-verified)"
+    },
+    {
+      "agency": "PVVTA / Blythe",
+      "region": "Riverside (Palo Verde Valley)",
+      "county_fips": "06065",
+      "route_count_est": 4,
+      "boardings_rvh_source": "RCTC/TransTrack SRTP Route Statistics Table 3 (route-level boardings + RVH), rctc.org",
+      "gtfs_mdb_id": "per feeds recon (Mobility Database)",
+      "fy_coverage": "per manifest (SRTP fiscal years joinable to archived/current GTFS)",
+      "status": "CONFIRMED-USABLE (route-level boardings + RVH both public; recon-verified)"
+    }
+  ],
+  "excluded": [
+    {
+      "agency": "LA Metro",
+      "region": "Los Angeles",
+      "county_fips": "06037",
+      "boardings_rvh_source": "route boardings public (metro.net ridership data portal) but NO line-level RVH published -- the LACMTA public-data README flags line-level revenue hours as a known public gap; the boardings+RVH pair is broken",
+      "gtfs_mdb_id": "Metro GTFS (current + archived)",
+      "exclusion_reason": "route-RVH-missing",
+      "upgrade_path": "records request for line-level revenue hours"
+    },
+    {
+      "agency": "OmniTrans",
+      "region": "San Bernardino",
+      "county_fips": "06071",
+      "boardings_rvh_source": "route-level RVH published but route-level boardings NOT published -- the boardings+RVH pair is broken",
+      "gtfs_mdb_id": "OmniTrans GTFS",
+      "exclusion_reason": "route-boardings-missing",
+      "upgrade_path": "records request for route-level boardings"
+    },
+    {
+      "agency": "Long Beach Transit",
+      "region": "Los Angeles",
+      "county_fips": "06037",
+      "boardings_rvh_source": "boardings + RVH published AGENCY-level only (NTD is an agency-level source, not route-level); no public route-level pair",
+      "gtfs_mdb_id": "LBT GTFS",
+      "exclusion_reason": "agency-level-only",
+      "upgrade_path": "records request for route-level boardings + RVH"
+    },
+    {
+      "agency": "Foothill Transit",
+      "region": "Los Angeles (San Gabriel Valley)",
+      "county_fips": "06037",
+      "boardings_rvh_source": "boardings + RVH published AGENCY-level only (NTD is an agency-level source, not route-level); no public route-level pair",
+      "gtfs_mdb_id": "Foothill GTFS",
+      "exclusion_reason": "agency-level-only",
+      "upgrade_path": "records request for route-level boardings + RVH"
+    },
+    {
+      "agency": "Big Blue Bus",
+      "region": "Los Angeles (Santa Monica)",
+      "county_fips": "06037",
+      "boardings_rvh_source": "boardings + RVH published AGENCY-level only (NTD is an agency-level source, not route-level); no public route-level pair",
+      "gtfs_mdb_id": "BBB GTFS",
+      "exclusion_reason": "agency-level-only",
+      "upgrade_path": "records request for route-level boardings + RVH"
+    }
+  ]
+}
