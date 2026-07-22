@@ -163,6 +163,18 @@ SCREEN_ARTIFACT = os.environ.get(
 SCREEN_V21_ARTIFACT = os.environ.get(
     "SCREEN_RESULTS_V21_ARTIFACT",
     os.path.join(OUT, "screen_results_v21.json"))
+# spec 01 §10 phase-2b-v22: the v2.2 PRODUCTIVITY screen artifact (a SEPARATE
+# file -- neither v2.0 screen_results.json nor v2.1 screen_results_v21.json is
+# touched). The §10 governance entries (screen_estimand_v22 / screen_battery_
+# rows_v22) are rowless definitional constants (they own no sensitivity rows),
+# so the scan harvests only rows the registry CLAIMS on the 'screen_v22'
+# artifact (none today -- the v2.2 fit reuses the v2.1 §9.1 swap machinery, and
+# the estimand/battery-list entries carry no per-row claims), scoped exactly
+# like the v21 branch below so no present-but-unclaimed row becomes a check-3
+# orphan. Absent file -> nothing to harvest.
+SCREEN_V22_ARTIFACT = os.environ.get(
+    "SCREEN_RESULTS_V22_ARTIFACT",
+    os.path.join(OUT, "screen_results_v22.json"))
 
 
 def _load(path):
@@ -260,6 +272,22 @@ def load_artifacts():
         for r in SV.get("sensitivity", []):
             if r["id"] in claimed_v21:
                 pct[("screen_v21", r["id"])] = r["pct"]
+    # spec 01 §10 phase-2b-v22: the v2.2 PRODUCTIVITY screen artifact. Scoped,
+    # exactly like the v21 branch, to the rows the registry CLAIMS on the
+    # 'screen_v22' artifact (none today -- the §10 estimand/battery-list
+    # governance entries own no per-row claims, and the v2.2 fit reuses the
+    # v2.1 §9.1 swap machinery), so no present-but-unclaimed §10 row becomes a
+    # check-3 orphan. Absent file -> nothing to harvest.
+    if os.path.exists(SCREEN_V22_ARTIFACT):
+        SW = _load(SCREEN_V22_ARTIFACT)
+        arts["screen_v22"] = SW
+        claimed_v22 = {rid for aid, e in ASSUMPTIONS.items()
+                       for a, rid in claimed_rows(aid, e) if a == "screen_v22"}
+        present["screen_v22"] = {r["id"] for r in SW.get("sensitivity", [])
+                                 if r["id"] in claimed_v22}
+        for r in SW.get("sensitivity", []):
+            if r["id"] in claimed_v22:
+                pct[("screen_v22", r["id"])] = r["pct"]
     return present, pct, arts
 
 

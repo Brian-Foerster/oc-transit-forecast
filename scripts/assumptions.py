@@ -2168,9 +2168,12 @@ ASSUMPTIONS = {
     # moves the decision bar). Both entries carry the structural-governance
     # role at CONSTANT tier (screen_battery_rows / screen_regime_split
     # precedent -- avoids the check-5 enumerated-alternative-row trap that a
-    # structural-tier rowless entry would trip). spec-pending:01§10 until the
-    # phase-2b-v22 fit consumes them (the §9 spec-pending:01§9 -> landed flip
-    # precedent, README issue 42). v2.0/v2.1 artifacts stay byte-identical.
+    # structural-tier rowless entry would trip). Both were spec-pending:01§10
+    # UNTIL the phase-2b-v22 fit consumed them; the fit LANDED 2026-07-21
+    # (outputs/screen_results_v22.json, run_id 00770f64, sha 3b1d5526), so both
+    # dispositions FLIP spec-pending:01§10 -> definitional (the §9
+    # spec-pending:01§9 -> landed precedent, README issue 42). v2.0/v2.1
+    # artifacts stay byte-identical (b88f9b65 / 83aeb032).
     "screen_estimand_v22": {
         "title": "v2.2 screen estimand: productivity dependent variable "
                  "(governed-method-change, pre-registered pre-fit)",
@@ -2190,7 +2193,27 @@ ASSUMPTIONS = {
                      "(D1/D2). This removes the b1/b3 collinearity and the "
                      "near-tautology in one step: b3 no longer competes for "
                      "the fundamentals' variance because it is no longer "
-                     "estimated")],
+                     "estimated"),
+                    ("2026-07-21", "log(boardings/RVH) -- LANDED", "judgment",
+                     "spec 01 §10 phase-2b-v22 fit LANDED 2026-07-21 "
+                     "(outputs/screen_results_v22.json, run_id 00770f64, sha "
+                     "3b1d5526; dual fresh-process byte-identical): the "
+                     "productivity estimand is CONSUMED via val() by "
+                     "screen_fit_v22 + screen_scan_v22 (DV = log(b/RVH); b3 "
+                     "pinned at +1 and moved to the LHS). Disposition FLIPS "
+                     "spec-pending:01§10 -> definitional. VERDICT: the "
+                     "productivity move RESCUED criterion 1 (b1_pos_frac 0.9075 "
+                     "/ b2_pos_frac 0.9965 vs 0.841, both PASS -- up from "
+                     "v2.1's failing 0.8115 / 0.7435) but ordinal_ok stays "
+                     "FALSE because criterion 2 fails (min rho 0.2072 at "
+                     "offset_variant vs 0.7) and criterion 3 fails (window "
+                     "1.4444 / hostshape 0.4000): the LENGTH ARTIFACT SHRANK "
+                     "(offset_variant rho rose from -0.486 in the v2.1 LEVEL "
+                     "fit to +0.207 here, b3+b5=+1.00 -> b5 alone -0.229) but "
+                     "NOT enough to clear the 0.7 floor, so it stays the "
+                     "binding worst row and the screen still delivers the "
+                     "threshold shortlist, not a decision-grade ordinal "
+                     "ranking. README known issue 43/44")],
         "provenance": "the v2.2 dependent variable, spec 01 §10 D1. RATIONALE "
                       "(the §1 endogeneity, CONFIRMED by the v2.1 verdict -- "
                       "README known issue 42): v2.1 rebuilt every INPUT defect "
@@ -2225,13 +2248,15 @@ ASSUMPTIONS = {
                       "val() by the phase-2b-v22 fit when it runs; NOT "
                       "consumed by any current artifact (v2.0/v2.1 stay "
                       "byte-identical)",
-        "rows": {}, "no_row_reason": "spec-pending:01§10",
+        "rows": {}, "no_row_reason": "definitional",
         "accepted": ("owner-ratified 2026-07-21 (v2.2 governed-method-change "
-                     "pre-registration, written pre-fit)", "2026-07-21"),
+                     "pre-registration, written pre-fit); phase-2b-v22 fit "
+                     "LANDED 2026-07-21 (disposition spec-pending:01§10 -> "
+                     "definitional)", "2026-07-21"),
         "logged": "README known-issue 43",
-        "upgrade": "phase-2b-v22 rebuilt fit (the productivity estimand goes "
-                   "live; the fit's measured pos_frac supersedes this "
-                   "pre-registration)",
+        "upgrade": "LANDED (phase-2b-v22, outputs/screen_results_v22.json). "
+                   "Any future estimand change (e.g. a regional cluster base "
+                   "with agency FE) is a SEPARATE §9.5 governed pre-registration",
     },
     "screen_battery_rows_v22": {
         "title": "v2.2 screen battery: CLOSED perturbation row list for the "
@@ -2260,7 +2285,20 @@ ASSUMPTIONS = {
                      "the NB2 RATE model -- boardings count with log(RVH) as a "
                      "FIXED OFFSET (exposure), the count analogue of the "
                      "pinned identity -- well-defined; no other v21 row is "
-                     "ill-defined")],
+                     "ill-defined"),
+                    ("2026-07-21", "17 frozen v2.2 battery row ids (LANDED)",
+                     "definitional",
+                     "spec 01 §10 phase-2b-v22 fit LANDED 2026-07-21 "
+                     "(outputs/screen_results_v22.json, sha 3b1d5526): consumed "
+                     "via val() by screen_scan_v22; the artifact's sensitivity "
+                     "block == this 17-row list, order-exact (test asserts it, "
+                     "and that it excludes drop_rh/svc_p25/svc_p75). "
+                     "Disposition FLIPS spec-pending:01§10 -> definitional. "
+                     "Measured over these rows: criterion 2 min rho 0.2072 "
+                     "(offset_variant, FAIL vs 0.7); criterion 3 window 1.4444 "
+                     "(offset_variant) / hostshape 0.4000 (window_10), both "
+                     "FAIL -- the battery is a MIN, so the frozen membership is "
+                     "what made the verdict. README known issue 43")],
         "provenance": "the CLOSED battery for the spec 01 §10 productivity "
                       "phase-2b verdict: criterion 2's min-rho runs over ALL "
                       "17 rows; criterion 3's tie-churn max runs over the "
@@ -2283,13 +2321,14 @@ ASSUMPTIONS = {
                       "excludes drop_rh/svc_p25/svc_p75). The v2.1 20-row "
                       "battery (screen_battery_rows_v21) stays VALID for the "
                       "v2.1 LEVEL artifact -- superseded FOR PRODUCTIVITY only",
-        "rows": {}, "no_row_reason": "spec-pending:01§10",
+        "rows": {}, "no_row_reason": "definitional",
         "accepted": ("owner item D5 2026-07-21 (pre-fit freeze on estimand "
-                     "grounds)", "2026-07-21"),
+                     "grounds); phase-2b-v22 fit LANDED 2026-07-21 "
+                     "(disposition spec-pending:01§10 -> definitional)",
+                     "2026-07-21"),
         "logged": "README known-issue 43",
-        "upgrade": "phase-2b-v22 rebuilt artifact (rows go live; test asserts "
-                   "artifact == this list, order included, and that it "
-                   "excludes drop_rh/svc_p25/svc_p75)",
+        "upgrade": "LANDED (phase-2b-v22 artifact; the artifact battery == this "
+                   "list, order-exact, excludes drop_rh/svc_p25/svc_p75)",
     },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {

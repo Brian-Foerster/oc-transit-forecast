@@ -96,8 +96,10 @@ def test_t7_guard_no_predictor_contact():
     outcome data. The phase-2b HOLD was RELEASED 2026-07-21 when the
     pre-registered v2.1 fit landed -- the AUTHORIZED extended-panel consumers
     are the phase-2b fit modules scripts/screen_fit_v21.py +
-    scripts/screen_scan_v21.py (they read route_boardings_ext.csv for the fit,
-    exactly as screen_fit.py reads the committed route_boardings.csv). This
+    scripts/screen_scan_v21.py AND the spec 01 §10 phase-2b-v22 productivity
+    fit modules scripts/screen_fit_v22.py + scripts/screen_scan_v22.py (all
+    read route_boardings_ext.csv for the fit, exactly as screen_fit.py reads
+    the committed route_boardings.csv; none is in the blanket-ban list). This
     guard now enforces the PERMANENT invariant instead: the INPUT-SIDE
     predictor machinery and every non-v21 fit module below must STILL never
     read the ext table (screen_common_v21.py keeps its no-fit hold; the v2.0

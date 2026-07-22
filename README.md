@@ -474,10 +474,14 @@ tornado (`bca_harbor.json`).
     STRENGTHENED 2026-07-21): that verdict is a statement about the
     hand-supplied `config/candidates.json` universe, **NOT a claim over all
     Orange County alignments.** The scope note is now firmer because stage 1
-    has failed to supply an empirical corridor-selection warrant **TWICE** —
-    the v2.0 screen and the v2.1 rebuild both landed `ordinal_ok = FALSE`
-    (issues 35–42), and the v2.2 productivity estimand is only PRE-REGISTERED
-    and UNRUN (issue 43, spec 01 §10). With no decision-grade window-level
+    has failed to supply an empirical corridor-selection warrant **THREE
+    TIMES** — the v2.0 screen, the v2.1 rebuild, AND the v2.2 productivity fit
+    all landed `ordinal_ok = FALSE` (issues 35–44, spec 01 §10). The v2.2
+    productivity move RESCUED criterion 1 (the demand block DOES predict
+    productivity once the RVH tautology is removed: b1/b2 bootstrap pos_frac
+    0.9075 / 0.9965 ≥ 0.841, up from v2.1's failing 0.8115 / 0.7435) but
+    criteria 2/3 still fail on the LENGTH ARTIFACT (min battery rho 0.207 at
+    `offset_variant`; issue 44). With no decision-grade window-level
     screen product in hand, `config/candidates.json` remains **analyst-chosen**
     (`hand_supplied: true`), so "no OC ALM corridor clears BCR=1" is a
     statement about the analyst's candidate set, never a screen-warranted
@@ -883,3 +887,56 @@ of the tripwire entries and the normalization entry respectively.
     (`screen_results_v21.json`, sha `83aeb032`) and v2.0
     (`screen_results.json`, sha `b88f9b65`) stay byte-identical; PRIORS and
     the prior-order fingerprint untouched.
+
+44. **v2.2 PRODUCTIVITY fit LANDED (2026-07-21): `ordinal_ok = FALSE` — the
+    endogeneity fix WORKED but the length artifact did not (spec 01 §10;
+    rule-3 log).** The phase-2b-v22 fit ran EXACTLY ONCE under the frozen §10
+    pre-registration (`scripts/screen_fit_v22.py` + `scripts/screen_scan_v22.py`;
+    DV = `log(boardings/RVH)`, b3 pinned at +1 and moved to the LHS, no svc_std
+    input). Artifact `outputs/screen_results_v22.json` (run_id `00770f64`, sha
+    `3b1d5526`, dual fresh-process byte-identical); NEW file — v2.0 (`b88f9b65`)
+    and v2.1 (`83aeb032`) untouched. Universe UNCHANGED from v2.1: 300
+    route-years / 63 clusters, the same 4 contemporaneous-shape drops
+    (53X/57X/64X fy2017 + 529/fy2022) and 4 no-RVH drops (35/70/150 fy2017 +
+    560/fy2022); every kept row RVH>0. **The productivity move did what the
+    owner directed it to do: it RESCUED CRITERION 1.** The demand block now
+    predicts productivity — `b1_flows` +0.256 (t 1.49, bootstrap pos_frac
+    **0.9075**), `b2_zveh` +0.383 (t 2.97, pos_frac **0.9965**), both ≥ 0.841,
+    PASS — where the v2.1 LEVEL fit failed (0.8115 / 0.7435). Removing the RVH
+    tautology (b3 was +1.340 at t 22.5, absorbing the fundamentals' variance)
+    let the fundamentals load onto productivity. **But `ordinal_ok` is still
+    FALSE, and the binding reason is the LENGTH ARTIFACT, not the demand
+    block.** Criterion 2 FAILS: battery min Spearman rho **0.2072** at
+    `offset_variant` (vs 0.7). The §10 D2 "length artifact expected to shrink"
+    hypothesis is PARTIALLY borne out but NOT enough: the offset_variant rho
+    rose from **−0.486** in the v2.1 LEVEL fit (where the length loading was
+    split b3+b5 = +1.340 − 0.340 = +1.00 and the ranking essentially INVERTED
+    under the length pin) to **+0.207** here (b3 gone; the length loading is b5
+    alone, which came back **−0.229**) — a material ~0.69 improvement, so
+    pinning b5 to +1 no longer flips the ranking. But +0.207 is still far below
+    the 0.7 floor, so the ranking remains length-sensitive enough to FAIL
+    criterion 2, and offset_variant is still the binding worst row (reported,
+    not forced — the fit answered the pre-registered question). Criterion 3
+    FAILS both sub-thresholds: window-unit
+    tie-churn **1.4444** at `offset_variant` (vs 0.20), host-shape **0.4000** at
+    `window_10` (vs 2⁄14). The §9.10/D7 regime-split gate does NOT downgrade
+    (pre-2020-only pos_frac 0.8635 / 0.9985 both pass; interaction i_flows_post
+    +0.040 / i_zveh_post −0.103). Decision output: `threshold_shortlist`, 18
+    `tie_with_cutoff` windows, **stable core EMPTY (0/18)** — no window survives
+    the whole 17-row battery, so per §4b the honest stage-1 output is narrower
+    than the shortlist and names no stable core. **`b4_wrong_sign` obligation
+    (§9.1/§10 D3, this entry is the required rule-3 log):** the measured
+    `l_genjobs` (b4) is again NEGATIVE (**−0.041**, t −0.29) under productivity,
+    so the pre-registered `b4_wrong_sign` flag is SET in
+    `screen_results_v22.json` `fit_diagnostics.b4_wrong_sign` /
+    `decision_output.b4_wrong_sign` — a diagnostic (b4 is OUTSIDE the demand
+    block, so it does NOT affect criterion 1), a signal that b5 (scale) may be
+    absorbing attraction effects. Registry: `screen_estimand_v22` and
+    `screen_battery_rows_v22` dispositions flipped `spec-pending:01§10 ->
+    definitional` (the fit consumed them via `val()`), clearing the 2 check-1
+    warnings; PRIORS and the prior-order fingerprint (`f0bb42f69644`) untouched.
+    **Consequence for stage 1:** three estimands have now failed the tripwire on
+    OC-only data; the §9.5 governed path stays open (e.g. a wider regional
+    cluster base with agency FE), a SEPARATE future pre-registration, never a
+    same-§10-spec re-run. The v2.2 index remains diagnostic-only;
+    `config/candidates.json` stays `hand_supplied: true`.

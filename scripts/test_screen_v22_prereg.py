@@ -1,10 +1,12 @@
 """v2.2 PRE-REGISTRATION gate tests (spec 01 §10; the productivity estimand).
 
-These tests are REGISTRY-ONLY and artifact-independent: the v2.2 fit is NOT
-implemented (the scan/index code is the phase-2b-v22 batch), so nothing here
-reads a v2.2 artifact, joins a predictor, or fits anything. They lock the
-pre-registration's frozen decisions (spec 01 §10 D4/D5) so a later batch
-cannot silently retune the bar or edit the battery:
+These tests are REGISTRY-ONLY and artifact-independent: nothing here reads a
+v2.2 artifact, joins a predictor, or fits anything. They lock the
+pre-registration's frozen decisions (spec 01 §10 D4/D5) so no batch can silently
+retune the bar or edit the battery. The phase-2b-v22 fit has SINCE LANDED
+(2026-07-21); these registry-only locks continue to hold, and P3 now asserts
+the LANDED disposition (spec-pending:01§10 -> definitional). The fit-side gates
+live in test_screen_v22_fit.py.
 
   P1  screen_battery_rows_v22 == the frozen 17-row list, ORDER-EXACT, and is
       exactly screen_battery_rows_v21 MINUS {drop_rh, svc_p25, svc_p75}
@@ -14,7 +16,8 @@ cannot silently retune the bar or edit the battery:
       screen_estimand_v22 + screen_battery_rows_v22, neither a threshold
   P3  the v2.2 estimand entry is log(boardings/RVH), a rowless structural-
       governance constant (the screen_battery_rows / screen_regime_split
-      precedent that avoids the check-5 trap), spec-pending until the fit lands
+      precedent that avoids the check-5 trap), LANDED (definitional) after the
+      phase-2b-v22 fit consumed it
   P4  the pre-registration touched NO fitted artifact: v2.0 screen_results.json
       (b88f9b65) and v2.1 screen_results_v21.json (83aeb032) stay byte-identical
 
@@ -91,20 +94,27 @@ def test_p2_thresholds_carry_over_no_new_ids():
 def test_p3_estimand_governance_entry():
     """screen_estimand_v22 = log(boardings/RVH), a rowless structural-
     governance CONSTANT (screen_battery_rows precedent, avoids the check-5
-    trap), spec-pending until the phase-2b-v22 fit consumes it."""
+    trap). LANDED 2026-07-21: the phase-2b-v22 fit consumed it, so the
+    disposition FLIPPED spec-pending:01§10 -> definitional (the §9
+    spec-pending:01§9 -> landed precedent). The structural-governance shape
+    (rowless, band None, accepted stamped) is unchanged."""
     e = ASSUMPTIONS["screen_estimand_v22"]
     assert val("screen_estimand_v22") == "log(boardings/RVH)"
     assert e["tier"] == "constant" and e["status"] == "active"
     assert e["band"] is None
     assert not e.get("rows"), "governance entry must own no sensitivity rows"
-    assert e["no_row_reason"] == "spec-pending:01§10"
+    # LANDED: no longer spec-pending; a definitional rowless disposition
+    assert e["no_row_reason"] == "definitional", e["no_row_reason"]
+    assert not str(e["no_row_reason"]).startswith("spec-pending:")
     assert e["accepted"] not in (None, False)
-    # the battery list is likewise a rowless spec-pending governance constant
+    # the battery list is likewise a rowless (now definitional) governance const
     b = ASSUMPTIONS["screen_battery_rows_v22"]
     assert b["tier"] == "constant" and b["band"] is None
-    assert b["no_row_reason"] == "spec-pending:01§10"
+    assert b["no_row_reason"] == "definitional", b["no_row_reason"]
+    assert not str(b["no_row_reason"]).startswith("spec-pending:")
     print("  P3 OK  screen_estimand_v22 = log(boardings/RVH); rowless "
-          "structural-governance constant, spec-pending:01§10")
+          "structural-governance constant, LANDED (spec-pending:01§10 -> "
+          "definitional)")
 
 
 def test_p4_fitted_artifacts_byte_identical():
