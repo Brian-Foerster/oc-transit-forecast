@@ -83,6 +83,30 @@ the controller recompute stays the real gate.
    the complete reproduced block — never a placeholder/dry-run structured output
    before the real one, since the harness keeps only the last submission.
 
+## Rule 6 — the universe-change class (perturbation-identity check)
+
+The same error has now appeared THREE times in this project: computing a
+comparison over a set that the perturbation itself changed.
+1. window_10/window_15 — a length change alters the window UNIVERSE; naive
+   scalar churn compared different denominators (resolved: separate host-shape
+   unit + threshold).
+2. rho-over-survivors — a correlation computed only over objects that survived
+   the perturbation, silently dropping the churned ones (the tell-tale
+   signature: churn 2.0 alongside rho 0.999; caught mid-run and fixed).
+3. min_sep set-churn — the anchor-lattice change (90 to 57 anchors, 209 to 91
+   corridors) counted as ranking churn; the headline 2.0 top-8 churn partly
+   measured UNIVERSE change, not ranking instability, which is why it could
+   exceed 1.0.
+
+STANDING CHECK (binding for every perturbation/robustness row, and a required
+reviewer assertion): state whether the perturbation (a) RESCORES a fixed object
+set, or (b) CHANGES the object set. For (b), naive set-membership churn and
+naive rank correlation are both INVALID — an IDENTITY-BASED metric is required:
+match objects across universes by identity (host street / segment overlap /
+stable key), and DECOMPOSE the result into no-longer-exists (universe change,
+disclosed separately) vs exists-but-moved (genuine ranking instability). A
+perturbation row that does not carry this statement is a review finding.
+
 ## When to apply
 
 Consequential computations only — fits, verdicts, irreversible commits,
