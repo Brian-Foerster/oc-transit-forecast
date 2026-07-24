@@ -2559,8 +2559,9 @@ ASSUMPTIONS = {
     # it; NO current artifact consumes it (v2.0/v2.1/v2.2 stay byte-identical).
     "screen_gate_failure_modes": {
         "title": "screen tripwire criteria 2/3 re-scoped BY FAILURE MODE: the "
-                 "three failure-mode subset the 0.7 / 0.20 / 2-14 thresholds "
-                 "range over (owner-ratified 2026-07-22, v2.4 governance)",
+                 "FOUR failure-mode subset the 0.7 / 0.20 / 2-14 thresholds "
+                 "range over (owner-ratified 2026-07-22, v2.4 governance; "
+                 "fourth mode estimation-uncertainty added 2026-07-22)",
         "tier": "constant", "status": "active",
         "value": {
             "modes": {
@@ -2571,11 +2572,25 @@ ASSUMPTIONS = {
                                       "anchor min-separation in IDENTITY units "
                                       "(min_sep) in the anchor world",
                 "specification": "a predictor SWAP or ESTIMATOR variant",
+                "estimation_uncertainty": "COEFFICIENT-SAMPLING perturbation "
+                                          "(added 2026-07-22): draw b1/b2 from "
+                                          "v2.2's EXISTING route-cluster "
+                                          "coefficient bootstrap (no new fit), "
+                                          "rerank, measure IDENTITY-UNIT "
+                                          "membership churn at the top-8 cutoff "
+                                          "(rule-6 metric: no-longer-exists vs "
+                                          "exists-but-moved; coeff resample "
+                                          "leaves the lattice fixed so it is all "
+                                          "exists-but-moved). The load-bearing "
+                                          "threat: v2.2 coeffs swap 6 of 8 "
+                                          "shortlist members vs coeff-free, b1 "
+                                          "at t=1.49 wide cluster SE",
             },
-            "criterion2": "min Spearman rho over the three failure-mode rows "
+            "criterion2": "min Spearman rho over the FOUR failure-mode rows "
                           ">= screen_battery_rho_min (0.7)",
             "criterion3": "max margin-defined tie-set churn over them, DUAL-UNIT: "
-                          "window-unit {catchment_width, specification} <= "
+                          "window-unit {catchment_width, specification, "
+                          "estimation_uncertainty} <= "
                           "screen_tie_churn_max_window (0.20); resolution-unit "
                           "{spatial_resolution} (host-shape unit in the window "
                           "world / identity unit in the anchor world) <= "
@@ -2583,29 +2598,48 @@ ASSUMPTIONS = {
             "thresholds_unchanged": ["screen_battery_rho_min",
                                      "screen_tie_churn_max_window",
                                      "screen_tie_churn_max_hostshape"],
+            # positional: [catchment_width, spatial_resolution, specification,
+            # estimation_uncertainty]. Fourth slot added 2026-07-22. It is
+            # NORMATIVE only for v2.4-anchor (= coeff_resample); documentary for
+            # v2.0/v2.1/v2.2 (they were scored over the FULL battery; the label
+            # names the row that WOULD have carried the mode -- their existing
+            # headline route-cluster coefficient bootstrap).
             "row_map": {
-                "v2.0": ["buffer", "window_len", "estimator-or-swap"],
-                "v2.1": ["buffer", "window_len", "swap"],
-                "v2.2": ["buffer", "window_len", "swap"],
-                "v2.4-anchor": ["buffer", "min_sep-identity", "swap"],
+                "v2.0": ["buffer", "window_len", "estimator-or-swap",
+                         "coeff_resample"],
+                "v2.1": ["buffer", "window_len", "swap", "coeff_resample"],
+                "v2.2": ["buffer", "window_len", "swap", "coeff_resample"],
+                "v2.4-anchor": ["buffer", "min_sep-identity", "swap",
+                                "coeff_resample"],
             },
             "normative_for": ["v2.4-anchor"],
             "documentary_for": ["v2.0", "v2.1", "v2.2"],
-            "direction_note": "a MIN over THREE rows is noisier than over "
+            "direction_note": "a MIN over FOUR rows is noisier than over "
                               "twenty and, in expectation, an EASIER bar -- the "
                               "CORRECT direction for this problem, stated "
                               "deliberately: the whole-battery min was dominated "
                               "by universe-change (rule-6) and decision-"
                               "orthogonal rows (service-level, year-drop, "
-                              "overlap), not by the three sensitivities a "
+                              "overlap), not by the four sensitivities a "
                               "corridor ranking must actually be robust to. "
-                              "Scoping the gate to the three genuine failure "
+                              "Scoping the gate to the four genuine failure "
                               "modes tests the right thing; that it is also "
                               "easier is a disclosed consequence, not a reason. "
                               "Threshold VALUES unchanged -- only their SUPPORT "
                               "is re-scoped",
+            "fourth_mode_note": "adding estimation_uncertainty makes the min "
+                                "over FOUR rows NOISIER STILL than over three "
+                                "-- stated, not hidden. BUT this row can "
+                                "GENUINELY BIND: it is the load-bearing threat "
+                                "(coeffs drive 6 of 8 shortlist members, b1 at "
+                                "t=1.49), so the gate is MORE HONEST even though "
+                                "noisier -- the three-mode gate could pass while "
+                                "leaving the single largest membership driver "
+                                "entirely untested. The added noise buys a gate "
+                                "that tests the thing most likely to break the "
+                                "ranking",
         },
-        "units": "failure-mode gate scoping (three modes + per-version "
+        "units": "failure-mode gate scoping (four modes + per-version "
                  "row->mode map)", "band": None, "basis": "judgment",
         "history": [("2026-07-22",
                      "three failure modes (catchment_width / spatial_resolution "
@@ -2623,39 +2657,478 @@ ASSUMPTIONS = {
                      "(0.7 / 0.20 / 2-14 stay put); only their SUPPORT is "
                      "re-scoped from the whole battery to the three failure-mode "
                      "rows. Non-failure-mode battery rows become DISCLOSED "
-                     "DIAGNOSTICS in shortlist_stability, outside the gate")],
+                     "DIAGNOSTICS in shortlist_stability, outside the gate"),
+                    ("2026-07-22",
+                     "ADDED A FOURTH failure mode: estimation_uncertainty "
+                     "(coefficient-sampling). Its row draws b1/b2 from v2.2's "
+                     "EXISTING route-cluster coefficient bootstrap (no new fit), "
+                     "reranks, and measures identity-unit membership churn at "
+                     "the top-8 cutoff (rule-6: no-longer-exists vs "
+                     "exists-but-moved; coeff resample leaves the lattice fixed "
+                     "so all exists-but-moved). row_map gains a 4th slot: "
+                     "v2.4-anchor = coeff_resample (NORMATIVE); "
+                     "v2.0/v2.1/v2.2 documentary. Criterion 2 = min rho over "
+                     "FOUR modes; criterion 3 = max churn over four, the new "
+                     "row window-unit -> screen_tie_churn_max_window (0.20). "
+                     "Rationale: the fit-materiality read showed v2.2 coeffs "
+                     "swap 6 of 8 shortlist members vs coeff-free, so the "
+                     "coefficients are the largest single membership driver; "
+                     "their OWN sampling uncertainty (b1 at t=1.49, wide "
+                     "cluster SE) is the perturbation most likely to move the "
+                     "cutoff and was OUTSIDE the gate until now. Homed as a "
+                     "FOURTH mode (not folded under specification) to preserve "
+                     "one-row-per-mode; the 'estimation and specification "
+                     "uncertainty are the same kind of threat' argument for the "
+                     "alternative single-mode home is recorded. NOTE: min over "
+                     "four is noisier STILL, BUT this row can genuinely BIND "
+                     "(it is the load-bearing threat), so the gate is MORE "
+                     "HONEST even if noisier -- stated, not hidden", "judgment",
+                     "owner-directed governance amendment 2026-07-22 (v2.4 "
+                     "pre-registration draft; spec 01 §5 fourth failure mode). "
+                     "No frozen threshold VALUE changes; the frozen v2.0/v2.1/"
+                     "v2.2 artifacts stay byte-identical (documentary map)")],
         "provenance": "spec 01 §5 FAILURE-MODE GATE + §12 v2.4 governance. "
-                      "Criterion 2 = MIN Spearman rho over the three "
+                      "Criterion 2 = MIN Spearman rho over the FOUR "
                       "failure-mode rows (>= screen_battery_rho_min = 0.7); "
                       "criterion 3 = MAX margin-defined tie-set churn over them, "
                       "keeping the §5 DUAL-UNIT split: catchment_width + "
-                      "specification are window-unit (or the anchor world's "
+                      "specification + estimation_uncertainty are window-unit "
+                      "(or the anchor world's "
                       "identity-window unit) -> screen_tie_churn_max_window = "
                       "0.20; spatial_resolution is host-shape-unit (window "
                       "world) / identity-unit (anchor world) -> "
-                      "screen_tie_churn_max_hostshape = 2/14. The three modes "
+                      "screen_tie_churn_max_hostshape = 2/14. The four modes "
                       "each named per version (row_map): v2.0 buffer/window_len/"
-                      "estimator-or-swap, v2.1 buffer/window_len/swap, v2.2 "
-                      "buffer/window_len/swap, v2.4-anchor buffer/min_sep-"
-                      "identity/swap. NORMATIVE for v2.4 (binds its gate); "
+                      "estimator-or-swap/coeff_resample, v2.1 and v2.2 "
+                      "buffer/window_len/swap/coeff_resample, v2.4-anchor "
+                      "buffer/min_sep-identity/swap/coeff_resample. NORMATIVE "
+                      "for v2.4 (binds its gate); "
                       "DOCUMENTARY for v2.0/v2.1/v2.2 (their verdicts were "
                       "computed over the FULL battery and their artifacts stay "
                       "byte-identical -- the map names which rows WOULD carry "
                       "each mode, it does NOT re-run them). REGISTRY NOTE (state "
-                      "don't hide): a min over three rows is noisier than over "
-                      "twenty, so the bar is EASIER in expectation -- the "
+                      "don't hide): a min over four rows is noisier than over "
+                      "twenty (and noisier still than the three-mode min), so "
+                      "the bar is EASIER in expectation -- the "
                       "CORRECT direction for this problem (see value."
-                      "direction_note). STRUCTURAL-GOVERNANCE entry at CONSTANT "
+                      "direction_note); the fourth mode is the honest "
+                      "correction, it can genuinely BIND as the load-bearing "
+                      "threat (see value.fourth_mode_note). "
+                      "STRUCTURAL-GOVERNANCE entry at CONSTANT "
                       "tier (screen_battery_rows / screen_regime_split "
                       "precedent). Consumed via val() by the v2.4 scan/decision "
                       "block when it runs; NOT consumed by any current artifact",
         "rows": {}, "no_row_reason": "spec-pending:01§12",
         "accepted": ("owner-ratified 2026-07-22 (v2.4 governance "
                      "pre-commitment; failure-mode gate)", "2026-07-22"),
-        "logged": "README known-issue 46",
+        "logged": "README known-issue 46 (three-mode gate) + 48 (fourth mode "
+                  "estimation-uncertainty added 2026-07-22)",
         "upgrade": "the v2.4 pre-registration proper (estimand/RHS/anchor-"
                    "lattice scan) names the concrete v2.4-anchor rows per mode; "
                    "the phase-2b-v24 fit then consumes this scoping via val()",
+    },
+    # -- v2.4 PRE-REGISTRATION DRAFT knobs (spec 01 §13; owner-directed
+    # 2026-07-23, written BEFORE any v2.4 number). DRAFT -- NOT FROZEN: the
+    # freeze requires owner ratification (stopping-rule timing), so each leaf's
+    # accepted stamp acknowledges the ROWLESS DISPOSITION (legitimately pending
+    # the §13 landing) while the VALUE stays PROPOSED, not ratified. All entries
+    # constant tier (screen_gate_failure_modes precedent -- avoids the check-5
+    # enumerated-alternative-row trap a structural-tier rowless entry trips) and
+    # spec-pending:01§13 until the v2.4 fit-application run consumes them. NO
+    # prior-tier entry here -> the prior-order fingerprint is untouched. NO new
+    # fit: v2.4 REUSES the committed v2.2 coefficients (screen_results_v22.json).
+    "screen_anchor_min_sep": {
+        "title": "v2.4 anchor lattice min-separation (universe-DEFINING "
+                 "constant, FROZEN per rule 6; also the spatial-resolution "
+                 "FAILURE-MODE row min_sep-identity, §13.1/§13.4 mode 2)",
+        "tier": "constant", "status": "active",
+        "value": 1.5,
+        "units": "mi (greedy anchor-thinning separation)", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-23", 1.5, "judgment",
+                     "spec 01 §13 v2.4 pre-registration DRAFT. Baseline value "
+                     "from the min_sep-under-M2_fit read: 1.5 mi -> 90 anchors "
+                     "/ 187 connectable corridors (freeway-excluded, "
+                     "geo-deduped). Universe-DEFINING per rule 6 (the anchor "
+                     "analogue of screen_window_mi), FROZEN for the product; "
+                     "SIMULTANEOUSLY the spatial-resolution failure-mode row "
+                     "(perturbed to identity-unit edges {1.0, 2.0} mi, "
+                     "exists-but-moved churn <= screen_tie_churn_max_hostshape "
+                     "= 2/14). DRAFT -- value proposed, not yet ratified")],
+        "provenance": "consumed via val() by the v2.4 anchor-lattice build "
+                      "when it runs. HOME: failure mode 2 (spatial-resolution) "
+                      "+ universe-defining frozen constant. Criterion C: the "
+                      "ONLY universe-defining lattice knob; the fitted read "
+                      "shows 5/8 top-8 exist-but-fall at the finer 1.0-mi edge "
+                      "(pooled genuine 6/16), FLIPPING the coefficient-free "
+                      "~0-churn verdict -- the demonstrated landmine, gated "
+                      "not silently frozen",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 v2.4 pre-registration "
+                     "NOT YET FROZEN; rowless leaf legitimately pending the "
+                     "§13 freeze (owner ratification, stopping-rule timing). "
+                     "VALUE proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+        "upgrade": "owner ratification flips the disposition to accepted-"
+                   "frozen and starts the §9.5 stopping-rule clock",
+    },
+    "screen_anchor_membership_buffer": {
+        "title": "v2.4 pair-selection membership buffer X (anchor-to-shape "
+                 "connect distance; §13.1d) -- DISCLOSED DIAGNOSTIC",
+        "tier": "constant", "status": "active",
+        "value": 0.5,
+        "units": "mi (anchor within X of a common weekday GTFS shape)",
+        "band": None, "basis": "judgment",
+        "history": [("2026-07-23", 0.5, "judgment",
+                     "spec 01 §13 DRAFT. Both anchors must lie within X = 0.5 "
+                     "mi of a common weekday GTFS shape for the pair to be a "
+                     "candidate corridor. DISCLOSED DIAGNOSTIC, not a gate row "
+                     "(pair-selection connect distance, distinct from the "
+                     "catchment buffer_mi); the de-risk read found it not "
+                     "decision-moving. DRAFT -- proposed, not ratified")],
+        "provenance": "consumed via val() by the v2.4 pair-selection step. "
+                      "HOME: disclosed diagnostic. Reason: it is a "
+                      "pair-selection knob, NOT the catchment-width knob "
+                      "(that is buffer_mi, failure mode 1); its perturbation "
+                      "is decision-orthogonal in the read",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 NOT YET FROZEN; value "
+                     "proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+    },
+    "screen_anchor_pair_dist_cap": {
+        "title": "v2.4 pair-selection distance cap Y (max corridor length; "
+                 "§13.1d) -- DISCLOSED DIAGNOSTIC",
+        "tier": "constant", "status": "active",
+        "value": 15.0,
+        "units": "mi (anchor-to-anchor corridor length cap)", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-23", 15.0, "judgment",
+                     "spec 01 §13 DRAFT. Anchor pairs longer than Y = 15 mi "
+                     "are not candidate corridors. DISCLOSED DIAGNOSTIC: the "
+                     "marginal-churn read measured 12/18-mi cap near-zero "
+                     "churn -- decision-orthogonal. NOTE the fit-materiality "
+                     "read found M2_fit's top-8 cluster near this cap (a "
+                     "length-profile interaction disclosed in §13.2). "
+                     "DRAFT -- proposed, not ratified")],
+        "provenance": "consumed via val() by the v2.4 pair-selection step. "
+                      "HOME: disclosed diagnostic (12/18 near-zero churn)",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 NOT YET FROZEN; value "
+                     "proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+    },
+    "screen_anchor_peak_pool": {
+        "title": "v2.4 anchor peak pool size (top-K emp + top-K pop block "
+                 "peaks before dedup; §13.1a) -- DISCLOSED DIAGNOSTIC",
+        "tier": "constant", "status": "active",
+        "value": 300,
+        "units": "blocks (top-K by WAC C000 jobs / by Decennial P1 pop, each)",
+        "band": None, "basis": "judgment",
+        "history": [("2026-07-23", 300, "judgment",
+                     "spec 01 §13 DRAFT. Top-300 employment (WAC C000) and "
+                     "top-300 population (Decennial P1) block peaks form the "
+                     "candidate anchor pool, unioned with the authoritative "
+                     "special_generators, then deduped at screen_anchor_min_"
+                     "sep. DISCLOSED DIAGNOSTIC: the read measured pool "
+                     "200/500 near-zero churn, street-Jaccard 1.00. "
+                     "DRAFT -- proposed, not ratified")],
+        "provenance": "consumed via val() by the v2.4 anchor build. HOME: "
+                      "disclosed diagnostic (200/500 near-zero churn)",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 NOT YET FROZEN; value "
+                     "proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+    },
+    "screen_anchor_path_exclusion": {
+        "title": "v2.4 path eligibility: freeway/express exclusion predicate "
+                 "(general road-class/geometry rule, NOT a route blacklist; "
+                 "§13.1c) -- universe PREDICATE + DISCLOSED on/off DIAGNOSTIC",
+        "tier": "constant", "status": "active",
+        "value": "freeway + express / limited-access alignments excluded by a "
+                 "general ROAD-CLASS + stop-spacing/geometry predicate applied "
+                 "to every candidate host shape (not an enumerated route id "
+                 "list)",
+        "units": "path-eligibility predicate", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-23",
+                     "general freeway/express road-class + geometry exclusion",
+                     "judgment",
+                     "spec 01 §13 DRAFT. The cheap read surfaced Route 83 "
+                     "('5 Freeway') as five contaminant top-15 entries; a "
+                     "general geometric predicate removes the whole freeway "
+                     "CLASS. HOME: universe-defining membership predicate; the "
+                     "on/off toggle is a disclosed diagnostic (near-zero "
+                     "churn), NOT a gate row. DRAFT -- proposed, not "
+                     "ratified")],
+        "provenance": "consumed via val() by the v2.4 path-eligibility filter. "
+                      "HOME: universe predicate (definitional) + disclosed "
+                      "on/off diagnostic. Reason: a general class rule honours "
+                      "governance rule 1 (no hand-blacklist); the toggle is "
+                      "decision-orthogonal in the read",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 NOT YET FROZEN; value "
+                     "proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+    },
+    "screen_v24_ranking_measure": {
+        "title": "v2.4 ranking measure: M2_fit benefit-per-cost PRIMARY, M1 "
+                 "coefficient-free demand/mi CO-REPORTED (§13.2); the M2_raw "
+                 "<-> M2_fit swap is the specification FAILURE-MODE row",
+        "tier": "constant", "status": "active",
+        "value": {"primary": "M2_fit", "co_reported": "M1",
+                  "M2_fit": "exp(b1*l_flows + b2*l_zveh + b4*l_genjobs + "
+                            "b5*l_len) * L / capital_$M (v2.2 coeffs; "
+                            "exp(const)+FE rank-inert, omitted)",
+                  "M1": "raw catchment (jobs+pop) / L, coefficient-free, no "
+                        "cost model",
+                  "specification_row": "swap = M2_raw <-> M2_fit "
+                                       "(coefficient-free vs fitted demand "
+                                       "numerator over the SAME cost "
+                                       "denominator)"},
+        "units": "ranking-measure definition", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-23", "M2_fit primary / M1 co-reported / "
+                     "swap = M2_raw<->M2_fit", "judgment",
+                     "spec 01 §13 DRAFT. HOME: failure mode 3 (specification) "
+                     "= the M2_raw<->M2_fit demand-numerator swap. Criterion "
+                     "C: maximal within-scoring specification change (preview "
+                     "rho 0.480, 6/8 shortlist swap); single-predictor swaps "
+                     "are subsets, disclosed as diagnostics. M1 co-reported "
+                     "for transparency; rho(M2_fit, M1)=0.068 is a MANDATORY "
+                     "disclosed measure-choice-fragility diagnostic. "
+                     "OWNER-only (binds an unrun fit -- the ranking measure "
+                     "is on the never-delegated list). DRAFT -- proposed, "
+                     "not ratified")],
+        "provenance": "consumed via val() by the v2.4 scan/rank step. HOME: "
+                      "failure mode 3 (specification, row swap) for the "
+                      "M2_raw<->M2_fit comparison; M1 is a co-reported "
+                      "transparency measure whose divergence is a disclosed "
+                      "diagnostic. The ranking measure binds an unrun fit "
+                      "(never-delegated) -- owner ratification required",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 NOT YET FROZEN; value "
+                     "proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+    },
+    "screen_v24_cost_model": {
+        "title": "v2.4 cost denominator: spec-04 capcost.py capital, LOW "
+                 "markup band (§13.2) -- DISCLOSED band DIAGNOSTIC; params "
+                 "OWNER-frozen (never delegated)",
+        "tier": "constant", "status": "active",
+        "value": {"source": "spec-04 capcost.py", "band": "LOW",
+                  "form": "two-part guideway (fixed OCC+depot + per-route-km) "
+                          "+ per-station + rolling stock",
+                  "stations": "max(2, round(L / 1.0 mi))",
+                  "fleet": "capcost.fleet(L, 5-min peak headway)",
+                  "markup": 1.20},
+        "units": "$M capital (cost denominator of M2)", "band": None,
+        "basis": "judgment",
+        "history": [("2026-07-23", "spec-04 capcost LOW band, markup 1.20",
+                     "judgment",
+                     "spec 01 §13 DRAFT. Cost-model PARAMETERS bind an unrun "
+                     "fit and are OWNER-only (never delegated, "
+                     "docs/review-verification.md); pre-registered here as the "
+                     "LOW-band instantiation with a HIGH/BASE band sweep as a "
+                     "disclosed diagnostic. HOME: disclosed diagnostic (band "
+                     "sweep). DRAFT -- proposed, not ratified")],
+        "provenance": "consumed via val() (and capcost.py) by the v2.4 M2 "
+                      "denominator. HOME: disclosed diagnostic (LOW/BASE/HIGH "
+                      "band). Params are never-delegated -> owner ratification "
+                      "required",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 NOT YET FROZEN; value "
+                     "proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+    },
+    "screen_v24_exposure": {
+        "title": "v2.4 exposure/length convention (rank-relevant, FROZEN): "
+                 "length L enters TWICE -- b5 covariate l_len=log L AND "
+                 "exposure multiplier ·L (§13.2)",
+        "tier": "constant", "status": "active",
+        "value": "corridor length L (mi, anchor-to-anchor, endogenous) used "
+                 "BOTH as the b5 covariate (l_len = log L) AND as the exposure "
+                 "multiplier converting predicted productivity to a "
+                 "demand-like numerator (· L); offset-only variant = disclosed "
+                 "diagnostic",
+        "units": "exposure convention", "band": None, "basis": "judgment",
+        "history": [("2026-07-23", "length double-use (b5 covariate + ·L "
+                     "multiplier)", "judgment",
+                     "spec 01 §13 DRAFT. Rank-RELEVANT (the fit-materiality "
+                     "read found the M2_fit-vs-M2_raw divergence concentrated "
+                     "in the shortlist length profile, top-8 lengths "
+                     "9.6-14.5 mi), so stated explicitly and FROZEN rather "
+                     "than left implicit. HOME: frozen rank-relevant "
+                     "convention + disclosed offset-only-variant diagnostic. "
+                     "DRAFT -- proposed, not ratified")],
+        "provenance": "consumed via val() by the v2.4 numerator. HOME: frozen "
+                      "convention (rank-relevant) + disclosed exposure-variant "
+                      "diagnostic. Binds an unrun fit -> owner ratification "
+                      "required",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 NOT YET FROZEN; value "
+                     "proposed, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+    },
+    "screen_v24_prereg": {
+        "title": "v2.4 §13 pre-registration DRAFT umbrella: the "
+                 "knob->home->rationale map (criterion A+C) + design summary + "
+                 "DRAFT status. NOT FROZEN -- freeze requires owner "
+                 "ratification (stopping-rule timing)",
+        "tier": "constant", "status": "active",
+        "value": {
+            "draft": True, "frozen": False,
+            "freeze_requires": "owner ratification (stopping-rule timing) -- "
+                               "§9.5 makes v2.4 the LAST stage-1 attempt, so "
+                               "the freeze starts the stopping-rule clock and "
+                               "must be an explicit owner act, not a draft",
+            "no_new_fit": True,
+            "reuses_v22_coeffs": {"b1_flows": 0.256194, "b2_zveh": 0.382547,
+                                  "b4_genjobs": -0.041057, "b5_len": -0.22846,
+                                  "source": "outputs/screen_results_v22.json",
+                                  "estimand": "log(boardings/RVH)"},
+            "universe": "discrete anchor-pair corridors; anchors = WAC C000 "
+                        "emp peaks + Decennial P1 pop peaks + special_"
+                        "generators (authoritative), deduped at "
+                        "screen_anchor_min_sep 1.5 mi (rule-6 universe-"
+                        "defining); freeway/express excluded by a general "
+                        "road-class predicate; pairs within X=0.5 mi of a "
+                        "common shape, length <= Y=15 mi (90 anchors / 187 "
+                        "corridors at the frozen setting)",
+            "scoring": "M2_fit = exp(b1*l_flows+b2*l_zveh+b4*l_genjobs+"
+                       "b5*l_len)*L / capcost_LOW (benefit-per-cost); M1 "
+                       "co-reported (coefficient-free demand/mi); exposure = "
+                       "length double-use, frozen",
+            "deliverable": "ranked benefit-per-cost QUEUE over ~187 corridors, "
+                           "top ~25 named, NO product cutoff; gate-1 consumes "
+                           "the top-8 (= §12.1 external-validity N)",
+            "gate": "the §5 FOUR failure-mode rows instantiated for the anchor "
+                    "world: mode1 catchment_width=buffer, mode2 spatial_"
+                    "resolution=min_sep-identity, mode3 specification=swap "
+                    "(M2_raw<->M2_fit), mode4 estimation_uncertainty="
+                    "coeff_resample; criterion2 min rho>=0.7; criterion3 "
+                    "dual-unit churn {buffer,swap,coeff_resample}<=0.20, "
+                    "{min_sep}<=2/14",
+            "stopping_rule": "§9.5 branch (a) decision-grade iff failure-mode "
+                             "min rho>=0.7 (item-9 sufficient-not-necessary), "
+                             "else (b) documented null; v2.4 = last attempt; "
+                             "closed v2.5 list",
+            "item9": "§12.1 external-validity: both clean arterial benchmarks "
+                     "(Bravo/Harbor-543, Bravo/Westminster-17th) in top-8 = "
+                     "PASS (confirmatory); miss -> confound-review; naive "
+                     "population baseline = discrimination diagnostic",
+            "thresholds_unchanged": ["screen_pos_frac_min",
+                                     "screen_battery_rho_min",
+                                     "screen_tie_churn_max_window",
+                                     "screen_tie_churn_max_hostshape"],
+            "delegated_diff_folded": "GUARD 2 folded: 5 delegated changes "
+                                     "(rule 6, rule 7, min_sep identity "
+                                     "correction, screen-fork consolidation, "
+                                     "canonical pointer) -- NONE moved a "
+                                     "published number or set a bar an unrun "
+                                     "fit is judged against; frozen artifacts "
+                                     "byte-identical",
+            # criterion A+C: every knob -> home (failure_mode|disclosed_
+            # diagnostic|universe_predicate|frozen_convention|deliverable) +
+            # rationale. The FOUR gated knobs map one-to-one to the four modes.
+            "knob_home_map": {
+                "screen_anchor_min_sep": {
+                    "home": "failure_mode", "mode": "spatial_resolution",
+                    "row": "min_sep-identity", "gated": True,
+                    "rationale": "only universe-defining lattice knob; fitted "
+                                 "read shows 5/8 top-8 exist-but-fall at the "
+                                 "1.0-mi edge -- the demonstrated landmine"},
+                "buffer_mi": {
+                    "home": "failure_mode", "mode": "catchment_width",
+                    "row": "buffer", "gated": True,
+                    "rationale": "only catchment-geometry knob surviving both "
+                                 "worlds; largest universe-fixed catchment "
+                                 "mover in the read"},
+                "screen_v24_ranking_measure": {
+                    "home": "failure_mode", "mode": "specification",
+                    "row": "swap", "gated": True,
+                    "rationale": "M2_raw<->M2_fit is the maximal within-"
+                                 "scoring spec change (rho 0.48, 6/8 swap); "
+                                 "predictor swaps are subsets"},
+                "reused_v22_coefficients": {
+                    "home": "failure_mode", "mode": "estimation_uncertainty",
+                    "row": "coeff_resample", "gated": True,
+                    "rationale": "LOAD-BEARING: coeffs drive 6/8 members, b1 "
+                                 "at t=1.49; sampling uncertainty most able "
+                                 "to move the cutoff"},
+                "screen_anchor_membership_buffer": {
+                    "home": "disclosed_diagnostic", "gated": False,
+                    "rationale": "pair-selection connect distance, not the "
+                                 "catchment-width knob; not decision-moving"},
+                "screen_anchor_pair_dist_cap": {
+                    "home": "disclosed_diagnostic", "gated": False,
+                    "rationale": "12/18 near-zero churn -- decision-"
+                                 "orthogonal"},
+                "screen_anchor_peak_pool": {
+                    "home": "disclosed_diagnostic", "gated": False,
+                    "rationale": "200/500 near-zero churn, street-Jaccard "
+                                 "1.00"},
+                "screen_anchor_path_exclusion": {
+                    "home": "universe_predicate", "gated": False,
+                    "rationale": "general class exclusion (gov rule 1); "
+                                 "on/off toggle near-zero churn"},
+                "screen_v24_cost_model": {
+                    "home": "disclosed_diagnostic", "gated": False,
+                    "rationale": "LOW/BASE/HIGH band sweep; params owner-"
+                                 "frozen (never delegated)"},
+                "screen_v24_exposure": {
+                    "home": "frozen_convention", "gated": False,
+                    "rationale": "rank-relevant length double-use, stated + "
+                                 "frozen; offset-only variant is a "
+                                 "diagnostic"},
+                # NOT a standalone registry id: the queue length is homed as
+                # the screen_v24_prereg.deliverable sub-field (spec 01 §13.7
+                # row), not its own entry. Keyed by a plain descriptor so it
+                # does not masquerade as a `screen_v24_*` registry knob the
+                # criterion-A registry-presence check would look for.
+                "queue_length": {
+                    "home": "deliverable", "gated": False,
+                    "home_ref": "screen_v24_prereg.deliverable",
+                    "rationale": "the queue is the product; only cutoff is "
+                                 "the top-8 consumption ceiling. Definitional "
+                                 "property of the deliverable field, not a "
+                                 "tunable registry knob (spec 01 §13.7)"},
+            },
+        },
+        "units": "v2.4 §13 pre-registration DRAFT (knob->home map + design)",
+        "band": None, "basis": "judgment",
+        "history": [("2026-07-23", "v2.4 §13 pre-registration DRAFT umbrella "
+                     "(knob->home->rationale map + design + DRAFT status)",
+                     "judgment",
+                     "spec 01 §13 DRAFT, owner-directed 2026-07-23, written "
+                     "BEFORE any v2.4 number. Applies the committed v2.2 "
+                     "coefficients to the discrete anchor-pair universe (NO "
+                     "new fit); instantiates the §5 four failure-mode rows for "
+                     "the anchor world; delivers a ranked benefit-per-cost "
+                     "queue (gate-1 top-8). NOT FROZEN -- freeze requires "
+                     "owner ratification (stopping-rule timing). No frozen "
+                     "threshold VALUE changes; frozen v2.0/v2.1/v2.2 artifacts "
+                     "byte-identical; prior-order fingerprint untouched")],
+        "provenance": "spec 01 §13. The machine-readable §13: knob_home_map "
+                      "satisfies criterion A (every knob has an entry + a "
+                      "home) and criterion C (each of the four modes "
+                      "instantiated by exactly one row, strongest-in-class "
+                      "rationale stated). Consumed via val() by the v2.4 "
+                      "scan/decision block when it runs; NOT consumed by any "
+                      "current artifact (v2.0/v2.1/v2.2 stay byte-identical). "
+                      "STRUCTURAL-GOVERNANCE entry at CONSTANT tier "
+                      "(screen_gate_failure_modes precedent)",
+        "rows": {}, "no_row_reason": "spec-pending:01§13",
+        "accepted": ("DRAFT disposition -- spec 01 §13 v2.4 pre-registration "
+                     "NOT YET FROZEN; rowless umbrella legitimately pending "
+                     "the §13 freeze (owner ratification, stopping-rule "
+                     "timing). Design PROPOSED, not ratified", "2026-07-23"),
+        "logged": "README known-issue 49 (v2.4 §13 pre-registration DRAFT)",
+        "upgrade": "owner ratification flips every spec-pending:01§13 leaf to "
+                   "accepted-frozen, confirms the four-mode row map + dual "
+                   "churn caps as the binding v2.4 gate, and starts the §9.5 "
+                   "stopping-rule clock; the v2.4 fit-application run then "
+                   "consumes the scoping via val()",
     },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {

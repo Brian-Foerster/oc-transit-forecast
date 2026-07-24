@@ -1111,3 +1111,105 @@ of the tripwire entries and the normalization entry respectively.
     (b) a separate ranked corridor queue that never feeds that claim (the
     queue informs future work only). This is a budget decision, stated as
     such.
+
+48. **v2.4 PRE-REGISTRATION DRAFT governance amendments (owner-directed
+    2026-07-22; spec 01 §5/§9.5/§12.1; registry `screen_gate_failure_modes`;
+    rule-3 log). Two owner-directed amendments, frozen BEFORE any v2.4 number.**
+    **(1) FOURTH FAILURE MODE — estimation-uncertainty.** The §5 failure-mode
+    gate gains a FOURTH mode (issue 46 had three). Its single row draws b1/b2
+    from v2.2's EXISTING route-cluster coefficient bootstrap (NO new fit — v2.4
+    reuses the committed v2.2 coefficients b1_flows 0.256194 / b2_zveh 0.382547 /
+    b4_genjobs −0.041057 / b5_len −0.22846), reranks the discrete-corridor
+    universe, and measures IDENTITY-UNIT membership churn at the top-8 cutoff
+    (rule-6 metric: decompose no-longer-exists from exists-but-moved; a
+    coefficient resample leaves the anchor lattice fixed, so churn is all
+    exists-but-moved — window/identity-window unit → `screen_tie_churn_max_window`
+    = 0.20). Rationale: the fit-materiality read showed the v2.2 coefficients SWAP
+    6 OF 8 shortlist members vs the coefficient-free ranking, so the coefficients
+    are the largest single membership driver; their OWN sampling uncertainty (b1
+    at t = 1.49, wide cluster SE) is the perturbation most likely to move the
+    cutoff and sat ENTIRELY OUTSIDE the gate until now. Homed as a FOURTH mode
+    (not folded under specification) to preserve one-row-per-mode; the
+    "estimation and specification uncertainty are the same kind of threat"
+    argument for the single-mode alternative is recorded. Criterion 2 = min rho
+    over FOUR modes; criterion 3 = max churn over four. `row_map` gains a 4th
+    slot: v2.4-anchor = `coeff_resample` (NORMATIVE); v2.0/v2.1/v2.2 documentary.
+    REGISTRY NOTE (stated, not hidden): a min over four is noisier STILL than over
+    three, BUT this row can genuinely BIND (it is the load-bearing threat), so the
+    gate is MORE HONEST even if noisier. **(2) ITEM-9 NECESSARY-CONDITION TENSION
+    RESOLVED to SUFFICIENT-BUT-NOT-NECESSARY (owner option b; spec 01 §9.5 +
+    §12.1).** §12.1 concedes one clean miss is weak evidence (n = 2 clean;
+    funding/political/mode confounds), so item-9 must NOT unilaterally veto the
+    stage. New rule, decided NOW so it cannot be relitigated at the miss: branch
+    (a) decision-grade gates on failure-mode-subset rho ≥ 0.7 ALONE; an item-9
+    PASS (both clean arterial benchmarks top-8) is CONFIRMATORY; an item-9 MISS
+    triggers a DOCUMENTED CONFOUND-REVIEW under the already-frozen §12.1 miss
+    semantics (benchmark confound vs genuine screen failure), whose recorded
+    finding decides ship-vs-null — a "genuine screen failure" finding routes to
+    branch (b), a "benchmark confound" finding leaves branch (a) available. NO
+    frozen threshold VALUE, estimand, or committed battery id list changes; the
+    three frozen artifacts stay byte-identical (`b88f9b65` / `83aeb032` /
+    `3b1d5526`); PRIORS and the prior-order fingerprint (`f0bb42f69644`) untouched.
+
+49. **v2.4 §13 PRE-REGISTRATION DRAFT — benefit-per-cost BCA-queue on discrete
+    anchor-pair corridors (owner-directed 2026-07-23; spec 01 §13; registry
+    `screen_v24_prereg` + the `screen_anchor_*` / `screen_v24_*` knobs;
+    rule-3 log). DRAFT — NOT FROZEN; freeze requires owner ratification
+    (stopping-rule timing).** The v2.4 pre-registration PROPER that §12 deferred:
+    the estimand APPLICATION, universe, scoring, deliverable, and the concrete
+    anchor-world instantiation of the §5 four-mode gate. It is a DRAFT on purpose
+    — §9.5 makes v2.4 the LAST stage-1 attempt, so the freeze is deferred to an
+    explicit owner act that starts the stopping-rule clock on a ratified object,
+    not a draft. **NO NEW FIT:** v2.4 REUSES the committed v2.2 coefficients
+    (b1_flows 0.256194 / b2_zveh 0.382547 / b4_genjobs −0.041057 / b5_len −0.22846,
+    from `screen_results_v22.json`) applied to the discrete-corridor universe;
+    per §9.5's closed v2.5 list, applying an existing fit to a new geometry is NOT
+    a new empirical input. **UNIVERSE:** discrete anchor-pair corridors — anchors
+    = WAC C000 employment peaks + Decennial P1 population peaks + the authoritative
+    `special_generators`, deduped at `screen_anchor_min_sep` = 1.5 mi (universe-
+    defining, FROZEN per rule 6 — the value from the min_sep-under-M2_fit read: 90
+    anchors / 187 corridors); freeway/express excluded by a general road-class
+    predicate (not a route blacklist); pairs within X = 0.5 mi of a common shape,
+    length ≤ Y = 15 mi. **SCORING:** M2_fit = exp(b1·l_flows + b2·l_zveh +
+    b4·l_genjobs + b5·l_len)·L / capcost(LOW) — benefit-per-cost, with the
+    length/exposure double-use stated and FROZEN (rank-relevant); M1
+    (coefficient-free demand/mi) CO-REPORTED. **DELIVERABLE:** a ranked
+    benefit-per-cost QUEUE (~25 named, no product cutoff); gate 1 consumes the
+    top-8. **GATE (four §5 failure-mode rows, one per mode):** catchment-width =
+    `buffer`; spatial-resolution = `min_sep-identity` (rule-6 identity-unit
+    exists-but-moved churn ≤ 2/14 — the min_sep-under-M2_fit read makes this the
+    demonstrated LANDMINE: under the FITTED ranking the finer 1.0-mi edge shows
+    5 of 8 top-8 exist-but-fall, pooled 6/16, FLIPPING the coefficient-free
+    ~0-churn read — so min_sep is GATED, not silently frozen); specification =
+    `swap` (M2_raw ↔ M2_fit demand-numerator, preview rho 0.48 / 6-of-8 swap);
+    estimation-uncertainty = `coeff_resample` (v2.2's existing route-cluster
+    bootstrap, the load-bearing threat). Criterion 2 = min rho ≥ 0.7; criterion 3
+    = dual churn caps (window-unit {buffer, swap, coeff_resample} ≤ 0.20,
+    identity-unit {min_sep} ≤ 2⁄14). Non-mode perturbations (peak pool,
+    dist-cap, membership buffer, freeway toggle, cost band, exposure variant,
+    M1-vs-M2 divergence) = DISCLOSED DIAGNOSTICS outside the gate. **STOPPING RULE
+    / ITEM-9:** unchanged from §9.5 / §12.1 (branch (a) iff failure-mode rho ≥ 0.7,
+    item-9 sufficient-not-necessary; else branch (b) documented null). Every pass
+    condition is DECIDABLE results-blind (criterion B); every knob has a registry
+    entry + an explicit home with a stated reason (criterion A), and each mode is
+    instantiated by exactly one row with a strongest-in-class rationale (criterion
+    C) — machine-readable as `screen_v24_prereg.knob_home_map`, asserted by the
+    v24-prereg-lock test. GUARD 2: the accumulated `DELEGATED_CHANGES.md` log (5
+    items) is folded in — none moved a published number. NO `*_v24` threshold id
+    minted; NO fit ran; the three frozen artifacts stay byte-identical (`b88f9b65`
+    / `83aeb032` / `3b1d5526`); PRIORS and the prior-order fingerprint
+    (`f0bb42f69644`) untouched.
+
+
+### 50 — v2.4 §13 draft REJECTED (pre-freeze review, 2026-07-23); ranking-measure decision open
+The v2.4 §13 pre-registration DRAFT was rejected before freeze by two
+structural findings the pre-freeze checks surfaced: (1) the min_sep-under-
+M2_fit landmine (fitted ranking unstable at the cutoff to anchor
+resolution, 6/16 genuine churn vs ~0 coefficient-free); (2) change-of-
+support — v2.2 route-fitted coefficients applied to fabricated anchor-
+corridors, un-gateable by any of the four failure modes. Together they
+reframe the 6/8 fit-materiality result (movement != improvement; may be
+transfer bias) and put the RANKING MEASURE (M2_fit fitted vs M1
+coefficient-free) up for an owner decision. The 4th failure mode
+(estimation_uncertainty) and the item-9 sufficient-not-necessary
+resolution ARE frozen (valid regardless). rule-3 logged.

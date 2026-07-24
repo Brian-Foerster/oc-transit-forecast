@@ -2221,6 +2221,23 @@
     {
       "history": [
         [
+          "2026-07-22",
+          "three failure modes (catchment_width / spatial_resolution / specification); criterion 2 = min rho over them, criterion 3 = max churn over them (dual-unit); per-version row->mode map v2.0/v2.1/v2.2/v2.4-anchor",
+          "judgment",
+          "owner-ratified 2026-07-22 (v2.4 governance pre-commitment, spec 01 §5 FAILURE-MODE GATE + §12) -- written BEFORE the v2.4 fit. Re-scopes criteria 2/3 to attach BY FAILURE MODE, not by row id, because row ids cannot stay constant across the window->anchor geometry change (offset_variant/window_10/window_15 meaningless in anchor-world; min_sep meaningless in window-world; only buffer survives both). NO frozen threshold VALUE changes (0.7 / 0.20 / 2-14 stay put); only their SUPPORT is re-scoped from the whole battery to the three failure-mode rows. Non-failure-mode battery rows become DISCLOSED DIAGNOSTICS in shortlist_stability, outside the gate"
+        ],
+        [
+          "2026-07-22",
+          "ADDED A FOURTH failure mode: estimation_uncertainty (coefficient-sampling). Its row draws b1/b2 from v2.2's EXISTING route-cluster coefficient bootstrap (no new fit), reranks, and measures identity-unit membership churn at the top-8 cutoff (rule-6: no-longer-exists vs exists-but-moved; coeff resample leaves the lattice fixed so all exists-but-moved). row_map gains a 4th slot: v2.4-anchor = coeff_resample (NORMATIVE); v2.0/v2.1/v2.2 documentary. Criterion 2 = min rho over FOUR modes; criterion 3 = max churn over four, the new row window-unit -> screen_tie_churn_max_window (0.20). Rationale: the fit-materiality read showed v2.2 coeffs swap 6 of 8 shortlist members vs coeff-free, so the coefficients are the largest single membership driver; their OWN sampling uncertainty (b1 at t=1.49, wide cluster SE) is the perturbation most likely to move the cutoff and was OUTSIDE the gate until now. Homed as a FOURTH mode (not folded under specification) to preserve one-row-per-mode; the 'estimation and specification uncertainty are the same kind of threat' argument for the alternative single-mode home is recorded. NOTE: min over four is noisier STILL, BUT this row can genuinely BIND (it is the load-bearing threat), so the gate is MORE HONEST even if noisier -- stated, not hidden",
+          "judgment",
+          "owner-directed governance amendment 2026-07-22 (v2.4 pre-registration draft; spec 01 §5 fourth failure mode). No frozen threshold VALUE changes; the frozen v2.0/v2.1/v2.2 artifacts stay byte-identical (documentary map)"
+        ]
+      ],
+      "id": "screen_gate_failure_modes"
+    },
+    {
+      "history": [
+        [
           "2026-07-20",
           "grid [0,0.8] step 0.05; S=200; B=500 (checked vs 2000); seed 11; 80% power target",
           "judgment",

@@ -15,7 +15,13 @@ criterion 1 RESCUED, criteria 2/3 failed on the length artifact;
 README known issue 44) · §11 v2.3 REGIONAL-CLUSTER-BASE
 GOVERNED-METHOD-CHANGE PRE-REGISTERED 2026-07-21 (owner-directed;
 KEEP productivity DV, ADD agency FE + regional panel frozen on
-acquisition-availability facts; written before any v2.3 fit)
+acquisition-availability facts; written before any v2.3 fit) · §12 v2.4
+GOVERNANCE PRE-COMMITMENTS owner-ratified 2026-07-22 (failure-mode gate
++ numeric stopping rule + external-validity check + delegation guards)
+· §13 v2.4 BENEFIT-PER-COST BCA-QUEUE PRE-REGISTRATION DRAFT 2026-07-23
+(NOT FROZEN — freeze requires owner ratification; discrete anchor-pair
+corridors, REUSES the committed v2.2 coefficients, NO new fit; four
+failure-mode rows instantiated for the anchor world)
 (prototype: the 13-arterial screen, summarized in HANDOFF.md "Dropped
 work"; superseded draft: 2026-07-08)
 
@@ -498,8 +504,9 @@ windows, no free length elasticity to pin), and `min_sep` is
 meaningless in the WINDOW world — only `buffer` survives both. A
 criterion whose row list changes meaning across versions cannot be a
 frozen bar. So the criterion-2/3 subset is frozen BY FAILURE MODE.
-Three failure modes, each of which EVERY version must instantiate with
-its own named row (or edge pair):
+Four failure modes (owner amendment 2026-07-22 added the FOURTH,
+estimation-uncertainty; see its rationale below), each of which EVERY
+version must instantiate with its own named row (or edge pair):
 
 1. **catchment-width sensitivity** — the `buffer` perturbation
    (`buffer_lo`, `buffer_hi`), in BOTH worlds;
@@ -514,15 +521,48 @@ its own named row (or edge pair):
    variant (v2.0: `nb_estimator` or `e016_swap`; v2.1/v2.2:
    `popden_swap` / `e002_swap` / `gen_dummy_swap` / `nb_estimator`;
    v2.4-anchor: a designated swap row).
+4. **estimation-uncertainty sensitivity (added 2026-07-22)** — the
+   COEFFICIENT-SAMPLING perturbation. Its single row DRAWS b1/b2 from
+   v2.2's EXISTING route-cluster coefficient bootstrap (§3.4 — no new
+   fit; v2.4 reuses the committed v2.2 coefficients, and this row reuses
+   that same bootstrap family), reranks the corridors on the v2.4
+   discrete-corridor universe, and measures IDENTITY-UNIT membership
+   churn at the top-8 cutoff (rule-6 identity metric per
+   docs/review-verification.md: decompose no-longer-exists from
+   exists-but-moved). Because a coefficient resample leaves the anchor
+   LATTICE unchanged, no-longer-exists is empty and the churn is ALL
+   exists-but-moved — pure ranking instability at the cutoff. Row:
+   v2.4-anchor = `coeff_resample`; v2.0/v2.1/v2.2 documentary.
 
-**Re-scoped criteria.** Criterion 2 = MIN Spearman rho over the three
+   **Rationale for a fourth mode (write it in).** The fit-materiality
+   read showed the v2.2 coefficients SWAP 6 OF 8 shortlist members
+   versus the coefficient-free (raw-catchment) ranking — so the
+   coefficients are the largest single driver of membership. Their OWN
+   sampling uncertainty (b1 sits at t = 1.49, a wide cluster SE) is
+   therefore the perturbation MOST LIKELY to move the cutoff, and until
+   this amendment it sat ENTIRELY OUTSIDE the gate — the whole-battery
+   min never contained a coefficient-resample row. Homing it as a
+   FOURTH mode (not folding it under specification) preserves the
+   one-row-per-mode discipline: each mode contributes exactly one gated
+   row, and estimation uncertainty gets its own. The alternative —
+   folding it under specification — rests on the argument that
+   estimation and specification uncertainty are the SAME KIND of threat
+   (both perturb the fitted predictor→ranking map rather than the data
+   geometry); that argument is real and recorded here, but the owner
+   chooses the separate home so the load-bearing threat carries its own
+   named, visible bar rather than being averaged into a swap row.
+
+**Re-scoped criteria.** Criterion 2 = MIN Spearman rho over the FOUR
 failure-mode rows (>= 0.7). Criterion 3 = MAX margin-defined tie-set
 churn over them, keeping the DUAL-UNIT split of §5 where applicable:
-the catchment-width and specification rows are window-unit (or the
-anchor-world's identity-window unit) and feed
-`screen_tie_churn_max_window` = 0.20; the spatial-resolution row is
-host-shape-unit (window world) / identity-unit (anchor world) and
-feeds `screen_tie_churn_max_hostshape` = 2/14. The remaining battery
+the catchment-width, specification AND estimation-uncertainty rows are
+window-unit (or the anchor-world's identity-window unit — the
+estimation-uncertainty row's rule-6 churn is all exists-but-moved on a
+fixed lattice, so it measures in the same identity-window unit as a
+within-universe reranking) and feed `screen_tie_churn_max_window` =
+0.20; the spatial-resolution row is host-shape-unit (window world) /
+identity-unit (anchor world) and feeds
+`screen_tie_churn_max_hostshape` = 2/14. The remaining battery
 rows (`drop_fy2020`, `drop_rh` (retired for productivity), `svc_*`,
 `overlap_*`, `year_fe_vs_pooled`, `loyo`, `loao`, the generator-class
 rows, …) are NOT dropped — they become DISCLOSED DIAGNOSTICS reported
@@ -530,15 +570,27 @@ in `shortlist_stability` OUTSIDE the gate, so nothing is hidden; they
 simply no longer set the pass/fail bar.
 
 **Direction of the bar, stated deliberately (NOT hidden).** A min over
-THREE rows is noisier than a min over twenty, and in expectation an
+FOUR rows is noisier than a min over twenty, and in expectation an
 EASIER bar to clear. That is the CORRECT direction for this problem:
 the whole-battery min was dominated by rows that measure UNIVERSE
 change (the rule-6 class) or perturbations orthogonal to the decision
-(service-level, year-drop, overlap), not by the three sensitivities a
+(service-level, year-drop, overlap), not by the four sensitivities a
 corridor ranking must actually be robust to. Scoping the gate to the
-three genuine failure modes tests the right thing; that it is also
+four genuine failure modes tests the right thing; that it is also
 easier is a consequence, disclosed, not a reason. The threshold VALUES
 are unchanged — only their SUPPORT is re-scoped.
+
+**The fourth mode is the honest correction to that noise (added
+2026-07-22).** Adding estimation-uncertainty makes the min over FOUR
+rows noisier STILL than the min over three. That is stated, not hidden.
+But this row differs in kind from the others: it CAN GENUINELY BIND. It
+is the load-bearing threat — the coefficients drive 6 of 8 shortlist
+members (above), and their sampling uncertainty is the perturbation
+most able to move the cutoff. A gate whose noisiest new row is also its
+most decision-relevant is MORE HONEST even though it is noisier: the
+earlier three-mode gate could pass while leaving the single largest
+membership driver entirely untested. The added noise buys a gate that
+tests the thing most likely to break the ranking.
 
 **Frozen-artifact invariance (binding).** This re-scoping is
 FORWARD-LOOKING: it binds the v2.4 gate. It does NOT re-run and does
@@ -993,20 +1045,47 @@ the stage-1 arc.** Its result resolves to exactly one of two branches,
 and EITHER branch stops stage 1:
 
 - **(a) DECISION-GRADE queue.** v2.4 is decision-grade IFF the
-  full-ranking Spearman rho on the **failure-mode subset** (the three
-  §5 failure-mode rows, criterion 2 as re-scoped above) is
-  >= 0.7 [screen_battery_rho_min] AND the §12 external-validity check
-  (item-9) PASSES. (The bar is the EXISTING criterion-2 value 0.7, NOT
-  the 0.79 / 0.87 anchor-world de-risk PREVIEW — those previews were
-  cheap reads seen before the fit and do not set the bar; the §12
-  non-transfer note applies.) On (a): SHIP the benefit-per-cost queue;
-  gate 1 consumes it per §4b; `config/candidates.json` may take
+  full-ranking Spearman rho on the **failure-mode subset** (the FOUR
+  §5 failure-mode rows — catchment-width / spatial-resolution /
+  specification / estimation-uncertainty — criterion 2 as re-scoped
+  above) is >= 0.7 [screen_battery_rho_min]. (The bar is the EXISTING
+  criterion-2 value 0.7, NOT the 0.79 / 0.87 anchor-world de-risk
+  PREVIEW — those previews were cheap reads seen before the fit and do
+  not set the bar; the §12 non-transfer note applies.) **The item-9
+  external-validity check (§12.1) is SUFFICIENT-BUT-NOT-NECESSARY, NOT a
+  second necessary condition (owner option b, resolved 2026-07-22 —
+  supersedes the earlier "two necessary conditions" AND form).** Its
+  role is:
+  - an item-9 **PASS** (both clean arterial benchmarks in the top-8) is
+    **CONFIRMATORY** — it strengthens branch (a) but is not required to
+    reach it;
+  - an item-9 **MISS** does NOT by itself veto the stage. §12.1 concedes
+    that with n = 2 clean benchmarks one clean miss is WEAK evidence
+    (funding / political / mode confounds), so it cannot unilaterally
+    force the null. A miss instead TRIGGERS a **documented
+    confound-review** under the already-frozen §12.1 miss semantics — is
+    the miss a benchmark confound (grant/political/mode) or a genuine
+    screen failure? — and that recorded finding decides ship-vs-null. A
+    miss is NOT an automatic null.
+
+  On (a) (failure-mode rho >= 0.7, and any item-9 miss resolved by the
+  confound-review to "benchmark confound"): SHIP the benefit-per-cost
+  queue; gate 1 consumes it per §4b; `config/candidates.json` may take
   `hand_supplied: false`.
-- **(b) DOCUMENTED NULL.** Otherwise: SHIP the finding that **OC demand
-  does not separate corridors** — the threshold shortlist stays the
-  permanent stage-1 output and `config/candidates.json` stays
-  `hand_supplied: true`. This is a real result, published as such, not
-  a failure to be retried.
+- **(b) DOCUMENTED NULL.** Otherwise — failure-mode rho < 0.7, OR an
+  item-9 miss that the confound-review finds to be a GENUINE screen
+  failure — SHIP the finding that **OC demand does not separate
+  corridors**: the threshold shortlist stays the permanent stage-1
+  output and `config/candidates.json` stays `hand_supplied: true`. This
+  is a real result, published as such, not a failure to be retried.
+
+**This branching is decided NOW, before any v2.4 number exists —
+including the sufficient-but-not-necessary status of item-9 and the
+confound-review disposition of a miss — precisely so it cannot be
+relitigated AT the miss. Whether a miss is a benchmark confound or a
+screen failure is answered under the §12.1 semantics that were frozen
+before the queue was ranked; the finding is recorded, not chosen after
+seeing which corridors missed.**
 
 Either way **stage 1 STOPS.** A stopping rule written NOW — before the
 v2.4 numbers exist — is legitimate; one written AFTER seeing the next
@@ -1974,12 +2053,15 @@ the single landing page for the v2.4 governance:
 
 - **Failure-mode gate** — §5 (**FAILURE-MODE GATE**) + registry
   `screen_gate_failure_modes`: criteria 2/3 re-scoped to range over the
-  three failure-mode rows (catchment-width / spatial-resolution /
-  specification), not the whole battery, threshold VALUES unchanged.
+  FOUR failure-mode rows (catchment-width / spatial-resolution /
+  specification / estimation-uncertainty — the fourth added 2026-07-22),
+  not the whole battery, threshold VALUES unchanged.
 - **Stopping rule with a numeric floor** — §9.5 (**STOPPING RULE WITH
   A NUMERIC FLOOR**): v2.4 is the LAST stage-1 method attempt; branch
-  (a) decision-grade iff failure-mode rho >= 0.7 AND the §12.1 check
-  passes, branch (b) documented null; closed v2.5 list.
+  (a) decision-grade iff failure-mode rho >= 0.7 (the §12.1 item-9 check
+  is SUFFICIENT-BUT-NOT-NECESSARY — a PASS is confirmatory, a MISS
+  triggers a documented confound-review, not an automatic null), branch
+  (b) documented null; closed v2.5 list.
 - **External-validity check** — §12.1 below (item-9).
 - **Delegation with two guards** — docs/review-verification.md
   (**Delegation**) + outputs/DELEGATED_CHANGES.md (the accumulating
@@ -2035,11 +2117,29 @@ after the fact:
   demand-weak and ranks low is a **benchmark confound**, not a screen
   failure.
 
-**Evidentiary weight, stated.** With n = 3 (really 2 clean), ONE clean
+**Evidentiary weight, stated (item-9 is SUFFICIENT-BUT-NOT-NECESSARY,
+resolved 2026-07-22, owner option b — supersedes the earlier
+"necessary condition" form).** With n = 3 (really 2 clean), ONE clean
 miss is WEAK evidence — the check can corroborate or embarrass, it
-cannot by itself validate. The item-8 stopping rule requires this check
-to PASS as one of two necessary conditions for branch (a); it is not
-sufficient on its own and is never read as independent validation.
+cannot by itself validate, and — the symmetric point, now made
+explicit — it cannot by itself VETO. Because one clean miss at n = 2 is
+confounded by funding, political, and mode factors, item-9 does NOT
+unilaterally force the null. Its status in the §9.5 stopping rule is
+therefore:
+
+- an item-9 **PASS** is **CONFIRMATORY** of branch (a) — it strengthens
+  the decision-grade finding but is not required to reach it (branch (a)
+  gates on the failure-mode-subset rho >= 0.7 alone);
+- an item-9 **MISS** triggers a **documented confound-review** under the
+  frozen miss semantics below (is the miss a benchmark confound or a
+  genuine screen failure?), whose recorded finding decides ship-vs-null
+  — NOT an automatic null.
+
+It remains never read as independent validation, and is never
+sufficient ON ITS OWN to reach branch (a) without the failure-mode
+gate. This status is decided NOW, before the queue is ranked, so the
+confound-vs-failure disposition of a miss cannot be relitigated after
+seeing which benchmarks missed.
 
 **Naive baseline (the discrimination control — the load-bearing part).**
 Also rank the corridors by **catchment POPULATION alone** (no
@@ -2055,7 +2155,12 @@ N = 8. Then:
   **PASSES** iff BOTH clean arterial benchmarks (Bravo/Harbor-543,
   Bravo/Westminster-17th) rank in the top-8 of the v2.4 benefit-per-cost
   queue. Decidable, falsifiable, frozen now. Either clean benchmark
-  outside top-8 = item-9 FAIL -> stopping-rule branch (b).
+  outside top-8 = item-9 **MISS**. A miss does NOT auto-route to
+  stopping-rule branch (b) (that was the superseded necessary-condition
+  form); it triggers the **documented confound-review** above under the
+  frozen miss semantics, and only a review finding of GENUINE SCREEN
+  FAILURE routes to branch (b) — a finding of BENCHMARK CONFOUND leaves
+  branch (a) available on the failure-mode gate alone.
 - **Discrimination vs the naive baseline is a REPORTED DIAGNOSTIC, not a
   pass condition** — demoted BEFORE any numbers exist, for a stated
   reason: with n=2 clean benchmarks and N=8, a discrimination margin
@@ -2097,3 +2202,457 @@ that consume it are RE-RUN in that same batch or the promotion does not
 land. This scoping is logged (governance rule 3; README known issue) and
 mechanized in spec 07 §4.3 (candidate-pool standing condition) and spec
 00 §3 (network-sequence row).
+
+## 13. v2.4 benefit-per-cost BCA-queue on discrete anchor-pair corridors — PRE-REGISTRATION
+
+**DRAFT — NOT FROZEN; freeze requires owner ratification (stopping-rule
+
+> **REJECTED by independent review 2026-07-23 — do NOT freeze.** Two
+> STRUCTURAL findings block a freeze (neither is a knob fix):
+> (1) **min_sep-under-M2_fit landmine** — under the FITTED ranking the
+> anchor-resolution row shows genuine (exists-but-moved) top-8 churn 6/16,
+> vs ~0 under the coefficient-free measure; M2_fit specifically is unstable
+> to the lattice, driven by long-corridor dominance from the length
+> exposure. The spatial-resolution failure mode would fail for M2_fit.
+> (2) **change-of-support** (reviewer rule-7): the v2.2 coefficients were
+> fit on the OCTA ROUTE panel and are applied unchanged to fabricated
+> anchor-corridors; if corridor-unit elasticities differ (b1 endogeneity-
+> attenuated, b4 wrong-signed) the ranking is coefficients-on-the-wrong-
+> unit, and NO failure mode can detect it (modes 1-3 hold coeffs fixed;
+> mode 4 samples the same route-panel distribution). This REFRAMES the 6/8
+> fit-materiality result: the coefficients MOVE the ranking, but movement
+> is not improvement — it may be transfer bias. Requires an OWNER DECISION
+> on the ranking measure (M2_fit vs coefficient-free M1) before any
+> redesign or freeze. See known-issue 50.
+timing).** This is the v2.4 pre-registration PROPER — the estimand
+APPLICATION, universe, scoring, deliverable, and the concrete
+instantiation of the §5 four-mode gate — that §12 deferred to "a
+SEPARATE later batch". It is a DRAFT on purpose. §9.5 makes v2.4 the
+LAST stage-1 method attempt, so the timing warrant that legitimizes
+every prior pre-registration (the numbers are unknown when the rule is
+fixed) binds here with special force: the freeze is deferred to an
+EXPLICIT owner ratification so the stopping-rule clock starts on a
+ratified object, not a draft. Until that ratification the values below
+are PROPOSED, no v2.4 fit consumes them, and nothing here changes a
+frozen threshold, the estimand, or a committed battery id list. The
+three frozen artifacts stay byte-identical (v2.0 b88f9b65 / v2.1
+83aeb032 / v2.2 3b1d5526).
+
+**NO NEW FIT (binding).** v2.4 REUSES the committed v2.2 productivity
+coefficients — b1_flows 0.256194, b2_zveh 0.382547, b4_genjobs
+−0.041057, b5_len −0.22846 (read from `outputs/screen_results_v22.json`,
+DV = log(boardings/RVH), §10) — applied to the discrete anchor-pair
+corridor universe. It fits NOTHING: no re-estimation, no new estimand,
+no re-vintaged predictor. Per the §9.5 CLOSED v2.5 list, applying an
+existing fit to a new geometry is NOT a new empirical input and does not
+re-open the arc; it is the last reading of the v2.2 evidence. The
+coefficient bootstrap the estimation-uncertainty gate row consumes
+(§13.4, mode 4) is v2.2's EXISTING route-cluster resample family (B =
+2000, §3.4) — no new bootstrap.
+
+**Delegated-changes fold-in (GUARD 2, docs/review-verification.md →
+Delegation).** This pre-registration quotes the accumulated
+`outputs/DELEGATED_CHANGES.md` log in aggregate, as required before any
+new pre-registration. As of 2026-07-22 the delegated set is FIVE items:
+(1) rule 6 (universe-change / perturbation-identity check), (2) rule 7
+(spec-validity review), (3) the min_sep IDENTITY-UNIT metric correction
+applied to the anchor de-risk read only, (4) the screen-fork
+consolidation, (5) the canonical-pointer file. In aggregate: TWO
+review-harness rules, ONE identity-unit metric correction on a de-risk
+read (not a committed verdict), and TWO pure-housekeeping items. NONE
+moved a published number or flipped a pass/fail — the three frozen
+artifacts stay byte-identical and no `ordinal_ok` changed — and NONE set
+a bar an unrun fit will be judged against. Guard 1 fired zero
+escalations. This §13 therefore inherits an UNMOVED pipeline; the
+delegated corrections it RELIES ON are rule 6 (the identity metric the
+spatial-resolution and estimation-uncertainty rows use) and the min_sep
+identity-unit read (§13.1/§13.4 evidence), both of which recompute no
+committed statistic.
+
+**Prior de-risk reads (context, NOT the bar).** Three cheap reads
+preceded this draft (tasks: anchor cheap read, marginal-churn battery,
+min_sep-under-M2_fit + fit-materiality). Their numbers are used ONLY to
+justify WHICH perturbation is the strongest threat in each failure-mode
+class (criterion C below). Per §9.5 / §12.1 non-transfer, a preview
+NEITHER sets NOR predicts the gate statistic: the gate runs on the
+fit-applied v2.4 numbers, computed after this document freezes. Where a
+preview is quoted it is labelled as such.
+
+### 13.1 UNIVERSE — discrete anchor-pair corridors
+
+The v2.4 universe is NOT sliding windows. It is a finite set of
+DISCRETE corridors, each spanning a pair of demand ANCHORS along a
+single host arterial. Construction (mechanical, no "major arterial"
+hand-filter — governance rule 1):
+
+**(a) Anchors.** The anchor set is the UNION of three sources, deduped
+(step c):
+- **WAC employment peaks** — census-block workplace jobs (LODES WAC,
+  block `C000` all-jobs totals), top-`screen_anchor_peak_pool` pool;
+- **Decennial P1 population peaks** — census-block resident population
+  (2020 Decennial P1), same top-`screen_anchor_peak_pool` pool;
+- **Special generators** — the `config/special_generators.json` sites
+  (resort / college / medical), AUTHORITATIVE (a generator is never
+  thinned away in favour of a co-located emp/pop peak; co-located peaks
+  fold in as extra feature tags).
+
+**(b) Deduplication at min-separation (universe-defining, FROZEN per
+rule 6).** Anchors are greedy-thinned so no two survivors sit within
+`screen_anchor_min_sep` = **1.5 mi** of each other (generators kept
+first, then emp, then pop; deterministic order). This constant DEFINES
+the universe: at 1.5 mi the min_sep-under-M2_fit read measured **90
+anchors → 187 connectable corridors** (freeway-excluded, geo-deduped;
+the read's headline figures). Per rule 6 min_sep is a universe-DEFINING
+knob (the anchor-world analogue of the window-length constant), FROZEN
+for the delivered product — NOT a free robustness axis. It is
+SIMULTANEOUSLY the spatial-resolution FAILURE-MODE row (§13.4 mode 2):
+the product is delivered at 1.5 mi and the gate perturbs it in IDENTITY
+units to test robustness. Freezing the value and gating its perturbation
+are the same discipline the window world applies to `screen_window_mi`
+(12.5 frozen; `window_10`/`window_15` gated).
+
+**(c) Path eligibility — freeway/express exclusion (general predicate,
+NOT a route blacklist).** A corridor's host path must be a surface
+arterial: freeway and express alignments are excluded by a
+ROAD-CLASS / GEOMETRY predicate (`screen_anchor_path_exclusion` — e.g.
+GTFS route-type / stop-spacing / limited-access geometry), a general
+rule that would exclude ANY freeway-running shape, not an enumerated
+list of route ids. Rationale: the cheap read surfaced Route 83 (the
+"5 Freeway" alignment) as five contaminant top-15 entries; a
+general geometric predicate removes the whole CLASS, and the on/off
+toggle is a disclosed diagnostic (§13.4), not a gated row (the read
+measured near-zero ranking churn from the toggle).
+
+**(d) Pair selection (each a named registry knob with its home).** A
+candidate corridor is an anchor PAIR both of whose members lie within
+`screen_anchor_membership_buffer` = **X = 0.5 mi** of a common weekday
+GTFS shape (the corridor is that shape's segment between the two
+projected anchor positions; one corridor per pair = the best-fit host
+route by minimum summed offset), subject to a length cap
+`screen_anchor_pair_dist_cap` = **Y = 15 mi**. Same-route sub-segments
+overlapping ≥ 0.70 Jaccard collapse to one (deterministic). Both X and Y
+are named registry knobs; both are DISCLOSED DIAGNOSTICS, not gate rows
+(their HOME and rationale are in §13.7).
+
+### 13.2 SCORING — M2_fit benefit-per-cost (M1 co-reported)
+
+**Primary measure `M2_fit` (`screen_v24_ranking_measure.primary`).**
+Benefit-per-cost. The NUMERATOR is predicted productivity carried to a
+demand-like quantity by the exposure convention; the DENOMINATOR is
+capital:
+
+    M2_fit(corridor) = [ exp(b1·l_flows + b2·l_zveh + b4·l_genjobs
+                             + b5·l_len) · L ]  /  capital_$M
+
+where `l_flows / l_zveh / l_genjobs` are the log1p catchment aggregates
+computed on the corridor's catchment by the SAME shared
+`compute_predictors` geometry (§3.2) — LODES both-ends-in flows,
+B25044 zero-vehicle households, WAC generator jobs (`gen_jobs_naics`) —
+so the CATCHMENT enters the numerator through the covariates; `l_len =
+log(L)`; and `exp(const) + year FE` are COMMON multipliers, rank-inert,
+omitted. `exp(·)` is predicted PRODUCTIVITY (boardings/RVH, the §10
+estimand); `× L` is the exposure step (§13.2 convention); the ratio to
+capital is benefit-per-cost.
+
+**Exposure / length convention (rank-relevant, FROZEN —
+`screen_v24_exposure`).** Corridor length `L` (miles, anchor-to-anchor,
+endogenous) enters TWICE and deliberately: as the `b5` covariate
+(`l_len = log L`) AND as the exposure multiplier (`· L`) that converts
+per-service productivity to a demand-like numerator. This double use is
+NOT rank-inert — the fit-materiality read found the M2_fit vs M2_raw
+divergence is CONCENTRATED in the length profile of the shortlist (fit
+top-8 lengths 9.6–14.5 mi, clustering at the Y = 15 mi cap) — so it is
+stated explicitly and FROZEN here rather than left implicit. An
+alternative exposure (offset/`b5`-only, no `· L` multiplier) is a
+DISCLOSED DIAGNOSTIC, not a gated row.
+
+**Cost denominator (`screen_v24_cost_model`; owner-frozen params).**
+`capital_$M` = the spec-04 `capcost.py` capital at the LOW markup band:
+a TWO-PART guideway cost (fixed OCC + depot, plus per-route-km) PLUS
+per-station PLUS rolling stock — stations = max(2, round(L / 1.0 mi)),
+fleet = `capcost.fleet(L, 5-min peak headway)`, LOW markup 1.20. The
+cost-model PARAMETERS bind an unrun fit and are OWNER-only (never
+delegated, docs/review-verification.md); they are pre-registered here as
+the LOW-band instantiation, with a HIGH/BASE band sweep as a disclosed
+diagnostic.
+
+**Co-reported measure `M1` (`screen_v24_ranking_measure.co_reported`).**
+The COEFFICIENT-FREE demand-per-mile ranking — raw catchment demand
+(jobs + population) / L, no coefficients, no cost model — is published
+ALONGSIDE M2_fit for every corridor. It is a transparency co-report, not
+a second gate. The fit-materiality read measured rho(M2_fit, M1) = 0.068
+(near-orthogonal) — the cost model and the fitted elasticities DO drive
+the answer away from raw density — so the M1-vs-M2_fit divergence is a
+MANDATORY disclosed diagnostic (§13.7), flagged as a
+ranking-measure-choice fragility.
+
+### 13.3 DELIVERABLE — a ranked BCA queue (no product cutoff)
+
+The v2.4 product is a RANKED BENEFIT-PER-COST QUEUE over the frozen
+(min_sep 1.5) discrete-corridor universe — the full ~187 corridors
+ranked by M2_fit, with the top **~25 named** and worked down (anchor A,
+anchor B, host arterial, length, M2_fit, M1 co-report,
+catchment components). There is NO cutoff for the PRODUCT: the queue is
+the deliverable, a priority ordering, not a shortlist with a line. The
+ONLY cutoff is the gate-1 consumption ceiling: **gate 1 consumes the
+top-8** (spec 00 §3 / §4b: top 5–8 + ties), which is also the N the §5
+gate churn and the §12.1 external-validity check are measured at. The
+queue is written to a v2.4 artifact under the §4 deterministic-write and
+output-format guardrails (no field denominated in boardings; the index
+is ordinal benefit-per-cost).
+
+### 13.4 GATE — the four §5 failure-mode rows, instantiated for v2.4
+
+The §5 FAILURE-MODE GATE binds v2.4 (NORMATIVE, per
+`screen_gate_failure_modes.row_map["v2.4-anchor"]`). Criterion 2 = MIN
+Spearman rho over the FOUR rows ≥ `screen_battery_rho_min` = 0.7;
+criterion 3 = MAX margin-defined tie-set churn over them, DUAL-UNIT.
+Exactly ONE named row instantiates each mode (criterion C); each row's
+pass condition is computable with no v2.4 results in hand (criterion B).
+
+**Mode 1 — catchment-width — row `buffer` (`buffer_lo` / `buffer_hi`).**
+Perturb the catchment buffer to its band edges. The anchor LATTICE is
+unchanged (buffer changes only the catchment aggregates), so every
+corridor persists — no universe change, no rule-6 decomposition needed.
+Statistic: full-ranking Spearman rho of M2_fit vs the buffer-edge
+ranking, and the margin-defined top-8 identity churn (window-unit).
+PASS: rho ≥ 0.7 AND churn ≤ `screen_tie_churn_max_window` = 0.20.
+*Criterion C (strongest catchment-width threat):* buffer is the ONLY
+catchment-geometry knob that survives BOTH worlds (§5); it is the
+canonical catchment-width perturbation, and the marginal-churn read
+measured it as the second-largest ranking mover after min_sep
+(preview rho 0.94–0.96, moderate top-8 movement) — the largest that
+holds the universe fixed.
+
+**Mode 2 — spatial-resolution — row `min_sep-identity`.** Perturb
+`screen_anchor_min_sep` from the frozen 1.5 to the band edges
+{1.0, 2.0} mi. Each edge REBUILDS the anchor lattice and the corridor
+universe, so this is a rule-6 universe-CHANGING perturbation: match the
+frozen-universe top-8 into the perturbed universe by the segment-overlap
+IDENTITY matcher (bearing ≤ 25° mod 180, endpoint-to-line perp ≤ 0.6 mi,
+along-overlap ≥ 0.4 of the shorter; greedy 1-1, endpoint-distance
+tie-break; matched against the FULL perturbed universe). DECOMPOSE each
+frozen top-8 member into NO-LONGER-EXISTS (zero seg-match candidate —
+universe change, DISCLOSED, not counted against the ranking) vs
+EXISTS-BUT-MOVED (a match exists but falls outside the perturbed top-8 —
+genuine ranking instability, COUNTED). Statistic = MAX over the two
+edges of [# exists-but-moved / # frozen-top-8 that persist]. PASS:
+statistic ≤ `screen_tie_churn_max_hostshape` = 2/14 = 0.142857 (the
+anchor-world identity-unit analogue of the host-shape cap) AND the
+persist-set rho ≥ 0.7.
+*Criterion C (strongest spatial-resolution threat):* min_sep is the
+ONLY universe-defining lattice knob — the direct analogue of the
+window-length row that was the most decision-relevant perturbation in
+the window world (§5). The min_sep-under-M2_fit read makes it the
+DEMONSTRATED landmine: under the FITTED ranking the finer edge (1.0 mi,
+universe grows 187→407, NO baseline corridor destroyed so
+no-longer-exists = 0) showed **5 of 8** frozen top-8 EXIST-BUT-FALL out
+(e.g. Alton 14.5 mi fit#2 → 24/407; Standard/Bristol 14.3 mi fit#7 →
+310/407; Main St 9.6 mi fit#8 → 11/407), pooled genuine 6/16 across both
+edges. The COEFFICIENT-FREE read had found ~0 genuine churn (all
+universe change) — the fitted ranking FLIPS the verdict, because
+`b5_len`'s exposure×length interaction rewards long corridors and a
+finer lattice manufactures MORE long-corridor candidates that displace
+the frozen top-8's specific representatives. This is precisely why
+min_sep is GATED here rather than "frozen and forgotten": the earlier
+de-risk recommendation to freeze it as a safe constant is SUPERSEDED by
+the fitted read. (Preview 5/8 ≫ 2/14 signals real risk that this row
+binds; per non-transfer it does not set the gate, which runs on the
+fit-applied numbers.)
+
+**Mode 3 — specification — row `swap` (demand-numerator swap).** Swap
+the FITTED demand numerator for its COEFFICIENT-FREE counterpart over
+the SAME cost denominator, same universe, same exposure — i.e. rank by
+M2_raw (raw catchment demand · L⁻¹-free / capital) and compare to
+M2_fit. The lattice is unchanged (no rule-6 decomposition). Statistic:
+full-ranking rho of M2_fit vs M2_raw and the top-8 identity churn
+(window-unit). PASS: rho ≥ 0.7 AND churn ≤ 0.20.
+*Criterion C (strongest specification threat):* this is the MAXIMAL
+within-scoring specification change — it replaces the ENTIRE fitted
+demand specification with its coefficient-free form while holding cost,
+universe, and exposure fixed. A single-predictor swap (`popden_swap`
+b1→density, `gen_dummy_swap` b4→binary) is a SUBSET of this change and
+its divergence is bounded above by it, so those are disclosed
+diagnostics, not the gated row. The fit-materiality read measured the
+swap at rho 0.480 with 6 of 8 shortlist members replaced — the fit is
+NOT decorative, the specification genuinely moves the answer, so this is
+the binding specification threat. (Preview rho 0.48 < 0.7 again signals
+real bind-risk; it does not set the gate.)
+
+**Mode 4 — estimation-uncertainty — row `coeff_resample`.** Draw the
+coefficients (b1/b2, and b4/b5) from v2.2's EXISTING route-cluster
+coefficient bootstrap (B = 2000, §3.4 — no new fit, no new bootstrap),
+re-rank the FROZEN corridor universe per draw, and — because a
+coefficient resample leaves the lattice UNCHANGED, so every corridor
+persists (rule-6 no-longer-exists is empty and the churn is ALL
+exists-but-moved) — measure the margin-defined top-8 identity churn
+across draws (window-unit / identity-window unit). Statistic: the
+bootstrap tie-set churn at the top-8 cutoff (max(#in,#out)/8 aggregated
+over draws) and the mean resampled-vs-point Spearman rho. PASS: churn ≤
+0.20 AND rho ≥ 0.7.
+*Criterion C (strongest estimation threat, and the LOAD-BEARING row):*
+it IS the estimation uncertainty, sampled directly — no proxy. The
+fit-materiality read showed the v2.2 coefficients SWAP 6 of 8 shortlist
+members versus the coefficient-free ranking, so the coefficients are the
+single largest membership driver; b1 sits at t = 1.49 (cluster SE 0.17),
+b2 at t ≈ 2.97 — wide enough that their sampling distribution is the
+perturbation MOST able to move the top-8. Until §5's 2026-07-22
+amendment this threat sat ENTIRELY OUTSIDE the gate. It is homed as its
+OWN mode (not folded under specification) so the load-bearing threat
+carries its own visible bar (§5 rationale).
+
+**Non-mode perturbations = DISCLOSED DIAGNOSTICS (outside the gate,
+nothing hidden).** Reported in the artifact's `shortlist_stability`
+block but setting NO pass/fail bar: `screen_anchor_peak_pool` 200/500
+(read: near-zero churn, street-Jaccard 1.00), `screen_anchor_pair_dist_cap`
+12/18 (near-zero churn), `screen_anchor_membership_buffer` variants,
+the freeway-exclusion on/off toggle (near-zero churn), the cost-model
+band (LOW/BASE/HIGH), the exposure-variant (offset-only), and the
+M1-vs-M2_fit ranking-measure divergence (rho 0.068 — the
+measure-choice fragility, MANDATORY disclosure). Each is a DIAGNOSTIC
+precisely because the de-risk reads measured it as decision-orthogonal
+or as a disclosed universe/measure choice, not one of the four
+sensitivities a corridor ranking must be robust to (§13.7 states each
+home + reason).
+
+### 13.5 STOPPING RULE (the §9.5 numeric floor consumes this queue)
+
+v2.4 is the LAST stage-1 method attempt (§9.5). The benefit-per-cost
+queue of §13.3 is the object the stopping rule reads:
+- **(a) DECISION-GRADE** iff the failure-mode-subset MIN rho (the four
+  §13.4 rows) ≥ 0.7 [`screen_battery_rho_min`] — the criterion-2 value,
+  NOT the 0.79/0.87 anchor-world previews. The §12.1 item-9 check is
+  SUFFICIENT-BUT-NOT-NECESSARY: a PASS is confirmatory; a MISS triggers
+  the documented confound-review, not an automatic null. On (a): SHIP
+  the queue, gate 1 consumes the top-8 per §4b, `config/candidates.json`
+  may take `hand_supplied: false` (subject to the §12.2 stage-2 re-run
+  condition).
+- **(b) DOCUMENTED NULL** otherwise (failure-mode rho < 0.7, or a
+  confound-review finding of GENUINE screen failure): SHIP the finding
+  that OC demand does not separate corridors; the threshold shortlist
+  stays the permanent stage-1 output, `candidates.json` stays
+  `hand_supplied: true`.
+
+Either branch STOPS stage 1. The CLOSED v2.5 list (§9.5) is unchanged:
+only a genuinely new empirical input (records-request RVH, a new agency
+panel clearing §11 D2, or a materially different data source) re-opens
+the arc — and applying the v2.2 fit to the anchor geometry is NOT such
+an input.
+
+### 13.6 ITEM-9 — the §12.1 external-validity check runs against this queue
+
+The §12.1 check (frozen 2026-07-22) runs against the §13.3 queue,
+UNCHANGED: N = 8 from consumption; benchmark set Bravo/Harbor (Route 543
+corridor) and Bravo Westminster/17th (the two CLEAN arterial-ALM
+benchmarks) plus OC Streetcar (CONFOUNDED rail case). PASS CONDITION
+(resolved 2026-07-22, sufficient-not-necessary): the check PASSES iff
+BOTH clean arterial benchmarks rank in the top-8 of the v2.4
+benefit-per-cost queue — a PASS is CONFIRMATORY of branch (a); either
+clean benchmark outside top-8 is a MISS that triggers the documented
+confound-review (benchmark confound vs genuine screen failure) under the
+frozen miss semantics, only a "genuine screen failure" finding routing
+to branch (b). NAIVE-BASELINE diagnostic (the discrimination control):
+also rank by catchment POPULATION alone against the same N = 8; if the
+naive population ranking ALSO places both clean benchmarks in top-8, the
+artifact and the gate-1 memo MUST carry the label "consistent with a
+population count" — the external-validity evidence is then weak-positive,
+not confirmatory. The discrimination margin is a REPORTED DIAGNOSTIC
+(mean clean-benchmark rank under the screen vs under the population
+count), not a pass condition (undecidable at n = 2).
+
+### 13.7 Knob → home → rationale (criterion A + criterion C)
+
+EVERY v2.4 knob has a registry entry AND an explicit home — inside a
+named failure mode OR a disclosed diagnostic — with the reason stated.
+Machine-readable as `screen_v24_prereg.knob_home_map`; the
+v24-prereg-lock test asserts every knob is present with a home, and that
+each of the four modes is instantiated by EXACTLY ONE row.
+
+| knob (registry id) | value (DRAFT) | home | why here / strongest-in-class (criterion C) |
+|---|---|---|---|
+| `screen_anchor_min_sep` | 1.5 mi | **FAILURE MODE 2** (spatial-resolution, `min_sep-identity`) + universe-defining FROZEN (rule 6) | only universe-defining lattice knob; fitted read shows 5/8 top-8 exist-but-fall at the finer edge — the demonstrated landmine, strongest resolution threat |
+| catchment buffer (`buffer_mi`) | 0.9 mi (existing entry) | **FAILURE MODE 1** (catchment-width, `buffer_lo`/`buffer_hi`) | only catchment-geometry knob surviving both worlds; largest universe-fixed catchment mover |
+| `screen_v24_ranking_measure` | {primary M2_fit, co-report M1} | **FAILURE MODE 3** (specification, `swap` = M2_raw↔M2_fit) | maximal within-scoring demand-spec change; preview rho 0.48, 6/8 swap; single-predictor swaps are subsets |
+| v2.2 coefficients (reused, `screen_results_v22.json`) | b1 .256194 / b2 .382547 / b4 −.041057 / b5 −.22846 | **FAILURE MODE 4** (estimation-uncertainty, `coeff_resample`) | THE load-bearing threat: coeffs drive 6/8 members, b1 at t=1.49; sampling uncertainty most able to move the cutoff |
+| `screen_anchor_membership_buffer` (X) | 0.5 mi | DISCLOSED DIAGNOSTIC | pair-selection connect distance, not a catchment-width knob; read: not decision-moving |
+| `screen_anchor_pair_dist_cap` (Y) | 15 mi | DISCLOSED DIAGNOSTIC | read measured 12/18 near-zero churn — decision-orthogonal |
+| `screen_anchor_peak_pool` | 300 (emp & pop each) | DISCLOSED DIAGNOSTIC | read measured 200/500 near-zero churn, street-Jaccard 1.00 |
+| `screen_anchor_path_exclusion` | freeway/express road-class geometry predicate | universe PREDICATE (definitional) + DISCLOSED DIAGNOSTIC (on/off) | general class exclusion, not a route blacklist; toggle near-zero churn |
+| `screen_v24_cost_model` | spec-04 capcost LOW band (owner-frozen params) | DISCLOSED DIAGNOSTIC (band sweep) | cost params bind an unrun fit → owner-only; band LOW/BASE/HIGH swept as diagnostic |
+| `screen_v24_exposure` | length L (double use: `b5` covariate + `·L` multiplier) | FROZEN rank-relevant convention + DISCLOSED DIAGNOSTIC (offset-only variant) | rank-relevant (divergence concentrated in length profile), so stated + frozen, not implicit |
+| queue length (`screen_v24_prereg.deliverable`) | ~25 named; gate-1 top-8 | deliverable definitional | the queue is the product; only cutoff is the top-8 consumption ceiling |
+
+*A min over four is only as good as the four (criterion C, stated).*
+Each mode's row is the STRONGEST available threat in its class by the
+de-risk previews: min_sep (5/8 fitted top-8 churn) for resolution,
+buffer (largest universe-fixed mover) for width, the demand-numerator
+swap (rho 0.48, 6/8) for specification, and coeff_resample (the direct
+sampling of the largest membership driver) for estimation. Weaker
+in-class perturbations are homed as diagnostics, not averaged into the
+gated row.
+
+### 13.8 Results-blind self-check (criterion B)
+
+Every pass condition below is DECIDABLE by someone who has seen NO v2.4
+results — it references only quantities frozen in this document (or in
+the already-committed §5 / §9.5 / §12.1) plus the fit-applied ranking
+the v2.4 run will produce. The check that item-9 just failed (a bar read
+off a preview rank already seen, §12.1) is avoided: no pass condition
+names a corridor, a rank, or a preview value.
+
+- **Criterion 1 (sign)** — decidable: b1/b2 positive-fraction ≥ 0.841
+  over v2.2's existing bootstrap; the coefficients and the bootstrap are
+  frozen (v2.2 artifact), nothing v2.4-specific to see.
+- **Criterion 2 (min rho ≥ 0.7)** — decidable: the FOUR rows are named
+  (§13.4), each row's ranking comparison and rho are fully specified
+  (perturbation, identity matcher, cutoff), the threshold 0.7 is frozen.
+- **Criterion 3 (dual churn caps)** — decidable: window-unit rows
+  {buffer, swap, coeff_resample} ≤ 0.20; identity-unit row {min_sep} ≤
+  2/14; the metric (margin-defined tie-set / rule-6 identity churn), the
+  cutoff (top-8), and both caps are frozen.
+- **Stopping rule (a)/(b)** — decidable: gates on the criterion-2 value
+  0.7 (NOT a preview); the sufficient-not-necessary status of item-9 and
+  the confound-review disposition of a miss are fixed NOW so a miss
+  cannot be relitigated after seeing which corridors missed.
+- **Item-9 (§12.1)** — decidable: PASSES iff BOTH named clean benchmarks
+  are in the top-8; N = 8, benchmark set, and miss semantics all frozen;
+  the naive-population disclosure is a fixed rule, not a threshold.
+
+The only quantities NOT knowable in advance are the RANKINGS themselves —
+which is the point: the rules that judge them are complete before they
+exist.
+
+### 13.9 Registry, freeze checklist, and what v2.4 does NOT do
+
+**Registry (all `spec-pending:01§13`, DRAFT — not yet ratified).** New
+entries: `screen_anchor_min_sep`, `screen_anchor_membership_buffer`,
+`screen_anchor_pair_dist_cap`, `screen_anchor_peak_pool`,
+`screen_anchor_path_exclusion`, `screen_v24_ranking_measure`,
+`screen_v24_cost_model`, `screen_v24_exposure`, and the umbrella
+`screen_v24_prereg` (which carries `knob_home_map`, the design summary,
+the delegated-diff fold-in flag, and the DRAFT status). `buffer_mi`,
+`gen_jobs_naics`, `special_generators`, and the v2.2 coefficients are
+REUSED existing entries. No `*_v24` THRESHOLD id is minted (the frozen
+0.841 / 0.7 / 0.20 / 2·14⁻¹ are unchanged, §5); no prior-tier entry is
+added, so the prior-order fingerprint is untouched.
+
+**Freeze checklist (what owner ratification must do to start the
+stopping-rule clock).** (1) Ratify the DRAFT values (min_sep 1.5,
+X 0.5, Y 15, pool 300, the LOW cost band, the exposure convention, the
+M2_fit/M1 measure pair). (2) Flip each `spec-pending:01§13` entry's
+disposition to accepted-frozen. (3) Confirm the four-mode row map and
+the dual churn caps as the binding v2.4 gate. Only after (1)–(3) does
+v2.4 become the ratified LAST attempt whose single fit-application run
+resolves branch (a)/(b).
+
+**What v2.4 does NOT do.** It fits NOTHING (reuses v2.2 coefficients);
+it adds NO networked scoring (corridors scored in isolation; transfers
+remain spec 07's job); it publishes NO field denominated in boardings
+(ordinal benefit-per-cost only, §4 guardrails); it does NOT auto-promote
+into `config/candidates.json` for the current verdict (§12.2 — a
+promotion lands only in a batch that re-runs the stage-2/3 verdicts that
+consume it); and it does NOT treat the anchor geometry as a new
+empirical input (§9.5 closed v2.5 list). The §1 endogeneity confession
+is UNCHANGED — b3 (RVH) is on the LHS as the productivity denominator
+(§10), never read as a service response, and no prediction at any
+counterfactual service level is published.

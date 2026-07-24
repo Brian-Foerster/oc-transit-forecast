@@ -54,3 +54,7 @@ owner-ratified. Guard 1 fired zero escalations because zero numbers moved.
   with mandatory consistent-with-population-count disclosure).
 - README-47 plain-terms statement (item 1 scoped OUT, not closed) — tier 2.
 - Harness tiering + premise-check + tree-only-record rules — tier 2.
+
+- v2.4 §13 draft REJECTED (structural findings) + rejection annotation + README-50
+  — tier 2 doc, no number moved; the FROZEN part (4th failure mode + item-9
+  resolution) is fit-binding, owner-directed 2026-07-22/23.
