@@ -123,3 +123,25 @@ could copy numbers (defeats 2) but cannot fake the journal tool trace (caught by
 4), and cannot make an independent controller recompute agree with a wrong result
 (caught by 5). That combination is the standard for consequential reviews going
 forward.
+
+
+## Rule 7 — the spec-validity review (assumption-surfacing), distinct from reproduce-the-numbers
+
+Every review harness above tests IMPLEMENTATION FIDELITY: does the code compute
+what the spec says. A from-scratch reimplementation matching byte-for-byte
+confirms exactly that and NOTHING about whether the spec is RIGHT. The same
+party has written the spec, the code, and most of the review, so spec-validity
+has had no structurally-independent check — every conceptual error this project
+caught (the regime narrative, top-vs-margin stability, the version fork, the
+tripwire min/max defect, the universe-change class) came from OUTSIDE review,
+not from any reproduce-the-numbers pass.
+
+For consequential runs, add a SECOND review with a different question. Not
+"reproduce the numbers" but: **name the assumption that, if wrong, would most
+change this answer.** The reviewer is instructed to (a) list the load-bearing
+assumptions (estimand form, exposure convention, universe-defining constants,
+the ranking measure, the cost model), (b) for each, state which way the answer
+moves if it is wrong, and (c) name the single one it would most want an outside
+expert to challenge. An APPROVE that cannot name a load-bearing assumption is
+itself a finding. This does not replace the reproduce-the-numbers review; it
+runs alongside it and targets the failure mode reproduction cannot reach.
