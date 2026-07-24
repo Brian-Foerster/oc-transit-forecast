@@ -2050,15 +2050,26 @@ N = 8. Then:
   the top tier, the check does NOT discriminate the screen from a
   population count, and a v2.4 pass tells you nothing the population
   count did not already say;
-- the check **PASSES** only if the v2.4 screen places the arterial
-  benchmarks in top-8 **AND** does so with discrimination the naive
-  baseline LACKS. If BOTH the screen and the naive count pass, the
-  result is reported honestly as **"consistent with a population
-  count"** — a pass on the letter of the check but explicitly NOT
+- **PASS CONDITION (resolved 2026-07-22, owner review; supersedes the
+  contradictory dual-clause form committed in ee03fc0):** the check
+  **PASSES** iff BOTH clean arterial benchmarks (Bravo/Harbor-543,
+  Bravo/Westminster-17th) rank in the top-8 of the v2.4 benefit-per-cost
+  queue. Decidable, falsifiable, frozen now. Either clean benchmark
+  outside top-8 = item-9 FAIL -> stopping-rule branch (b).
+- **Discrimination vs the naive baseline is a REPORTED DIAGNOSTIC, not a
+  pass condition** — demoted BEFORE any numbers exist, for a stated
+  reason: with n=2 clean benchmarks and N=8, a discrimination margin
+  between two rankings is UNDECIDABLE as a gate (no honest threshold on
+  2 points); leaving it in the pass condition would have forced post-hoc
+  resolution in the direction of shipping. MANDATORY DISCLOSURE: if the
+  naive population ranking ALSO places both clean benchmarks in top-8,
+  the artifact and the gate-1 memo MUST carry the label **"consistent
+  with a population count"** — the external-validity evidence is then
+  weak-positive, not confirmatory, and is explicitly NOT
   evidence that the screen adds signal over counting people.
 
 The check, its N, its benchmark scoping, its miss semantics, and its
-naive baseline are all frozen here; the v2.4 batch runs them and reports
+naive baseline are all frozen here; the diagnostic reports the mean clean-benchmark rank under the screen vs under the population count (displacement, sign and size); the v2.4 batch runs them and reports
 the disposition, never re-defining them after seeing the queue.
 
 ### 12.2 Stage-2 scoping — the downstream gap (mechanized in spec 07 §4.3 + spec 00 §3)

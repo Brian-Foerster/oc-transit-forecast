@@ -45,3 +45,12 @@ byte-identical at b88f9b65 / 83aeb032 / 3b1d5526, and no `ordinal_ok` changed.
 No delegated change set a bar an unrun fit will be judged against — every
 threshold, the estimand, and the `screen_gate_failure_modes` subset remain
 owner-ratified. Guard 1 fired zero escalations because zero numbers moved.
+
+## 2026-07-22 (owner-review round)
+- item-9 pass-condition resolution (spec 01 §12.1): NOT delegated — fit-binding,
+  ratified by the owner review directing pick-one-reading-or-demote; implemented
+  as demote-the-undecidable-component (clean-benchmark top-8 membership stays the
+  necessary condition; discrimination vs naive baseline -> reported diagnostic
+  with mandatory consistent-with-population-count disclosure).
+- README-47 plain-terms statement (item 1 scoped OUT, not closed) — tier 2.
+- Harness tiering + premise-check + tree-only-record rules — tier 2.

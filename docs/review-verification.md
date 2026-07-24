@@ -194,3 +194,32 @@ delegated this arc: rule 6 (universe-change / perturbation-identity check), rule
 7 (spec-validity review), the min_sep identity-unit correction, the screen-fork
 consolidation, and the canonical-pointer file. It is the first aggregate diff the
 next (v2.4) pre-registration folds in.
+
+
+## Harness tiering (owner review 2026-07-22)
+
+Full harness (workflow dispatch + independent review + reproduced block +
+gated commit) is for TIER 1 only: anything that writes/regenerates an
+artifact, runs a fit, or binds a frozen value. TIER 2 (docs, spec prose,
+metric definitions, registry provenance text, logs): direct controller edit
++ standard gates (check GREEN, relevant tests) + one commit — no workflow
+ceremony. The item-5 escalation tripwire is the safety net: a tier-2 change
+that turns out to move a published number or flip a pass/fail escalates to
+tier 1 retroactively, both versions reported.
+
+## Premise check before dispatch (owner review 2026-07-22)
+
+Before dispatching any workflow whose task presumes a repo fact (a fork
+exists, a table lacks a column), verify the premise directly first (a
+grep/read, under a minute). Arc examples: the consolidation ran to fix a
+three-way predictor fork that mostly did not exist; the marginal-churn run
+corrected its own metric mid-flight. Cheap premise checks precede expensive
+dispatches.
+
+## The frozen record lives in the tree (owner review 2026-07-22)
+
+Anything constituting the frozen record — pre-registrations, thresholds,
+pass conditions, battery lists, governance rules — exists ONLY in committed
+repo files. The session memory store is a convenience index, never an
+authority; if memory and tree disagree, the tree wins and the memory entry
+is corrected.

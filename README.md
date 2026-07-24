@@ -1103,3 +1103,11 @@ of the tripwire entries and the normalization entry respectively.
     be committed — a promotion lands only in a batch that also re-runs the
     stage-2/3 verdicts that consume it. Docs only; no artifact regenerated; the
     three frozen screen artifacts and `network_sequence.json` untouched.
+
+    **Plain-terms statement (owner review 2026-07-22):** option (ii) means
+    item 1 -- closing the screen-to-candidates loop -- is declared OUT OF
+    SCOPE, not completed. The project ships, permanently: (a) a headline
+    BCR claim about two analyst-chosen corridors (harbor, streetcar), and
+    (b) a separate ranked corridor queue that never feeds that claim (the
+    queue informs future work only). This is a budget decision, stated as
+    such.
