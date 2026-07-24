@@ -18,6 +18,19 @@ cluster-by-route primary + NB2 robustness -- but NB2 is now a RATE model
 analogue of the pinned identity (D5). The block-resolution vintage-matched
 catchments come from screen_common_v21.compute_predictors_v21 REUSED VERBATIM.
 
+CONSOLIDATION (item 2, 2026-07-23). The v2.1 and v2.2 fits share the entire
+estimand-INDEPENDENT block-fit machinery: the fast per-shape projection, the
+archived-GTFS feeds (§9.4), the boardings panel (§9.9.1), the catchment
+extraction, and the OLS/VIF helpers. Those are now SINGLE-SOURCED from the
+canonical v2.1 module (screen_fit_v21) by import rather than copied -- v2.2
+carries ONLY its genuine estimand delta (BASE_CFG_V22, col_order_v22,
+design_matrix_v22, and the NB2 RATE-model offset in fit_nb2 /
+nb2_beta_fixed_alpha). The block predictor itself is one function object,
+screen_common_v21.compute_predictors_v21, on BOTH the fit and scan sides of
+BOTH versions (test_screen_cross_version.py XV1). This keeps every v2.2 fit
+input byte-identical to what the old copied fork produced (byte-identity gate
+test_screen_cross_version.py XV3 / test_screen_v22_fit.py V5-V6).
+
 §10 D2 headline: b1 log1p(LODES both-ends flows), b2 log1p(B25044 zero-vehicle
 HOUSEHOLDS), b4 log1p(WAC generator jobs CNS15-18), b5 log(length mi); + year FE
 (base fy2017). NO b3 (RVH is the DV denominator). NO agency FE (OC-only).
@@ -31,31 +44,28 @@ finite (§10 D8: all 300 kept route-years have RVH > 0 and boardings > 0).
     python -X utf8 scripts/screen_fit_v22.py   -> fit table, coefficients,
                                                   VIFs, dropped route-years
 """
-import csv
-import io
-import math
-import os
 import sys
-import zipfile
 
 import numpy as np
-import pandas as pd
 
 from assumptions import val
-from build_corridor import Line
-from screen_common import project_points
 import screen_common_v21 as sv
+# Estimand-INDEPENDENT block-fit machinery, single-sourced from the canonical
+# v2.1 module (see the CONSOLIDATION note above). FastProjV22 is kept as an
+# alias so the v2.2 module still exposes the historical name, though nothing
+# references it externally. The names re-exported here are what screen_scan_v22
+# reads off `sf` (fast_proj, build_fit_projs, build_fit_rows, load_cns_by_block,
+# ols_beta, fit_primary, vifs, _route_sort_key, _b1name/_b2name/_b4name) plus
+# the helpers design_matrix_v22 / col_order_v22 use (_fys_in, _col_b1/2/4).
+from screen_fit_v21 import (                                       # noqa: E402
+    _route_sort_key, fast_proj, FastProjV21 as FastProjV22,
+    build_fit_projs, build_fit_rows, load_cns_by_block,
+    ols_beta, fit_primary, vifs,
+    _fys_in, _b1name, _b2name, _b4name, _col_b1, _col_b2, _col_b4,
+)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-DER = os.path.join(HERE, "..", "data", "derived")
-ARCHIVE = os.path.join(HERE, "..", "data", "raw", "gtfs_archive")
-
-# committed-table years (route_boardings.csv) that survive into the extended
-# panel; the four new FYs come from route_boardings_ext.csv (§9.9.1).
-COMMITTED_FYS = ("fy2017", "fy2019")
 
 # NB2 optimizer scaffolding (mirrors screen_fit_v21 -- fixed start/maxiter/method
 # under pinned statsmodels==0.14.5; starts derived from the log-OLS fit).
@@ -78,311 +88,12 @@ BASE_CFG_V22 = {
 }
 
 
-def _route_sort_key(r):
-    return (len(r), r)
-
-
-def _norm(rid):
-    """Case-normalized APC<->GTFS join key (spec 01 §9.9.7)."""
-    return str(rid).strip().lower()
-
-
 # ---------------------------------------------------------------------------
-# fast per-shape projection (drop-in for ScreenDataV21.proj / ShapeProjV21)
+# design matrices (§10 D1/D2: PRODUCTIVITY DV, b3 gone from the RHS). The
+# estimand-independent column helpers (_fys_in, _b1name/_b2name/_b4name,
+# _col_b1/_col_b2/_col_b4) are imported from screen_fit_v21; only the RHS column
+# ORDER (no b3_rvh) and the DV transform differ.
 # ---------------------------------------------------------------------------
-# widest buffer any run uses is band("buffer_mi")[1] = 1.25; a block whose
-# INTERNAL POINT lies outside the shape bbox expanded by MAXBUF cannot be
-# within MAXBUF of any point ON the shape, so it is never in-buffer for any
-# buffer <= MAXBUF and its exact offset is irrelevant. Projecting only the
-# in-bbox blocks (a few thousand vs 26,734) is therefore an EXACT speedup:
-# for every block that CAN enter a catchment the offset/position are the same
-# vectorized project_points values ShapeProjV21 would compute.
-MAXBUF = 1.30
-
-
-class FastProjV22:
-    """Same interface as screen_common_v21.ShapeProjV21 (route_id, line, L,
-    b_off, b_pos, g_off, g_pos, g_types) -- buffer-independent -- but projects
-    only blocks inside the shape bbox+MAXBUF; far blocks carry b_off = inf
-    (never in catchment). compute_predictors_v21 / ScreenDataV21.view read
-    only these attributes, so the result is byte-identical to the full
-    projection at any buffer <= MAXBUF. IDENTICAL to screen_fit_v21.FastProjV21."""
-
-    def __init__(self, route_id, x, y, block_xy, gen_xy, gen_types):
-        self.route_id = str(route_id)
-        self.line = Line(np.asarray(x, float), np.asarray(y, float))
-        self.L = float(self.line.L)
-        bx, by = np.asarray(block_xy[0], float), np.asarray(block_xy[1], float)
-        near = ((bx >= self.line.x.min() - MAXBUF)
-                & (bx <= self.line.x.max() + MAXBUF)
-                & (by >= self.line.y.min() - MAXBUF)
-                & (by <= self.line.y.max() + MAXBUF))
-        self.b_off = np.full(len(bx), np.inf)
-        self.b_pos = np.zeros(len(bx))
-        if near.any():
-            off, pos = project_points(self.line, bx[near], by[near])
-            self.b_off[near] = off
-            self.b_pos[near] = pos
-        self.g_off, self.g_pos = project_points(self.line, *gen_xy)
-        self.g_types = list(gen_types)
-
-
-def fast_proj(data, route_id, x, y):
-    """Build a FastProjV22 against a loaded ScreenDataV21's block/generator
-    geometry (drop-in for data.proj)."""
-    return FastProjV22(route_id, x, y, (data.bx, data.by),
-                       (data.gx, data.gy), data.gtypes)
-
-
-# ---------------------------------------------------------------------------
-# archived GTFS feeds (§9.4) -- one contemporaneous feed per boardings year
-# ---------------------------------------------------------------------------
-ARCHIVE_FEEDS = {
-    "fy2017": "octa_gtfs_fy2017_20170201.zip",
-    "fy2019": "octa_gtfs_fy2019_20190208.zip",
-    "fy2020": "octa_gtfs_fy2020_20200129.zip",
-    "fy2021": "octa_gtfs_fy2021_20210217.zip",
-    "fy2022": "octa_gtfs_fy2022_20211224.zip",
-    "fy2023": "octa_gtfs_fy2023_20230210.zip",
-}
-
-
-def _read_zip_csv(zf, name):
-    """Read a GTFS member as a DataFrame (utf-8-sig handles the BOM + quotes;
-    dtype=str, columns stripped of stray quotes/whitespace)."""
-    raw = zf.read(name).decode("utf-8-sig")
-    df = pd.read_csv(io.StringIO(raw), dtype=str)
-    df.columns = [c.strip().strip('"') for c in df.columns]
-    return df
-
-
-class ArchivedFeed:
-    """One archived OCTA feed: weekday services + short_name->longest-weekday
-    shape (mi frame). Mirrors build_corridor.main_shape_xy (monday==1 service,
-    longest shape) generalized to the case-normalized route_short_name join,
-    so the fy2023 '<short>_merged_<id>' route_ids and the express 53x/57x/64x
-    all resolve. Longest-shape heuristic is the documented v2.0 behavior.
-    IDENTICAL to screen_fit_v21.ArchivedFeed (fit universe unchanged, §10 D8)."""
-
-    def __init__(self, path):
-        zf = zipfile.ZipFile(path)
-        routes = _read_zip_csv(zf, "routes.txt")
-        trips = _read_zip_csv(zf, "trips.txt")
-        cal = _read_zip_csv(zf, "calendar.txt")
-        shapes = _read_zip_csv(zf, "shapes.txt")
-        zf.close()
-        wk = set(cal[cal["monday"] == "1"]["service_id"])
-        # route_id -> case-normalized short_name
-        rid_short = {r["route_id"]: _norm(r["route_short_name"])
-                     for _, r in routes.iterrows()}
-        # weekday trips only, tagged with their short_name
-        t = trips[trips["service_id"].isin(wk)].copy()
-        t["short"] = t["route_id"].map(rid_short)
-        # shape geometry (sorted), precomputed length in mi frame
-        shapes = shapes.copy()
-        shapes["seq"] = shapes["shape_pt_sequence"].astype(int)
-        self._shape_xy = {}
-        for sid, g in shapes.groupby("shape_id"):
-            g = g.sort_values("seq")
-            x = g["shape_pt_lon"].to_numpy(float) * sv.MI_LON
-            y = g["shape_pt_lat"].to_numpy(float) * sv.MI_LAT
-            self._shape_xy[sid] = (x, y,
-                                   float(np.sum(np.hypot(np.diff(x),
-                                                         np.diff(y)))))
-        # short_name -> list of weekday shape_ids
-        self._short_shapes = {}
-        for _, r in t.iterrows():
-            sid = r.get("shape_id")
-            if pd.isna(sid) or sid == "" or sid not in self._shape_xy:
-                continue
-            self._short_shapes.setdefault(r["short"], set()).add(sid)
-
-    def main_shape(self, apc_route):
-        """Longest weekday shape for the APC route (matched by case-normalized
-        route_short_name). Returns ((x, y), L) or (None, -1) when the route has
-        NO contemporaneous weekday shape in this feed (the §9.3 shapeless-route
-        drop applies)."""
-        key = _norm(apc_route)
-        sids = self._short_shapes.get(key)
-        if not sids:
-            return None, -1.0
-        best, bl = None, -1.0
-        for sid in sids:
-            x, y, L = self._shape_xy[sid]
-            if L > bl:
-                best, bl = (x, y), L
-        return best, bl
-
-
-# ---------------------------------------------------------------------------
-# per-CNS block arrays (genjobs_leave_class_out needs per-NAICS-sector sums;
-# ScreenDataV21 only carries the CNS15-18 total, so the fit layer loads the
-# sector columns itself -- keeps screen_common_v21 frozen under its no-fit hold)
-# ---------------------------------------------------------------------------
-def load_cns_by_block(data, vintages):
-    """{vintage: {CNS col: per-block array aligned to data.geoids}}."""
-    naics = val("gen_jobs_naics")
-    gidx = {g: i for i, g in enumerate(data.geoids)}
-    out = {}
-    for v in vintages:
-        cols = {c: np.zeros(len(data.geoids)) for c in naics}
-        with open(os.path.join(DER, f"oc_block_wac_{v}.csv"),
-                  encoding="utf-8", newline="") as f:
-            for r in csv.DictReader(f):
-                i = gidx[r["GEOID20"]]
-                for c in naics:
-                    cols[c][i] = float(r[c]) if r[c] not in ("", ".") else 0.0
-        out[v] = cols
-    return out
-
-
-# ---------------------------------------------------------------------------
-# boardings panel (route_boardings.csv committed years UNION the ext table)
-# ---------------------------------------------------------------------------
-def load_panel():
-    """Long-format fit panel rows {route, fy, boardings, rvh} for the frozen
-    6-FY set screen_panel_ext_fys, from route_boardings.csv (fy2017/fy2019)
-    UNION route_boardings_ext.csv (fy2020/fy2021/fy2022/fy2023). fy2020q3 is
-    SUPERSEDED and never enters. fittable requires boardings present AND
-    validated RVH present; non-fittable rows are returned tagged so the caller
-    prints them (the 3 KNOWN_BAD_RVH fy2017 rows, the 560/fy2022
-    KNOWN_DUP_RVH_EXT blank). IDENTICAL to screen_fit_v21.load_panel (§10 D8:
-    same universe -- RVH is still REQUIRED on every kept row, now as the DV
-    denominator rather than the b3 predictor)."""
-    fys_ext = tuple(val("screen_panel_ext_fys"))
-    rows, unfittable = [], []
-    rb = pd.read_csv(os.path.join(DER, "route_boardings.csv"),
-                     dtype={"route": str})
-    for _, rr in rb.iterrows():
-        for fy in COMMITTED_FYS:
-            b, rvh = rr[fy], rr["rvh_" + fy]
-            if pd.isna(b):
-                continue
-            if pd.isna(rvh):
-                unfittable.append((str(rr["route"]), fy, "no validated RVH"))
-                continue
-            rows.append({"route": str(rr["route"]), "fy": fy,
-                         "boardings": float(b), "rvh": float(rvh)})
-    re_ = pd.read_csv(os.path.join(DER, "route_boardings_ext.csv"),
-                      dtype={"route": str})
-    bad = sorted(set(re_["fy"]) - set(fys_ext))
-    if bad:
-        raise ValueError(f"route_boardings_ext.csv carries FY labels outside "
-                         f"the frozen §9.9.1 set: {bad}")
-    for _, rr in re_.iterrows():
-        fy = str(rr["fy"])
-        if pd.isna(rr["boardings"]):
-            continue
-        if pd.isna(rr["rvh"]):
-            unfittable.append((str(rr["route"]), fy, "no validated RVH"))
-            continue
-        rows.append({"route": str(rr["route"]), "fy": fy,
-                     "boardings": float(rr["boardings"]),
-                     "rvh": float(rr["rvh"])})
-    return rows, unfittable
-
-
-# ---------------------------------------------------------------------------
-# fit-side predictor extraction (archived-shape catchments, vintage-matched X)
-# ---------------------------------------------------------------------------
-def build_fit_projs(data, quiet=False):
-    """The EXPENSIVE step, done ONCE: a FastProjV22 per fittable (route, fy) on
-    that FY's contemporaneous archived shape (buffer-independent, so the whole
-    battery -- including buffer_lo/buffer_hi -- reuses it). Returns
-    {proj_cache: {(route, fy): FastProjV22 | None}, dropped_shapeless: [...],
-     dropped_norvh: [...], feeds: {fy: ArchivedFeed}}. None = the route has no
-     contemporaneous weekday shape in that FY's feed (§9.3 shapeless drop).
-     IDENTICAL to screen_fit_v21.build_fit_projs."""
-    panel, unfittable = load_panel()
-    feeds = {fy: ArchivedFeed(os.path.join(ARCHIVE, fn))
-             for fy, fn in ARCHIVE_FEEDS.items()}
-    proj_cache, dropped_shapeless, seen = {}, [], set()
-    for rec in panel:
-        r, fy = rec["route"], rec["fy"]
-        key = (r, fy)
-        if key in seen:
-            continue
-        seen.add(key)
-        res, L = feeds[fy].main_shape(r)
-        if res is None:
-            proj_cache[key] = None
-            dropped_shapeless.append((r, fy))
-        else:
-            proj_cache[key] = fast_proj(data, f"{r}@{fy}", res[0], res[1])
-    return {"proj_cache": proj_cache, "dropped_shapeless": dropped_shapeless,
-            "dropped_norvh": unfittable, "feeds": feeds}
-
-
-def build_fit_rows(data, cns_by_block, buffer_mi, projs=None, quiet=False):
-    """One raw-sum row per FITTABLE route-year whose route has a contemporaneous
-    archived-feed weekday shape. Each row's catchment is built on that FY's
-    archived shape at that FY's vintage (§9.3/§9.9.2). `projs` is a
-    build_fit_projs() result (built once and reused across buffer variants);
-    when None it is built here. Returns {rows: DataFrame,
-    dropped_shapeless: [...], dropped_norvh: [...], feeds: {fy: ArchivedFeed}}.
-    Shapeless route-years drop (§9.3): the pre-registered set is 3 FY2017
-    Express + 529/fy2022 = 4. IDENTICAL to screen_fit_v21.build_fit_rows (fit
-    universe unchanged, §10 D8)."""
-    if projs is None:
-        projs = build_fit_projs(data, quiet=quiet)
-    proj_cache = projs["proj_cache"]
-    panel, _unfittable = load_panel()
-    rows = []
-    for rec in panel:
-        r, fy = rec["route"], rec["fy"]
-        proj = proj_cache.get((r, fy))
-        if proj is None:
-            continue
-        p = sv.compute_predictors_v21(data, proj, 0.0, proj.L, fy,
-                                      rvh=rec["rvh"], buffer_mi=buffer_mi)
-        vin = p["vintage"]
-        bidx = p["block_idx"]
-        cns = {c: float(cns_by_block[vin["wac"]][c][bidx].sum())
-               for c in val("gen_jobs_naics")}
-        rows.append({
-            "route": r, "fy": fy,
-            "boardings": rec["boardings"], "rvh": rec["rvh"],
-            "log_b": math.log(rec["boardings"]),
-            "L": proj.L,
-            "flows": p["flows"], "zveh": p["zveh_hh"],
-            "e002": p["e002"], "e016": p["e016"], "popden": p["popden"],
-            "genjobs": p["genjobs"], "gen_dummy": p["gen_dummy"],
-            **{f"cns_{c}": cns[c] for c in cns},
-        })
-    df = pd.DataFrame(rows).sort_values(
-        ["route", "fy"], key=lambda s: (s.map(_route_sort_key)
-                                        if s.name == "route" else s)
-    ).reset_index(drop=True)
-    return {"rows": df, "dropped_shapeless": projs["dropped_shapeless"],
-            "dropped_norvh": projs["dropped_norvh"], "feeds": projs["feeds"]}
-
-
-# ---------------------------------------------------------------------------
-# design matrices (§10 D1/D2: PRODUCTIVITY DV, b3 gone from the RHS)
-# ---------------------------------------------------------------------------
-def _fys_in(cfg):
-    """Fit-panel FY set for a config (base year first)."""
-    fys = list(val("screen_panel_ext_fys"))
-    if cfg["panel"] == "pre2020":
-        fys = [f for f in fys if f in ("fy2017", "fy2019")]
-    if cfg["drop_fy2020"]:
-        fys = [f for f in fys if f != "fy2020"]
-    return fys
-
-
-def _b1name(cfg):
-    return "b1_popden" if cfg["b1"] == "popden" else "b1_flows"
-
-
-def _b2name(cfg):
-    return {"zveh": "b2_zveh", "e002": "b2_e002",
-            "e016": "b2_e016"}[cfg["b2"]]
-
-
-def _b4name(cfg):
-    return "b4_gendummy" if cfg["b4"] == "dummy" else "b4_genjobs"
-
-
 def col_order_v22(cfg):
     """§10 D2 RHS column order. b3_rvh is GONE (RVH is the DV denominator);
     everything else is the v2.1 column order verbatim."""
@@ -397,25 +108,6 @@ def col_order_v22(cfg):
     if cfg["year_fe"]:
         names += [f"fe_{fy}" for fy in fys[1:]]
     return names, fys
-
-
-def _col_b1(df, cfg):
-    return np.log1p(df["popden"].to_numpy(float) if cfg["b1"] == "popden"
-                    else df["flows"].to_numpy(float))
-
-
-def _col_b2(df, cfg):
-    return np.log1p(df[{"zveh": "zveh", "e002": "e002",
-                        "e016": "e016"}[cfg["b2"]]].to_numpy(float))
-
-
-def _col_b4(df, cfg):
-    if cfg["b4"] == "dummy":
-        return df["gen_dummy"].to_numpy(float)
-    gj = df["genjobs"].to_numpy(float)
-    if cfg["b4_ex_cns"] is not None:
-        gj = gj - df["cns_" + cfg["b4_ex_cns"]].to_numpy(float)
-    return np.log1p(np.clip(gj, 0.0, None))
 
 
 def design_matrix_v22(rows, cfg):
@@ -456,22 +148,6 @@ def design_matrix_v22(rows, cfg):
     names, _ = col_order_v22(cfg)
     X = np.column_stack([colmap[c] for c in names])
     return y, X, names, df["route"].to_numpy(), df
-
-
-def ols_beta(y, X):
-    """Deterministic least-squares point fit (min-norm on degenerate
-    resamples) -- used by variants, LOO and the bootstrap."""
-    return np.linalg.lstsq(X, y, rcond=None)[0]
-
-
-def fit_primary(y, X, names, groups):
-    """log-OLS with cluster-robust-by-route SEs (spec 01 §3.1)."""
-    import statsmodels.api as sm
-    res = sm.OLS(y, X).fit(cov_type="cluster",
-                           cov_kwds={"groups": pd.Categorical(groups).codes})
-    return {"params": np.asarray(res.params),
-            "se_cluster": np.asarray(res.bse), "names": names,
-            "n": int(res.nobs), "res": res}
 
 
 def fit_nb2(boardings, y, X, start_beta, log_rvh_offset):
@@ -520,22 +196,6 @@ def nb2_beta_fixed_alpha(counts, X, alpha, beta0, log_rvh_offset,
         if float(np.max(np.abs(step))) < tol:
             break
     return beta
-
-
-def vifs(X, names):
-    """VIF per non-intercept column (required diagnostic)."""
-    out = {}
-    for j, name in enumerate(names):
-        if name == "const":
-            continue
-        others = [k for k in range(X.shape[1]) if k != j]
-        beta = ols_beta(X[:, j], X[:, others])
-        resid = X[:, j] - X[:, others] @ beta
-        v = X[:, j] - X[:, j].mean()
-        ss_tot = float(v @ v)
-        r2 = 1.0 - float(resid @ resid) / ss_tot if ss_tot > 0 else 0.0
-        out[name] = float(1.0 / max(1.0 - r2, 1e-12))
-    return out
 
 
 def resid_decomposition(rows):
