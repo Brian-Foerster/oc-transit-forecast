@@ -298,6 +298,28 @@ this candidate universe, so the harness ranks the analyst's corridors and
 claims nothing about the alignments the analyst did not supply. The
 hand-supplied substitution stays stated in the artifact.
 
+**Stage-2 scoping under the v2.4 stopping rule (owner-ratified 2026-07-22,
+option (ii); rule-3 log — README known issue 47; spec 01 §12.2).** The v2.4
+BCA-queue build (spec 01 §12, §9.5 stopping rule) is stage 1's LAST method
+attempt. If its branch (a) ever lands a decision-grade benefit-per-cost queue,
+that queue is a PROMOTED candidate set — which would STRAND this spec's verdict
+and stage 2's welfare BCA, both computed on the HAND-SUPPLIED harbor/streetcar
+set. The adopted resolution, the one consistent with the item-8 stopping rule
+(v2.4 = last STAGE-1 attempt, NOT a stage-2/3 re-trigger):
+
+- the §7 "no OC ALM corridor clears BCR=1" verdict is **PERMANENTLY SCOPED to
+  the corridors ACTUALLY EVALUATED** (hand-supplied harbor/streetcar) — it never
+  silently extends to a promoted set;
+- the v2.4 queue is **FORWARD-LOOKING input for FUTURE stage-2 work — NOT a
+  trigger to re-run stage 2/3, and NOT auto-promoted into
+  `config/candidates.json` for the CURRENT verdict**;
+- **DISALLOWED STATE, stated explicitly:** shipping a NEW candidate set
+  (`hand_supplied: false`) ALONGSIDE verdicts computed from the OLD
+  hand-supplied one is an incoherent artifact and must never be committed. A
+  promotion lands ONLY in a batch that also RE-RUNS the stage-2/3 verdicts that
+  consume it; otherwise the promotion does not land and the verdict keeps its
+  hand-supplied scope.
+
 ## 5. Anti-myopia guards (the load-bearing section)
 
 1. **k=2 lookahead** — the §3 CV rule (conditional chaining; the machinery

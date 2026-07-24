@@ -2544,6 +2544,119 @@ ASSUMPTIONS = {
                    "route-level pair) are records-request upgrade paths that "
                    "could later widen the panel",
     },
+    # -- v2.4 GOVERNANCE PRE-COMMITMENT (spec 01 §5 + §12; owner-ratified
+    # 2026-07-22, written BEFORE the v2.4 fit). Re-scopes what the FROZEN
+    # criterion-2/3 thresholds RANGE OVER (their VALUES are untouched -- 0.7 /
+    # 0.20 / 2-14 stay in screen_battery_rho_min / screen_tie_churn_max_window /
+    # screen_tie_churn_max_hostshape). The whole-battery min/max cannot stay a
+    # frozen bar across a geometry change: offset_variant/window_10/window_15
+    # are meaningless in the v2.4 ANCHOR world and min_sep is meaningless in the
+    # WINDOW world -- only buffer survives both. So criteria 2/3 attach to a
+    # subset frozen BY FAILURE MODE, not by row id. STRUCTURAL-GOVERNANCE entry
+    # at CONSTANT tier (screen_battery_rows / screen_regime_split precedent --
+    # avoids the check-5 enumerated-alternative-row trap a structural-tier
+    # rowless entry would trip). spec-pending:01§12 until the v2.4 fit consumes
+    # it; NO current artifact consumes it (v2.0/v2.1/v2.2 stay byte-identical).
+    "screen_gate_failure_modes": {
+        "title": "screen tripwire criteria 2/3 re-scoped BY FAILURE MODE: the "
+                 "three failure-mode subset the 0.7 / 0.20 / 2-14 thresholds "
+                 "range over (owner-ratified 2026-07-22, v2.4 governance)",
+        "tier": "constant", "status": "active",
+        "value": {
+            "modes": {
+                "catchment_width": "buffer perturbation (buffer_lo/buffer_hi), "
+                                   "BOTH worlds",
+                "spatial_resolution": "window-length (window_10/window_15, "
+                                      "HOST-SHAPE unit) in the window world / "
+                                      "anchor min-separation in IDENTITY units "
+                                      "(min_sep) in the anchor world",
+                "specification": "a predictor SWAP or ESTIMATOR variant",
+            },
+            "criterion2": "min Spearman rho over the three failure-mode rows "
+                          ">= screen_battery_rho_min (0.7)",
+            "criterion3": "max margin-defined tie-set churn over them, DUAL-UNIT: "
+                          "window-unit {catchment_width, specification} <= "
+                          "screen_tie_churn_max_window (0.20); resolution-unit "
+                          "{spatial_resolution} (host-shape unit in the window "
+                          "world / identity unit in the anchor world) <= "
+                          "screen_tie_churn_max_hostshape (2/14)",
+            "thresholds_unchanged": ["screen_battery_rho_min",
+                                     "screen_tie_churn_max_window",
+                                     "screen_tie_churn_max_hostshape"],
+            "row_map": {
+                "v2.0": ["buffer", "window_len", "estimator-or-swap"],
+                "v2.1": ["buffer", "window_len", "swap"],
+                "v2.2": ["buffer", "window_len", "swap"],
+                "v2.4-anchor": ["buffer", "min_sep-identity", "swap"],
+            },
+            "normative_for": ["v2.4-anchor"],
+            "documentary_for": ["v2.0", "v2.1", "v2.2"],
+            "direction_note": "a MIN over THREE rows is noisier than over "
+                              "twenty and, in expectation, an EASIER bar -- the "
+                              "CORRECT direction for this problem, stated "
+                              "deliberately: the whole-battery min was dominated "
+                              "by universe-change (rule-6) and decision-"
+                              "orthogonal rows (service-level, year-drop, "
+                              "overlap), not by the three sensitivities a "
+                              "corridor ranking must actually be robust to. "
+                              "Scoping the gate to the three genuine failure "
+                              "modes tests the right thing; that it is also "
+                              "easier is a disclosed consequence, not a reason. "
+                              "Threshold VALUES unchanged -- only their SUPPORT "
+                              "is re-scoped",
+        },
+        "units": "failure-mode gate scoping (three modes + per-version "
+                 "row->mode map)", "band": None, "basis": "judgment",
+        "history": [("2026-07-22",
+                     "three failure modes (catchment_width / spatial_resolution "
+                     "/ specification); criterion 2 = min rho over them, "
+                     "criterion 3 = max churn over them (dual-unit); per-version "
+                     "row->mode map v2.0/v2.1/v2.2/v2.4-anchor", "judgment",
+                     "owner-ratified 2026-07-22 (v2.4 governance pre-commitment, "
+                     "spec 01 §5 FAILURE-MODE GATE + §12) -- written BEFORE the "
+                     "v2.4 fit. Re-scopes criteria 2/3 to attach BY FAILURE "
+                     "MODE, not by row id, because row ids cannot stay constant "
+                     "across the window->anchor geometry change "
+                     "(offset_variant/window_10/window_15 meaningless in "
+                     "anchor-world; min_sep meaningless in window-world; only "
+                     "buffer survives both). NO frozen threshold VALUE changes "
+                     "(0.7 / 0.20 / 2-14 stay put); only their SUPPORT is "
+                     "re-scoped from the whole battery to the three failure-mode "
+                     "rows. Non-failure-mode battery rows become DISCLOSED "
+                     "DIAGNOSTICS in shortlist_stability, outside the gate")],
+        "provenance": "spec 01 §5 FAILURE-MODE GATE + §12 v2.4 governance. "
+                      "Criterion 2 = MIN Spearman rho over the three "
+                      "failure-mode rows (>= screen_battery_rho_min = 0.7); "
+                      "criterion 3 = MAX margin-defined tie-set churn over them, "
+                      "keeping the §5 DUAL-UNIT split: catchment_width + "
+                      "specification are window-unit (or the anchor world's "
+                      "identity-window unit) -> screen_tie_churn_max_window = "
+                      "0.20; spatial_resolution is host-shape-unit (window "
+                      "world) / identity-unit (anchor world) -> "
+                      "screen_tie_churn_max_hostshape = 2/14. The three modes "
+                      "each named per version (row_map): v2.0 buffer/window_len/"
+                      "estimator-or-swap, v2.1 buffer/window_len/swap, v2.2 "
+                      "buffer/window_len/swap, v2.4-anchor buffer/min_sep-"
+                      "identity/swap. NORMATIVE for v2.4 (binds its gate); "
+                      "DOCUMENTARY for v2.0/v2.1/v2.2 (their verdicts were "
+                      "computed over the FULL battery and their artifacts stay "
+                      "byte-identical -- the map names which rows WOULD carry "
+                      "each mode, it does NOT re-run them). REGISTRY NOTE (state "
+                      "don't hide): a min over three rows is noisier than over "
+                      "twenty, so the bar is EASIER in expectation -- the "
+                      "CORRECT direction for this problem (see value."
+                      "direction_note). STRUCTURAL-GOVERNANCE entry at CONSTANT "
+                      "tier (screen_battery_rows / screen_regime_split "
+                      "precedent). Consumed via val() by the v2.4 scan/decision "
+                      "block when it runs; NOT consumed by any current artifact",
+        "rows": {}, "no_row_reason": "spec-pending:01§12",
+        "accepted": ("owner-ratified 2026-07-22 (v2.4 governance "
+                     "pre-commitment; failure-mode gate)", "2026-07-22"),
+        "logged": "README known-issue 46",
+        "upgrade": "the v2.4 pre-registration proper (estimand/RHS/anchor-"
+                   "lattice scan) names the concrete v2.4-anchor rows per mode; "
+                   "the phase-2b-v24 fit then consumes this scoping via val()",
+    },
     # -- v2.1 rebuild constants (spec 01 §9 pre-registration; phase 2a) -----
     "gen_jobs_naics": {
         "title": "v2.1 generator-jobs NAICS column set (LODES WAC CNS15-18)",

@@ -486,6 +486,70 @@ owner's criterion-2/3 threshold values attach to the CLOSED v2.1
 battery [screen_battery_rows_v21] for the phase-2b verdict (§9.8,
 frozen 2026-07-20 on acquisition facts only).
 
+**FAILURE-MODE GATE (owner-ratified 2026-07-22 — criteria 2/3
+re-scoped to attach BY FAILURE MODE, not by row id; registry
+`screen_gate_failure_modes`).** The criterion-2/3 thresholds
+(`screen_battery_rho_min` = 0.7, `screen_tie_churn_max_window` = 0.20,
+`screen_tie_churn_max_hostshape` = 2/14) are UNCHANGED in VALUE. What
+they RANGE OVER is re-scoped. The whole-battery min/max cannot survive
+a geometry change across versions: `offset_variant`, `window_10`,
+`window_15` are meaningless in the v2.4 ANCHOR world (no sliding
+windows, no free length elasticity to pin), and `min_sep` is
+meaningless in the WINDOW world — only `buffer` survives both. A
+criterion whose row list changes meaning across versions cannot be a
+frozen bar. So the criterion-2/3 subset is frozen BY FAILURE MODE.
+Three failure modes, each of which EVERY version must instantiate with
+its own named row (or edge pair):
+
+1. **catchment-width sensitivity** — the `buffer` perturbation
+   (`buffer_lo`, `buffer_hi`), in BOTH worlds;
+2. **spatial-resolution sensitivity** — the window-length perturbation
+   (`window_10`, `window_15`, HOST-SHAPE unit) in the WINDOW world;
+   the anchor min-separation perturbation in IDENTITY units
+   (`min_sep`-identity, per docs/review-verification.md rule 6 — the
+   anchor-lattice change is decomposed into no-longer-exists vs
+   exists-but-moved, and this row scores the exists-but-moved part) in
+   the ANCHOR world;
+3. **specification sensitivity** — a predictor SWAP or ESTIMATOR
+   variant (v2.0: `nb_estimator` or `e016_swap`; v2.1/v2.2:
+   `popden_swap` / `e002_swap` / `gen_dummy_swap` / `nb_estimator`;
+   v2.4-anchor: a designated swap row).
+
+**Re-scoped criteria.** Criterion 2 = MIN Spearman rho over the three
+failure-mode rows (>= 0.7). Criterion 3 = MAX margin-defined tie-set
+churn over them, keeping the DUAL-UNIT split of §5 where applicable:
+the catchment-width and specification rows are window-unit (or the
+anchor-world's identity-window unit) and feed
+`screen_tie_churn_max_window` = 0.20; the spatial-resolution row is
+host-shape-unit (window world) / identity-unit (anchor world) and
+feeds `screen_tie_churn_max_hostshape` = 2/14. The remaining battery
+rows (`drop_fy2020`, `drop_rh` (retired for productivity), `svc_*`,
+`overlap_*`, `year_fe_vs_pooled`, `loyo`, `loao`, the generator-class
+rows, …) are NOT dropped — they become DISCLOSED DIAGNOSTICS reported
+in `shortlist_stability` OUTSIDE the gate, so nothing is hidden; they
+simply no longer set the pass/fail bar.
+
+**Direction of the bar, stated deliberately (NOT hidden).** A min over
+THREE rows is noisier than a min over twenty, and in expectation an
+EASIER bar to clear. That is the CORRECT direction for this problem:
+the whole-battery min was dominated by rows that measure UNIVERSE
+change (the rule-6 class) or perturbations orthogonal to the decision
+(service-level, year-drop, overlap), not by the three sensitivities a
+corridor ranking must actually be robust to. Scoping the gate to the
+three genuine failure modes tests the right thing; that it is also
+easier is a consequence, disclosed, not a reason. The threshold VALUES
+are unchanged — only their SUPPORT is re-scoped.
+
+**Frozen-artifact invariance (binding).** This re-scoping is
+FORWARD-LOOKING: it binds the v2.4 gate. It does NOT re-run and does
+NOT alter the v2.0 / v2.1 / v2.2 verdicts, which were computed with
+criteria 2/3 over the FULL battery and whose artifacts stay
+byte-identical (b88f9b65 / 83aeb032 / 3b1d5526). The per-version
+row→mode mapping in `screen_gate_failure_modes` is DOCUMENTARY for
+those three (it names which rows WOULD have carried each mode); it is
+NORMATIVE for v2.4. The full-battery min-rho / churn statistics remain
+published in every artifact's `shortlist_stability` as diagnostics.
+
 **§5c Shortlist-stability report (owner review 2026-07-20; the
 statistics behind criteria 2/3's pending values).** For EVERY battery
 row, the artifact's `shortlist_stability` block reruns that row's OWN
@@ -917,6 +981,55 @@ changes are GOVERNED — owner-approved, spec-amended, and logged —
 not banned. (The prior wording — "no v2.2, permanent, no re-tuning
 ever" — promised more than governance can honestly deliver and was
 softened by the owner review 2026-07-20; README known issue 38.)
+
+**STOPPING RULE WITH A NUMERIC FLOOR (owner-ratified 2026-07-22 — the
+softened §9.5 governed-method path gets a TERMINUS for the stage-1
+arc).** The softened §9.5 correctly refuses a false permanence promise,
+but as written it always resolves to "keep going": there is no numeric
+condition under which stage 1 STOPS. That is fixed here, before the
+v2.4 fit exists (the legitimacy condition below). **v2.4 (the
+benefit-per-cost BCA-queue build, §12) is the LAST method attempt of
+the stage-1 arc.** Its result resolves to exactly one of two branches,
+and EITHER branch stops stage 1:
+
+- **(a) DECISION-GRADE queue.** v2.4 is decision-grade IFF the
+  full-ranking Spearman rho on the **failure-mode subset** (the three
+  §5 failure-mode rows, criterion 2 as re-scoped above) is
+  >= 0.7 [screen_battery_rho_min] AND the §12 external-validity check
+  (item-9) PASSES. (The bar is the EXISTING criterion-2 value 0.7, NOT
+  the 0.79 / 0.87 anchor-world de-risk PREVIEW — those previews were
+  cheap reads seen before the fit and do not set the bar; the §12
+  non-transfer note applies.) On (a): SHIP the benefit-per-cost queue;
+  gate 1 consumes it per §4b; `config/candidates.json` may take
+  `hand_supplied: false`.
+- **(b) DOCUMENTED NULL.** Otherwise: SHIP the finding that **OC demand
+  does not separate corridors** — the threshold shortlist stays the
+  permanent stage-1 output and `config/candidates.json` stays
+  `hand_supplied: true`. This is a real result, published as such, not
+  a failure to be retried.
+
+Either way **stage 1 STOPS.** A stopping rule written NOW — before the
+v2.4 numbers exist — is legitimate; one written AFTER seeing the next
+result is not (it would be a stop tuned to a number already seen). That
+timing is the rule's entire warrant, the same warrant every §9/§10/§11
+pre-registration rests on.
+
+**CLOSED LIST of what licenses a v2.5 (nothing else does).** Only a new
+EMPIRICAL INPUT re-opens the arc, and only these three:
+
+1. new route-level RVH from a **records request** (an OC or regional
+   agency's line-level revenue hours that were not public before);
+2. a **new agency panel** (an agency clearing the §11 D2 availability
+   test — public route-level boardings AND RVH joinable to GTFS — that
+   the recon did not land);
+3. a **materially different data source** (e.g. a systemwide stop-level
+   APC extract, or a non-commute demand fabric).
+
+**Internal refinement of an existing source does NOT count** — a new
+estimand on the same data, a re-vintaged predictor, a re-geometry of
+the same scan, a wider bootstrap: none re-open the arc. Those are the
+moves §9.5 already bars as same-data re-runs. v2.5 requires NEW
+evidence, not a new way of reading the old evidence.
 
 ### 9.6 Acquisition manifest
 
@@ -1839,3 +1952,137 @@ route ids join to the route-level rows; (4) LODES + ACS coverage of the
 service-area geography at the matching vintages. The agency list
 `screen_regional_agencies` is then frozen to exactly the candidates
 that clear (1)-(4).
+
+## 12. v2.4 governance pre-commitments (owner-ratified 2026-07-22; written before the v2.4 fit)
+
+**This section is a pre-commitment document, ratified and committed
+2026-07-22 BEFORE the v2.4 benefit-per-cost BCA-queue build has run —
+before any anchor-world corridor has been ranked. It is GOVERNANCE
+STRUCTURE, not a measurement: it adds the frame the v2.4 thresholds
+attach to (the failure-mode gate), the terminus for the stage-1 arc
+(the numeric stopping rule), the external-validity pre-registration
+below, and the stage-2 scoping — none of which changes a frozen
+threshold value, estimand, or committed battery id list. The three
+frozen artifacts stay byte-identical (v2.0 b88f9b65 / v2.1 83aeb032 /
+v2.2 3b1d5526). The v2.4 pre-registration PROPER (estimand, RHS,
+anchor-lattice scan design, index) is a SEPARATE later batch; this
+section fixes only the governance that must predate it.**
+
+The batch has five owner-ratified pre-commitments; the other four are
+recorded at their canonical anchors and cross-referenced here so §12 is
+the single landing page for the v2.4 governance:
+
+- **Failure-mode gate** — §5 (**FAILURE-MODE GATE**) + registry
+  `screen_gate_failure_modes`: criteria 2/3 re-scoped to range over the
+  three failure-mode rows (catchment-width / spatial-resolution /
+  specification), not the whole battery, threshold VALUES unchanged.
+- **Stopping rule with a numeric floor** — §9.5 (**STOPPING RULE WITH
+  A NUMERIC FLOOR**): v2.4 is the LAST stage-1 method attempt; branch
+  (a) decision-grade iff failure-mode rho >= 0.7 AND the §12.1 check
+  passes, branch (b) documented null; closed v2.5 list.
+- **External-validity check** — §12.1 below (item-9).
+- **Delegation with two guards** — docs/review-verification.md
+  (**Delegation**) + outputs/DELEGATED_CHANGES.md (the accumulating
+  log).
+- **Stage-2 scoping** — §12.2 below, mechanized in spec 07 §4.3 and
+  spec 00 §3.
+
+### 12.1 External-validity check (item-9; pre-registered before any v2.4 run)
+
+**Concession first (the e016 error, conceded in the text).** An earlier
+framing set the external-validity bar as "Harbor lands in the top ~10."
+That bar was anchored to a preview RANK ALREADY SEEN — the same class of
+error as scoring on B08141 E016 (§1): a target read off the data before
+the test is not an out-of-sample test. The bar is REDEFINED here so its
+N, its benchmark set, and its miss semantics are all fixed before the
+v2.4 queue exists.
+
+**N FROM CONSUMPTION, not from a preview.** The gate-1 memo consumes the
+TOP OF THE QUEUE (spec 00 §3: top 5-8 corridors + ties; §4b). The
+external-validity N is set to the consumption ceiling: **N = 8**. The
+claim under test: OCTA's own revealed arterial-ALM corridor choices
+should land in the **top 8** of the v2.4 benefit-per-cost queue.
+
+**Non-transfer note (binding).** The preview that produced the old
+"~10" bar ranked corridors by RAW catchment. v2.4 ranks by
+BENEFIT-PER-COST (a cost model over an anchor-lattice queue). The raw
+preview rank therefore does NOT transfer to the v2.4 ordering — a
+corridor's raw-catchment rank and its benefit-per-cost rank are
+different objects. Stated so no one re-imports the preview number as a
+prior on the v2.4 result. (This is also why §9.5's stopping rule reads
+the criterion-2 value 0.7, not the 0.79/0.87 anchor-world previews.)
+
+**Benchmark set, honestly scoped (n = 3, really 2 clean).**
+
+- **Bravo! / Harbor (Route 543 corridor)** — an arterial rapid-transit
+  choice OCTA actually made. CLEAN benchmark.
+- **Bravo! Westminster / 17th** — an arterial rapid-transit choice.
+  CLEAN benchmark.
+- **OC Streetcar** — fixed-guideway RAIL on a short alignment, NOT an
+  arterial ALM corridor. CONFOUNDED case (mode + length differ from
+  what the screen ranks); carried for completeness, not as a clean
+  test.
+
+**Pre-stated miss semantics (written BEFORE any run).** Each possible
+outcome is dispositioned in advance so no result can be re-narrated
+after the fact:
+
+- a **demand-strong, OCTA-chosen ARTERIAL** corridor (Harbor,
+  Westminster/17th) ranking OUTSIDE top-8 counts **AGAINST** the screen;
+- a **miss on OC Streetcar** is attributed to the mode/length
+  **confound**, NOT scored against the screen;
+- a corridor OCTA chose for **grant or political** reasons that is
+  demand-weak and ranks low is a **benchmark confound**, not a screen
+  failure.
+
+**Evidentiary weight, stated.** With n = 3 (really 2 clean), ONE clean
+miss is WEAK evidence — the check can corroborate or embarrass, it
+cannot by itself validate. The item-8 stopping rule requires this check
+to PASS as one of two necessary conditions for branch (a); it is not
+sufficient on its own and is never read as independent validation.
+
+**Naive baseline (the discrimination control — the load-bearing part).**
+Also rank the corridors by **catchment POPULATION alone** (no
+coefficients, no cost model) and run the SAME benchmark against the same
+N = 8. Then:
+
+- if the naive population ranking ALSO puts the arterial benchmarks in
+  the top tier, the check does NOT discriminate the screen from a
+  population count, and a v2.4 pass tells you nothing the population
+  count did not already say;
+- the check **PASSES** only if the v2.4 screen places the arterial
+  benchmarks in top-8 **AND** does so with discrimination the naive
+  baseline LACKS. If BOTH the screen and the naive count pass, the
+  result is reported honestly as **"consistent with a population
+  count"** — a pass on the letter of the check but explicitly NOT
+  evidence that the screen adds signal over counting people.
+
+The check, its N, its benchmark scoping, its miss semantics, and its
+naive baseline are all frozen here; the v2.4 batch runs them and reports
+the disposition, never re-defining them after seeing the queue.
+
+### 12.2 Stage-2 scoping — the downstream gap (mechanized in spec 07 §4.3 + spec 00 §3)
+
+Closing the screen→candidates loop (v2.4 branch (a)) would produce a
+PROMOTED candidate set. But stage 2's welfare BCA and spec 07's "no OC
+ALM corridor clears BCR=1" verdict were computed on the HAND-SUPPLIED
+set (harbor / streetcar). A newly promoted set would STRAND them. Of the
+available options, the one consistent with the item-8 stopping rule
+(v2.4 = last STAGE-1 attempt, not a stage-2/3 re-trigger) is adopted:
+
+**Option (ii), adopted.** Spec 07's "no OC ALM corridor clears BCR=1"
+verdict is **PERMANENTLY scoped to the corridors ACTUALLY EVALUATED**
+(hand-supplied harbor / streetcar). The v2.4 benefit-per-cost queue is
+**FORWARD-LOOKING input for future stage-2 work — NOT a trigger to
+re-run stage 2/3, and NOT auto-promoted into `config/candidates.json`
+for the current verdict.**
+
+**Disallowed state, stated explicitly.** Shipping a NEW candidate set
+alongside verdicts computed from the OLD one is barred — a candidates.json
+that says `hand_supplied: false` beside a BCR verdict computed on the
+hand-supplied universe is an incoherent artifact and must never be
+committed. If v2.4 branch (a) ever promotes a set, the stage-2/3 verdicts
+that consume it are RE-RUN in that same batch or the promotion does not
+land. This scoping is logged (governance rule 3; README known issue) and
+mechanized in spec 07 §4.3 (candidate-pool standing condition) and spec
+00 §3 (network-sequence row).

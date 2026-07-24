@@ -1022,3 +1022,84 @@ of the tripwire entries and the normalization entry respectively.
     computed or peeked; v2.2 (`3b1d5526`), v2.1 (`83aeb032`), v2.0 (`b88f9b65`)
     stay byte-identical; PRIORS and the prior-order fingerprint (`f0bb42f69644`)
     untouched.
+
+46. **v2.4 GOVERNANCE PRE-COMMITMENTS (owner-ratified 2026-07-22): the
+    failure-mode gate, a numeric stopping rule, the external-validity check, and
+    delegation-with-two-guards — written BEFORE the v2.4 fit (spec 01 §5/§9.5/§12;
+    docs/review-verification.md; rule-3 log).** PRE-COMMITMENT governance
+    writing, NOT a measurement: it adds the STRUCTURE the v2.4 thresholds attach
+    to, changing no frozen threshold VALUE, estimand, or committed battery id
+    list. **(1) FAILURE-MODE GATE** (spec 01 §5 + registry
+    `screen_gate_failure_modes`): criteria 2/3 are re-scoped to attach BY FAILURE
+    MODE, not by row id, because row ids cannot stay constant across the
+    window→anchor geometry change (`offset_variant`/`window_10`/`window_15` are
+    meaningless in the v2.4 ANCHOR world; `min_sep` is meaningless in the WINDOW
+    world; only `buffer` survives both). Three modes — catchment-width (buffer,
+    both worlds), spatial-resolution (window length in window-world /
+    anchor min-separation in IDENTITY units in anchor-world), specification (a
+    swap or estimator variant) — each instantiated per version (v2.0
+    buffer/window_len/estimator-or-swap; v2.1/v2.2 buffer/window_len/swap;
+    v2.4-anchor buffer/min_sep-identity/swap). Criterion 2 = min rho over the
+    three failure-mode rows; criterion 3 = max churn over them (dual-unit). The
+    other battery rows become DISCLOSED DIAGNOSTICS outside the gate. Threshold
+    VALUES unchanged (0.7 / 0.20 / 2⁄14); only their SUPPORT is re-scoped.
+    REGISTRY NOTE (stated, not hidden): a min over three rows is noisier than
+    over twenty, so the bar is EASIER in expectation — the CORRECT direction for
+    this problem (the whole-battery min was dominated by universe-change and
+    decision-orthogonal rows). The re-scoping is FORWARD-LOOKING (binds v2.4);
+    the v2.0/v2.1/v2.2 verdicts were computed over the full battery and their
+    artifacts stay byte-identical, so the per-version map is DOCUMENTARY for
+    them. **(2) STOPPING RULE WITH A NUMERIC FLOOR** (spec 01 §9.5): the softened
+    §9.5 always resolved to "keep going"; a terminus is added. v2.4 (the
+    benefit-per-cost BCA-queue build) is the LAST stage-1 method attempt — branch
+    (a) DECISION-GRADE iff failure-mode Spearman rho ≥ 0.7 [`screen_battery_rho_min`,
+    NOT the 0.79/0.87 anchor-world previews] AND the item-9 check PASSES → ship
+    the queue, gate 1 consumes it; branch (b) DOCUMENTED NULL (OC demand does not
+    separate corridors) → ship that finding. Either way stage 1 STOPS. CLOSED
+    v2.5 list (nothing else re-opens the arc): (i) new route-level RVH from a
+    records request, (ii) a new agency panel clearing §11 D2, (iii) a materially
+    different data source; internal refinement of an existing source does NOT
+    count. A stopping rule written NOW is legitimate; one written after the next
+    result is not. **(3) EXTERNAL-VALIDITY CHECK** (spec 01 §12.1): CONCEDES that
+    the earlier "Harbor top ~10" bar was anchored to a preview rank already seen
+    (the e016 error). Redefined — N = 8 FROM CONSUMPTION (gate-1 consumes top 5-8
+    + ties, spec 00 §3), NON-TRANSFER note (preview used raw catchment, v2.4 uses
+    benefit-per-cost), benchmark set honestly scoped (Bravo/Harbor + Bravo
+    Westminster/17th are CLEAN arterial-ALM benchmarks; OC Streetcar is a
+    CONFOUNDED rail case), pre-stated MISS SEMANTICS (a demand-strong OCTA-chosen
+    ARTERIAL outside top-8 counts against the screen; an OC-Streetcar miss is a
+    mode/length confound; a grant/political demand-weak low rank is a benchmark
+    confound), n=3 (really 2 clean) so one clean miss is weak evidence, and a
+    NAIVE POPULATION BASELINE as the discrimination control — the check PASSES
+    only if the screen places the arterial benchmarks in top-8 AND with
+    discrimination the population count lacks (if both pass, reported honestly as
+    "consistent with a population count"). **(4) DELEGATION WITH TWO GUARDS**
+    (docs/review-verification.md + `outputs/DELEGATED_CHANGES.md`): the controller
+    may proceed WITHOUT owner ratification on metric-definition corrections,
+    universe-invariance/identity fixes, and housekeeping, with logged
+    notification — GUARD 1 (escalation tripwire: any change that moves a published
+    number or flips a pass/fail returns for owner ratification with both versions),
+    GUARD 2 (accumulating diff `outputs/DELEGATED_CHANGES.md`, folded into the next
+    pre-registration; seeded with rule 6, rule 7, the min_sep identity correction,
+    the screen-fork consolidation, the canonical pointer). Values that bind an
+    UNRUN fit (thresholds, estimand, failure-mode subset, cost-model params,
+    ranking measure) still require owner ratification. NO fit ran; the three
+    frozen artifacts stay byte-identical (`b88f9b65` / `83aeb032` / `3b1d5526`);
+    PRIORS and the prior-order fingerprint (`f0bb42f69644`) untouched.
+
+47. **STAGE-2 SCOPING under the v2.4 stopping rule (owner-ratified 2026-07-22,
+    option (ii); spec 01 §12.2, spec 07 §4.3, spec 00 §3; rule-3 log).** Closing
+    the screen→candidates loop means a v2.4-promoted candidate set would STRAND
+    spec 07's verdict and stage 2's welfare BCA, both computed on the
+    HAND-SUPPLIED harbor/streetcar universe. Adopted resolution (the one
+    consistent with issue 46's stopping rule — v2.4 = last STAGE-1 attempt, not a
+    stage-2/3 re-trigger): the "no OC ALM corridor clears BCR=1" verdict is
+    PERMANENTLY scoped to the corridors ACTUALLY EVALUATED; the v2.4
+    benefit-per-cost queue is FORWARD-LOOKING input for FUTURE stage-2 work — NOT
+    a trigger to re-run stage 2/3 and NOT auto-promoted into
+    `config/candidates.json` for the current verdict. DISALLOWED STATE, stated
+    explicitly: shipping a new candidate set (`hand_supplied: false`) alongside
+    verdicts computed from the old hand-supplied one is incoherent and must never
+    be committed — a promotion lands only in a batch that also re-runs the
+    stage-2/3 verdicts that consume it. Docs only; no artifact regenerated; the
+    three frozen screen artifacts and `network_sequence.json` untouched.

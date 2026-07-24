@@ -1,7 +1,7 @@
 {
   "basis_census": {
     "definitional": 30,
-    "judgment": 73,
+    "judgment": 74,
     "literature": 10,
     "locally-calibrated": 2,
     "measured": 44
@@ -495,6 +495,16 @@
       "basis": "judgment",
       "id": "screen_estimand_v22",
       "no_row_reason": "definitional",
+      "tier": "constant"
+    },
+    {
+      "accepted": [
+        "owner-ratified 2026-07-22 (v2.4 governance pre-commitment; failure-mode gate)",
+        "2026-07-22"
+      ],
+      "basis": "judgment",
+      "id": "screen_gate_failure_modes",
+      "no_row_reason": "spec-pending:01§12",
       "tier": "constant"
     },
     {
@@ -1802,7 +1812,7 @@
       "tier": "constant"
     }
   ],
-  "n_entries": 159,
+  "n_entries": 160,
   "priors": [
     {
       "basis": "judgment",
@@ -1930,6 +1940,10 @@
       "no_row_reason": "spec-pending:01§11"
     },
     {
+      "id": "screen_gate_failure_modes",
+      "no_row_reason": "spec-pending:01§12"
+    },
+    {
       "id": "screen_regional_agencies",
       "no_row_reason": "spec-pending:01§11"
     },
@@ -1948,7 +1962,7 @@
   ],
   "tier_census": {
     "config": 15,
-    "constant": 89,
+    "constant": 90,
     "data": 18,
     "prior": 19,
     "structural": 18

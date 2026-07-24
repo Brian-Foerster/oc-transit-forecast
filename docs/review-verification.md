@@ -145,3 +145,52 @@ moves if it is wrong, and (c) name the single one it would most want an outside
 expert to challenge. An APPROVE that cannot name a load-bearing assumption is
 itself a finding. This does not replace the reproduce-the-numbers review; it
 runs alongside it and targets the failure mode reproduction cannot reach.
+
+
+## Delegation — controller-authorized changes with two guards (owner-ratified 2026-07-22)
+
+Not every change needs an owner round-trip. Requiring one for a metric-definition
+correction or an identity fix has a real cost: it slows the housekeeping that
+KEEPS the artifacts honest, and it trains everyone to treat the owner gate as a
+rubber stamp. So the controller is AUTHORIZED to proceed WITHOUT owner
+ratification on exactly three classes, **with logged notification**:
+
+1. **metric-definition corrections** — fixing HOW a published statistic is
+   computed when the current definition is wrong (e.g. rule 6's identity-unit
+   churn replacing naive set-membership churn over a changed universe);
+2. **universe-invariance / identity fixes** — matching objects across a
+   perturbed universe by stable identity, decomposing no-longer-exists (universe
+   change) from exists-but-moved (genuine instability), per rule 6;
+3. **housekeeping** — consolidation of duplicated code paths, canonical
+   pointers, doc/reg cross-reference repair, determinism fixes — changes that do
+   not move a number or a verdict.
+
+**GUARD 1 — the escalation tripwire.** If a delegated change alters ANY
+PUBLISHED NUMBER **or** flips ANY PASS/FAIL, it STOPS being housekeeping and
+RETURNS for owner ratification, with **BOTH versions (before / after)** reported
+side by side. The test is on the OUTPUT, not the intent: a change believed to be
+a pure refactor that moves a committed sha, a coefficient, a decision statistic,
+or an `ordinal_ok` is — by that fact — a substantive change and must escalate.
+"It was only a definition fix" is not a defense once a number moved.
+
+**GUARD 2 — the accumulating diff.** Every delegated change is appended to
+`outputs/DELEGATED_CHANGES.md` (the running log), which is FOLDED INTO THE NEXT
+PRE-REGISTRATION as an explicit aggregate diff. Drift is invisible per-item and
+obvious in a list: five individually-reasonable "corrections" can amount to a
+re-specification the owner never approved, and the only way to see that is to
+read them together. The next pre-registration MUST quote the accumulated log and
+state, in aggregate, what the delegated changes did to the pipeline since the
+last one.
+
+**What delegation NEVER covers.** Values that BIND AN UNRUN FIT stay with the
+owner, always: thresholds, the estimand, the failure-mode subset
+(`screen_gate_failure_modes`), cost-model parameters, and the ranking measure. A
+delegated change may correct how an EXISTING number is computed; it may never
+set a bar a future fit will be judged against. That line is the whole point — the
+anti-tuning guarantee depends on the owner, not the controller, owning the bar.
+
+The seeded log (`outputs/DELEGATED_CHANGES.md`) opens with the changes already
+delegated this arc: rule 6 (universe-change / perturbation-identity check), rule
+7 (spec-validity review), the min_sep identity-unit correction, the screen-fork
+consolidation, and the canonical-pointer file. It is the first aggregate diff the
+next (v2.4) pre-registration folds in.

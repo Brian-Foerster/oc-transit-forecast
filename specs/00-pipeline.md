@@ -122,7 +122,16 @@ final ridership; stage 3 is the number of record.
     (spec 01 §5/§9, README issues 35–42), and the v2.2 productivity estimand
     is only PRE-REGISTERED and UNRUN (spec 01 §10, README issue 43) — so
     candidates.json remains analyst-chosen (hand_supplied: true) and the
-    BCR verdict speaks only to that hand-supplied set. RULE-5 note (binding): the network sequence inherits spec 02's
+    BCR verdict speaks only to that hand-supplied set. STAGE-2 SCOPING
+    (owner-ratified 2026-07-22, option (ii); spec 01 §12.2 + spec 07 §4.3;
+    README issue 47): this BCR verdict is PERMANENTLY scoped to the corridors
+    ACTUALLY EVALUATED (hand-supplied harbor/streetcar); a future v2.4
+    benefit-per-cost queue is FORWARD-LOOKING input for later stage-2 work, NOT
+    a trigger to re-run stage 2/3 and NOT auto-promoted into candidates.json for
+    the current verdict. DISALLOWED: shipping a new candidate set
+    (hand_supplied: false) alongside verdicts computed from the old one — a
+    promotion lands only in a batch that also re-runs the verdicts consuming it.
+    RULE-5 note (binding): the network sequence inherits spec 02's
     frozen-market / no-induced-demand firewall verbatim — network assembly is
     where the temptation to close the land-use loop is strongest, and it stays
     closed; the agglomeration/user-benefit share of the sequence's NPV and the
